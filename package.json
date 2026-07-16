@@ -1,0 +1,12 @@
+{
+  "name": "resume-assistant",
+  "version": "1.0.0",
+  "description": "Render Markdown resume to PDF using github-markdown-css",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "marked": "^14.0.0",
+    "puppeteer-core": "^23.0.0",
+    "github-markdown-css": "^5.5.1"
+  }
+}

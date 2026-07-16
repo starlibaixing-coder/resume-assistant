@@ -1,0 +1,110 @@
+/* Print stylesheet for resume PDF rendering.
+ *
+ * Layered on top of github-markdown-css. Adjusts the GitHub README
+ * style (which is designed for wide screens and reading) into something
+ * that works on A4 paper for a resume: tighter spacing, readable but
+ * dense, no forced single-page constraint.
+ *
+ * Edit this file freely to tune the visual output.
+ */
+
+/* Page setup - A4 with modest margins */
+@page {
+  size: A4;
+  margin: 15mm;
+}
+
+/* The markdown-body container is where github-markdown-css applies.
+ * Tighten the GitHub defaults (980px max-width, 45px padding) into
+ * something that fills an A4 page nicely. */
+.markdown-body {
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial,
+    sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.5;
+  color: #1f2328;
+}
+
+/* Headings: compact, scannable */
+.markdown-body h1 {
+  font-size: 20pt;
+  border-bottom: 2px solid #d0d7de;
+  padding-bottom: 6px;
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.markdown-body h2 {
+  font-size: 13pt;
+  border-bottom: 1px solid #d8dee4;
+  padding-bottom: 3px;
+  margin-top: 20px;
+  margin-bottom: 8px;
+}
+
+.markdown-body h3 {
+  font-size: 11pt;
+  margin-top: 14px;
+  margin-bottom: 4px;
+}
+
+/* Tighter paragraph spacing for density */
+.markdown-body p {
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+/* List items: close together */
+.markdown-body ul,
+.markdown-body ol {
+  margin-top: 4px;
+  margin-bottom: 4px;
+  padding-left: 20px;
+}
+
+.markdown-body li {
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+/* Strong/bold is the primary scannability tool in a resume - make it count */
+.markdown-body strong {
+  font-weight: 600;
+}
+
+/* Links: keep them but don't let default blue dominate */
+.markdown-body a {
+  color: #0969da;
+  text-decoration: none;
+}
+
+/* Code: keep inline code subtle */
+.markdown-body code {
+  font-size: 9.5pt;
+  background-color: rgba(175, 184, 193, 0.2);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+/* Horizontal rule as a section separator */
+.markdown-body hr {
+  border: none;
+  border-top: 1px solid #d0d7de;
+  margin: 12px 0;
+}
+
+/* Tables (if used for skills etc.) - compact */
+.markdown-body table {
+  font-size: 10pt;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.markdown-body th,
+.markdown-body td {
+  padding: 4px 8px;
+}
