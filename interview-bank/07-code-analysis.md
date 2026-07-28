@@ -56,10 +56,11 @@
   - 表达代码的**语法结构**（嵌套关系：函数→语句→表达式）；
   - 管"代码长什么样"，用于解析、改写、格式化、语法高亮、代码生成。
 - **CFG（控制流图）**：
-  - 表达程序的**执行路径**（基本块 + 跳转边）；
-  - 管"代码怎么执行"，用于可达性分析、死代码检测、循环分析、路径覆盖。
-- **关系**：AST 是静态结构，CFG 是动态执行视角；CFG 通常由 AST 派生。
+  - 表达程序**（静态推导出的）可能执行路径**（基本块 + 跳转边）；
+  - 管"代码可能怎么执行"，用于可达性分析、死代码检测、循环分析、路径覆盖。
+- **关系**：AST 和 CFG **都是静态分析产物**（都不运行代码）；区别在视角——AST 看语法嵌套结构，CFG 看控制流/执行路径。CFG 通常由 AST 派生。
 - **举例**：找"未使用的 import"用 AST；找"永远不会执行的代码"用 CFG。
+- **注意**：动态执行视角 ≠ 动态分析（dynamic analysis 指真运行程序收集 trace,如插桩/日志);CFG 是对程序行为的**静态近似**,因此会有 over/under-approximation(见 Q07.6)。
 
 ---
 
@@ -89,11 +90,14 @@
 
 **参考答案要点：**
 - **Tree-sitter**：
-  - 跨语言的增量 AST 解析器；
-  - 快速、容错（语法错也能解析）；
+  - 跨语言的 AST 解析器(**支持 100+ 语言,统一 C API**),快速、容错(语法错也能解析);
+  - **核心特性:增量解析(incremental parsing)**——代码编辑后只需 O(变更大小) 重解析(而非全量),这是它用于编辑器/Coding Agent 的根本原因;流程:`tree.edit()` 标记变更 → 重新 parse → 得到更新后的 AST;
+  - **Tree-sitter query**:用 S-expression 写结构化 pattern,如 `(method_invocation name: (identifier) @func)` 精准匹配所有方法调用;
   - 用于：结构化理解、精准定位符号、代码改写。
 - **LSP（Language Server Protocol）**：
-  - 提供语义信息：定义跳转、引用查找、重命名、补全、类型信息；
+  - 基于 **JSON-RPC 2.0** 的 client/server 协议(严格说 LSP 是协议,**提供语义能力的是 language server**);
+  - 核心方法:`textDocument/definition`(定义跳转)、`/references`(引用)、`/hover`(悬停信息)、`/rename`(重命名)、`/documentSymbol`(文档符号)、`workspace/symbol`(全局符号);
+  - 通过 initialize 握手 + `didChange` 增量同步保持状态;
   - 用于：跨文件理解调用关系、重构、类型推断。
 - **ripgrep**：
   - 极快的文本搜索；
@@ -138,10 +142,29 @@
 
 ---
 
+### Q07.7【中高】静态分析的 call graph 怎么构建?soundness 和 completeness 怎么权衡?
+
+**考察点:** 程序分析的灵魂概念(JD4 深度考点)。
+
+**参考答案要点:**
+- **call graph 构建方法**(按精度/成本递增):
+  - **CHA(Class Hierarchy Analysis)**:只看类层次,把所有可能的重写都算上 → over-approximation,快但糙;
+  - **RTA(Rapid Type Analysis)**:在 CHA 基础上排除不可能实例化的类;
+  - **VTA / 0-CFA / k-CFA**:基于变量/上下文敏感的数据流分析,k 越大越精确越慢。
+- **soundness vs completeness(核心权衡)**:
+  - 程序分析本质**不可判定**(停机问题),必须近似;
+  - **sound(可靠)**:报出所有真实问题,**可能含误报**(false positive, over-approximation)——用于安全审计(宁可误报不漏报);
+  - **complete(完备)**:所有报出都是真问题,**可能漏报**(false negative, under-approximation)——用于优化(漏报可接受,误报不行);
+  - **soundy**:工程上的折中——理论上不严格 sound,但实践中接近 sound。
+- **工程意义**:选工具时先问它 sound 还是 complete,决定能否用于安全场景。
+
+---
+
 ## 自查 Checklist（投 JD4 必过）
-- [ ] 能说清 AST 与 CFG 的区别和各自用途
+- [ ] 能说清 AST 与 CFG 的区别和各自用途（都是静态分析）
 - [ ] 能设计代码库的分层理解方案（不全塞 context）
-- [ ] 知道 Tree-sitter / LSP / ripgrep 的分工
+- [ ] 知道 Tree-sitter（增量解析 + query）/ LSP（JSON-RPC）/ ripgrep 的分工
 - [ ] 能描述自动单测生成的技术流程
-- [ ] 理解 call graph 与影响面分析
+- [ ] 理解 call graph 构建方法（CHA/RTA/k-CFA）与影响面分析
+- [ ] 能讲清 soundness vs completeness 权衡
 - [ ] 了解污点分析等安全应用

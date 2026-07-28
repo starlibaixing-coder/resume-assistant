@@ -109,14 +109,35 @@
 **参考答案要点:**
 - **不全塞,按需检索加载**:
   - **文件树概览**:先看目录结构,建立整体认知;
+  - **Repo Map**(Aider 等用):基于 tree-sitter 生成**符号树压缩**进 context,给模型全局结构感(函数/类签名概览,省 token);
   - **关键词检索**(ripgrep):定位相关文件;
   - **符号检索**(AST/LSP):找定义、引用、调用关系;
   - **语义检索**(embedding):用自然语言找代码;
   - **Lazy 加载**:只读当前需要的,细节按需展开。
+- **上下文压缩(Compaction)**:超窗口时自动摘要/淘汰历史(Claude Code 的自动 compaction),把长对话压缩成摘要常驻,腾出空间。
 - **上下文组装**:检索到的相关代码 + 调用链 + 类型信息,按 token 预算裁剪。
 - **记忆机制**:跨步骤记住已探索的结构,避免重复检索。
 - **核心矛盾**:检索 recall(不漏)vs context 预算(不爆),需平衡。
 - **详见模块 07 的代码库理解方案(Q07.1)。**
+
+---
+
+### Q13.4.5【高·必问】AI 改代码有哪些"编辑格式(edit formats)"?各有什么优劣?
+
+**考察点:** Coding Agent 最核心的工程难题之一——模型如何表达代码改动(区分"会用"和"懂设计")。
+
+**参考答案要点:**
+三种主流格式(Aider 有专门论文做消融):
+
+| 格式 | 说明 | 准确率 | token 成本 | 失败模式 |
+|---|---|---|---|---|
+| **whole-file(整文件)** | 让模型重写整个文件 | 最高 | 极高(大文件) | 浪费 |
+| **unified diff(统一 diff)** | 输出标准 diff | **最低** | 低 | 行号/上下文对不齐,模型最容易错 |
+| **search-and-replace(搜索替换块)** | "查找这段→替换成这段" | 高 | 中 | 极少冲突 |
+
+- **结论**:主流 Coding Agent(Aider/Cline/Claude Code)**倾向 search-replace 块**——它不依赖精确行号,定位准、容错好、冲突小。
+- **关联**:这是 Coding Agent 的核心工程难点,diff 看似标准实则模型最不擅长(对齐行号难)。
+- **Claude Code 的工具设计参考**:Read/Edit/Glob/Grep/Bash + Task(派发子 agent)+ hooks,Edit 用 search-replace 格式。
 
 ---
 
@@ -128,11 +149,12 @@
 
 **参考答案要点:**
 - **普通补全**(Tab 补全):单点预测下一行,人主导,AI 补全;
-- **Chat**:问答式,生成片段,人手动应用;
-- **Composer/Agent 模式**:
+- **Chat/Ask**:问答式,生成片段,人手动应用;
+- **Agent / Edit 模式**(Cursor 当前主形态,由早期 Composer 演进而来):
   - **多文件协同编辑**:能同时修改多个文件,理解跨文件依赖;
   - **Agent 模式**:能自主执行(读文件、跑命令、看错误、迭代修复),形成 agentic loop;
-  - **上下文管理**:@file / @codebase 显式注入,或自动检索 codebase;
+  - **Background Agent**:后台异步执行长任务,完成后通知;
+  - **上下文管理**:@file / @codebase 显式注入,或自动检索 codebase(@codebase 用 embedding 索引);
   - **Apply 机制**:AI 生成 diff,人 review 后一键应用。
 - **本质演进**:从"补全工具"→"协同编辑器"→"Agent"。
 
@@ -186,14 +208,16 @@
 
 ---
 
-### Q13.5.5【中】SWE-bench 是什么?为什么对 Coding Agent 重要?
+### Q13.7【中】SWE-bench 是什么?为什么对 Coding Agent 重要?
 
 **考察点:** Coding Agent 的评测认知。
 
 **参考答案要点:**
 - **SWE-bench**:从真实 GitHub 仓库(Python 项目)收集的 issue + 对应 PR + 测试,作为 Coding Agent 的基准评测。
 - **任务**:给 Agent 一个 issue,让它改代码并通过测试;
-- **指标**:解决率(passed@k)—— 多少 issue 能正确解决。
+- **指标**:解决率(resolve rate,常报 **pass@1** 或 % resolved)—— 多少 issue 能正确解决。
+  - 注意:pass@k 严格说是 HumanEval 等代码生成基准的指标(从 n 次采样中至少 k 次通过的概率,公式 `1-C(n-k,k)/C(n,k)`);SWE-bench 因单任务成本高,通常报 pass@1。
+- **变体**:实际业界主要引用 **SWE-bench Verified**(OpenAI 人工校验 500 题子集,更可靠)和 **SWE-bench Lite**(精简子集),原全集较少单独引用。
 - **意义**:
   - 是目前 Coding Agent 最权威的实战评测(非人造任务);
   - 直接反映 Agent 的"端到端交付能力";
@@ -202,7 +226,7 @@
 
 ---
 
-### Q13.7【中】为什么 Coding Agent 强调"跑测试/看报错"这个闭环?不能一次写对吗?
+### Q13.8【中】为什么 Coding Agent 强调"跑测试/看报错"这个闭环?不能一次写对吗?
 
 **考察点:** 理解 Agent 自我验证的价值。
 
@@ -217,7 +241,7 @@
 
 ---
 
-### Q13.8【高】Coding Agent 会不会完全替代程序员?你怎么看它的能力边界?
+### Q13.9【高】Coding Agent 会不会完全替代程序员?你怎么看它的能力边界?
 
 **考察点:** 对技术趋势的判断力(常作为开放题)。
 

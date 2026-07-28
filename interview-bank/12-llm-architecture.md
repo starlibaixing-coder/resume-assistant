@@ -36,9 +36,13 @@ Transformer 架构
   - 每个 token 通过 Query/Key/Value 三个矩阵,与其他 token 计算相关性(注意力权重),加权聚合信息;
   - **本质**:让序列中每个位置都能"看到"其他所有位置,捕捉长程依赖(RNN 的痛点)。
 - **Multi-Head Attention**:多组 Q/K/V 并行,捕捉不同子空间的关系(语法、语义、指代等)。
+  - 计算时 Q·K 后会**除以 √d_k**(head 维度的平方根)再 softmax,防止点积过大导致 softmax 饱和、梯度消失——这是 attention 公式的标准组成,被追问公式时常考。
 - **其他组件**:
-  - FFN(前馈网络):对每个位置做非线性变换,存储"知识";
-  - 残差连接 + LayerNorm:缓解深层梯度消失,稳定训练;
+  - **FFN(前馈网络)**:对每个位置做非线性变换,存储"知识";现代主流模型(LLaMA/Qwen/GLM)用 **SwiGLU** 激活(门控 + Swish,比 ReLU/GELU 质量更好);
+  - **归一化**:
+    - 现代模型用 **Pre-Norm**(在进入 attention/FFN **前**做归一化),比原始 Transformer 的 Post-Norm 更稳定,是深层训练不崩的关键;
+    - 多用 **RMSNorm**(去均值/去偏置,只做缩放),比 LayerNorm 计算更快,LLaMA/GLM/Qwen 标配;
+  - 残差连接:缓解深层梯度消失;
   - 位置编码:告诉模型 token 的顺序(Attention 本身无序)。
 - **Decoder-only 的特点**:训练时用 mask 让每个位置只能看到上文(不能偷看未来),适合生成任务。
 
@@ -51,13 +55,13 @@ Transformer 架构
 **考察点:** 推理优化的基础认知(JD2 核心)。
 
 **参考答案要点:**
-- **问题**:自回归生成时,每生成一个新 token,理论上要重新计算所有历史 token 的注意力。第 N 步要把前 N-1 个 token 全算一遍 → O(N²) 计算浪费。
+- **问题**:自回归生成时,每生成一个新 token 都要用到所有历史 token 的 K/V。不加缓存时,生成第 N 个 token 需把前 N-1 个 token 的 K/V 投影重算一遍,**全程累计 O(N²)** 次投影计算,大量浪费。
 - **KV Cache 原理**:
-  - 注意力计算中,历史 token 的 Key 和 Value 不变;
-  - 把它们缓存起来,新 token 只需算自己的 Q,与缓存的 K/V 做注意力;
-  - 把每步 O(N²) 降到 O(N)。
+  - 注意力计算中,历史 token 的 Key 和 Value 在后续步不变;
+  - 把它们缓存起来,**每个 token 的 K/V 只算一次,全程累计降到 O(N)**;
+  - 每步生成时只需算新 token 自己的 Q,与缓存的 K/V 做一次注意力(O(N))。
 - **代价**:
-  - 显存占用随序列长度线性增长(长上下文显存吃紧);
+  - **显存**占用随序列长度**线性**增长(长上下文显存吃紧),且随 batch/并发数翻倍;
   - 这正是 PagedAttention(vLLM)优化的对象——高效管理 KV Cache 显存碎片。
 - **对工程的影响**:
   - 多轮对话中,system + history 的 KV Cache 可复用(prefix caching),降成本;
@@ -75,7 +79,7 @@ Transformer 架构
 - **背景**:标准 MHA(Multi-Head Attention)每个头都有独立的 K/V,推理时 KV Cache 大。
 - **MQA(Multi-Query Attention)**:所有 head 共享同一组 K/V(只有 Q 是多头的)。大幅减少 KV Cache,提推理速度;但质量略降。
 - **GQA(Grouped-Query Attention)**:折中——把 head 分组,组内共享 K/V。介于 MHA 和 MQA 之间,质量接近 MHA,速度接近 MQA。
-- **为什么主流**:LLaMA-2/3、Qwen2、Mistral 都用 GQA。在**推理效率**和**模型质量**间取得平衡,KV Cache 显著减小 → 更高吞吐、更长上下文。
+- **为什么主流**:**LLaMA-3、Qwen2、Mistral** 全尺寸用 GQA;注意 LLaMA-2 **只有 70B 用 GQA**,7B/13B 仍是标准 MHA。GQA 在**推理效率**和**模型质量**间取得平衡,KV Cache 显著减小 → 更高吞吐、更长上下文。
 - **工程意义**:选模型时关注是否用 GQA,影响推理成本。
 
 ---
@@ -90,9 +94,15 @@ Transformer 架构
 - **RoPE(Rotary Position Embedding)**:
   - 用**旋转矩阵**把位置信息编码到 Q/K 上(相对位置);
   - 优点:**天然支持相对位置**、可外推(配合 YaRN/NTK 等可扩展上下文);
-  - 主流:LLaMA、Qwen、Claude 系等几乎都用 RoPE。
+  - 主流:**LLaMA、Qwen、GLM 等开源主流模型**都用 RoPE(闭源模型如 Claude/GPT 未公开其位置编码方案,不宜断言)。
 - **ALiBi**:另一种外推方案(在 attention score 上加位置偏置),简单但表现不如 RoPE。
-- **工程意义**:RoPE 模型可通过"扩展 RoPE 频率"把 4K 模型微调到 32K+ 长上下文。
+- **上下文长度扩展技术**(高频追问,RoPE 模型外推的演进线):
+  - **PI(Position Interpolation)**:线性压缩位置,需少量微调;
+  - **NTK-aware**:保留高频信息,可免微调外推;
+  - **YaRN**:分段缩放,效果优于 NTK,是目前主流长上下文方案;
+  - **LongRoPE**:非均匀插值,支持极长(如 2M)上下文。
+  - **关键认知**:标称 128K ≠ 有效 128K(中段召回率下降),实际有效长度需用 needle-in-haystack 测。
+- **工程意义**:RoPE 模型可通过上述技术把 4K 模型扩展到 32K/128K+ 长上下文。
 
 ---
 
@@ -147,8 +157,9 @@ Transformer 架构
   - 显存仍要装下全部专家(参数没省,省的是计算);
   - 负载均衡难(某些专家过载、某些闲置);
   - 训练复杂。
-- **代表**:Mixtral 8x7B、DeepSeek-MoE、Qwen2-MoE。趋势是稀疏激活以降本。
-- **工程意义**:MoE 模型推理需特殊优化(专家并行),部署成本评估要看激活参数而非总参数。
+- **代表**:Mixtral 8x7B、**DeepSeek-V3**(当前最具代表性之一)、Qwen2-MoE。趋势是稀疏激活以降本。
+- **进阶结构**:DeepSeek 提出 **shared expert(共享专家,常驻激活)** + routed expert(被路由激活),共享专家承担通用知识、路由专家承担专业化,缓解"共享知识被稀释"问题。
+- **工程意义**:MoE 模型推理需特殊优化(专家并行 expert parallelism),部署成本评估要看**激活参数**而非总参数。
 
 ---
 
@@ -233,24 +244,51 @@ Transformer 架构
 **参考答案要点:**
 | 技术 | 解决问题 | 原理 |
 |---|---|---|
-| **KV Cache** | 避免重复计算历史 token 的注意力 | 缓存历史 K/V |
+| **FlashAttention** | Attention 计算的 HBM(显存)读写瓶颈 | 分块计算(tiling),不改变数学结果只优化访存;训练+推理通用的基础优化 |
+| **KV Cache** | 避免重复计算历史 token 的注意力投影 | 缓存历史 K/V |
 | **PagedAttention** | KV Cache 的显存碎片、并发受限 | 类 OS 分页管理显存(vLLM) |
 | **Prefix Caching** | 相同前缀(如 system prompt)重复计算 | 缓存公共前缀的 KV Cache |
-| **Speculative Decoding** | 大模型逐 token 生成慢 | 小模型先猜多个,大模型并行验证 |
+| **Speculative Decoding** | 大模型逐 token 生成慢(串行步多) | draft model 先猜多个 token,target model 一次 forward 并行验证(需词表/分词兼容) |
 | **Continuous Batching** | GPU 利用率低 | 动态拼 batch,不等满 |
+| **Context Parallelism / Ring Attention** | 超长上下文单卡装不下 | 将序列切分到多卡并行计算注意力 |
 
 - **组合价值**:这是 LLM 服务高吞吐、低延迟的核心工程手段。
+- **Speculative Decoding 注意**:它减少的是大模型的**串行自回归步数**(一次验证多个),不是单纯"减少 forward 次数";draft/target 必须分词兼容,且有"接受概率"决定实际加速比。
+
+---
+
+### Q12.13【中·必问】什么是推理模型(Reasoning Model,如 o1/R1)?和普通 LLM 有什么区别?
+
+**考察点:** 2024-2026 最重要的架构级进展,高频考点。
+
+**参考答案要点:**
+- **普通 Chat 模型**:直接给答案,推理过程内隐(或靠 CoT prompt 触发)。
+- **推理模型**(OpenAI o1/o3、DeepSeek-R1):
+  - 把 **长思维链(long CoT)显式化甚至内化为可学习的**:模型在回答前先"想很久",生成大量推理 token;
+  - **test-time compute**:用**推理期算力**换**准确率**——思考越久(生成更多推理 token),复杂任务表现越好,这是新的 scaling 维度;
+  - **训练方式**:R1-Zero 直接用 **RL( GRPO)** 训练推理能力(无需 SFT 冷启动也能涌现),R1 在此基础上加 SFT/冷启动提升稳定性;OpenAI o1 用大规模 RL + 思维链数据。
+- **适用场景差异**:
+  - 推理模型适合:数学、编程、复杂逻辑、多步规划(Agent 规划层);
+  - 普通模型适合:对话、简单问答、低延迟场景(推理模型延迟高、成本贵)。
+- **工程意义**:
+  - Agent 的 Planner 可用推理模型提规划质量;
+  - 但要权衡延迟/成本(思维链 token 也要付费);
+  - 上下文管理变复杂(要给推理过程留空间)。
+
+**追问方向:** R1-Zero 为什么重要?(证明纯 RL 也能涌现推理,无需大量人类思维链数据)
 
 ---
 
 ## 自查 Checklist
 
-- [ ] 能讲清 Transformer 的核心组件(Attention / FFN / 残差 / LayerNorm)
+- [ ] 能讲清 Transformer 的核心组件(Attention / FFN / 残差 / Norm),含 Pre-Norm/RMSNorm/SwiGLU
 - [ ] 能解释 KV Cache 的原理与代价,并说明对工程的影响
 - [ ] 知道 GQA/MQA、RoPE 等现代模型设计
+- [ ] 了解上下文扩展技术(PI/NTK/YaRN)
 - [ ] 能讲清采样参数(temperature/top-k/top-p)及调参经验
 - [ ] 理解 Token / Tokenizer 对成本和上下文的影响
 - [ ] 能说清幻觉的根本原因(概率生成模型本质)
 - [ ] 知道长上下文的局限(Lost in the Middle)
 - [ ] 理解预训练/SFT/对齐三阶段
-- [ ] 了解 MoE、Scaling Law、推理优化技术
+- [ ] 了解推理模型(o1/R1 / test-time compute)
+- [ ] 了解 MoE、Scaling Law、推理优化技术(含 FlashAttention)

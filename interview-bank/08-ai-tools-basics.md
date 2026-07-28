@@ -83,18 +83,19 @@
 
 **参考答案要点：**
 - **MCP（Model Context Protocol）**：
-  - Anthropic 提出的**开放协议**，标准化"模型 ↔ 工具 / 数据源"的连接；
-  - 解决 **N×M 问题**：M 个模型 × N 个工具，原本要 M×N 个集成；有了 MCP，工具实现一次 MCP server，任何支持 MCP 的模型都能用 → M+N。
+  - Anthropic 提出的**开放协议**，标准化"模型 ↔ 工具 / 数据源 / 提示词模板"的连接；
+  - 解决 **N×M 问题**：M 个模型 × N 个工具，原本要 M×N 个集成；有了 MCP，工具实现一次 MCP server，任何支持 MCP 的 host/客户端都能用 → M+N。
+  - **三类原语**（不只 tools）：`tools`（可调用的函数）、`resources`（应用控制读取的数据/文件）、`prompts`（模板）；此外 host 还可发起 `sampling`（反向请求模型推理）。
+  - **架构三角**：host（如 Cursor/Claude）↔ client（连接器）↔ server（工具方）。
 - **Function Calling**：
-  - 是**模型的能力**（按 schema 输出工具调用）；
-  - 解决"模型如何调用工具"。
-- **关系**：
-  - Function Calling 是底层执行机制；
-  - MCP 是**工具接入的标准化协议**（类似 USB 标准化外设接入）；
-  - MCP server 可以通过 function calling 暴露工具给模型。
+  - 是**模型厂商提供的接口能力**（让模型按 schema 输出结构化工具调用）；
+  - 解决"模型如何决定调用工具"。
+- **关系与调用链路**（更精确）：
+  - 二者处于不同层：MCP 是**工具侧的接入协议**，function calling 是**模型侧的接口能力**；
+  - 调用链路：用户消息 → host 聚合各 MCP server 的 tools 成 schema → 模型用 function calling 决定调哪个 → host 路由到对应 MCP server → 执行并返回结果 → 回灌模型。
 - **价值**：工具复用、生态共享、解耦模型与工具。
 
-**追问方向：** MCP 的 transport 有哪些？（stdio / SSE / HTTP）
+**追问方向：** MCP 的 transport 有哪些？（**stdio / Streamable HTTP**——2025-03 spec 起 Streamable HTTP 取代了旧的 HTTP+SSE，支持无状态部署与更好的 resumability）
 
 ---
 
@@ -177,10 +178,66 @@
 
 ---
 
+### D. 项目上下文 / 规则文件(重度用户标志)
+
+### Q08.9【中·必问】CLAUDE.md / .cursor/rules / AGENTS.md 这些文件是干什么用的?为什么"写好它"是提效关键?
+
+**考察点:** AI 编程工具最核心的"项目级上下文注入"机制,重度用户必知。
+
+**参考答案要点:**
+- **作用**:这些文件存放**项目约定**(技术栈、代码风格、架构、禁忌、常用命令),会被工具**自动注入到 system prompt**,让 AI"懂项目",产出符合规范。
+- **层级(优先级)**:
+  - **全局/用户级**(跨项目,个人偏好);
+  - **项目级**(根目录,团队共享);
+  - **目录级**(子模块特定规则)。
+- **主流约定**:
+  - `CLAUDE.md`(Claude Code)、`AGENTS.md`(通用约定)、**`.cursor/rules/`**(Cursor 新版目录式,旧版单文件 `.cursorrules` 已废弃)。
+- **为什么是提效关键**:
+  - 把**隐性知识显性化**,减少反复纠正;
+  - 团队规范一次定义,全员(含 AI)遵守;
+  - 这是"规则文件 = 项目的 AI 接口"。
+- **写好它的要点**:简洁、结构化、给 do/don't、给示例、定期维护。
+
+---
+
+### Q08.10【中】Aider 的 edit formats 是什么?AI 改代码有哪些格式?
+
+**考察点:** AI 改代码的底层机制(Aider 核心设计,有专门论文消融)。
+
+**参考答案要点:**
+三种主流编辑格式(对比其准确率/token 成本/失败模式):
+
+| 格式 | 说明 | 优劣 |
+|---|---|---|
+| **whole-file(整文件)** | 让模型重写整个文件 | 最简单可靠,但大文件极费 token |
+| **unified diff(统一 diff)** | 输出标准 diff | 直观,但**模型最容易出错**(行号/上下文对不齐) |
+| **search-and-replace(搜索替换块)** | 给"查找这段→替换成这段" | **最稳**(Aider/Cline/Claude Code 主流),定位准、冲突小 |
+
+- **结论**:主流 Coding Agent 倾向 search-replace 块——它不依赖精确行号,容错好。
+- **关联**:这正是 Coding Agent 的核心工程难点之一(见模块 13 edit formats)。
+
+---
+
+### Q08.11【中】Cursor、Claude Code、Aider、Copilot 这些工具怎么选?
+
+**考察点:** 工具横向对比与选型(重度用户应能分辨)。
+
+**参考答案要点:**
+按**交互位置 + 自主度**选(详见模块 13):
+- **IDE 协同**:Cursor(Agent/Ask/Edit 模式、@codebase 索引、Background Agent)、Copilot、通义灵码——日常编码、所见即所得;
+- **终端 Agent**:Claude Code(强工具/subagent/hooks)、Aider(git 友好、edit format 可选)——多文件改动、自动化、CI 集成;
+- **组合实践**:Cursor(日常)+ Claude Code(复杂/自动化),而非一个工具打天下。
+- **选型维度**:可视化需求、工具能力、是否需 git/CI 集成、代码是否可上云、成本。
+
+---
+
 ## 自查 Checklist
 - [ ] 能讲一个具体的 AI 编程提效闭环（不空谈）
 - [ ] 能说清 SDD 的流程和价值（投 JD1 必备）
-- [ ] 能解释 MCP 与 function calling 的区别（投 JD2 必备）
+- [ ] 能解释 MCP 与 function calling 的区别 + MCP 三类原语 + transport（投 JD2 必备）
+- [ ] 知道 CLAUDE.md / .cursor/rules 的作用与层级（重度用户标志）
+- [ ] 了解 Aider 的 edit formats（whole/diff/search-replace）
 - [ ] 知道 AI 生成代码的质量保障手段
 - [ ] 能说出 LLM 服务高并发的特殊性（投 JD2/JD3）
 - [ ] 能设计 LLM 缓存方案并说明坑
+- [ ] 能对比主流 AI 编程工具并选型

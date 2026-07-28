@@ -34,8 +34,11 @@
 
 **参考答案要点：**
 - **CoT**：单条思维链，逐步推理。适合多数常规推理任务。代价小。
+  - 区分 **Zero-shot CoT**(直接加"Let's think step by step"触发)与 **Few-shot CoT**(给带推理过程的示例)。
 - **Self-Consistency**：采样多条 CoT，投票取多数结果。提升准确性，但成本翻倍（多次采样）。适合有明确答案的任务（数学、逻辑）。
+  - **关键前提**:需配合**较高 temperature / top-p**采样,否则多条推理路径趋同,投票无意义(这是落地常踩的坑)。
 - **ToT**：树形探索，每步多分支 + 评估 + 剪枝。适合需要回溯的复杂问题（规划、创意）。成本最高。
+  - 代价来源:分支因子 b、深度 d 下节点数 ~b^d,搜索算法(BFS/DFS)+ 状态评估器(LLM 打分/投票)成本远高于线性 CoT。
 - **选型**：成本 CoT < Self-Consistency < ToT；复杂度反向递增。生产中绝大多数场景用 CoT 即可。
 
 ---
@@ -55,7 +58,10 @@
 - **结构优化**：
   - 关键信息前置（避免 lost in the middle）；
   - 减少冗余的 few-shot，精选高价值示例。
-- **换模型**：长上下文模型（128K / 200K），但要权衡成本和"大海捞针"衰减。
+- **换模型**：长上下文模型（128K / 200K），但要权衡成本和"大海捞针"衰减（长上下文单价更高，且中段召回率显著下降）。
+- **复用(Prompt / 语义缓存)**:与前两步正交——能用缓存就别重算。
+  - **Prompt Caching**:Anthropic/OpenAI 原生支持,稳定前缀(如 system prompt、长文档)的 KV Cache 复用,命中即降价降延迟;关键是**前缀必须逐 token 完全一致**(中间任何变化都会断开命中),所以稳定内容放最前、动态内容放最后;
+  - **语义缓存**:相似 query 命中历史结果(embedding 相似度判断),适合容错场景,注意私有数据不能跨用户共享。
 
 **追问方向：** 长上下文模型（如 1M context）是否就解决问题了？（不一定，长上下文有 needle-in-haystack 衰减、成本高、注意力分散）
 
@@ -103,10 +109,15 @@
 **考察点：** 对 function calling 价值的理解。
 
 **参考答案要点：**
-- **直接输出 JSON**：靠 prompt 约束 + 后处理解析，不稳定（模型可能加废话、格式错、漏字段）。
-- **Function Calling**：模型经专门训练，按 JSON Schema 输出，可靠性高；还能并行调用、返回工具结果继续对话。
-- **优势**：结构化保证、参数校验、原生支持多轮（工具结果回灌）、provider 优化过。
-- **注意**：仍要做参数校验（模型也可能出错），只是出错率低很多。
+三种获取结构化输出的路径(常考辨析):
+- **直接输出 JSON**:靠 prompt 约束 + 后处理解析,不稳定(模型可能加废话、格式错、漏字段)。
+- **Function Calling**:模型经专门训练,按 JSON Schema 输出,可靠性高;还能并行调用、返回工具结果继续对话。
+- **JSON Mode / 受约束解码(第三条路)**:
+  - **JSON Mode**(OpenAI `response_format=json_schema`、strict mode):provider 在解码时强制输出合法 JSON;
+  - **受约束解码(grammar-constrained decoding)**:Outlines / Guidance / xgrammar / llama.cpp grammar,在生成阶段用 schema/CFG 约束每一步可选 token,**可靠性最高**,但牺牲一定多样性;
+  - **数据校验驱动重试**:`instructor` / pydantic,校验失败自动喂回重试;搭配**容错解析**(json-repair / partial JSON parser)处理不完整 JSON。
+- **Function Calling 优势**:结构化保证、参数校验、原生支持多轮(工具结果回灌)、provider 优化过。
+- **注意**:无论哪种方式仍要做参数校验(模型也可能出错),只是出错率显著降低。
 
 ---
 

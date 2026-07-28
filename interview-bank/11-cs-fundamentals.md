@@ -23,6 +23,10 @@
 | **ANN 近似最近邻（HNSW / IVF）** | 向量库的检索引擎 |
 | **拓扑排序** | 子任务依赖调度、编译顺序 |
 | **分治 / MapReduce** | 超长文档处理、大批量数据汇总 |
+| **倒排索引** | BM25 / 全文检索的数据结构基础(RAG Hybrid 检索) |
+| **布隆过滤器 (Bloom Filter)** | 缓存穿透防护、URL/文档去重(爬虫/批量入库 Agent)、prompt 缓存预过滤 |
+| **跳表 (Skip List)** | Redis 有序集合底层、部分向量库的有序检索 |
+| **并查集 (Union-Find)** | 聚类连通性、社区发现(GraphRAG)、实体消歧 |
 
 ### 题目
 
@@ -31,13 +35,13 @@
 **考察点：** ANN 检索（RAG 生产必考）。
 
 **参考答案要点：**
-- **暴力 KNN**：O(N×D)，百万级撑不住（每次 query 几秒到几十秒）。
+- **暴力 KNN**:查询 O(N·D),无建索引开销;百万级撑不住(每次 query 几秒到几十秒)。
 - **ANN（近似最近邻）**：牺牲一点精度换速度。
-  - **HNSW**（Hierarchical Navigable Small World）：图索引，查询快（毫秒级）、精度高，但费内存、构建慢。
-  - **IVF**（Inverted File）：聚类后只搜最近的几个簇，速度快、省内存，精度略低。
+  - **HNSW**(图索引):构建约 O(N·M·logN),查询约 O(efSearch·M·logN) 量级(polylogarithmic),内存 O(N·M);查询快(毫秒级)、精度高,但费内存、构建慢;
+  - **IVF**(聚类):训练(k-means)约 O(N·niter·k),查询 O(nprobe·(N/k)·D),内存 O(N·D);速度快、省内存,精度略低;
   - **PQ**（Product Quantization）：乘积量化压缩向量，省内存，常和 IVF 组合（IVF-PQ）。
 - **生产实践**：百万级常用 HNSW 或 IVF + PQ；再加 rerank 精排提精度。
-- **trade-off**：召回率 vs 延迟 vs 内存，按业务调参。
+- **trade-off**：**召回率 vs 延迟 vs 内存**三维权衡，按业务调参。
 
 **追问方向：** HNSW 的 efSearch / M 参数怎么调？（M 影响图的连接度，efSearch 影响搜索范围）
 
@@ -53,7 +57,7 @@
   - 消除向量长度差异，只比方向（语义），不被长文档"长度"干扰；
   - 点积计算更快（很多向量库优化）；
   - 不同 embedding 模型的输出尺度不同，归一化统一。
-- **余弦 vs 欧式**：归一化后二者等价（单调对应）；余弦对长度不敏感，更适合文本语义。
+- **余弦 vs 欧式**：归一化后,欧氏距离 ‖a−b‖ 与余弦相似度**单调对应(排序结果一致)**,所以检索时二者可互相替代(注意:是排序等价,不是数值相等);余弦对长度不敏感，更适合文本语义。
 
 ---
 
@@ -95,12 +99,31 @@
 
 **考察点：** 基础编码 + 理解上下文管理。
 
-**参考答案要点（伪代码思路）：**
-- 维护 history 列表 + system prompt（单独存储，不进窗口）；
-- 每次构造请求时：取 history 的后 N 轮；
-- 若总 token 超限，继续从最老的开始剔除，直到满足；
-- 进阶：被剔除的内容可触发摘要压缩（rolling summary），摘要常驻。
-- 边界：单轮就超限的处理（截断该轮或报错）。
+**参考答案要点（关键:按 token 而非按轮数截断）:**
+- 维护 history 列表 + system prompt(单独存储,不进窗口);
+- **按 token 计数**(用 tokenizer,不是按轮数——单轮也可能超长);
+- 每次构造请求时:从最老的对话开始剔除,直到总 token 满足预算;
+- 进阶:被剔除的内容触发摘要压缩(rolling summary),摘要常驻;
+- 边界:单轮就超限的处理(截断该轮或报错)。
+
+```python
+def build_context(history, system, max_tokens, tokenizer):
+    # system 常驻,不计入滑动窗口
+    sys_tokens = tokenizer.count(system)
+    budget = max_tokens - sys_tokens
+    kept = []
+    total = 0
+    # 从最新往回取,优先保留近期
+    for msg in reversed(history):
+        t = tokenizer.count(msg)
+        if total + t > budget:
+            break
+        kept.append(msg)
+        total += t
+    kept.reverse()
+    # 被剔除的老对话可触发 rolling summary(此处略)
+    return [system] + kept
+```
 
 ---
 
@@ -114,7 +137,7 @@
 - **Parent-Child**：
   - 切小 chunk 用于检索（精准）；
   - 每个小 chunk 关联一个更大的 parent chunk，命中时返回 parent（保上下文）。
-- **结构感知**：日志类可按时间窗口 / 请求 ID 切，保留事件完整性。
+- **结构感知**：日志类**先按 request_id / trace_id 聚合成一个完整事件再切**(避免把一次请求的日志切到不同块导致检索碎片化),或按时间窗口切,保留事件完整性。
 - **MapReduce**：超长文档先分块摘要，再汇总摘要（两阶段）。
 - **评测驱动**：不同切法跑评测集对比，选最优。
 
@@ -137,6 +160,8 @@
 | **单例 (Singleton)** | 模型客户端、向量库连接池、配置中心 |
 | **适配器 (Adapter)** | 统一不同 LLM provider 接口（OpenAI / Claude / Qwen） |
 | **建造者 (Builder)** | 复杂 Prompt 构建（多段拼接）、Agent 配置构建 |
+| **命令模式 (Command)** | 把每次工具调用封装成 Command 对象(含参数/目标/结果),天然支持记录/重放/撤销/审计 |
+| **组合模式 (Composite)** | 多 Agent 嵌套编排——一个 Agent 作为另一个 Agent 的子节点统一调度(Orchestrator-Worker) |
 
 ### 题目
 
