@@ -75,7 +75,7 @@ questions:
     tags:
       - 高频
       - 概念
-    title: React Router 的原理是什么？`history` 模式和 `hash` 模式有什么区别？
+    title: React Router 的 `history` 模式和 `hash` 模式有什么区别？
     focus: React Router 原理及 hash/history 模式区别
     answer:
       - 原理：`#` 后面的部分叫 hash，改变 hash **不会触发请求**，但会触发 `hashchange` 事件。Router 监听该事件，匹配路由渲染组件。

@@ -122,8 +122,8 @@ function main() {
         }
 
         // 检查 3：题干自我回答（后半句关键词在答案中出现）
-        // 仅在 ≥3 问号时触发，降低误报
-        if (qMarkCount >= 3 && Array.isArray(q.answer)) {
+        // ≥2 问号时触发，重叠≥3 词才报（降低误报）
+        if (qMarkCount >= 2 && Array.isArray(q.answer)) {
           const titleParts = q.title.split('？').filter((s) => s.trim());
           if (titleParts.length >= 2) {
             const latter = titleParts[titleParts.length - 1];
@@ -131,7 +131,7 @@ function main() {
             const keywords = latter.match(/[\u4e00-\u9fa5]{2,}|[A-Za-z]{3,}/g) || [];
             const answerText = q.answer.join('');
             const leaked = keywords.filter((k) => answerText.includes(k));
-            if (leaked.length >= 2) {
+            if (leaked.length >= 3) {
               issues.push({
                 type: 'design', severity: '中', id: fullId, loc,
                 msg: `疑似答案泄漏进题干: 后半句关键词(${leaked.slice(0, 3).join('/')})在答案中出现`,

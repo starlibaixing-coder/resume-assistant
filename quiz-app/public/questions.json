@@ -4193,7 +4193,7 @@
         "高频",
         "概念"
       ],
-      "title": "什么是 Function Calling？LLM 是怎么学会调用外部工具的？",
+      "title": "什么是 Function Calling？",
       "focus": "理解 Function Calling 的本质:LLM 生成调用指令,外部代码执行",
       "answer": [
         "**Function Calling 工作流程**：",
@@ -5102,7 +5102,7 @@
       "tags": [
         "概念"
       ],
-      "title": "HTTP/2 和 HTTP/3 相比 HTTP/1.1 有什么改进？为什么 HTTP/3 改用 UDP？",
+      "title": "HTTP/2 和 HTTP/3 相比 HTTP/1.1 有什么改进？",
       "focus": "HTTP 版本演进的核心改进与 HTTP/3 改用 UDP 的原因",
       "answer": [
         "**HTTP 版本演进**：",
@@ -7221,7 +7221,7 @@
         "高频",
         "概念"
       ],
-      "title": "React Router 的原理是什么？`history` 模式和 `hash` 模式有什么区别？",
+      "title": "React Router 的 `history` 模式和 `hash` 模式有什么区别？",
       "focus": "React Router 原理及 hash/history 模式区别",
       "answer": [
         "原理：`#` 后面的部分叫 hash，改变 hash **不会触发请求**，但会触发 `hashchange` 事件。Router 监听该事件，匹配路由渲染组件。",

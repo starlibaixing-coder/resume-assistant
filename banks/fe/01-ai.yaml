@@ -4,7 +4,7 @@ questions:
   - id: "01.1"
     difficulty: 中
     tags: [高频, 概念]
-    title: 什么是 Function Calling？LLM 是怎么学会调用外部工具的？
+    title: 什么是 Function Calling？
     focus: 理解 Function Calling 的本质:LLM 生成调用指令,外部代码执行
     answer:
     - "**Function Calling 工作流程**："

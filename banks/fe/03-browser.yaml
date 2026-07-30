@@ -245,7 +245,7 @@ questions:
     difficulty: 高
     tags:
       - 概念
-    title: HTTP/2 和 HTTP/3 相比 HTTP/1.1 有什么改进？为什么 HTTP/3 改用 UDP？
+    title: HTTP/2 和 HTTP/3 相比 HTTP/1.1 有什么改进？
     focus: HTTP 版本演进的核心改进与 HTTP/3 改用 UDP 的原因
     answer:
       - '**HTTP 版本演进**：'
