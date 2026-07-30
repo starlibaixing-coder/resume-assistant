@@ -190,12 +190,14 @@ function extractSection(block, label) {
 // 把段落按 bullet 拆成数组；若无 bullet 则按行拆。
 function splitBullets(text) {
   const lines = text.split('\n').map((l) => l.trimEnd()).filter((l) => l.trim());
-  const bullets = lines.filter((l) => /^[-*]\s+/.test(l.trim()));
+  // 过滤掉 Markdown 水平分隔线(---/***/___)
+  const content = lines.filter((l) => !/^(?:-{3,}|\*{3,}|_{3,})\s*$/.test(l.trim()));
+  const bullets = content.filter((l) => /^[-*]\s+/.test(l.trim()));
   if (bullets.length) {
     return bullets.map((l) => l.trim().replace(/^[-*]\s+/, ''));
   }
   // 无 bullet，按非空行拆
-  return lines.filter((l) => l.trim());
+  return content.filter((l) => l.trim());
 }
 
 // ---------------------------------------------------------------------------
