@@ -1,0 +1,64 @@
+module: 10
+moduleName: 微前端
+questions:
+  - id: "10.80"
+    difficulty: 中
+    tags: [高频, 概念]
+    title: 什么是微前端？它解决什么问题？
+    focus: 微前端的概念与它解决的核心问题
+    answer:
+    - "**微前端解决的核心问题**："
+    - 随着项目变大变老，出现「巨石应用」：
+    - "1. **构建慢**：代码越堆越多，构建几分钟。"
+    - "2. **协作冲突**：多团队改同一仓库，互相阻塞。"
+    - "3. **部署耦合**：改一处要整体重新部署，风险大。"
+    - "4. **技术栈锁定**：老项目想升级 React/Vue，但牵一发动全身。"
+    followups:
+    - 微前端和后端微服务有什么对应关系？
+    - 微前端的「独立部署」具体怎么实现的？
+  - id: "10.81"
+    difficulty: 高
+    tags: [高频, 概念]
+    title: qiankun 微前端框架的优缺点和核心机制是什么？
+    focus: qiankun 的核心机制与优缺点
+    answer:
+    - "**qiankun 核心机制**："
+    - "1. **HTML Entry**：主应用配置子应用的入口 HTML 地址。qiankun fetch 这个 HTML，解析出里面的 `<script>`、`<style>`、`<link>`。"
+    - "2. **资源加载执行**：把解析出的 JS 在一个**沙箱环境**里执行，CSS 注入页面。"
+    - "3. **生命周期**：子应用导出 bootstrap/mount/unmount，qiankun 在对应时机调用，实现挂载/卸载。"
+    - "4. **JS 沙箱**：隔离子应用的 window，防止互相污染（Proxy 拦截 window 操作）。"
+    followups:
+    - qiankun 的 JS 沙箱（Proxy）具体怎么实现隔离？
+    - qiankun 的 CSS 隔离为什么默认不做？shadowDOM 方案有什么坑？
+    - qiankun 和 wujie/micro-app 相比有什么优劣？
+  - id: "10.82"
+    difficulty: 高
+    tags: [概念]
+    title: 微前端项目中，主应用加载子应用资源时的跨域问题怎么解决？
+    focus: 微前端主应用加载子应用资源的跨域解法
+    answer:
+    - "**原因**：主应用域名和子应用资源域名不同，浏览器拦截跨域请求。"
+    - "**解决**："
+    - "子应用服务端配 CORS：`Access-Control-Allow-Origin: 主应用域名`（或 *）。"
+    - 或主应用用反向代理，把子应用资源代理到同域。
+    - qiankun 加载资源用的是 fetch，所以 CORS 必须配。
+    followups:
+    - qiankun 加载子应用用 fetch，为什么不用 script 标签？
+    - "子应用资源配了 CORS=* 有什么风险？怎么收紧？"
+  - id: "10.83"
+    difficulty: 高
+    tags: [高频, 概念]
+    title: 微前端的沙盒（隔离）方案有哪些？JS 沙箱和 CSS 隔离分别怎么实现？
+    focus: JS 沙箱：Proxy 代理 window（快照沙箱/代理沙箱），拦截子应用对 window 的读写，实现隔离。CSS 隔离：Shadow DOM（彻底但样式难穿透）、scoped CSS（加前缀，有局限）、CSS Modules。没有完美方案，各有取舍。
+    answer:
+    - 子应用挂载前，快照当前 window。
+    - 子应用卸载时，恢复 window 到快照。
+    - 缺点：要遍历整个 window，性能差；不支持多实例。
+    - 给子应用一个 Proxy 代理的 fake window。
+    - 子应用所有 window 读写都被 Proxy 拦截，写到 fake window 里，不碰真实 window。
+    - 优点：性能好（不遍历）、支持多实例（每个子应用一个 fake window）。
+    - 这是现代主流方案。
+    followups:
+    - Proxy 沙箱能拦住所有对 window 的操作吗？有逃逸的情况吗？
+    - Shadow DOM 的弹窗逃逸问题怎么解决？
+    - wujie 用 iframe 做隔离，和 Proxy 沙箱比有什么优劣？

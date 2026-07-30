@@ -1,0 +1,96 @@
+module: 6
+moduleName: 设计模式
+questions:
+  - id: '06.51'
+    difficulty: 中
+    tags:
+      - 概念
+    title: 设计模式分为哪三大类？前端常用的是哪些？
+    focus: 设计模式三大分类及前端常用模式
+    answer:
+      - 单例（Singleton）：全局只有一个实例（如全局状态、弹窗）。
+      - 工厂（Factory）：封装对象创建过程（如 React.createElement）。
+      - 建造者（Builder）：分步构建复杂对象。
+      - 原型（Prototype）：通过克隆创建（Object.create）。
+      - 装饰器（Decorator）：动态加功能（高阶组件 HOC）。
+      - 代理（Proxy）：控制访问（Vue3 响应式、缓存代理）。
+      - 适配器（Adapter）：接口转换。
+      - 外观（Facade）：简化复杂接口。
+      - 观察者（Observer）：一对多通知（Vue 响应式）。
+      - 发布订阅（Pub/Sub）：通过中间人解耦（EventBus）。
+      - 策略（Strategy）：算法互换（表单校验规则）。
+      - 责任链（Chain of Responsibility）：请求链式传递（中间件）。
+      - 命令（Command）：封装请求。
+      - '**示例:**'
+      - 单例：Vuex/Redux store、全局弹窗、登录态管理。
+      - 观察者：Vue 响应式、MutationObserver。
+      - 发布订阅：EventBus、Node EventEmitter。
+      - 策略：表单校验（不同规则用不同校验函数）。
+      - 装饰器：React HOC、ES7 装饰器语法。
+      - 代理：Vue3 Proxy 响应式、图片懒加载代理。
+      - 责任链：Koa 洋葱圈中间件、Express 中间件。
+    followups:
+      - 观察者模式和发布订阅模式有什么区别？
+      - 单例模式在前端怎么实现？有什么坑？
+      - 策略模式相比 if-else 优势在哪？
+  - id: '06.52'
+    difficulty: 中
+    tags:
+      - 概念
+    title: 单例模式是什么？前端有哪些应用场景？
+    focus: 单例模式的定义与前端应用场景
+    answer:
+      - '**单例模式**：保证一个类只有一个实例，并提供全局访问点。'
+      - '**前端应用场景**：'
+      - 1. **全局状态管理**：Redux/Vuex store 全局一个。
+      - 2. **弹窗/登录框**：整个应用只一个登录弹窗实例，避免重复。
+      - 3. **工具类**：日志、请求封装、缓存——全局复用一个。
+      - 4. **配置**：全局配置对象。
+      - '**实现方式**：'
+      - 1. **闭包缓存实例**（经典）：用闭包变量存实例，getInstance 时判断。
+      - 2. **模块单例**（ES Module 天然单例）：ES Module 的导出是单例的（模块只执行一次），直接导出实例就是单例。
+      - 3. **全局变量**（简单粗暴）：挂 window，但不推荐（污染全局）。
+      - '**JS 的「线程安全」**：JS 单线程，不存在多线程竞争。但要防止「重复实例化」（比如惰性单例，第一次用才创建，之后复用）。'
+    followups:
+      - 单例模式有什么缺点？
+  - id: '06.53'
+    difficulty: 高
+    tags:
+      - 高频
+      - 手写
+    title: 观察者模式和发布订阅模式有什么区别？
+    focus: 观察者模式与发布订阅模式的核心区别
+    answer:
+      - Subject（目标）直接维护 Observer 列表，状态变化时直接调用 Observer.update()。
+      - 目标和观察者**互相知道**对方（耦合）。
+      - 例子：Vue 的响应式（数据变了直接通知依赖它的渲染函数）。
+      - Publisher（发布者）和 Subscriber（订阅者）**互不认识**。
+      - 通过**事件中心（EventBus/消息总线）**中转：发布者只管发事件给中心，订阅者只管从中心收。
+      - 完全解耦。
+      - 例子：EventBus、Node EventEmitter、消息队列。
+      - '用一个对象存 {事件名: [回调函数数组]}。'
+      - on(event, fn)：往对应事件数组里加回调。
+      - emit(event, data)：遍历对应事件数组，逐个调用回调。
+      - off(event, fn)：从数组里删除回调。
+      - once(event, fn)：注册只触发一次的回调。
+    followups:
+      - EventBus 怎么实现 once（只触发一次）？
+      - 发布订阅模式会不会内存泄漏？
+      - Vue 的响应式是观察者还是发布订阅？
+  - id: '06.54'
+    difficulty: 高
+    tags:
+      - 概念
+    title: 策略模式、责任链模式、装饰器模式各自解决什么问题？它们的共同思想是什么？
+    focus: 策略模式替代 if-else（把可互换的算法/规则封装起来）；责任链让请求沿链传递、每个节点决定处理或下传（中间件）；装饰器在不改原对象的前提下动态叠加功能（HOC）。三者都服务于「开闭原则」——对扩展开放、对修改封闭。
+    answer:
+      - '**三种模式各自定位**：'
+      - '| 模式 | 解决的问题 | 前端经典场景 |'
+      - '|---|---|---|'
+      - '| 策略模式（Strategy） | 多种算法/规则用 if-else 写很乱 → 封装成可互换策略 | 表单校验、折扣计算 |'
+      - '| 责任链（Chain of Responsibility） | 一个请求要经过多个处理步骤、顺序可变 → 链式传递 | Koa/Express 中间件、事件冒泡 |'
+      - '| 装饰器（Decorator） | 想加功能但不想改原对象 → 包一层叠加 | React HOC（withRouter、connect） |'
+    followups:
+      - 策略模式和状态模式有什么区别？
+      - 中间件（洋葱圈）和经典责任链有什么不同？
+      - React HOC 和 Hook，哪个更符合装饰器思想？

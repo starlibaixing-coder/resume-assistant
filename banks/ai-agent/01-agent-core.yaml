@@ -1,0 +1,151 @@
+module: 1
+moduleName: Agent 核心机制
+questions:
+  - id: "01.1"
+    difficulty: 中
+    tags: []
+    title: 讲讲 ReAct 和 Plan-and-Execute 的区别，什么场景该用哪个？
+    focus: 理解两种主流规划范式的本质差异，能按场景选型，而非只会名词。
+    answer:
+    - "**ReAct**（Reasoning + Acting）：边想边做，每一步 Thought → Action → Observation 循环。"
+    - 适合：任务步数不定、需动态决策（如开放式问答、查资料）。
+    - 缺点：易跑偏、步数不可控、错误会累积。
+    - "**Plan-and-Execute**：先一次性生成完整计划，再逐步执行，必要时重规划。"
+    - 适合：步骤可预先规划、强调稳定性（如固定流程的自动化、SOP 类任务）。
+    - 缺点：僵化，对动态变化适应性差。
+    - "**选型口诀**：探索型用 ReAct，执行型用 Plan-Execute；生产中常混合（先 Plan 建骨架，细节用 ReAct 兜动态）。"
+    followups:
+    - 为什么 ReAct 容易跑偏？怎么治？（见 Q09.1）
+  - id: "01.2"
+    difficulty: 中
+    tags: []
+    title: Agent 的记忆系统你怎么设计？如何避免上下文爆炸？
+    focus: 是否真做过长对话 Agent，能否给出分层记忆的具体方案。
+    answer:
+    - "**分层记忆**："
+    - 工作记忆（working）：当前上下文窗口，放最近 N 轮 + 关键任务目标。
+    - 短期记忆（episodic）：近期会话片段，存向量库，按时间衰减检索。
+    - 长期记忆（semantic）：用户画像、偏好、事实知识，持久化。
+    - "**避免上下文爆炸**："
+    - 滑动窗口 + 早期对话摘要压缩（rolling summary）；
+    - 关键信息（用户画像、任务目标）常驻 system prompt；
+    - 向量检索按需加载，不全塞；
+    - relevance / recency / frequency 加权排序。
+    - "**记忆写入与摘要触发（高频追问）**："
+    - "写什么:用户画像/事实(user profile/facts)、任务目标与状态、关键决策;"
+    - "何时写入:显式抽取(每轮后结构化提炼)、检测到新事实时增量更新;"
+    - "何时触发摘要:按 token 阈值(超限即压缩)、按轮次(每 N 轮)、按主题切换检测。"
+    - "**分类辨析(易被追问)**:\"短期/长期\"是按**持续时间**分类,\"episodic(情节)/semantic(语义)\"是按**内容类型**分类,两套维度正交(如 Reflexion 的反思记忆是 episodic 但可长期留存)。"
+    followups:
+    - "记忆写入会出错(写入幻觉事实)怎么办?"
+  - id: "01.3"
+    difficulty: 高
+    tags: []
+    title: Agent 进入死循环 / 一直 hallucinate，你怎么治理？
+    focus: 生产级问题排查能力，能分层给出兜底 + 检测 + 纠偏方案。
+    answer:
+    - "**兜底（硬约束）**：最大迭代次数、最大 token 预算，超限强制终止。"
+    - "**检测**：维护\"近期 action 历史\"，重复 N 次相同 action → 判定卡死。"
+    - "**纠偏**：注入 Reflection（\"你已重复调用 X 3 次，请换思路或终止\"）。"
+    - "**升级**：触发人工兜底（escalation），转人工处理。"
+    - "**回流**：bad case 自动归集，补进评测集（见模块 10 数据飞轮）。"
+    followups:
+    - Reflection 自己也会死循环怎么办？
+  - id: "01.4"
+    difficulty: 中
+    tags: []
+    title: 什么是 Reflexion？反思机制怎么落地？
+    focus: "区分\"听过 Reflexion\"和\"知道怎么工程化\"。"
+    answer:
+    - "**核心思想**：Agent 执行后，由 self/critic 评估结果 → 若失败，生成\"反思文本\"（哪里错了、怎么改）→ 注入下一轮的上下文，相当于\"吃一堑长一智\"。"
+    - "**落地要点**："
+    - 评估器：可以是规则（输出是否符合 schema）、LLM-as-Judge、或外部工具校验；
+    - "反思要具体、可执行，不能空泛（\"试试别的\"无效，\"工具 A 参数应为 int\"有效）；"
+    - "限制反思轮数（通常 1~3 轮），避免\"反思死循环\"；"
+    - 反思记忆可持久化，避免同类错误重复犯。
+    followups:
+    - ""
+  - id: "01.5"
+    difficulty: 高
+    tags: []
+    title: 多 Agent 之间怎么协作？会不会出现反复踢皮球？
+    focus: "多 Agent 编排的工程经验，能否避免\"无终止对话\"。"
+    answer:
+    - "**常见协作模式**："
+    - "**Supervisor 模式**：一个主 Agent 调度，分发给子 Agent，结果汇总——最可控，推荐。"
+    - "**平等对话**：多 Agent 自由对话，需明确终止条件。"
+    - "**流水线**：Agent A 的输出是 B 的输入。"
+    - "**避免踢皮球**："
+    - 明确每个 Agent 的职责边界（system prompt 强约束）；
+    - 全局状态共享（blackboard / shared state），避免信息丢失；
+    - 主 Agent 控制终止条件（任务完成 / 达到上限）；
+    - 消息计数 / 轮次上限兜底。
+    followups:
+    - 多 Agent 通信开销大、延迟高，什么时候不值得用？（见 Q04.5）
+  - id: "01.6"
+    difficulty: 初
+    tags: []
+    title: function calling 和 ReAct 是什么关系？
+    focus: "概念辨析，避免混淆\"模型能力\"和\"Agent 模式\"。"
+    answer:
+    - "**Function Calling** 是模型的**底层能力**：模型原生支持按 JSON Schema 输出结构化工具调用。解决\"如何让模型准确调用工具\"。"
+    - "**ReAct** 是上层的 **Agent 模式**：Thought→Action→Observation 的循环，决定\"如何规划多步任务\"。可以基于 function calling 实现 Action 步骤。"
+    - "类比：function calling 是\"手脚\"，ReAct 是\"思考方式\"。"
+    followups:
+    - ""
+  - id: "01.7"
+    difficulty: 高
+    tags: [系统设计]
+    title: "设计一个 Agent，能处理\"帮我查一下订单然后退掉\"这类多意图、多步任务。"
+    focus: 真实业务场景的综合设计——意图识别 + 任务拆解 + 状态管理 + 确认机制。
+    answer:
+    - "**意图识别**：判断是否多意图（可由 LLM 拆解，或规则辅助）。"
+    - "**任务拆解**：用 Plan-and-Execute 生成步骤 [查单 → 确认订单信息 → 用户确认 → 退款 → 反馈结果]。"
+    - "**状态管理**：维护任务执行状态机（pending / executing / awaiting_user / done / failed），支持中断与续跑。"
+    - "**确认机制（关键）**：高危操作（退款）前必须 human-in-the-loop 确认。"
+    - "**失败处理**：任一步失败 → 回退 / 提示用户 / 转人工。"
+    - "**可观测**：每步落 trace，便于排查（见模块 06）。"
+    followups:
+    - "用户中途说\"算了不退了\"，Agent 怎么响应？"
+  - id: "01.8"
+    difficulty: 中
+    tags: []
+    title: 什么是 Tree of Thoughts（ToT）？和 CoT 有什么区别？什么时候用？
+    focus: 对推理范式的理解深度。
+    answer:
+    - "**CoT**：线性思维链，一条路走到底。适合多数常规推理。"
+    - "**ToT**：树形探索，每一步生成多个候选想法 → 评估 → 选最优分支继续（类似搜索 + 剪枝）。适合需要回溯、探索的复杂问题（如数学推理、创意规划）。"
+    - "**代价**：ToT 调用次数远多于 CoT（成本/延迟翻几倍），生产中慎用，多用于离线复杂任务。"
+    followups:
+    - ""
+  - id: "01.9"
+    difficulty: 高
+    tags: []
+    title: "设计一个能被 LLM 可靠调用的工具，需要注意哪些点?(Tool Use 工程化)"
+    focus: "工具设计的工程能力——这是 Agent 落地的高频细节,区别于 Q01.6 的概念辨析。"
+    answer:
+    - "**工具描述(description)** 要结构化:"
+    - "**what**:这个工具干什么;"
+    - "**when**:什么时候该用、什么时候不该用(加反例/边界);"
+    - "**params**:每个参数的含义、类型、约束、示例;"
+    - "一句话说不清就给 **example**。"
+    - "**参数 schema** 严格:JSON Schema 完整(type/format/enum/required),避免歧义。"
+    - "**工具粒度**:太粗(一个工具干太多事,模型选不准)vs 太细(工具太多,选择爆炸);工具多时可**分组/分层路由**(先选类别,再选具体工具)。"
+    - "**返回结果(Observation)的格式化**:返回结构化、简洁、模型易读的结果;避免超长输出污染上下文(必要时截断/摘要);错误信息要可被模型理解并据此重试。"
+    - "**失败处理**:参数校验 → 失败信息喂回模型重试(见 Q09.3);超时/异常降级。"
+    - "**安全**:高危工具加权限/确认(见 Q10.8)。"
+    followups:
+    - ""
+  - id: "01.10"
+    difficulty: 中
+    tags: []
+    title: "Agent 的执行循环(loop)什么时候该终止?"
+    focus: "Agent loop 的控制点——ReAct loop 的核心,常被追问。"
+    answer:
+    - "**任务完成信号**:模型主动输出 finish / 不再产生 tool call / 输出 Final Answer;"
+    - "**质量/置信度阈值**:答案通过校验或置信度达标(配合 Reflection);"
+    - "**硬上限**(兜底):最大迭代步数、最大 token 预算、最大时间预算——任一触达即强制终止;"
+    - "**外部中断**:异常、超时、人工介入取消。"
+    - "**关键认知**:ReAct loop 完整结构是 Thought → Action → Observation → ...(循环)→ Thought → **Final Answer**,终止时必须给出最终答案,不能停在半路。"
+    followups:
+    - ""

@@ -1,0 +1,64 @@
+module: 1
+moduleName: AI
+questions:
+  - id: "01.1"
+    difficulty: 中
+    tags: [高频, 概念]
+    title: 什么是 Function Calling？
+    focus: 理解 Function Calling 的本质:LLM 生成调用指令,外部代码执行
+    answer:
+    - "**Function Calling 工作流程**："
+    - 1. 开发者定义一批工具（函数），每个工具有名称、描述、参数 schema。
+    - 2. 用户提问时，把「工具清单 + 用户问题」一起发给 LLM。
+    - 3. LLM 判断：需不需要用工具？用哪个？参数是什么？
+    - 4. LLM 输出结构化的工具调用（函数名 + 参数 JSON），而不是自然语言。
+    - 5. 外部代码执行这个函数，拿到结果。
+    - 6. 把结果喂回 LLM，LLM 据此生成最终回答。
+    followups:
+    - Function Calling 和 MCP 有什么关系？
+    - LLM 生成的参数不对怎么处理？
+    - 多个工具时，LLM 怎么选对的？描述写不好会怎样？
+  - id: "01.2"
+    difficulty: 中
+    tags: [高频, 概念]
+    title: SSE（Server-Sent Events）是什么？和 WebSocket 有什么区别？
+    focus: 区分 SSE 和 WebSocket 的通信方向与协议基础
+    answer:
+    - "**SSE vs WebSocket**："
+    - "| 维度 | SSE | WebSocket |"
+    - "|---|---|---|"
+    - "| 方向 | 单向（服务器到客户端） | 双向 |"
+    - "| 协议 | 基于 HTTP | 独立协议（ws） |"
+    - "| 复杂度 | 简单 | 复杂 |"
+    - "| 自动重连 | 内置 | 要自己实现 |"
+    - "| 数据格式 | 文本（UTF-8） | 文本+二进制 |"
+    - "| 适合 | 服务器推送（通知、流式输出） | 实时双向通信（聊天、游戏） |"
+    followups:
+    - EventSource 为什么不能设请求头？（只能 GET）怎么带 token？
+    - SSE 怎么处理断线重连？
+  - id: "01.3"
+    difficulty: 高
+    tags: [高频, 概念]
+    title: MCP（Model Context Protocol）是什么？它解决了什么问题？
+    focus: MCP 是 Anthropic 提出的「LLM 访问外部工具/资源的标准化协议」。解决「每个工具都要单独写适配、千差万别」的碎片化问题——用统一协议，所有工具按同一标准暴露能力，LLM/Agent 用同一套方式访问。类似 USB 之于外设。
+    answer:
+    - 传统：LLM 要用 GitHub、数据库、文件系统……每个都要写专门适配，接口各不相同，维护成本高。
+    - MCP：定义一套统一的协议规范，所有工具都按这套规范暴露能力。LLM/Agent 用统一 client 访问。
+    followups:
+    - MCP 和 Function Calling 什么关系？
+    - MCP Server 怎么开发？暴露一个工具要做什么？
+    - MCP 生态现在有哪些现成的 Server？
+  - id: "01.4"
+    difficulty: 高
+    tags: [高频, 概念]
+    title: 如何高效使用 AI 编码工具（如 Cursor/Copilot）进行前端研发？
+    focus: AI 贯穿研发全流程：需求（分析/拆解）、编码（生成/补全/重构）、测试（生成用例）、文档、CR（辅助审查）。高效用 AI 的关键：写好上下文和 Prompt、让 AI 做重复劳动、人做决策和审查。质量保证：必须人工 review、理解每行代码、写测试验证、不盲目信任。
+    answer:
+    - 代码补全（Copilot）：写一句补一段。
+    - 生成代码（Cursor Chat）：描述需求生成实现。
+    - 重构/优化：让 AI 优化性能、改写法。
+    - 解释代码：快速理解陌生代码。
+    followups:
+    - AI 生成的代码你怎么判断该不该用？
+    - AI 会不会取代前端？你怎么看？
+    - 团队引入 AI 编码工具，怎么制定规范防滥用？

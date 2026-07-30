@@ -1,0 +1,149 @@
+module: 11
+moduleName: 计算机基础落地
+questions:
+  - id: "11.1"
+    difficulty: 中
+    tags: []
+    title: 给你 100 万条向量，用户每次 query 要返回最相似的 top-10，怎么做？暴力算行不行？
+    focus: ANN 检索（RAG 生产必考）。
+    answer:
+    - "**暴力 KNN**:查询 O(N·D),无建索引开销;百万级撑不住(每次 query 几秒到几十秒)。"
+    - "**ANN（近似最近邻）**：牺牲一点精度换速度。"
+    - "**HNSW**(图索引):构建约 O(N·M·logN),查询约 O(efSearch·M·logN) 量级(polylogarithmic),内存 O(N·M);查询快(毫秒级)、精度高,但费内存、构建慢;"
+    - "**IVF**(聚类):训练(k-means)约 O(N·niter·k),查询 O(nprobe·(N/k)·D),内存 O(N·D);速度快、省内存,精度略低;"
+    - "**PQ**（Product Quantization）：乘积量化压缩向量，省内存，常和 IVF 组合（IVF-PQ）。"
+    - "**生产实践**：百万级常用 HNSW 或 IVF + PQ；再加 rerank 精排提精度。"
+    - "**trade-off**：**召回率 vs 延迟 vs 内存**三维权衡，按业务调参。"
+    followups:
+    - HNSW 的 efSearch / M 参数怎么调？
+  - id: "11.2"
+    difficulty: 中
+    tags: []
+    title: 为什么向量检索要 normalize？余弦相似度和点积什么关系？
+    focus: 向量检索基础。
+    answer:
+    - "**归一化后**，向量长度为 1，**余弦相似度 = 点积**。可以用更快的点积计算。"
+    - "**为什么归一化**："
+    - "消除向量长度差异，只比方向（语义），不被长文档\"长度\"干扰；"
+    - 点积计算更快（很多向量库优化）；
+    - 不同 embedding 模型的输出尺度不同，归一化统一。
+    - "**余弦 vs 欧式**：归一化后,欧氏距离 ‖a−b‖ 与余弦相似度**单调对应(排序结果一致)**,所以检索时二者可互相替代(注意:是排序等价,不是数值相等);余弦对长度不敏感，更适合文本语义。"
+    followups:
+    - ""
+  - id: "11.3"
+    difficulty: 高
+    tags: []
+    title: 一个 Agent 有 50 个子任务，存在依赖关系（A 完成才能做 B），怎么调度？怎么并行最大化？
+    focus: DAG + 拓扑排序 + 并行调度（LangGraph 这类框架的内核）。
+    answer:
+    - "**建模**：把子任务建成 DAG（有向无环图），边表示依赖。"
+    - "**拓扑排序**：确定执行顺序，无依赖冲突。"
+    - "**并行最大化**："
+    - "同一时刻，所有\"前置依赖均已完成\"的节点可并行执行；"
+    - 每轮取入度为 0 的节点全部并行跑（类似 Kahn 算法分层）；
+    - 受限于资源上限（并发数 / token 预算），用线程池 / 异步调度。
+    - "**容错**：节点失败 → 重试 / 跳过 / 回退；记录状态，支持续跑（对应 Q09.6）。"
+    - "**检测环**：拓扑排序能检测依赖环（环 = 死锁，需避免）。"
+    followups:
+    - 如果是动态依赖怎么办？
+  - id: "11.4"
+    difficulty: 中
+    tags: []
+    title: LRU 缓存怎么实现？在 Agent 里用在哪？
+    focus: 经典数据结构 + Agent 落地。
+    answer:
+    - "**实现**：HashMap + 双向链表，O(1) get/put。"
+    - HashMap 存 key→node，O(1) 查找；
+    - 双向链表维护访问顺序，访问即移到头，满时删尾。
+    - "**Agent 应用**："
+    - "**对话历史淘汰**（有限 context 保留最近 / 最有价值的历史）；"
+    - "**LLM 响应缓存**（相同 prompt 命中）；"
+    - "**工具结果缓存**；"
+    - "**KV Cache 淘汰**（推理引擎内部）。"
+    followups:
+    - ""
+  - id: "11.5"
+    difficulty: 中
+    tags: [手撕]
+    title: 实现一个滑动窗口，用于截断对话历史，保留最近 N 轮 + 永久保留 system prompt。
+    focus: 基础编码 + 理解上下文管理。
+    answer:
+    - "维护 history 列表 + system prompt(单独存储,不进窗口);"
+    - "**按 token 计数**(用 tokenizer,不是按轮数——单轮也可能超长);"
+    - "每次构造请求时:从最老的对话开始剔除,直到总 token 满足预算;"
+    - "进阶:被剔除的内容触发摘要压缩(rolling summary),摘要常驻;"
+    - "边界:单轮就超限的处理(截断该轮或报错)。"
+    followups:
+    - ""
+  - id: "11.6"
+    difficulty: 高
+    tags: []
+    title: "2GB 的日志文件，RAG 切块时怎么平衡\"块太大塞不下\"和\"块太小丢上下文\"？"
+    focus: chunking 策略（RAG 核心）。
+    answer:
+    - "**基础策略**：固定大小（如 500 token）+ overlap（如 50 token），保证边界信息不丢。"
+    - "**语义边界切块**：按段落 / 句子 / 标题切，避免切断完整语义。"
+    - "**Parent-Child**："
+    - 切小 chunk 用于检索（精准）；
+    - 每个小 chunk 关联一个更大的 parent chunk，命中时返回 parent（保上下文）。
+    - "**结构感知**：日志类**先按 request_id / trace_id 聚合成一个完整事件再切**(避免把一次请求的日志切到不同块导致检索碎片化),或按时间窗口切,保留事件完整性。"
+    - "**MapReduce**：超长文档先分块摘要，再汇总摘要（两阶段）。"
+    - "**评测驱动**：不同切法跑评测集对比，选最优。"
+    followups:
+    - ""
+  - id: "11.7"
+    difficulty: 高
+    tags: [必问]
+    title: 设计一个支持多模型（GPT/Claude/Qwen）、可切换、可加监控的 LLM 调用层，用什么设计模式？
+    focus: 综合设计能力——答出来工程素养直接拉满。
+    answer:
+    - "**适配器模式**：定义统一抽象 `LLMClient.chat()`，各 provider 写适配器实现（抹平接口差异）。"
+    - "**工厂模式**：按配置 / 策略创建对应的 client 实例。"
+    - "**装饰器模式**：在 `chat()` 外面包 `@retry @cache @log @trace @metrics`，横切关注点与核心逻辑分离。"
+    - "**策略模式**：运行时按任务选择模型路由策略（成本优先 / 质量优先 / 降级链）。"
+    - "**价值**：新增 provider 只加一个适配器；加监控不改核心代码；切换模型一行配置。"
+    followups:
+    - 装饰器在 Python 里怎么实现？
+  - id: "11.8"
+    difficulty: 中
+    tags: []
+    title: 流式输出（streaming）用哪个设计模式实现最自然？
+    focus: 观察者模式的识别。
+    answer:
+    - "**观察者 / 发布订阅**：LLM 产出 token → 推送给所有订阅者（前端 SSE、日志、metrics、转写）。"
+    - "**也可用迭代器 / 生成器**（Python async generator）：`async for chunk in stream()`。"
+    - "**解耦**：生产者（模型）不关心有多少消费者，消费者按需订阅。"
+    - "**LangChain 的 Callbacks** 就是观察者模式的实现。"
+    followups:
+    - ""
+  - id: "11.9"
+    difficulty: 高
+    tags: []
+    title: 用责任链模式设计一套 Agent 输入输出的安全中间件。
+    focus: 安全工程 + 设计模式结合（对应 Q10.7 Prompt 注入防御）。
+    answer:
+    - "**链式结构**，每个 handler 决定放行或拦截："
+    - "**特点**："
+    - 顺序执行，任一环节拦截即终止；
+    - 每个 handler 单一职责，可独立测试；
+    - 可配置、可插拔（按场景增减 handler）；
+    - 易扩展（新增检查只加一个 handler）。
+    - "**落地**：Python 可用函数链 / 类继承；Web 框架中间件本质就是责任链。"
+    followups:
+    - ""
+  - id: "11.10"
+    difficulty: 高
+    tags: []
+    title: LangGraph 为什么要用图 / 状态机模型，而不是普通的函数调用链？
+    focus: 对 Agent 编排本质的理解。
+    answer:
+    - "**普通函数链的局限**：线性、无状态、难循环、难中断恢复。"
+    - "**状态机 / 图解决**："
+    - "**循环**：ReAct 的 act-observe 反复执行；"
+    - "**条件分支**：按结果动态决定下一步（成功→继续，失败→重试 / 回退）；"
+    - "**断点恢复**：checkpoint + 状态持久化（长任务续跑）；"
+    - "**并行**：分支并行执行后汇总；"
+    - "**human-in-loop**：某节点暂停等人工确认。"
+    - "**本质**：Agent 的执行是**带状态的非线性流程**，状态机是最自然的建模方式。函数链只能表达\"配方\"，状态机能表达\"流程\"。"
+    followups:
+    - ""

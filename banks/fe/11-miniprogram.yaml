@@ -1,0 +1,66 @@
+module: 11
+moduleName: 小程序
+questions:
+  - id: '11.84'
+    difficulty: 高
+    tags:
+      - 高频
+      - 概念
+    title: 微信小程序为什么采用「双线程架构」（视图层和逻辑层分离）？这种架构有什么优缺点？
+    focus: 小程序双线程架构的设计目的与代价
+    answer:
+      - '**视图层（WebView）**：每个页面一个 WebView，负责渲染 WXML/WXSS。可以有多个（多页面）。'
+      - '**逻辑层（JSCore/V8）**：只有一个，跑所有 JS 逻辑（数据、事件处理）。**没有 DOM/BOM API**。'
+      - '**Native 层（微信客户端）**：作为中间人，在两个线程间转发数据和事件。'
+    followups:
+      - setData 为什么慢？怎么优化？
+      - 小程序为什么不能用 jQuery/直接操作 DOM？
+      - 双线程架构和浏览器的单线程模型比，开发上有什么不便？
+  - id: '11.85'
+    difficulty: 高
+    tags:
+      - 高频
+      - 概念
+    title: 小程序的 WXML/WXSS 最终编译成什么？为什么不能直接用 HTML/CSS？
+    focus: WXML/WXSS 的编译产物与不能直接用 HTML 的原因
+    answer:
+      - WXML 不是直接转成 HTML。它经过 **WCC 编译器**，编译成一个 JS 函数（$gwx）。
+      - 运行时，逻辑层把数据传给这个函数，函数生成**虚拟 DOM 树（JS 对象）**。
+      - 虚拟 DOM 树再通过 setData 传到视图层，渲染成实际的渲染层节点（基于 WebView 但做了封装）。
+    followups:
+      - WCC 编译器具体做了哪些事？
+      - rpx 单位是怎么工作的？和 px/rem 有什么区别？
+      - 小程序的虚拟 DOM 和 Vue/React 的虚拟 DOM 一样吗？
+  - id: '11.86'
+    difficulty: 高
+    tags:
+      - 概念
+    title: 小程序有哪些性能优化手段？
+    focus: 小程序性能优化的关键手段
+    answer:
+      - 把小程序拆成主包 + 多个子包，按需加载子包。
+      - 减少首次加载体积，加快启动。
+      - 虚拟列表（recycle-view）：只渲染可视区域的项。
+      - 避免一次性 setData 上千条数据。
+      - 图片懒加载、用 CDN、压缩、用 WebP。
+      - 减少包体积（清理无用代码、按需引入）。
+      - 减少节点嵌套层级。
+      - 避免频繁变化的动画（用 CSS 动画而非 JS）。
+      - 合理用 wx:if vs hidden（频繁切换用 hidden，不频繁用 wx:if）。
+      - 主包只放核心页面，其他进分包。
+      - 减少启动时的同步逻辑。
+      - '**示例:**'
+      - '**分包配置**：'
+      - '```json'
+      - '{'
+      - '  "pages": ["pages/index/index"],'
+      - '  "subpackages": ['
+      - '    { "root": "moduleA", "pages": ["pages/detail/detail"] }'
+      - '  ]'
+      - '}'
+      - '```'
+      - '**资源优化**：图片懒加载 `<image lazy-load />`，用 WebP 格式。'
+    followups:
+      - 小程序启动慢怎么排查？有哪些指标？
+      - 分包和独立分包有什么区别？
+      - recycle-view 虚拟列表原理是什么？

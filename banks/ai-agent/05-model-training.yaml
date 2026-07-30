@@ -1,0 +1,164 @@
+module: 5
+moduleName: 模型训练微调
+questions:
+  - id: "05.1"
+    difficulty: 中
+    tags: []
+    title: 什么时候该微调？什么时候用 Prompt / RAG 就够了？
+    focus: "技术选型判断（避免\"什么都想微调\"）。"
+    answer:
+    - "**决策顺序（成本递增）**：Prompt Engineering → RAG → Few-shot → SFT → RLHF/DPO。"
+    - "**Prompt / RAG 够用的场景**："
+    - 通用能力足够，只是缺知识 → RAG；
+    - 任务可由指令明确 → Prompt。
+    - "**需要微调的场景**："
+    - 需要特定输出风格 / 格式（如严格 JSON、特定语气）；
+    - 领域术语 / 表达习惯（领域适配）；
+    - function calling 准确率不够，需针对工具调微调；
+    - 推理成本敏感（小模型微调后替代大模型）。
+    - "**核心原则**：先穷尽低成本方案，微调是\"最后的手段\"，且要有评测证明它确实带来提升。"
+    followups:
+    - ""
+  - id: "05.2"
+    difficulty: 高
+    tags: []
+    title: SFT 和 RLHF / DPO 各解决什么问题？
+    focus: 训练方法的本质区别。
+    answer:
+    - "**SFT（监督微调）**："
+    - "有标准答案（input→output），教模型\"应该这么答\"；"
+    - 解决：风格、格式、领域知识、任务能力。
+    - "**RLHF（人类反馈强化学习）**："
+    - "无标准答案，只有\"好坏\"偏好；"
+    - 流程：训练 reward model → 用 PPO 优化策略；
+    - "**RM 怎么训练**(JD2 深水区必问):用成对偏好数据 (chosen, rejected),基于 **Bradley-Terry 模型**,loss = `-log σ(r(x,y_c) - r(x,y_r))`;RM 通常从 SFT 模型初始化;"
+    - 解决：对齐人类偏好（更有用、无害、诚实）；
+    - 缺点：复杂、不稳定、成本高（需 RM + PPO）。
+    - "**DPO（Direct Preference Optimization）**："
+    - "**免去显式 RM 训练和 RL 采样**,直接用偏好对(chosen / rejected)优化;"
+    - "**但仍需 reference model**(loss 里用 ref model 的 logprob 计算隐式奖励),不是完全无参考模型;"
+    - "比 RLHF 简单稳定,工业界越来越主流;"
+    - "解决：偏好对齐,效果接近 RLHF 且工程成本低。"
+    - "**2024-2025 对齐新进展(必提,否则显过时)**:"
+    - "**GRPO(DeepSeek)**:去掉 critic,用**组内相对优势**(同一 prompt 采一组,组内归一化算优势),R1-Zero 用纯 GRPO 就涌现推理能力;"
+    - "**KTO**:非成对,只用二元反馈(赞/踩);"
+    - "**SimPO / ORPO**:进一步简化,SimPO 无需 reference model。"
+    - "**典型组合**：SFT 打底 → DPO/GRPO 对齐。"
+    followups:
+    - ""
+  - id: "05.3"
+    difficulty: 中
+    tags: []
+    title: 微调数据怎么造？多少条够？
+    focus: 数据工程经验。
+    answer:
+    - "**数据来源**："
+    - 真实业务数据（最优质，脱敏后用）；
+    - 人工标注；
+    - "**数据合成**：self-instruct（模型自生成指令）、evol-instruct（指令进化增强复杂度）、用强模型（GPT-4）生成训练数据；"
+    - 开源数据集（通用能力兜底）。
+    - "**数量**：质量 > 数量。几千到几万条高质量数据往往够（LoRA 场景）；通用能力可能需更多。"
+    - "**质量要点**："
+    - 去噪、去重；
+    - 领域分布均衡（避免某类过多）；
+    - 难度梯度覆盖；
+    - 混合通用数据防灾难性遗忘。
+    - "**数据质量评估**：用 LLM-as-Judge 或人工抽检。"
+    followups:
+    - ""
+  - id: "05.4"
+    difficulty: 中
+    tags: []
+    title: 什么是灾难性遗忘？怎么避免？
+    focus: 微调的典型问题。
+    answer:
+    - "**现象**：微调后模型在目标任务变强，但通用能力退化（学了新的，忘了旧的）。"
+    - "**原因**：参数被新数据过度覆盖。"
+    - "**对策**："
+    - 混合通用数据（微调数据里掺一部分通用数据）；
+    - 低学习率 + 适量 epoch（别训太猛）；
+    - "**LoRA / QLoRA**：只训练少量附加参数，不动原模型，大幅缓解遗忘；"
+    - 评测时同时测通用能力，监控退化。
+    followups:
+    - ""
+  - id: "05.5"
+    difficulty: 高
+    tags: []
+    title: 线上推理延迟高，你怎么优化？
+    focus: 推理系统工程（JD2 核心）。
+    answer:
+    - "**推理引擎**："
+    - "**vLLM / PagedAttention**：高效管理 KV Cache，提升吞吐；"
+    - "**TensorRT-LLM**：NVIDIA 优化。"
+    - "**批处理**："
+    - 连续批处理（continuous batching）：动态拼 batch，提升 GPU 利用率；
+    - 区别于静态 batch（需等满）。
+    - "**量化**：降显存、提速度，精度略损。两条路线:"
+    - "**PTQ(训练后量化)**:GPTQ / AWQ / group-wise quantization,无需重训,部署主流;"
+    - "**QAT(量化感知训练)**:训练时模拟量化,精度更好但成本高;"
+    - "**精度格式**:INT8 / INT4 / **FP8**(新一代硬件支持);**格式与引擎对应**:GGUF(llama.cpp)、GPTQ/AWQ(vLLM)。"
+    - "**KV Cache 优化**：复用前缀（prefix caching）、淘汰策略。"
+    - "**并行推理(大模型部署必讲)**:"
+    - "**Tensor Parallelism(张量并行)**:把单层权重切到多卡;"
+    - "**Pipeline Parallelism(流水线并行)**:把不同层放不同卡;"
+    - "**Expert Parallelism(专家并行)**:MoE 的专家分布到多卡。"
+    - "**投机解码（Speculative Decoding）**：draft model 先猜多个 token,target model 一次 forward 并行验证,减少大模型**串行自回归步数**(需词表兼容,按\"接受概率\"决定加速比)。"
+    - "**模型侧**：蒸馏出小模型(见 Q05.8)、MoE 路由。"
+    - "**工程侧**：缓存常见 query、异步流式、预热。"
+    followups:
+    - vLLM 的 PagedAttention 解决了什么问题？（参考 OS 虚拟内存的分页）
+  - id: "05.6"
+    difficulty: 中
+    tags: []
+    title: 什么是 LoRA / QLoRA？为什么 Agent 微调常用它？
+    focus: 参数高效微调（PEFT）。
+    answer:
+    - "**LoRA**（Low-Rank Adaptation）："
+    - "冻结原模型参数,只在目标层(通常 q_proj/v_proj)旁注入低秩分解 `W = W₀ + BA`,其中 B(d×r) 初始化为零、A(r×k) 高斯初始化,输出再乘 `scaling = alpha/r`;"
+    - "**核心超参**:秩 r(常用 8/16/64)和 alpha,r 越大表达力越强但参数越多;参数量典型 0.1%~2%;"
+    - "**为什么 r 很小也有效**:Aghajanyan 等证明微调时的权重更新本质是低秩的(低秩假设);"
+    - "训练参数量极小,显存大幅降低;"
+    - "效果接近全参数微调,且可插拔(多个 LoRA 权重可热切换/合并)。"
+    - "**QLoRA**："
+    - 在 LoRA 基础上把原模型量化到 4bit；
+    - 单卡可微调大模型（如 65B）。
+    - "**PEFT 全家族(常被追问\"除了 LoRA 还知道哪些\")**:"
+    - "**Agent 场景常用原因**："
+    - 成本低、速度快；
+    - 多任务 / 多场景可维护多个 LoRA（如不同业务的不同风格）；
+    - 缓解灾难性遗忘。
+    followups:
+    - ""
+  - id: "05.7"
+    difficulty: 高
+    tags: [进阶]
+    title: 什么是 RLHF 的 reward hacking？怎么发现和避免？
+    focus: 对齐训练的深度理解。
+    answer:
+    - "**reward hacking**：模型学会了\"钻 reward model 的空子\"——输出能拿高分但实际不好（如啰嗦、重复奖励词）。"
+    - "**发现**："
+    - KL 散度监控（策略偏离原模型太远）；
+    - 人工抽检；
+    - 多维评测（reward 涨但其他指标掉）。
+    - "**避免**："
+    - 加 KL 惩罚（限制偏离程度）；
+    - "改进 reward model（更多偏好数据、对抗训练、**多 RM ensemble 投票**）；"
+    - 多目标 reward；
+    - "**early stopping**(在 reward 仍真实时停下);"
+    - DPO 因不依赖 RM，一定程度上缓解。
+    followups:
+    - ""
+  - id: "05.8"
+    difficulty: 中
+    tags: []
+    title: "什么是知识蒸馏?为什么小模型 + 蒸馏是部署主流之一?"
+    focus: 蒸馏的认知(知识地图提了但未展开)。
+    answer:
+    - "**目标**:把大模型(teacher)的能力迁移到小模型(student),降部署成本。"
+    - "**两条路线**:"
+    - "**白盒蒸馏(logit/KD)**:能拿到 teacher 的 logits,用**温度 softmax** 让 student 学 teacher 的输出分布(软标签),信息量比硬标签大;"
+    - "**黑盒蒸馏(distilling step-by-step)**:只能调 teacher API,用 teacher 的**输出**(含 CoT 推理过程)作为训练数据;灵活但信息量受限。"
+    - "**典型流程**:大模型生成高质量数据(含推理) → 小模型 SFT 学。"
+    - "**价值**:小模型在特定任务上逼近大模型,大幅降推理成本——这是 Agent 大规模落地的经济前提之一。"
+    followups:
+    - ""

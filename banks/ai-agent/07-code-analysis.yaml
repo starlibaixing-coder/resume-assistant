@@ -1,0 +1,137 @@
+module: 7
+moduleName: 程序分析
+questions:
+  - id: "07.1"
+    difficulty: 高
+    tags: [必问]
+    title: 让 Agent 理解一个 10 万行的代码库，你怎么做？
+    focus: 代码 Agent 的核心系统设计——不能全塞进 context。
+    answer:
+    - "**核心矛盾**：代码库远大于 context 窗口，不能全塞。"
+    - "**分层理解策略**："
+    - "**宏观层**：仓库结构（目录树、README、模块依赖图）—— 构建整体认知；"
+    - "**模块层**：按目录 / 模块建索引，理解职责划分；"
+    - "**函数层**：用 AST 提取函数签名、注释、调用关系，建可检索的代码索引；"
+    - "**细节层**：按需 Lazy 加载——只有需要时才读具体实现。"
+    - "**检索手段**："
+    - "**call graph**：找影响面（改了这个函数，谁会被影响）；"
+    - "**语义检索**：代码 embedding + 自然语言查询；"
+    - "**符号检索**：LSP 找定义 / 引用 / 实现；"
+    - "**文本检索**：ripgrep 找关键词。"
+    - "**上下文组装**：检索到的相关代码 + 调用链 + 注释，按 token 预算裁剪后喂给模型。"
+    - "**工具栈**：Tree-sitter（AST）、LSP（语义）、ripgrep（文本）、向量库（语义检索）。"
+    followups:
+    - 改一个函数，怎么找出所有受影响的调用方？
+  - id: "07.2"
+    difficulty: 中
+    tags: []
+    title: AST 和 CFG 分别解决什么问题？
+    focus: 程序分析基础概念。
+    answer:
+    - "**AST（抽象语法树）**："
+    - "表达代码的**语法结构**（嵌套关系：函数→语句→表达式）；"
+    - "管\"代码长什么样\"，用于解析、改写、格式化、语法高亮、代码生成。"
+    - "**CFG（控制流图）**："
+    - "表达程序**（静态推导出的）可能执行路径**（基本块 + 跳转边）；"
+    - "管\"代码可能怎么执行\"，用于可达性分析、死代码检测、循环分析、路径覆盖。"
+    - "**关系**：AST 和 CFG **都是静态分析产物**（都不运行代码）；区别在视角——AST 看语法嵌套结构，CFG 看控制流/执行路径。CFG 通常由 AST 派生。"
+    - "**举例**：找\"未使用的 import\"用 AST；找\"永远不会执行的代码\"用 CFG。"
+    - "**注意**：动态执行视角 ≠ 动态分析（dynamic analysis 指真运行程序收集 trace,如插桩/日志);CFG 是对程序行为的**静态近似**,因此会有 over/under-approximation(见 Q07.6)。"
+    followups:
+    - ""
+  - id: "07.3"
+    difficulty: 高
+    tags: []
+    title: 自动生成单元测试，你技术上怎么做？
+    focus: 代码 Agent 的典型应用（JD4 明确提到）。
+    answer:
+    - "**输入分析**："
+    - 用 AST 解析函数签名（参数、返回类型、类型注解）；
+    - 提取函数体逻辑（分支、边界条件）；
+    - 提取已有调用示例（docstring / 使用处）。
+    - "**测试用例生成**："
+    - 基于参数类型生成边界 case（null、空、极值、合法值）；
+    - 用 LLM 补充语义级 case（业务含义、异常场景）；
+    - 符号执行 / 模糊测试辅助发现隐藏路径。
+    - "**验证与过滤**："
+    - 执行生成的测试，保留能跑通 + 有断言的；
+    - 覆盖率分析（用 CFG 看覆盖了哪些路径），补充未覆盖路径的 case。
+    - "**进阶**：变异测试（mutate 代码看测试能否检测）。"
+    followups:
+    - ""
+  - id: "07.4"
+    difficulty: 中
+    tags: []
+    title: Tree-sitter、LSP、ripgrep，在代码 Agent 里分别干什么？
+    focus: 工具栈的认知（JD4 相关）。
+    answer:
+    - "**Tree-sitter**："
+    - "跨语言的 AST 解析器(**支持 100+ 语言,统一 C API**),快速、容错(语法错也能解析);"
+    - "**核心特性:增量解析(incremental parsing)**——代码编辑后只需 O(变更大小) 重解析(而非全量),这是它用于编辑器/Coding Agent 的根本原因;流程:`tree.edit()` 标记变更 → 重新 parse → 得到更新后的 AST;"
+    - "**Tree-sitter query**:用 S-expression 写结构化 pattern,如 `(method_invocation name: (identifier) @func)` 精准匹配所有方法调用;"
+    - 用于：结构化理解、精准定位符号、代码改写。
+    - "**LSP（Language Server Protocol）**："
+    - "基于 **JSON-RPC 2.0** 的 client/server 协议(严格说 LSP 是协议,**提供语义能力的是 language server**);"
+    - "核心方法:`textDocument/definition`(定义跳转)、`/references`(引用)、`/hover`(悬停信息)、`/rename`(重命名)、`/documentSymbol`(文档符号)、`workspace/symbol`(全局符号);"
+    - "通过 initialize 握手 + `didChange` 增量同步保持状态;"
+    - 用于：跨文件理解调用关系、重构、类型推断。
+    - "**ripgrep**："
+    - 极快的文本搜索；
+    - 用于：关键词定位、快速扫描、正则匹配。
+    - "**互补**：ripgrep 找\"哪里有这个词\" → Tree-sitter 确认\"是不是真的这个符号\"（排除注释 / 字符串） → LSP 找\"完整调用关系\"。"
+    followups:
+    - ""
+  - id: "07.5"
+    difficulty: 高
+    tags: []
+    title: 什么是污点分析（taint analysis）？在安全场景有什么用？
+    focus: 数据流分析的应用（安全方向）。
+    answer:
+    - "**污点分析**：追踪\"不可信数据\"（用户输入）在程序中的传播路径。"
+    - source（污点源）：用户输入、网络请求、文件读取；
+    - sink（危险点）：SQL 执行、命令执行、文件写入；
+    - 分析 source 是否能到达 sink 且未经净化。
+    - "**应用**："
+    - 检测 SQL 注入、XSS、命令注入、路径遍历等漏洞；
+    - 代码审计自动化。
+    - "**结合 Agent**：让代码 Agent 自动审计 PR，标注潜在污点流，提示开发者。"
+    followups:
+    - ""
+  - id: "07.6"
+    difficulty: 高
+    tags: [系统设计]
+    title: "设计一个\"代码影响面分析\"工具：输入一个函数改动，输出所有可能受影响的代码。"
+    focus: 综合应用 call graph + 静态分析。
+    answer:
+    - "**构建 call graph**："
+    - 用 LSP / Tree-sitter 解析整个仓库的函数调用关系；
+    - 建立反向调用图（callee → callers）。
+    - "**影响传播**："
+    - 从改动函数出发，反向 BFS/DFS 遍历调用者；
+    - 递归向上，直到入口（API handler / main）。
+    - "**细化分析**："
+    - 数据流：改动是否影响返回值 / 副作用（若只改了日志，影响面小）；
+    - 类型变化：签名变了的影响更大；
+    - 动态调用：虚函数 / 接口 / 反射需特殊处理（over-approximation）。
+    - "**输出**：受影响文件列表 + 调用链 + 建议测试范围。"
+    - "**局限**：动态分发、反射、跨服务调用难以精确分析，需结合运行时信息。"
+    followups:
+    - ""
+  - id: "07.7"
+    difficulty: 高
+    tags: []
+    title: "静态分析的 call graph 怎么构建?soundness 和 completeness 怎么权衡?"
+    focus: 程序分析的灵魂概念(JD4 深度考点)。
+    answer:
+    - "**call graph 构建方法**(按精度/成本递增):"
+    - "**CHA(Class Hierarchy Analysis)**:只看类层次,把所有可能的重写都算上 → over-approximation,快但糙;"
+    - "**RTA(Rapid Type Analysis)**:在 CHA 基础上排除不可能实例化的类;"
+    - "**VTA / 0-CFA / k-CFA**:基于变量/上下文敏感的数据流分析,k 越大越精确越慢。"
+    - "**soundness vs completeness(核心权衡)**:"
+    - "程序分析本质**不可判定**(停机问题),必须近似;"
+    - "**sound(可靠)**:报出所有真实问题,**可能含误报**(false positive, over-approximation)——用于安全审计(宁可误报不漏报);"
+    - "**complete(完备)**:所有报出都是真问题,**可能漏报**(false negative, under-approximation)——用于优化(漏报可接受,误报不行);"
+    - "**soundy**:工程上的折中——理论上不严格 sound,但实践中接近 sound。"
+    - "**工程意义**:选工具时先问它 sound 还是 complete,决定能否用于安全场景。"
+    followups:
+    - ""
