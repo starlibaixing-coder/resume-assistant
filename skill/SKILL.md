@@ -1,11 +1,11 @@
 ---
 name: resume-assistant
-description: Generate a JD-tailored PDF resume from local code, job descriptions, and business context. Use when the user wants to create or tailor a resume for a specific job, rewrite project experience to match a JD, or produce a PDF resume from their code and project details.
+description: Generate a JD-tailored PDF resume from the user's project material (local code, README, docs, or pasted snippets), job descriptions, and business context. Use when the user wants to create or tailor a resume for a specific job, rewrite project experience to match a JD, or produce a PDF resume from their code and project details.
 ---
 
 # Resume Assistant
 
-A resume collaborator that tailors a PDF resume to a specific job description (JD). It reads the user's local code as *leads* (never as fact), extracts candidate highlights, cross-examines the user to confirm what they actually did, rewrites against the JD, then renders to PDF.
+A resume collaborator that tailors a PDF resume to a specific job description (JD). It reads the user's project material (local code, README, docs, or pasted snippets) as *leads* (never as fact), extracts candidate highlights, cross-examines the user to confirm what they actually did, rewrites against the JD, then renders to PDF.
 
 The user is the single source of truth. The skill never invents. Its entire value rests on three lines that must not break.
 
@@ -59,17 +59,22 @@ Follow these phases in order. Do not skip phases. Do not collapse phases 2–3 i
 Collect the three inputs from the user:
 
 1. **JD**: Ask the user to paste the job description. Extract: required skills, preferred skills, seniority level, domain keywords. These become the tailoring targets.
-2. **Code location**: Ask for the local path to the project repo. Confirm it exists (`ls` the path). If the user has multiple projects, collect all paths.
+2. **Project material**: Ask the user what they can provide about the project. This need not be a code repo - acceptable sources, in descending order of fidelity:
+   - **Local code path** (preferred): a path to the project repo. Confirm it exists (`ls` the path). If the user has multiple projects, collect all paths.
+   - **Documentation files**: README, design docs, API docs, or any Markdown/text file describing the project - these often contain embedded code snippets.
+   - **Pasted code snippets or descriptions**: raw code pasted inline, or a prose description of what the project does.
+
+   Read whatever the user provides as *leads*, never as fact. The richer the material, the better the extraction - but the skill works with whatever is available. Do not reject a session just because the user only has a README.
 3. **Existing resume / base info**: Ask if they have an existing Markdown resume to use as the content structure base. If yes, read it. If no, ask for basic info (name, contact, education, work history skeleton).
 
 Do not proceed to Phase 2 until you have all three.
 
-### Phase 2 — Code extraction (leads only)
+### Phase 2 — Material extraction (leads only)
 
-Read the user's local code. For each project:
+Read whatever project material the user provided in Phase 1. For each source (code repo, README, doc, or pasted snippet):
 
-1. Scan the directory structure, entry points, and key modules.
-2. Extract **candidate** technical points: what the code does, notable patterns, potential talking points.
+1. For a code repo: scan directory structure, entry points, and key modules. For a README/doc: read the architecture, feature, and embedded code-snippet sections. For a pasted snippet: read what it does.
+2. Extract **candidate** technical points: what the project/code does, notable patterns, potential talking points.
 3. For each candidate, form a factual observation — not a resume bullet. Example: "代码里有一个指数退避重试函数 `retryWithBackoff`，被调用了 3 次" (factual). NOT "攻克了高并发重试难题" (inflated).
 
 **Critical:** These are leads, not resume content. They have not been endorsed yet. Do not write them into the resume in this phase.
@@ -133,7 +138,7 @@ Tell the user the output path. Done.
 
 ## What this skill does NOT do
 
-- Does not read remote repos (GitLab, GitHub). Code must be local.
+- Does not read remote repos (GitLab, GitHub). Project material must be local - a local code path, or pasted README/docs/snippets.
 - Does not invent experiences the user doesn't have.
 - Does not force the resume to one page.
 - Does not design visual layouts beyond the github-markdown-css base + print adjustments.
