@@ -1,0 +1,152 @@
+module: 4
+moduleName: 跨端
+questions:
+  - id: '04.35'
+    difficulty: 中
+    tags:
+      - 手写
+    title: 瀑布流布局怎么实现？有哪些方案？
+    focus: 三种方案：①CSS columns（最简单，但顺序是列优先）②JS 分列（计算每列高度，新元素放最短列，顺序正确）③CSS Grid（masonry 还在实验中）。实际项目多用 JS 分列方案，控制精确、顺序正确。
+    answer:
+      - '`column-count` 分列，元素自动流入。'
+      - 优点：纯 CSS，代码少。
+      - 缺点：**填充顺序是列优先**（先填满第一列再第二列），不是常见的行优先（左到右、上到下）。视觉顺序奇怪。
+      - 固定 N 列，维护每列当前高度。
+      - 新元素来，放进**当前最矮的列**。
+      - 优点：顺序正确（行优先）、空间利用率高。
+      - 缺点：要写 JS，元素高度变化要重排。
+      - '`grid-template-rows: masonry`（实验特性）。'
+      - 优点：纯 CSS 且顺序正确。
+      - 缺点：浏览器支持差，还在实验。
+      - '**示例:**'
+      - '**JS 瀑布流核心**：'
+      - '```javascript'
+      - function waterfall(container, items, columnCount = 3) {
+      - '  const columns = new Array(columnCount).fill(0); // 每列高度'
+      - '  const colWidth = container.clientWidth / columnCount;'
+      - '  items.forEach(item => {'
+      - '    // 找最矮的列'
+      - '    const minCol = columns.indexOf(Math.min(...columns));'
+      - '    // 定位'
+      - '    item.style.position = ''absolute'';'
+      - '    item.style.left = minCol * colWidth + ''px'';'
+      - '    item.style.top = columns[minCol] + ''px'';'
+      - '    item.style.width = colWidth + ''px'';'
+      - '    // 更新该列高度（需等图片加载后才知道实际高度）'
+      - '    columns[minCol] += item.offsetHeight;'
+      - '  });'
+      - '}'
+      - '```'
+      - '**CSS columns 方案（简单但有顺序问题）**：'
+      - '```css'
+      - '.masonry { column-count: 3; column-gap: 10px; }'
+      - '.masonry > div { break-inside: avoid; margin-bottom: 10px; }'
+      - '```'
+    followups:
+      - 瀑布流里图片高度异步加载怎么处理？（提示：onload 后重排）
+      - 无限滚动的瀑布流，新数据来了怎么高效追加？
+      - CSS columns 的列优先顺序问题能解决吗？
+  - id: '04.36'
+    difficulty: 中
+    tags:
+      - 手写
+    title: 如何实现一个轮播图（carousel）？请手写。
+    focus: '核心：用 transform: translateX 做位移，定时器自动切换 + 拖拽/点击手动切换；无缝循环靠克隆首尾元素实现。'
+    answer:
+      - 在最后一张后面克隆一份第一张，在第一张前面克隆一份最后一张。
+      - 滚到克隆的第一张时，瞬间（无过渡）跳回真正的第一张，用户感觉是无缝的。
+      - '**示例:**'
+      - '**轮播核心逻辑**：'
+      - '```javascript'
+      - let current = 0;
+      - const slides = [cloneLast, ...realSlides, cloneFirst]; // 克隆首尾
+      - let animating = false;
+      - function goTo(index, animate = true) {
+      - '  if (animating) return;        // 防快速点击'
+      - '  animating = true;'
+      - '  track.style.transition = animate ? ''transform 0.3s'' : ''none'';'
+      - '  track.style.transform = `translateX(-${index * slideWidth}px)`;'
+      - '  current = index;'
+      - '}'
+      - // 过渡结束：如果到了克隆位，瞬间跳回真实位
+      - track.addEventListener('transitionend', () => {
+      - '  animating = false;'
+      - '  if (current === 0) goTo(realLength, false);       // 在克隆的末尾→跳真末尾'
+      - '  if (current === slides.length - 1) goTo(1, false); // 在克隆的开头→跳真开头'
+      - '});'
+      - // 自动播放
+      - setInterval(() => goTo(current + 1), 3000);
+      - '```'
+    followups:
+      - 用 CSS scroll-snap 实现轮播和 JS 实现各有什么优劣？
+      - 轮播图在 SSR 下要注意什么？
+  - id: '04.37'
+    difficulty: 高
+    tags:
+      - 概念
+    title: Taro 跨端框架的原理是什么？
+    focus: Taro 原理是「编译时 + 运行时」：编译时把 React 代码转成各端的代码（小程序转 WXML/WXSS/JS，H5 转原生标签）；运行时提供统一的组件库和 API 适配层，抹平各端差异。本质是「用 React 语法描述 UI，编译器翻译成各端产物」。
+    answer:
+      - 你写 React（JSX）代码。
+      - Taro 编译器把 JSX 转成各端能跑的代码：
+      - 微信小程序：JSX → WXML，CSS → WXSS，JS → 小程序 JS（组件转成 view/text 等小程序标签）。
+      - H5：JSX → React（标签转成 div/span）。
+      - RN：JSX → RN 组件（View/Text）。
+      - 这是 Taro3 之前的核心，编译期完成大部分转换。
+      - 提供统一组件库（`<View>`、`<Text>`，各端映射到各自原生组件）。
+      - 提供统一 API（`Taro.request` 等，内部适配各端实现）。
+      - Taro3 引入了运行时方案：在小程序里实现一个「React 运行时」，不再纯靠编译，更接近 React 原生写法。
+      - '**示例:**'
+      - '**Taro 代码 → 多端产物**：'
+      - '```jsx'
+      - // 你写的（一套代码）
+      - <View className="box">
+      - '  <Text>{title}</Text>'
+      - '  <Button onClick={handler}>点击</Button>'
+      - </View>
+      - // 编译到微信小程序
+      - <view class="box">
+      - '  <text>{{title}}</text>'
+      - '  <button bindtap="handler">点击</button>'
+      - </view>
+      - // 编译到 H5
+      - <div class="box">
+      - '  <span>{title}</span>'
+      - '  <button onClick={handler}>点击</button>'
+      - </div>
+      - '```'
+    followups:
+      - Taro3 的运行时方案和 Taro2 的纯编译方案有什么区别？为什么改？
+      - Taro 和 uni-app 跨端原理有什么不同？
+  - id: '04.38'
+    difficulty: 高
+    tags:
+      - 高频
+      - 手写
+    title: 虚拟滚动（virtual scroll）的实现原理是什么？
+    focus: 虚拟滚动只渲染可视区域的列表项，用绝对定位 + transform 偏移，滚动时动态替换内容，靠一个大的占位元素撑出总高度。核心：计算可视区间 [startIndex, endIndex]，只渲染这部分，用 padding/transform 撑出滚动条。
+    answer:
+      - '**为什么需要虚拟滚动**：列表有上万条，全渲染 DOM 会卡死（DOM 太多）。虚拟列表只渲染可视区的几十条，滚动时动态替换。'
+    followups:
+      - 不定高虚拟列表怎么实现？（提示：预估高度 + 实际测量缓存 + 二分查找）
+      - 虚拟滚动滚动过快会白屏怎么办？（提示：加 buffer、预渲染）
+      - React Window / react-virtualized 这些库比手写强在哪？
+  - id: '04.39'
+    difficulty: 高
+    tags:
+      - 概念
+    title: Electron 和 NW.js（node-webkit）有什么区别？
+    focus: 两者都用 Chromium + Node 做 Web 桌面应用，区别在架构：Electron 多进程（主进程用 Node + 渲染进程用 Chromium），渲染进程默认隔离、要 IPC 调 Node；NW.js 单进程，把 Node 直接注入 DOM。Electron 进程隔离更安全、生态更主流，NW.js 基本被淘汰。
+    answer:
+      - '**Electron vs NW.js**：'
+      - '| 维度 | Electron | NW.js |'
+      - '|---|---|---|'
+      - '| 架构 | 主进程(Node)+渲染进程(Chromium)，多进程 | 单进程，Node 直接注入 DOM |'
+      - '| Node 访问 | 渲染进程默认隔离，要 IPC 调主进程 | DOM 里直接能用 Node API |'
+      - '| 安全 | 更好（进程隔离） | 较弱（DOM 直接碰 Node） |'
+      - '| 生态 | 极成熟（VSCode/Slack/Discord） | 衰落 |'
+      - 两者都是 Chromium + Node，但 Electron 的多进程架构更安全、更主流，NW.js 基本被淘汰。
+    followups:
+      - Electron 的 contextIsolation 和 nodeIntegration 为什么默认关？
+      - Electron 的 IPC 通信有性能瓶颈吗？
+      - 为什么 NW.js 输给了 Electron？

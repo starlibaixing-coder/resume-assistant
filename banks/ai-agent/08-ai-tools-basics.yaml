@@ -1,0 +1,193 @@
+module: 8
+moduleName: "AI 工具 & 工程基础"
+questions:
+  - id: "08.1"
+    difficulty: 中
+    tags: [必问]
+    title: 你日常怎么用 AI 编程工具？讲一个具体的提效场景。
+    focus: 是否真的是重度用户——这题几乎每场必问，要讲具体工作流，别空谈。
+    answer:
+    - "**避免空谈**：不要只说\"用 Cursor 写代码\"，要讲**完整闭环**。"
+    - "**答题模板**："
+    - 场景：具体任务（如重构一个模块、写一个新 feature、加测试）；
+    - 流程：需求拆解 → 让 AI 生成 spec/计划 → 分步实现 → 人工 review → 测试验证；
+    - "量化：节省了多少时间、提升多少（如\"原来 2 天的重构，4 小时完成\"）；"
+    - 边界：哪些交给 AI、哪些自己做（架构决策、关键逻辑自己把控）。
+    - "**加分**：讲清\"AI 不替代思考，替代的是重复劳动\"，体现正确认知（对应 JD1 的理念）。"
+    followups:
+    - ""
+  - id: "08.2"
+    difficulty: 高
+    tags: [JD1 必问]
+    title: 什么是 SDD（Spec-Driven Development）？
+    focus: "JD1 明确要求\"SDD 完整项目经验\"，必须答得出。"
+    answer:
+    - "**核心思想**：**先写规格（spec），再让 AI 按 spec 实现**，而非直接让 AI 写代码。"
+    - "**流程**："
+    - 需求分析 → 写出明确的 spec（功能描述、接口定义、验收标准、边界）；
+    - AI 按 spec 生成实现（或先出计划再分步实现）；
+    - 人做 review，对照 spec 验收；
+    - 测试驱动验证。
+    - "**价值**："
+    - "把\"模糊需求\"前置澄清，减少返工；"
+    - spec 即文档，可维护；
+    - 让 AI 输出更可控（有明确目标 vs 自由发挥）。
+    - "**对比传统**：传统是\"想到哪写到哪\"；SDD 是\"想清楚再写\"，AI 放大了 spec 的价值。"
+    - "**Harness**：指构建可让 AI 自主执行（spec→实现→测试→修复）的工程框架 / 工具链，让 AI 在受控环境内闭环完成开发任务。"
+    followups:
+    - ""
+  - id: "08.3"
+    difficulty: 中
+    tags: []
+    title: AI 生成的代码，你怎么保证质量？直接用吗？
+    focus: "工程严谨性，避免\"AI 写啥就用啥\"。"
+    answer:
+    - "**绝不全盘直接用**：AI 代码需经过与人写代码同样的质量门禁。"
+    - "**质量保障**："
+    - "**Code Review**：人工 review 逻辑、边界、安全；"
+    - "**测试**：AI 同步生成测试，覆盖率检查，关键路径必测；"
+    - "**静态检查**：linter、类型检查、安全扫描；"
+    - "**对照 spec**：验收是否满足规格（SDD 的核心）；"
+    - "**关注典型问题**：幻觉 API（不存在的函数）、过时的库用法、安全问题。"
+    - "**经验**：AI 适合\"骨架 + 模板 + 重复逻辑\"；关键业务逻辑、安全相关代码要人主导。"
+    followups:
+    - ""
+  - id: "08.4"
+    difficulty: 高
+    tags: [JD2 必问]
+    title: 什么是 MCP？和 function calling 有什么区别？
+    focus: MCP 是 2025 年热点，JD2 明确要求。
+    answer:
+    - "**MCP（Model Context Protocol）**："
+    - "Anthropic 提出的**开放协议**，标准化\"模型 ↔ 工具 / 数据源 / 提示词模板\"的连接；"
+    - "解决 **N×M 问题**：M 个模型 × N 个工具，原本要 M×N 个集成；有了 MCP，工具实现一次 MCP server，任何支持 MCP 的 host/客户端都能用 → M+N。"
+    - "**三类原语**（不只 tools）：`tools`（可调用的函数）、`resources`（应用控制读取的数据/文件）、`prompts`（模板）；此外 host 还可发起 `sampling`（反向请求模型推理）。"
+    - "**架构三角**：host（如 Cursor/Claude）↔ client（连接器）↔ server（工具方）。"
+    - "**Function Calling**："
+    - "是**模型厂商提供的接口能力**（让模型按 schema 输出结构化工具调用）；"
+    - "解决\"模型如何决定调用工具\"。"
+    - "**关系与调用链路**（更精确）："
+    - "二者处于不同层：MCP 是**工具侧的接入协议**，function calling 是**模型侧的接口能力**；"
+    - 调用链路：用户消息 → host 聚合各 MCP server 的 tools 成 schema → 模型用 function calling 决定调哪个 → host 路由到对应 MCP server → 执行并返回结果 → 回灌模型。
+    - "**价值**：工具复用、生态共享、解耦模型与工具。"
+    followups:
+    - "MCP 的 transport 有哪些？（**stdio / Streamable HTTP**——2025-03 spec 起 Streamable HTTP 取代了旧的 HTTP+SSE，支持无状态部署与更好的 resumability）"
+  - id: "08.5"
+    difficulty: 中
+    tags: []
+    title: 如果让你给团队设计一个内部 MCP server，暴露什么能力？
+    focus: MCP 的工程落地。
+    answer:
+    - "**典型能力**："
+    - 内部数据查询（用户、订单、业务数据）；
+    - 内部平台操作（CI/CD 触发、工单创建、部署）；
+    - 知识库检索（内部文档 / wiki）；
+    - 代码仓库操作（查代码、提 PR）。
+    - "**设计要点**："
+    - 权限控制（不同角色可用的工具不同）；
+    - 审计日志（高危操作可追溯）；
+    - 错误处理与降级；
+    - 工具描述清晰（description 决定模型选择准确率）。
+    - "**价值**：一次实现，全公司的 AI 工具（Cursor / Claude Code / 内部 Agent）都能用。"
+    followups:
+    - ""
+  - id: "08.6"
+    difficulty: 高
+    tags: [JD2]
+    title: LLM 服务的高并发和传统 Web 服务有什么不同？
+    focus: LLM 服务的特殊性（JD2 要求高并发低延迟）。
+    answer:
+    - "**不同点**："
+    - "**单请求耗时长**：LLM 推理秒级（传统 Web 毫秒级），并发模型完全不同；"
+    - "**资源瓶颈不同**：GPU 算力 / 显存（而非 CPU / DB）；"
+    - "**流式响应**：长连接、SSE，不同于传统 request-response；"
+    - "**成本与 QPS 强相关**：每请求都要付费，QPS 直接 = 成本；"
+    - "**token 限流**：provider 按 RPM / TPM 限制，需特殊限流策略；"
+    - "**超长尾**：长 prompt / 长输出拖慢整体。"
+    - "**应对**："
+    - 异步 + 流式（不阻塞 worker）；
+    - 连续批处理（提升 GPU 利用率）；
+    - 多 provider 配额池 + 限流；
+    - 缓存（降 QPS）；
+    - 队列削峰。
+    followups:
+    - ""
+  - id: "08.7"
+    difficulty: 中
+    tags: []
+    title: Agent 服务峰值流量怎么扛？
+    focus: 容量与稳定性设计。
+    answer:
+    - "**异步化**：非实时任务走消息队列（Kafka / RabbitMQ），削峰填谷。"
+    - "**限流**：令牌桶 / 漏桶，保护下游 LLM provider 配额；按用户 / 按租户限流。"
+    - "**降级**：高峰期切小模型、关闭非核心功能、返回缓存结果。"
+    - "**熔断**：错误率超限熔断，避免雪崩。"
+    - "**弹性扩容**：推理服务按 GPU 弹性扩缩容（注意 GPU 启动慢，需预热）。"
+    - "**缓存**：常见 query 结果缓存，高峰期命中率提升显著。"
+    - "**排队体验**：高负载时告知用户预计等待，比直接失败体验好。"
+    followups:
+    - ""
+  - id: "08.8"
+    difficulty: 中
+    tags: []
+    title: 你怎么给一个 LLM 调用做缓存？直接用 Redis 行不行？
+    focus: 缓存设计（LLM 缓存有特殊性）。
+    answer:
+    - "**精确缓存**：相同 prompt → 相同结果，key = hash(prompt + 模型 + 参数)。适合确定性输出（temperature=0）。"
+    - "**语义缓存**：相似 prompt → 复用结果。需 embedding 相似度判断，有风险（相似 ≠ 相同），适合容错场景。"
+    - "**缓存什么**："
+    - 完整 LLM 响应；
+    - 工具调用结果（相同输入复用）；
+    - RAG 检索结果（相同 query 短期复用）。
+    - "**失效策略**："
+    - TTL（知识有时效性）；
+    - 主动失效（知识更新时清缓存）；
+    - 版本失效（模型 / Prompt 改版清缓存）。
+    - "**坑**："
+    - 用户私有数据不能跨用户共享缓存（隔离！）；
+    - "temperature>0 时缓存命中率低且可能不一致；"
+    - Prompt 里含时间戳 / 随机数会破坏缓存命中。
+    followups:
+    - ""
+  - id: "08.9"
+    difficulty: 中
+    tags: [必问]
+    title: "CLAUDE.md / .cursor/rules / AGENTS.md 这些文件是干什么用的?为什么\"写好它\"是提效关键?"
+    focus: "AI 编程工具最核心的\"项目级上下文注入\"机制,重度用户必知。"
+    answer:
+    - "**作用**:这些文件存放**项目约定**(技术栈、代码风格、架构、禁忌、常用命令),会被工具**自动注入到 system prompt**,让 AI\"懂项目\",产出符合规范。"
+    - "**层级(优先级)**:"
+    - "**全局/用户级**(跨项目,个人偏好);"
+    - "**项目级**(根目录,团队共享);"
+    - "**目录级**(子模块特定规则)。"
+    - "**主流约定**:"
+    - "`CLAUDE.md`(Claude Code)、`AGENTS.md`(通用约定)、**`.cursor/rules/`**(Cursor 新版目录式,旧版单文件 `.cursorrules` 已废弃)。"
+    - "**为什么是提效关键**:"
+    - "把**隐性知识显性化**,减少反复纠正;"
+    - "团队规范一次定义,全员(含 AI)遵守;"
+    - "这是\"规则文件 = 项目的 AI 接口\"。"
+    - "**写好它的要点**:简洁、结构化、给 do/don't、给示例、定期维护。"
+    followups:
+    - ""
+  - id: "08.10"
+    difficulty: 中
+    tags: []
+    title: "Aider 的 edit formats 是什么?AI 改代码有哪些格式?"
+    focus: "AI 改代码的底层机制(Aider 核心设计,有专门论文消融)。"
+    answer:
+    - "**结论**:主流 Coding Agent 倾向 search-replace 块——它不依赖精确行号,容错好。"
+    - "**关联**:这正是 Coding Agent 的核心工程难点之一(见模块 13 edit formats)。"
+    followups:
+    - ""
+  - id: "08.11"
+    difficulty: 中
+    tags: []
+    title: "Cursor、Claude Code、Aider、Copilot 这些工具怎么选?"
+    focus: 工具横向对比与选型(重度用户应能分辨)。
+    answer:
+    - "**IDE 协同**:Cursor(Agent/Ask/Edit 模式、@codebase 索引、Background Agent)、Copilot、通义灵码——日常编码、所见即所得;"
+    - "**终端 Agent**:Claude Code(强工具/subagent/hooks)、Aider(git 友好、edit format 可选)——多文件改动、自动化、CI 集成;"
+    - "**组合实践**:Cursor(日常)+ Claude Code(复杂/自动化),而非一个工具打天下。"
+    - "**选型维度**:可视化需求、工具能力、是否需 git/CI 集成、代码是否可上云、成本。"
+    followups:
+    - ""

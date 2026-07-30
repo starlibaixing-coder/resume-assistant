@@ -193,7 +193,7 @@
       "category": "agent",
       "module": 1,
       "moduleName": "Agent 核心机制",
-      "index": 1,
+      "index": 1.1,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -217,7 +217,7 @@
       "category": "agent",
       "module": 1,
       "moduleName": "Agent 核心机制",
-      "index": 2,
+      "index": 1.2,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -248,7 +248,7 @@
       "category": "agent",
       "module": 1,
       "moduleName": "Agent 核心机制",
-      "index": 3,
+      "index": 1.3,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -270,7 +270,7 @@
       "category": "agent",
       "module": 1,
       "moduleName": "Agent 核心机制",
-      "index": 4,
+      "index": 1.4,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -284,14 +284,16 @@
         "限制反思轮数（通常 1~3 轮），避免\"反思死循环\"；",
         "反思记忆可持久化，避免同类错误重复犯。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.01.5",
       "category": "agent",
       "module": 1,
       "moduleName": "Agent 核心机制",
-      "index": 5,
+      "index": 1.5,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -317,7 +319,7 @@
       "category": "agent",
       "module": 1,
       "moduleName": "Agent 核心机制",
-      "index": 6,
+      "index": 1.6,
       "type": "qa",
       "difficulty": "初",
       "tags": [],
@@ -328,14 +330,16 @@
         "**ReAct** 是上层的 **Agent 模式**：Thought→Action→Observation 的循环，决定\"如何规划多步任务\"。可以基于 function calling 实现 Action 步骤。",
         "类比：function calling 是\"手脚\"，ReAct 是\"思考方式\"。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.01.7",
       "category": "agent",
       "module": 1,
       "moduleName": "Agent 核心机制",
-      "index": 7,
+      "index": 1.7,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -360,7 +364,7 @@
       "category": "agent",
       "module": 1,
       "moduleName": "Agent 核心机制",
-      "index": 8,
+      "index": 1.8,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -371,14 +375,16 @@
         "**ToT**：树形探索，每一步生成多个候选想法 → 评估 → 选最优分支继续（类似搜索 + 剪枝）。适合需要回溯、探索的复杂问题（如数学推理、创意规划）。",
         "**代价**：ToT 调用次数远多于 CoT（成本/延迟翻几倍），生产中慎用，多用于离线复杂任务。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.01.9",
       "category": "agent",
       "module": 1,
       "moduleName": "Agent 核心机制",
-      "index": 9,
+      "index": 1.9,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -396,14 +402,16 @@
         "**失败处理**:参数校验 → 失败信息喂回模型重试(见 Q09.3);超时/异常降级。",
         "**安全**:高危工具加权限/确认(见 Q10.8)。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.01.10",
       "category": "agent",
       "module": 1,
       "moduleName": "Agent 核心机制",
-      "index": 10,
+      "index": 1.1,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -416,14 +424,16 @@
         "**外部中断**:异常、超时、人工介入取消。",
         "**关键认知**:ReAct loop 完整结构是 Thought → Action → Observation → ...(循环)→ Thought → **Final Answer**,终止时必须给出最终答案,不能停在半路。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.02.1",
       "category": "agent",
       "module": 2,
       "moduleName": "LLM 三大范式",
-      "index": 1,
+      "index": 2.1,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -438,14 +448,16 @@
         "代价来源:分支因子 b、深度 d 下节点数 ~b^d,搜索算法(BFS/DFS)+ 状态评估器(LLM 打分/投票)成本远高于线性 CoT。",
         "**选型**：成本 CoT < Self-Consistency < ToT；复杂度反向递增。生产中绝大多数场景用 CoT 即可。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.02.2",
       "category": "agent",
       "module": 2,
       "moduleName": "LLM 三大范式",
-      "index": 2,
+      "index": 2.2,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -478,7 +490,7 @@
       "category": "agent",
       "module": 2,
       "moduleName": "LLM 三大范式",
-      "index": 3,
+      "index": 2.3,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -492,14 +504,16 @@
         "**格式一致**：示例的输入输出格式要统一，引导模型对齐。",
         "**进阶**：动态 few-shot（按 query 实时检索示例）优于静态固定。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.02.4",
       "category": "agent",
       "module": 2,
       "moduleName": "LLM 三大范式",
-      "index": 4,
+      "index": 2.4,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -531,7 +545,7 @@
       "category": "agent",
       "module": 2,
       "moduleName": "LLM 三大范式",
-      "index": 5,
+      "index": 2.5,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -547,14 +561,16 @@
         "**Function Calling 优势**:结构化保证、参数校验、原生支持多轮(工具结果回灌)、provider 优化过。",
         "**注意**:无论哪种方式仍要做参数校验(模型也可能出错),只是出错率显著降低。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.02.6",
       "category": "agent",
       "module": 2,
       "moduleName": "LLM 三大范式",
-      "index": 6,
+      "index": 2.6,
       "type": "qa",
       "difficulty": "初",
       "tags": [],
@@ -565,14 +581,16 @@
         "**Context Engineering**：关注\"**塞什么、塞多少、什么时候清**\"——管理进入上下文的信息流，解决窗口有限与信息爆炸的矛盾。",
         "**关系**：Context Engineering 是 Prompt Engineering 的升级概念，更强调动态信息管理，而非静态指令设计。Agent 场景下 Context Engineering 更关键（因为信息是动态流入的）。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.02.7",
       "category": "agent",
       "module": 2,
       "moduleName": "LLM 三大范式",
-      "index": 7,
+      "index": 2.7,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -587,14 +605,16 @@
         "错误处理变复杂（部分成功部分失败）；",
         "并发会放大下游压力。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.03.1",
       "category": "agent",
       "module": 3,
       "moduleName": "RAG & 知识库",
-      "index": 1,
+      "index": 3.1,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -634,7 +654,7 @@
       "category": "agent",
       "module": 3,
       "moduleName": "RAG & 知识库",
-      "index": 2,
+      "index": 3.2,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -653,14 +673,16 @@
         "**进阶**：Self-RAG——训练模型输出 **reflection token**(`[Retrieve]`/`[NoRetrieve]`、`[Relevant]`/`[Irrelevant]`),让模型在**模型层面**自主决定是否检索、检索结果是否相关、答案是否可信,区别于纯 prompt 层的\"让它自问自答\"。",
         "**兜底**：低置信度时拒绝回答或转人工。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.03.3",
       "category": "agent",
       "module": 3,
       "moduleName": "RAG & 知识库",
-      "index": 3,
+      "index": 3.3,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -679,14 +701,16 @@
         "**质量评估**：定期评测知识有效性，淘汰低使用率 / 低准确率知识；",
         "形成与数据飞轮的闭环（见 Q10.9）。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.03.4",
       "category": "agent",
       "module": 3,
       "moduleName": "RAG & 知识库",
-      "index": 4,
+      "index": 3.4,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -703,14 +727,16 @@
         "图表数据可 OCR + 结构化。",
         "**版式**：用 Layout-aware 切块（保留标题、段落、页眉页脚结构）。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.03.5",
       "category": "agent",
       "module": 3,
       "moduleName": "RAG & 知识库",
-      "index": 5,
+      "index": 3.5,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -736,7 +762,7 @@
       "category": "agent",
       "module": 3,
       "moduleName": "RAG & 知识库",
-      "index": 6,
+      "index": 3.6,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -752,14 +778,16 @@
         "**线性加权**:需归一化各路分数,调权重麻烦。",
         "**场景**：法律（条款编号）、医疗（药名）、企业内部（系统名）等强关键词场景必备。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.03.7",
       "category": "agent",
       "module": 3,
       "moduleName": "RAG & 知识库",
-      "index": 7,
+      "index": 3.7,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -776,14 +804,16 @@
         "区别于一般\"Graph-augmented RAG\"(仅沿图谱关系游走,仍偏局部)。",
         "**代价**：构建图谱 + 社区摘要成本高（大量 LLM 调用）、维护复杂；适合知识关系密集的领域。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.03.8",
       "category": "agent",
       "module": 3,
       "moduleName": "RAG & 知识库",
-      "index": 8,
+      "index": 3.8,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -799,14 +829,16 @@
         "**整体指标**:context_recall(该检索的是否都检索到了)、answer_correctness(对比标准答案)。",
         "**方法论**:先看检索指标定位是召回还是排序问题,再看生成指标定位是否忠实/相关——对应 Q03.1 的优化链路。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.03.9",
       "category": "agent",
       "module": 3,
       "moduleName": "RAG & 知识库",
-      "index": 9,
+      "index": 3.9,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -823,14 +855,16 @@
         "**RAG(检索加载)**:成本低、可扩展到海量文档、精准,但依赖检索质量、有信息丢失风险;",
         "**结论**:不是二选一——文档量小且关键 → 长上下文;海量文档 → RAG;复杂场景可**组合**(RAG 检索 + 长窗口承载)。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.04.1",
       "category": "agent",
       "module": 4,
       "moduleName": "多 Agent 框架",
-      "index": 1,
+      "index": 4.1,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -849,14 +883,16 @@
         "**human-in-the-loop**：可在某节点暂停等人工确认再继续（对应 Q10.8）。",
         "**结论**：纯线性简单流程用 LangChain；涉及循环/状态持久化/断点恢复/人工介入的复杂 Agent 用 LangGraph。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.04.2",
       "category": "agent",
       "module": 4,
       "moduleName": "多 Agent 框架",
-      "index": 2,
+      "index": 4.2,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -875,14 +911,16 @@
         "**共享与隔离**：全局 state 共享；并行分支的中间结果可隔离。",
         "**并发写共享 state 的竞态**:多个 worker 并行写同一字段需注意一致性,可用 reducer 聚合或隔离各分支结果再汇总。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.04.3",
       "category": "agent",
       "module": 4,
       "moduleName": "多 Agent 框架",
-      "index": 3,
+      "index": 4.3,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -902,14 +940,16 @@
         "**超时与心跳**：长任务要有心跳机制，判断任务是否真死。",
         "**工具**：LangGraph checkpointer、Celery 任务队列、工作流引擎（Temporal / Airflow）。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.04.4",
       "category": "agent",
       "module": 4,
       "moduleName": "多 Agent 框架",
-      "index": 4,
+      "index": 4.4,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -923,14 +963,16 @@
         "任务靠多角色自由讨论推进、流程不固定 → AutoGen；",
         "生产级稳定性要求高 → 倾向 LangGraph（可控性强）。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.04.5",
       "category": "agent",
       "module": 4,
       "moduleName": "多 Agent 框架",
-      "index": 5,
+      "index": 4.5,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -949,14 +991,16 @@
         "**核心判断**：多 Agent 的复杂度、延迟、成本都更高，**不要为了多而多**。先单 Agent，证明不够再拆。",
         "**成本量化(硬论据)**:多 Agent 因角色 prompt 常驻 + Agent 间消息传递 + 各自维护独立上下文,**token 消耗通常是单 Agent 的 3~10 倍**,延迟也近似线性增长——这是\"不该用多 Agent\"最硬的论据。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.04.6",
       "category": "agent",
       "module": 4,
       "moduleName": "多 Agent 框架",
-      "index": 6,
+      "index": 4.6,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -971,14 +1015,16 @@
         "**超时处理**：等待超时要有默认策略（拒绝 / 转人工）。",
         "**审计**：所有人工干预记录留痕。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.04.7",
       "category": "agent",
       "module": 4,
       "moduleName": "多 Agent 框架",
-      "index": 7,
+      "index": 4.7,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -995,14 +1041,16 @@
         "**成本**：框架自身开销（额外 LLM 调用、抽象损耗）；",
         "**抽象损耗 / debug 难度**:抽象越重报错越难定位(黑盒),senior 评估时常被追问。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.04.8",
       "category": "agent",
       "module": 4,
       "moduleName": "多 Agent 框架",
-      "index": 8,
+      "index": 4.8,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -1021,14 +1069,16 @@
         "一个 Agent 可以既通过 MCP 调用工具,又通过 A2A 与其他 Agent 协作。",
         "**工程意义**:这是 Agent 从\"单体内嵌\"走向\"开放生态\"的关键基础设施,类似微服务时代的 API 标准。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.04.9",
       "category": "agent",
       "module": 4,
       "moduleName": "多 Agent 框架",
-      "index": 9,
+      "index": 4.9,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -1037,14 +1087,16 @@
       "answer": [
         "**选型**:可控性要求高用 hierarchical;需并行用 fan-out-fan-in;mesh 仅用于探索性协作且必须有终止机制。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.05.1",
       "category": "agent",
       "module": 5,
       "moduleName": "模型训练微调",
-      "index": 1,
+      "index": 5.1,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -1062,14 +1114,16 @@
         "推理成本敏感（小模型微调后替代大模型）。",
         "**核心原则**：先穷尽低成本方案，微调是\"最后的手段\"，且要有评测证明它确实带来提升。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.05.2",
       "category": "agent",
       "module": 5,
       "moduleName": "模型训练微调",
-      "index": 2,
+      "index": 5.2,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -1096,14 +1150,16 @@
         "**SimPO / ORPO**:进一步简化,SimPO 无需 reference model。",
         "**典型组合**：SFT 打底 → DPO/GRPO 对齐。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.05.3",
       "category": "agent",
       "module": 5,
       "moduleName": "模型训练微调",
-      "index": 3,
+      "index": 5.3,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -1123,14 +1179,16 @@
         "混合通用数据防灾难性遗忘。",
         "**数据质量评估**：用 LLM-as-Judge 或人工抽检。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.05.4",
       "category": "agent",
       "module": 5,
       "moduleName": "模型训练微调",
-      "index": 4,
+      "index": 5.4,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -1145,14 +1203,16 @@
         "**LoRA / QLoRA**：只训练少量附加参数，不动原模型，大幅缓解遗忘；",
         "评测时同时测通用能力，监控退化。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.05.5",
       "category": "agent",
       "module": 5,
       "moduleName": "模型训练微调",
-      "index": 5,
+      "index": 5.5,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -1187,7 +1247,7 @@
       "category": "agent",
       "module": 5,
       "moduleName": "模型训练微调",
-      "index": 6,
+      "index": 5.6,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -1209,14 +1269,16 @@
         "多任务 / 多场景可维护多个 LoRA（如不同业务的不同风格）；",
         "缓解灾难性遗忘。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.05.7",
       "category": "agent",
       "module": 5,
       "moduleName": "模型训练微调",
-      "index": 7,
+      "index": 5.7,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -1237,14 +1299,16 @@
         "**early stopping**(在 reward 仍真实时停下);",
         "DPO 因不依赖 RM，一定程度上缓解。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.05.8",
       "category": "agent",
       "module": 5,
       "moduleName": "模型训练微调",
-      "index": 8,
+      "index": 5.8,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -1258,14 +1322,16 @@
         "**典型流程**:大模型生成高质量数据(含推理) → 小模型 SFT 学。",
         "**价值**:小模型在特定任务上逼近大模型,大幅降推理成本——这是 Agent 大规模落地的经济前提之一。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.06.1",
       "category": "agent",
       "module": 6,
       "moduleName": "评测 & 可观测性",
-      "index": 1,
+      "index": 6.1,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -1285,14 +1351,16 @@
         "**基线对比**：每次迭代都要和 baseline 对比，量化提升。",
         "**关键认知**：单一指标会骗人，必须多维交叉（如成功率高但成本飙升）。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.06.2",
       "category": "agent",
       "module": 6,
       "moduleName": "评测 & 可观测性",
-      "index": 2,
+      "index": 6.2,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -1328,7 +1396,7 @@
       "category": "agent",
       "module": 6,
       "moduleName": "评测 & 可观测性",
-      "index": 3,
+      "index": 6.3,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -1347,14 +1415,16 @@
         "**规模**：起步 50~200 条精标，持续扩充。",
         "**版本化**：评测集也要版本管理，迭代时增量补充。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.06.4",
       "category": "agent",
       "module": 6,
       "moduleName": "评测 & 可观测性",
-      "index": 4,
+      "index": 6.4,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -1386,7 +1456,7 @@
       "category": "agent",
       "module": 6,
       "moduleName": "评测 & 可观测性",
-      "index": 5,
+      "index": 6.5,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -1402,14 +1472,16 @@
         "**配合评测**：每次改 Prompt → 跑回归 → 记录分数变化 → 通过才发布。",
         "**工具**：Langfuse Prompt Management、自建平台。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.06.6",
       "category": "agent",
       "module": 6,
       "moduleName": "评测 & 可观测性",
-      "index": 6,
+      "index": 6.6,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -1428,14 +1500,16 @@
         "人工复核疑难 case。",
         "**回流**：归因后进入评测集 / 优化 Prompt / 补知识（数据飞轮，见 Q10.9）。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.06.7",
       "category": "agent",
       "module": 6,
       "moduleName": "评测 & 可观测性",
-      "index": 7,
+      "index": 6.7,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -1450,14 +1524,16 @@
         "**评估**：看 Agent 在扰动下是否仍能正确完成任务，找出崩溃边界。",
         "**价值**：比正常 case 更能暴露问题，是提升鲁棒性的关键手段。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.06.8",
       "category": "agent",
       "module": 6,
       "moduleName": "评测 & 可观测性",
-      "index": 8,
+      "index": 6.8,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -1474,14 +1550,16 @@
         "**方法**:trajectory match(与人工标注的理想轨迹对比)、step-level LLM judge(逐步评)、process reward model(过程奖励)。",
         "**结果 vs 轨迹的取舍**:只看结果会漏掉\"瞎蒙对\"或\"低效但凑对\"的情况;轨迹评测更全面但成本高。生产中常**结果指标为主 + 关键路径轨迹抽检**。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.06.9",
       "category": "agent",
       "module": 6,
       "moduleName": "评测 & 可观测性",
-      "index": 9,
+      "index": 6.9,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -1493,14 +1571,16 @@
         "**Agent**:**AgentBench**、**WebArena**(Web 操作)、**SWE-bench**(开发任务);",
         "**使用认知**:基准只能横向对比,不等于业务表现;最终要以**自建业务评测集**为准。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.07.1",
       "category": "agent",
       "module": 7,
       "moduleName": "程序分析",
-      "index": 1,
+      "index": 7.1,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -1532,7 +1612,7 @@
       "category": "agent",
       "module": 7,
       "moduleName": "程序分析",
-      "index": 2,
+      "index": 7.2,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -1549,14 +1629,16 @@
         "**举例**：找\"未使用的 import\"用 AST；找\"永远不会执行的代码\"用 CFG。",
         "**注意**：动态执行视角 ≠ 动态分析（dynamic analysis 指真运行程序收集 trace,如插桩/日志);CFG 是对程序行为的**静态近似**,因此会有 over/under-approximation(见 Q07.6)。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.07.3",
       "category": "agent",
       "module": 7,
       "moduleName": "程序分析",
-      "index": 3,
+      "index": 7.3,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -1576,14 +1658,16 @@
         "覆盖率分析（用 CFG 看覆盖了哪些路径），补充未覆盖路径的 case。",
         "**进阶**：变异测试（mutate 代码看测试能否检测）。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.07.4",
       "category": "agent",
       "module": 7,
       "moduleName": "程序分析",
-      "index": 4,
+      "index": 7.4,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -1605,14 +1689,16 @@
         "用于：关键词定位、快速扫描、正则匹配。",
         "**互补**：ripgrep 找\"哪里有这个词\" → Tree-sitter 确认\"是不是真的这个符号\"（排除注释 / 字符串） → LSP 找\"完整调用关系\"。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.07.5",
       "category": "agent",
       "module": 7,
       "moduleName": "程序分析",
-      "index": 5,
+      "index": 7.5,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -1628,14 +1714,16 @@
         "代码审计自动化。",
         "**结合 Agent**：让代码 Agent 自动审计 PR，标注潜在污点流，提示开发者。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.07.6",
       "category": "agent",
       "module": 7,
       "moduleName": "程序分析",
-      "index": 6,
+      "index": 7.6,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -1657,14 +1745,16 @@
         "**输出**：受影响文件列表 + 调用链 + 建议测试范围。",
         "**局限**：动态分发、反射、跨服务调用难以精确分析，需结合运行时信息。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.07.7",
       "category": "agent",
       "module": 7,
       "moduleName": "程序分析",
-      "index": 7,
+      "index": 7.7,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -1682,14 +1772,16 @@
         "**soundy**:工程上的折中——理论上不严格 sound,但实践中接近 sound。",
         "**工程意义**:选工具时先问它 sound 还是 complete,决定能否用于安全场景。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.08.1",
       "category": "agent",
       "module": 8,
       "moduleName": "AI 工具 & 工程基础",
-      "index": 1,
+      "index": 8.1,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -1706,14 +1798,16 @@
         "边界：哪些交给 AI、哪些自己做（架构决策、关键逻辑自己把控）。",
         "**加分**：讲清\"AI 不替代思考，替代的是重复劳动\"，体现正确认知（对应 JD1 的理念）。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.08.2",
       "category": "agent",
       "module": 8,
       "moduleName": "AI 工具 & 工程基础",
-      "index": 2,
+      "index": 8.2,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -1735,14 +1829,16 @@
         "**对比传统**：传统是\"想到哪写到哪\"；SDD 是\"想清楚再写\"，AI 放大了 spec 的价值。",
         "**Harness**：指构建可让 AI 自主执行（spec→实现→测试→修复）的工程框架 / 工具链，让 AI 在受控环境内闭环完成开发任务。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.08.3",
       "category": "agent",
       "module": 8,
       "moduleName": "AI 工具 & 工程基础",
-      "index": 3,
+      "index": 8.3,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -1758,14 +1854,16 @@
         "**关注典型问题**：幻觉 API（不存在的函数）、过时的库用法、安全问题。",
         "**经验**：AI 适合\"骨架 + 模板 + 重复逻辑\"；关键业务逻辑、安全相关代码要人主导。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.08.4",
       "category": "agent",
       "module": 8,
       "moduleName": "AI 工具 & 工程基础",
-      "index": 4,
+      "index": 8.4,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -1796,7 +1894,7 @@
       "category": "agent",
       "module": 8,
       "moduleName": "AI 工具 & 工程基础",
-      "index": 5,
+      "index": 8.5,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -1815,14 +1913,16 @@
         "工具描述清晰（description 决定模型选择准确率）。",
         "**价值**：一次实现，全公司的 AI 工具（Cursor / Claude Code / 内部 Agent）都能用。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.08.6",
       "category": "agent",
       "module": 8,
       "moduleName": "AI 工具 & 工程基础",
-      "index": 6,
+      "index": 8.6,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -1845,14 +1945,16 @@
         "缓存（降 QPS）；",
         "队列削峰。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.08.7",
       "category": "agent",
       "module": 8,
       "moduleName": "AI 工具 & 工程基础",
-      "index": 7,
+      "index": 8.7,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -1867,14 +1969,16 @@
         "**缓存**：常见 query 结果缓存，高峰期命中率提升显著。",
         "**排队体验**：高负载时告知用户预计等待，比直接失败体验好。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.08.8",
       "category": "agent",
       "module": 8,
       "moduleName": "AI 工具 & 工程基础",
-      "index": 8,
+      "index": 8.8,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -1896,14 +2000,16 @@
         "temperature>0 时缓存命中率低且可能不一致；",
         "Prompt 里含时间戳 / 随机数会破坏缓存命中。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.08.9",
       "category": "agent",
       "module": 8,
       "moduleName": "AI 工具 & 工程基础",
-      "index": 9,
+      "index": 8.9,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -1925,14 +2031,16 @@
         "这是\"规则文件 = 项目的 AI 接口\"。",
         "**写好它的要点**:简洁、结构化、给 do/don't、给示例、定期维护。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.08.10",
       "category": "agent",
       "module": 8,
       "moduleName": "AI 工具 & 工程基础",
-      "index": 10,
+      "index": 8.1,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -1942,14 +2050,16 @@
         "**结论**:主流 Coding Agent 倾向 search-replace 块——它不依赖精确行号,容错好。",
         "**关联**:这正是 Coding Agent 的核心工程难点之一(见模块 13 edit formats)。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.08.11",
       "category": "agent",
       "module": 8,
       "moduleName": "AI 工具 & 工程基础",
-      "index": 11,
+      "index": 8.11,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -1961,14 +2071,16 @@
         "**组合实践**:Cursor(日常)+ Claude Code(复杂/自动化),而非一个工具打天下。",
         "**选型维度**:可视化需求、工具能力、是否需 git/CI 集成、代码是否可上云、成本。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.09.1",
       "category": "agent",
       "module": 9,
       "moduleName": "实战踩坑",
-      "index": 1,
+      "index": 9.1,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -1994,7 +2106,7 @@
       "category": "agent",
       "module": 9,
       "moduleName": "实战踩坑",
-      "index": 2,
+      "index": 9.2,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -2009,14 +2121,16 @@
         "引入\"任务完成判定器\"——每步后检查目标是否全部达成；",
         "system prompt 强约束：\"在所有用户目标完成前，必须继续执行或询问用户\"。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.09.3",
       "category": "agent",
       "module": 9,
       "moduleName": "实战踩坑",
-      "index": 3,
+      "index": 9.3,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -2037,14 +2151,16 @@
         "重试仍失败 → 降级或转人工。",
         "**模型侧**：换 function calling 支持更好的模型；适当降 temperature。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.09.4",
       "category": "agent",
       "module": 9,
       "moduleName": "实战踩坑",
-      "index": 4,
+      "index": 9.4,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -2058,14 +2174,16 @@
         "长期记忆外置到向量库，按需检索注入；",
         "控制单次上下文长度，必要时分段处理。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.09.5",
       "category": "agent",
       "module": 9,
       "moduleName": "实战踩坑",
-      "index": 5,
+      "index": 9.5,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -2089,7 +2207,7 @@
       "category": "agent",
       "module": 9,
       "moduleName": "实战踩坑",
-      "index": 6,
+      "index": 9.6,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -2118,7 +2236,7 @@
       "category": "agent",
       "module": 9,
       "moduleName": "实战踩坑",
-      "index": 7,
+      "index": 9.7,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -2131,14 +2249,16 @@
         "**降级**：工具不可用时返回兜底结果或换备用工具。",
         "**异步化**：耗时工具改异步（先返回\"处理中\"，完成再通知）。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.09.8",
       "category": "agent",
       "module": 9,
       "moduleName": "实战踩坑",
-      "index": 8,
+      "index": 9.8,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -2157,14 +2277,16 @@
         "工具参数缓冲 + 完整性校验后再执行;",
         "区分\"展示用流式\"和\"解析用完整结果\"。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.10.1",
       "category": "agent",
       "module": 10,
       "moduleName": "生产级工程化",
-      "index": 1,
+      "index": 10.1,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -2194,7 +2316,7 @@
       "category": "agent",
       "module": 10,
       "moduleName": "生产级工程化",
-      "index": 2,
+      "index": 10.2,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -2207,14 +2329,16 @@
         "**灰度发布**：小流量灰度（如 5% → 20% → 100%），观察线上指标后再全量。",
         "**可回滚**：保留旧版本，出问题秒回滚（Prompt 也要版本管理，见模块 06）。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.10.3",
       "category": "agent",
       "module": 10,
       "moduleName": "生产级工程化",
-      "index": 3,
+      "index": 10.3,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -2243,7 +2367,7 @@
       "category": "agent",
       "module": 10,
       "moduleName": "生产级工程化",
-      "index": 4,
+      "index": 10.4,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -2273,7 +2397,7 @@
       "category": "agent",
       "module": 10,
       "moduleName": "生产级工程化",
-      "index": 5,
+      "index": 10.5,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -2289,14 +2413,16 @@
         "**成本控制**：并发会放大成本，需配预算上限。",
         "**背压**：下游扛不住时主动限流 / 排队，不硬冲。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.10.6",
       "category": "agent",
       "module": 10,
       "moduleName": "生产级工程化",
-      "index": 6,
+      "index": 10.6,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -2323,7 +2449,7 @@
       "category": "agent",
       "module": 10,
       "moduleName": "生产级工程化",
-      "index": 7,
+      "index": 10.7,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -2352,7 +2478,7 @@
       "category": "agent",
       "module": 10,
       "moduleName": "生产级工程化",
-      "index": 8,
+      "index": 10.8,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -2366,14 +2492,16 @@
         "**沙箱隔离**：文件 / 网络等敏感操作在沙箱内执行，限制爆炸半径。",
         "**额度限制**：金额、频率上限。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.10.9",
       "category": "agent",
       "module": 10,
       "moduleName": "生产级工程化",
-      "index": 9,
+      "index": 10.9,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -2405,7 +2533,7 @@
       "category": "agent",
       "module": 11,
       "moduleName": "计算机基础落地",
-      "index": 1,
+      "index": 11.1,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -2429,7 +2557,7 @@
       "category": "agent",
       "module": 11,
       "moduleName": "计算机基础落地",
-      "index": 2,
+      "index": 11.2,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -2443,14 +2571,16 @@
         "不同 embedding 模型的输出尺度不同，归一化统一。",
         "**余弦 vs 欧式**：归一化后,欧氏距离 ‖a−b‖ 与余弦相似度**单调对应(排序结果一致)**,所以检索时二者可互相替代(注意:是排序等价,不是数值相等);余弦对长度不敏感，更适合文本语义。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.11.3",
       "category": "agent",
       "module": 11,
       "moduleName": "计算机基础落地",
-      "index": 3,
+      "index": 11.3,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -2475,7 +2605,7 @@
       "category": "agent",
       "module": 11,
       "moduleName": "计算机基础落地",
-      "index": 4,
+      "index": 11.4,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -2491,14 +2621,16 @@
         "**工具结果缓存**；",
         "**KV Cache 淘汰**（推理引擎内部）。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.11.5",
       "category": "agent",
       "module": 11,
       "moduleName": "计算机基础落地",
-      "index": 5,
+      "index": 11.5,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -2513,14 +2645,16 @@
         "进阶:被剔除的内容触发摘要压缩(rolling summary),摘要常驻;",
         "边界:单轮就超限的处理(截断该轮或报错)。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.11.6",
       "category": "agent",
       "module": 11,
       "moduleName": "计算机基础落地",
-      "index": 6,
+      "index": 11.6,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -2536,14 +2670,16 @@
         "**MapReduce**：超长文档先分块摘要，再汇总摘要（两阶段）。",
         "**评测驱动**：不同切法跑评测集对比，选最优。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.11.7",
       "category": "agent",
       "module": 11,
       "moduleName": "计算机基础落地",
-      "index": 7,
+      "index": 11.7,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -2567,7 +2703,7 @@
       "category": "agent",
       "module": 11,
       "moduleName": "计算机基础落地",
-      "index": 8,
+      "index": 11.8,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -2579,14 +2715,16 @@
         "**解耦**：生产者（模型）不关心有多少消费者，消费者按需订阅。",
         "**LangChain 的 Callbacks** 就是观察者模式的实现。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.11.9",
       "category": "agent",
       "module": 11,
       "moduleName": "计算机基础落地",
-      "index": 9,
+      "index": 11.9,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -2601,14 +2739,16 @@
         "易扩展（新增检查只加一个 handler）。",
         "**落地**：Python 可用函数链 / 类继承；Web 框架中间件本质就是责任链。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.11.10",
       "category": "agent",
       "module": 11,
       "moduleName": "计算机基础落地",
-      "index": 10,
+      "index": 11.1,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -2624,14 +2764,16 @@
         "**human-in-loop**：某节点暂停等人工确认。",
         "**本质**：Agent 的执行是**带状态的非线性流程**，状态机是最自然的建模方式。函数链只能表达\"配方\"，状态机能表达\"流程\"。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.12.1",
       "category": "agent",
       "module": 12,
       "moduleName": "大模型原理与架构",
-      "index": 1,
+      "index": 12.1,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -2664,7 +2806,7 @@
       "category": "agent",
       "module": 12,
       "moduleName": "大模型原理与架构",
-      "index": 2,
+      "index": 12.2,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -2692,7 +2834,7 @@
       "category": "agent",
       "module": 12,
       "moduleName": "大模型原理与架构",
-      "index": 3,
+      "index": 12.3,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -2705,14 +2847,16 @@
         "**为什么主流**:**LLaMA-3、Qwen2、Mistral** 全尺寸用 GQA;注意 LLaMA-2 **只有 70B 用 GQA**,7B/13B 仍是标准 MHA。GQA 在**推理效率**和**模型质量**间取得平衡,KV Cache 显著减小 → 更高吞吐、更长上下文。",
         "**工程意义**:选模型时关注是否用 GQA,影响推理成本。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.12.4",
       "category": "agent",
       "module": 12,
       "moduleName": "大模型原理与架构",
-      "index": 4,
+      "index": 12.4,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -2734,14 +2878,16 @@
         "**关键认知**:标称 128K ≠ 有效 128K(中段召回率下降),实际有效长度需用 needle-in-haystack 测。",
         "**工程意义**:RoPE 模型可通过上述技术把 4K 模型扩展到 32K/128K+ 长上下文。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.12.5",
       "category": "agent",
       "module": 12,
       "moduleName": "大模型原理与架构",
-      "index": 5,
+      "index": 12.5,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -2769,7 +2915,7 @@
       "category": "agent",
       "module": 12,
       "moduleName": "大模型原理与架构",
-      "index": 6,
+      "index": 12.6,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -2786,14 +2932,16 @@
         "选用对中文友好的模型(GLM/Qwen)能省 token。",
         "**实践**:开发时用 tokenizer 库实际计数,别用字数估算。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.12.7",
       "category": "agent",
       "module": 12,
       "moduleName": "大模型原理与架构",
-      "index": 7,
+      "index": 12.7,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -2814,14 +2962,16 @@
         "**进阶结构**:DeepSeek 提出 **shared expert(共享专家,常驻激活)** + routed expert(被路由激活),共享专家承担通用知识、路由专家承担专业化,缓解\"共享知识被稀释\"问题。",
         "**工程意义**:MoE 模型推理需特殊优化(专家并行 expert parallelism),部署成本评估要看**激活参数**而非总参数。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.12.8",
       "category": "agent",
       "module": 12,
       "moduleName": "大模型原理与架构",
-      "index": 8,
+      "index": 12.8,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -2836,14 +2986,16 @@
         "小模型在简单任务上可能够用(模型路由的依据,见 Q10.6);",
         "新能力往往需要足够规模才稳定(如 function calling 在小模型上不稳)。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.12.9",
       "category": "agent",
       "module": 12,
       "moduleName": "大模型原理与架构",
-      "index": 9,
+      "index": 12.9,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -2866,14 +3018,16 @@
         "让模型会说\"不知道\"。",
         "**关键认知**:**幻觉是 feature 不是 bug**——生成模型的\"创造力\"和\"幻觉\"是同一机制的两面。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.12.10",
       "category": "agent",
       "module": 12,
       "moduleName": "大模型原理与架构",
-      "index": 10,
+      "index": 12.1,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -2893,14 +3047,16 @@
         "分段处理 + 摘要(MapReduce)。",
         "**选型**:不是越长越好,看模型在长上下文下的**有效表现**,而非标称窗口。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.12.11",
       "category": "agent",
       "module": 12,
       "moduleName": "大模型原理与架构",
-      "index": 11,
+      "index": 12.11,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -2918,14 +3074,16 @@
         "让模型**更有用、无害、诚实**,符合人类价值观。",
         "**工程意义**:理解这三层,就知道 base 模型为什么不能直接用、为什么要 chat 版本、微调改的是哪一层。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.12.12",
       "category": "agent",
       "module": 12,
       "moduleName": "大模型原理与架构",
-      "index": 12,
+      "index": 12.12,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -2937,14 +3095,16 @@
         "**组合价值**:这是 LLM 服务高吞吐、低延迟的核心工程手段。",
         "**Speculative Decoding 注意**:它减少的是大模型的**串行自回归步数**(一次验证多个),不是单纯\"减少 forward 次数\";draft/target 必须分词兼容,且有\"接受概率\"决定实际加速比。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.12.13",
       "category": "agent",
       "module": 12,
       "moduleName": "大模型原理与架构",
-      "index": 13,
+      "index": 12.13,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -2975,7 +3135,7 @@
       "category": "agent",
       "module": 13,
       "moduleName": "Coding Agent 与产品架构",
-      "index": 1,
+      "index": 13.1,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -2999,7 +3159,7 @@
       "category": "agent",
       "module": 13,
       "moduleName": "Coding Agent 与产品架构",
-      "index": 2,
+      "index": 13.2,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -3030,7 +3190,7 @@
       "category": "agent",
       "module": 13,
       "moduleName": "Coding Agent 与产品架构",
-      "index": 3,
+      "index": 13.3,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -3055,7 +3215,7 @@
       "category": "agent",
       "module": 13,
       "moduleName": "Coding Agent 与产品架构",
-      "index": 4,
+      "index": 13.4,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -3075,14 +3235,16 @@
         "**核心矛盾**:检索 recall(不漏)vs context 预算(不爆),需平衡。",
         "**详见模块 07 的代码库理解方案(Q07.1)。**"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.13.4.5",
       "category": "agent",
       "module": 13,
       "moduleName": "Coding Agent 与产品架构",
-      "index": 4.5,
+      "index": 13.4,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -3095,14 +3257,16 @@
         "**关联**:这是 Coding Agent 的核心工程难点,diff 看似标准实则模型最不擅长(对齐行号难)。",
         "**Claude Code 的工具设计参考**:Read/Edit/Glob/Grep/Bash + Task(派发子 agent)+ hooks,Edit 用 search-replace 格式。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.13.5",
       "category": "agent",
       "module": 13,
       "moduleName": "Coding Agent 与产品架构",
-      "index": 5,
+      "index": 13.5,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -3119,14 +3283,16 @@
         "**Apply 机制**:AI 生成 diff,人 review 后一键应用。",
         "**本质演进**:从\"补全工具\"→\"协同编辑器\"→\"Agent\"。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.13.6",
       "category": "agent",
       "module": 13,
       "moduleName": "Coding Agent 与产品架构",
-      "index": 6,
+      "index": 13.6,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -3163,7 +3329,7 @@
       "category": "agent",
       "module": 13,
       "moduleName": "Coding Agent 与产品架构",
-      "index": 7,
+      "index": 13.7,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -3181,14 +3347,16 @@
         "各家(Claude/GPT/Devin)都刷这个榜。",
         "**局限**:覆盖偏 Python、测试覆盖度影响结果、不评估代码质量(只看测试通过)。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.13.8",
       "category": "agent",
       "module": 13,
       "moduleName": "Coding Agent 与产品架构",
-      "index": 8,
+      "index": 13.8,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -3203,14 +3371,16 @@
         "**关键认知**:Agent 的优势不是\"一次写对\",而是**\"能快速迭代到对\"**——把人类来回调试的过程自动化。",
         "**工程意义**:给 Agent 配测试工具 + 允许它多轮迭代,比追求\"一次生成\"更现实、效果更好。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.13.9",
       "category": "agent",
       "module": 13,
       "moduleName": "Coding Agent 与产品架构",
-      "index": 9,
+      "index": 13.9,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -3232,14 +3402,16 @@
         "单人产出放大,团队规模可能缩小,但不是消失。",
         "**(展开见模块 15 的程序员定位讨论)**"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.14.1",
       "category": "agent",
       "module": 14,
       "moduleName": "AI 工作流与方法论",
-      "index": 1,
+      "index": 14.1,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -3270,7 +3442,7 @@
       "category": "agent",
       "module": 14,
       "moduleName": "AI 工作流与方法论",
-      "index": 2,
+      "index": 14.2,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -3291,14 +3463,16 @@
         "**价值**:从\"增强个人\"升级到\"派发任务给 AI 同事\",处理多文件、多步骤的复杂任务。",
         "**代价**:可控性下降、成本上升、需要 review 机制。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.14.3",
       "category": "agent",
       "module": 14,
       "moduleName": "AI 工作流与方法论",
-      "index": 3,
+      "index": 14.3,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -3336,7 +3510,7 @@
       "category": "agent",
       "module": 14,
       "moduleName": "AI 工作流与方法论",
-      "index": 4,
+      "index": 14.4,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -3358,14 +3532,16 @@
         "**与多 Agent 协作的关系**:Subagent 是多 Agent 的一种具体落地(supervisor 模式,见模块 01/04)。",
         "**关键认知**:Subagent 的最大价值是**上下文管理**,而非\"分工\"本身。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.14.5",
       "category": "agent",
       "module": 14,
       "moduleName": "AI 工作流与方法论",
-      "index": 5,
+      "index": 14.5,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -3385,14 +3561,16 @@
         "**本质**:把\"Plan-and-Execute\"模式(模块 01)应用到开发工作流。",
         "**实例**:Claude Code 的 TodoWrite、Cursor 的 plan 模式、各类 Agent 框架的任务列表。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.14.6",
       "category": "agent",
       "module": 14,
       "moduleName": "AI 工作流与方法论",
-      "index": 6,
+      "index": 14.6,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -3428,7 +3606,7 @@
       "category": "agent",
       "module": 14,
       "moduleName": "AI 工作流与方法论",
-      "index": 7,
+      "index": 14.7,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -3443,14 +3621,16 @@
         "**小步快跑 + 持续验证**,而不是\"一次性大生成\"。",
         "**加分**:量化提效(时间/质量),讲清边界(哪些必须人做)。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.14.8",
       "category": "agent",
       "module": 14,
       "moduleName": "AI 工作流与方法论",
-      "index": 8,
+      "index": 14.8,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -3472,14 +3652,16 @@
         "**静态检查**:lint、类型、安全扫描。",
         "**原则**:把 AI 代码当\"初级工程师的 PR\"对待,走同样的质量门禁。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.14.9",
       "category": "agent",
       "module": 14,
       "moduleName": "AI 工作流与方法论",
-      "index": 9,
+      "index": 14.9,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -3498,14 +3680,16 @@
         "团队规范一次定义,全员(含 AI)遵守。",
         "**关键认知**:**规则文件是项目的\"AI 接口\"**,把隐性知识显性化。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.14.10",
       "category": "agent",
       "module": 14,
       "moduleName": "AI 工作流与方法论",
-      "index": 10,
+      "index": 14.1,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -3524,14 +3708,16 @@
         "**务实做法**:记录关键任务的\"AI 前 vs AI 后\"耗时,长期对比。",
         "**注意**:不要只看\"生成多少代码\",要看**交付的业务价值**。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.14.11",
       "category": "agent",
       "module": 14,
       "moduleName": "AI 工作流与方法论",
-      "index": 11,
+      "index": 14.11,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -3550,14 +3736,16 @@
         "Prompt 库(常用模板)。",
         "**原则**:不同任务用不同工具,而非一个工具打天下;**组合 > 单一**。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.14.12",
       "category": "agent",
       "module": 14,
       "moduleName": "AI 工作流与方法论",
-      "index": 12,
+      "index": 14.12,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -3577,14 +3765,16 @@
         "未来工程师要**双修**:既要会写代码(理解底层),又要会\"写 Prompt/搭 Agent\"(指挥 AI)。",
         "**关键认知**:AI 时代,代码量不是价值,**解决问题的能力才是**;Prompt 是新的\"编程语言\",但工程素养仍是根基。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.15.1",
       "category": "agent",
       "module": 15,
       "moduleName": "AI 时代认知与行为面",
-      "index": 1,
+      "index": 15.1,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -3618,7 +3808,7 @@
       "category": "agent",
       "module": 15,
       "moduleName": "AI 时代认知与行为面",
-      "index": 2,
+      "index": 15.2,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -3638,14 +3828,16 @@
         "**容易被替代的**:明确、重复、模式内的编码工作。",
         "**结论**:与其担心被替代,不如**把 AI 变成自己的杠杆**,做 AI 做不了的事,让 AI 做 AI 能做的事。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.15.2.5",
       "category": "agent",
       "module": 15,
       "moduleName": "AI 时代认知与行为面",
-      "index": 2.5,
+      "index": 15.2,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -3666,14 +3858,16 @@
         "**建立使用规范**:团队制定 AI 使用红线(哪些能做、哪些需审批),高危操作留痕。",
         "**认知**:安全合规不是阻碍 AI,是让 AI 可持续、规模化落地的前提。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.15.3",
       "category": "agent",
       "module": 15,
       "moduleName": "AI 时代认知与行为面",
-      "index": 3,
+      "index": 15.3,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -3691,14 +3885,16 @@
         "**加分**:能讲清\"这个方向对业务/自己的影响\",而非纯学术。",
         "**避免**:只甩名词、说不出所以然。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.15.4",
       "category": "agent",
       "module": 15,
       "moduleName": "AI 时代认知与行为面",
-      "index": 4,
+      "index": 15.4,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -3712,14 +3908,16 @@
         "**答题结构**:场景 → 具体做法 → 效果 → 我的判断(哪些交 AI、哪些自己做)。",
         "**加分**:讲一个\"用 AI 做了以前做不到的事\"(能力扩展),而非仅\"做得更快\"。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.15.5",
       "category": "agent",
       "module": 15,
       "moduleName": "AI 时代认知与行为面",
-      "index": 5,
+      "index": 15.5,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -3734,14 +3932,16 @@
         "**安全风险**:AI 生成硬编码密钥 → Review 重点查安全。",
         "**体现成长**:每个坑要讲\"后来我怎么避免\",展示学习能力。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.15.6",
       "category": "agent",
       "module": 15,
       "moduleName": "AI 时代认知与行为面",
-      "index": 6,
+      "index": 15.6,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -3757,14 +3957,16 @@
         "**度量**:跟踪团队提效指标,持续迭代。",
         "**关键认知**:推广不是\"逼大家用\",是\"让大家看到价值、降低门槛、形成习惯\"。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.15.7",
       "category": "agent",
       "module": 15,
       "moduleName": "AI 时代认知与行为面",
-      "index": 7,
+      "index": 15.7,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -3797,14 +3999,16 @@
         "别只讲技术不讲业务价值;",
         "量化结果(没有数字的项目经验很苍白)。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.15.8",
       "category": "agent",
       "module": 15,
       "moduleName": "AI 时代认知与行为面",
-      "index": 8,
+      "index": 15.8,
       "type": "qa",
       "difficulty": "高",
       "tags": [],
@@ -3818,14 +4022,16 @@
         "**方法论**:如果用现在的认知(SDD/Skills)会怎么做。",
         "**关键**:展示你不固步自封,有复盘和迭代意识。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.15.9",
       "category": "agent",
       "module": 15,
       "moduleName": "AI 时代认知与行为面",
-      "index": 9,
+      "index": 15.9,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -3841,14 +4047,16 @@
         "**看源码 / 官方文档**:深入时回到一手资料。",
         "**AI 的作用**:把 AI 当导师(解释、答疑、出题、debug),大幅加速学习。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.15.10",
       "category": "agent",
       "module": 15,
       "moduleName": "AI 时代认知与行为面",
-      "index": 10,
+      "index": 15.1,
       "type": "qa",
       "difficulty": "中",
       "tags": [],
@@ -3862,14 +4070,65 @@
         "关注结果,也注重过程沉淀(可复用的 Skills/经验)。",
         "**避免**:空喊\"我抗压\"\"我热爱加班\";讲具体怎么应对过压力。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
+    },
+    {
+      "id": "agent.15.10.5",
+      "category": "agent",
+      "module": 15,
+      "moduleName": "AI 时代认知与行为面",
+      "index": 15.1,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "必问"
+      ],
+      "title": "你的职业规划是什么(3~5 年)?",
+      "focus": "几乎必问,考察是否有清晰成长路径、与岗位是否匹配。",
+      "answer": [
+        "**结合 Agent 方向的成长路径**(双轨):",
+        "**专家轨**:成为深度驾驭 AI、能搭建核心 Agent 体系的专家(深入模型层 + 工程化);",
+        "**复合轨**:成为带领团队运用 AI 创造价值的复合型人才(技术 + 业务 + 影响力)。",
+        "**具体规划(体现务实)**:",
+        "短期(1 年):扎根某个 Agent 方向,做出可量化的业务/技术成果;",
+        "中期(2~3 年):成为该方向 owner,沉淀方法论/平台,放大影响;",
+        "长期:看是深做技术专家还是带团队。",
+        "**避免**:空泛(\"我想成为架构师\")、与岗位无关、只谈钱/职级。",
+        "**关键**:规划要和投的岗位匹配(如投 JD1 强调平台化,投 JD4 强调代码智能体深耕)。"
+      ],
+      "followups": [
+        ""
+      ]
+    },
+    {
+      "id": "agent.15.10.6",
+      "category": "agent",
+      "module": 15,
+      "moduleName": "AI 时代认知与行为面",
+      "index": 15.1,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [],
+      "title": "为什么离开现公司?最大的挫折 / 冲突是什么?",
+      "focus": "经典压力/协作题,看人品与反思能力。",
+      "answer": [
+        "**离职动机**:从\"成长/方向\"角度讲(求更大空间、想做 Agent 方向),**避免抱怨现公司**;",
+        "**挫折/冲突**:用 STAR 讲真实经历——重点放在**你怎么解决、学到了什么**,而非冲突本身;",
+        "**红线**:不抱怨前同事/老板、不泄露商业机密、不表现情绪化;",
+        "**体现**:抗压、复盘能力、职业素养。"
+      ],
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.15.11",
       "category": "agent",
       "module": 15,
       "moduleName": "AI 时代认知与行为面",
-      "index": 11,
+      "index": 15.11,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -3889,59 +4148,16 @@
         "Coding Agent(JD4):用 AI 改造研发本身,方向前沿。",
         "**真诚 + 具体**:别泛泛而谈,要体现你了解这个团队做什么。"
       ],
-      "followups": []
-    },
-    {
-      "id": "agent.15.10.5",
-      "category": "agent",
-      "module": 15,
-      "moduleName": "AI 时代认知与行为面",
-      "index": 10.5,
-      "type": "qa",
-      "difficulty": "中",
-      "tags": [
-        "必问"
-      ],
-      "title": "你的职业规划是什么(3~5 年)?",
-      "focus": "几乎必问,考察是否有清晰成长路径、与岗位是否匹配。",
-      "answer": [
-        "**结合 Agent 方向的成长路径**(双轨):",
-        "**专家轨**:成为深度驾驭 AI、能搭建核心 Agent 体系的专家(深入模型层 + 工程化);",
-        "**复合轨**:成为带领团队运用 AI 创造价值的复合型人才(技术 + 业务 + 影响力)。",
-        "**具体规划(体现务实)**:",
-        "短期(1 年):扎根某个 Agent 方向,做出可量化的业务/技术成果;",
-        "中期(2~3 年):成为该方向 owner,沉淀方法论/平台,放大影响;",
-        "长期:看是深做技术专家还是带团队。",
-        "**避免**:空泛(\"我想成为架构师\")、与岗位无关、只谈钱/职级。",
-        "**关键**:规划要和投的岗位匹配(如投 JD1 强调平台化,投 JD4 强调代码智能体深耕)。"
-      ],
-      "followups": []
-    },
-    {
-      "id": "agent.15.10.6",
-      "category": "agent",
-      "module": 15,
-      "moduleName": "AI 时代认知与行为面",
-      "index": 10.6,
-      "type": "qa",
-      "difficulty": "高",
-      "tags": [],
-      "title": "为什么离开现公司?最大的挫折 / 冲突是什么?",
-      "focus": "经典压力/协作题,看人品与反思能力。",
-      "answer": [
-        "**离职动机**:从\"成长/方向\"角度讲(求更大空间、想做 Agent 方向),**避免抱怨现公司**;",
-        "**挫折/冲突**:用 STAR 讲真实经历——重点放在**你怎么解决、学到了什么**,而非冲突本身;",
-        "**红线**:不抱怨前同事/老板、不泄露商业机密、不表现情绪化;",
-        "**体现**:抗压、复盘能力、职业素养。"
-      ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "agent.15.12",
       "category": "agent",
       "module": 15,
       "moduleName": "AI 时代认知与行为面",
-      "index": 12,
+      "index": 15.12,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -3961,14 +4177,16 @@
         "**避免**:问百度能查到的、只关心钱/加班(留到 HR 面)。",
         "**价值**:好问题 = 展示你懂行 + 真感兴趣。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "fe.01.1",
       "category": "fe",
       "module": 1,
       "moduleName": "AI",
-      "index": 1,
+      "index": 1.1,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -3997,7 +4215,7 @@
       "category": "fe",
       "module": 1,
       "moduleName": "AI",
-      "index": 2,
+      "index": 1.2,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -4027,7 +4245,7 @@
       "category": "fe",
       "module": 1,
       "moduleName": "AI",
-      "index": 3,
+      "index": 1.3,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -4051,7 +4269,7 @@
       "category": "fe",
       "module": 1,
       "moduleName": "AI",
-      "index": 4,
+      "index": 1.4,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -4077,7 +4295,7 @@
       "category": "fe",
       "module": 2,
       "moduleName": "算法",
-      "index": 5,
+      "index": 2.5,
       "type": "qa",
       "difficulty": "初",
       "tags": [
@@ -4102,7 +4320,7 @@
       "category": "fe",
       "module": 2,
       "moduleName": "算法",
-      "index": 6,
+      "index": 2.6,
       "type": "qa",
       "difficulty": "初",
       "tags": [
@@ -4125,7 +4343,7 @@
       "category": "fe",
       "module": 2,
       "moduleName": "算法",
-      "index": 7,
+      "index": 2.7,
       "type": "qa",
       "difficulty": "初",
       "tags": [
@@ -4155,7 +4373,7 @@
       "category": "fe",
       "module": 2,
       "moduleName": "算法",
-      "index": 8,
+      "index": 2.8,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -4180,7 +4398,7 @@
       "category": "fe",
       "module": 2,
       "moduleName": "算法",
-      "index": 9,
+      "index": 2.9,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -4206,7 +4424,7 @@
       "category": "fe",
       "module": 2,
       "moduleName": "算法",
-      "index": 10,
+      "index": 2.1,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -4230,7 +4448,7 @@
       "category": "fe",
       "module": 2,
       "moduleName": "算法",
-      "index": 11,
+      "index": 2.11,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -4259,7 +4477,7 @@
       "category": "fe",
       "module": 2,
       "moduleName": "算法",
-      "index": 12,
+      "index": 2.12,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -4282,7 +4500,7 @@
       "category": "fe",
       "module": 2,
       "moduleName": "算法",
-      "index": 13,
+      "index": 2.13,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -4310,7 +4528,7 @@
       "category": "fe",
       "module": 2,
       "moduleName": "算法",
-      "index": 14,
+      "index": 2.14,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -4320,7 +4538,51 @@
       "title": "实现对象的深度优先遍历（DFS）与广度优先遍历（BFS）。",
       "focus": "DFS 用递归（或栈）一路向下钻；BFS 用队列一层一层扫。两者都需 visited 集合防环。",
       "answer": [
-        "前端常考「对象/树」的遍历（区别于图，但写法类似）。"
+        "前端常考「对象/树」的遍历（区别于图，但写法类似）。",
+        "**DFS（深度优先）**：递归最自然——先处理当前节点，再依次递归所有子节点。也可用栈迭代。适合「找最深路径」「树形菜单折叠」。",
+        "**BFS（广度优先）**：用队列，先进先出。当前层所有节点处理完才进下一层。适合「最短路径」「按层输出」「找最近的目标」。",
+        "**防环**：对象可能有循环引用（如 a.b = a），需用 Set 记录已访问对象，避免死循环。WeakSet 更合适（不阻止 GC）。",
+        "复杂度：均 O(V+E)。",
+        "**示例:**",
+        "```javascript",
+        "const tree = {",
+        "  name: 'root',",
+        "  children: [",
+        "    { name: 'A', children: [{ name: 'A1' }, { name: 'A2' }] },",
+        "    { name: 'B', children: [{ name: 'B1' }] }",
+        "  ]",
+        "};",
+        "// DFS（递归）",
+        "function dfs(node, out = []) {",
+        "  if (!node) return out;",
+        "  out.push(node.name);",
+        "  (node.children || []).forEach(c => dfs(c, out));",
+        "  return out;",
+        "}",
+        "console.log(dfs(tree)); // ['root','A','A1','A2','B','B1']",
+        "// DFS（迭代，用栈）",
+        "function dfsIter(root) {",
+        "  const out = [], stack = [root];",
+        "  while (stack.length) {",
+        "    const node = stack.pop();",
+        "    out.push(node.name);",
+        "    // 倒序入栈保证从左到右访问",
+        "    (node.children || []).reverse().forEach(c => stack.push(c));",
+        "  }",
+        "  return out;",
+        "}",
+        "// BFS（队列）",
+        "function bfs(root) {",
+        "  const out = [], queue = [root];",
+        "  while (queue.length) {",
+        "    const node = queue.shift();",
+        "    out.push(node.name);",
+        "    (node.children || []).forEach(c => queue.push(c));",
+        "  }",
+        "  return out;",
+        "}",
+        "console.log(bfs(tree)); // ['root','A','B','A1','A2','B1']",
+        "```"
       ],
       "followups": [
         "如何检测对象的循环引用？（DFS/BFS + WeakSet，或 JSON.stringify 捕获异常）",
@@ -4333,7 +4595,7 @@
       "category": "fe",
       "module": 2,
       "moduleName": "算法",
-      "index": 15,
+      "index": 2.15,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -4342,7 +4604,42 @@
       "title": "用两个队列实现一个栈，支持 push / pop / top 操作。",
       "focus": "两种实现：①push 时把新元素加到空队列 q2，再把 q1 全部倒进 q2，交换 q1/q2（保证 q1 队首始终是栈顶）；②pop 时把 q1 前 n-1 个倒进 q2，剩最后一个弹出。",
       "answer": [
-        "**思路**：栈是 LIFO，队列是 FIFO。用两个队列互相倒腾，让「最后进的元素」跑到队首。"
+        "push：把元素入 q2；把 q1 的全部元素依次出队再入 q2（这样新元素在队首）；最后交换 q1、q2。",
+        "pop：直接 q1 出队。",
+        "top：q1 队首。",
+        "push：直接入 q1。",
+        "pop：把 q1 前 n-1 个元素依次搬到 q2，剩最后一个出队作为返回值，再交换 q1、q2。",
+        "**示例:**",
+        "```javascript",
+        "class MyStack {",
+        "  constructor() {",
+        "    this.q1 = [];",
+        "    this.q2 = [];",
+        "  }",
+        "  // 方案 A：push 时调整，保证 q1 队首是栈顶",
+        "  push(x) {",
+        "    this.q2.push(x);",
+        "    while (this.q1.length) this.q2.push(this.q1.shift());",
+        "    [this.q1, this.q2] = [this.q2, this.q1]; // 交换",
+        "  }",
+        "  pop() {",
+        "    return this.q1.length ? this.q1.shift() : undefined;",
+        "  }",
+        "  top() {",
+        "    return this.q1[0];",
+        "  }",
+        "  empty() {",
+        "    return this.q1.length === 0;",
+        "  }",
+        "}",
+        "const s = new MyStack();",
+        "s.push(1); s.push(2); s.push(3);",
+        "console.log(s.top());  // 3",
+        "console.log(s.pop());  // 3",
+        "console.log(s.pop());  // 2",
+        "console.log(s.pop());  // 1",
+        "console.log(s.empty());// true",
+        "```"
       ],
       "followups": [
         "反过来，用两个栈实现队列怎么做？（LeetCode 232，一个入栈一个出栈，出栈空了再倒）",
@@ -4355,7 +4652,7 @@
       "category": "fe",
       "module": 2,
       "moduleName": "算法",
-      "index": 16,
+      "index": 2.16,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -4380,7 +4677,7 @@
       "category": "fe",
       "module": 2,
       "moduleName": "算法",
-      "index": 17,
+      "index": 2.17,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -4403,7 +4700,7 @@
       "category": "fe",
       "module": 2,
       "moduleName": "算法",
-      "index": 18,
+      "index": 2.18,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -4429,7 +4726,7 @@
       "category": "fe",
       "module": 3,
       "moduleName": "浏览器原理",
-      "index": 19,
+      "index": 3.19,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -4453,7 +4750,7 @@
       "category": "fe",
       "module": 3,
       "moduleName": "浏览器原理",
-      "index": 20,
+      "index": 3.2,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -4476,7 +4773,7 @@
       "category": "fe",
       "module": 3,
       "moduleName": "浏览器原理",
-      "index": 21,
+      "index": 3.21,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -4504,7 +4801,7 @@
       "category": "fe",
       "module": 3,
       "moduleName": "浏览器原理",
-      "index": 22,
+      "index": 3.22,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -4532,7 +4829,7 @@
       "category": "fe",
       "module": 3,
       "moduleName": "浏览器原理",
-      "index": 23,
+      "index": 3.23,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -4557,7 +4854,7 @@
       "category": "fe",
       "module": 3,
       "moduleName": "浏览器原理",
-      "index": 24,
+      "index": 3.24,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -4567,7 +4864,36 @@
       "title": "浏览器的 Event Loop（事件循环）机制是怎样的？宏任务和微任务的执行顺序如何？",
       "focus": "JS 单线程靠 Event Loop 调度任务。每一轮：先执行一个宏任务（含同步代码），清空其产生的所有微任务，再执行 UI 渲染，然后取下一个宏任务。微任务插队，优先级高于下一个宏任务。",
       "answer": [
-        "**核心模型**：调用栈 + 微任务队列 + 宏任务队列 + 渲染。"
+        "**核心模型**：调用栈 + 微任务队列 + 宏任务队列 + 渲染。",
+        "**一次循环（tick）步骤**：",
+        "1. 从宏任务队列取**一个**任务执行（脚本本身是第一个宏任务）。",
+        "2. 执行过程中产生的**所有微任务**，在本轮清空（一个接一个执行完）。",
+        "3. 必要时执行 requestAnimationFrame 回调。",
+        "4. 触发 UI 渲染（render 步骤，受节流限制，不是每轮都渲染）。",
+        "5. 回到第 1 步。",
+        "**类比**：宏任务是「排队取号的顾客」，微任务是「VIP 加急单」——每个顾客服务完，必须把当前累积的 VIP 单全办完，才轮到下一个顾客。",
+        "**宏任务 vs 微任务**：",
+        "| 类型 | 常见成员 |",
+        "|---|---|",
+        "| 宏任务 | script 整体、setTimeout、setInterval、I/O、UI 事件、postMessage、MessageChannel |",
+        "| 微任务 | Promise.then/catch/finally、MutationObserver、queueMicrotask、process.nextTick(Node) |",
+        "**记忆**：同步代码 → 微任务（清空）→ 渲染 → 宏任务。",
+        "**示例:**",
+        "```javascript",
+        "console.log('1 同步');",
+        "setTimeout(() => console.log('4 宏任务'), 0);",
+        "Promise.resolve().then(() => console.log('3 微任务'));",
+        "console.log('2 同步');",
+        "// 输出顺序：1 → 2 → 3 → 4",
+        "```",
+        "```javascript",
+        "// 嵌套场景：微任务里再产生微任务，仍在本轮清空",
+        "Promise.resolve().then(() => {",
+        "  console.log('a');",
+        "  Promise.resolve().then(() => console.log('b'));",
+        "}).then(() => console.log('c'));",
+        "// 输出：a → b → c（每个 then 入队时都已 ready，按入队顺序执行）",
+        "```"
       ],
       "followups": [
         "requestAnimationFrame 属于宏任务还是微任务？它在事件循环哪个阶段执行？",
@@ -4580,7 +4906,7 @@
       "category": "fe",
       "module": 3,
       "moduleName": "浏览器原理",
-      "index": 25,
+      "index": 3.25,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -4608,7 +4934,7 @@
       "category": "fe",
       "module": 3,
       "moduleName": "浏览器原理",
-      "index": 26,
+      "index": 3.26,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -4636,7 +4962,7 @@
       "category": "fe",
       "module": 3,
       "moduleName": "浏览器原理",
-      "index": 27,
+      "index": 3.27,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -4661,7 +4987,7 @@
       "category": "fe",
       "module": 3,
       "moduleName": "浏览器原理",
-      "index": 28,
+      "index": 3.28,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -4691,7 +5017,7 @@
       "category": "fe",
       "module": 3,
       "moduleName": "浏览器原理",
-      "index": 29,
+      "index": 3.29,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -4716,7 +5042,7 @@
       "category": "fe",
       "module": 3,
       "moduleName": "浏览器原理",
-      "index": 30,
+      "index": 3.3,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -4739,7 +5065,7 @@
       "category": "fe",
       "module": 3,
       "moduleName": "浏览器原理",
-      "index": 31,
+      "index": 3.31,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -4770,7 +5096,7 @@
       "category": "fe",
       "module": 3,
       "moduleName": "浏览器原理",
-      "index": 32,
+      "index": 3.32,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -4797,7 +5123,7 @@
       "category": "fe",
       "module": 3,
       "moduleName": "浏览器原理",
-      "index": 33,
+      "index": 3.33,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -4820,7 +5146,7 @@
       "category": "fe",
       "module": 3,
       "moduleName": "浏览器原理",
-      "index": 34,
+      "index": 3.34,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -4852,7 +5178,7 @@
       "category": "fe",
       "module": 4,
       "moduleName": "跨端",
-      "index": 35,
+      "index": 4.35,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -4861,7 +5187,40 @@
       "title": "瀑布流布局怎么实现？有哪些方案？",
       "focus": "三种方案：①CSS columns（最简单，但顺序是列优先）②JS 分列（计算每列高度，新元素放最短列，顺序正确）③CSS Grid（masonry 还在实验中）。实际项目多用 JS 分列方案，控制精确、顺序正确。",
       "answer": [
-        "**瀑布流特点**：等宽不等高的卡片，像 Pinterest 那样错落排列，填满空间无大空白。"
+        "`column-count` 分列，元素自动流入。",
+        "优点：纯 CSS，代码少。",
+        "缺点：**填充顺序是列优先**（先填满第一列再第二列），不是常见的行优先（左到右、上到下）。视觉顺序奇怪。",
+        "固定 N 列，维护每列当前高度。",
+        "新元素来，放进**当前最矮的列**。",
+        "优点：顺序正确（行优先）、空间利用率高。",
+        "缺点：要写 JS，元素高度变化要重排。",
+        "`grid-template-rows: masonry`（实验特性）。",
+        "优点：纯 CSS 且顺序正确。",
+        "缺点：浏览器支持差，还在实验。",
+        "**示例:**",
+        "**JS 瀑布流核心**：",
+        "```javascript",
+        "function waterfall(container, items, columnCount = 3) {",
+        "  const columns = new Array(columnCount).fill(0); // 每列高度",
+        "  const colWidth = container.clientWidth / columnCount;",
+        "  items.forEach(item => {",
+        "    // 找最矮的列",
+        "    const minCol = columns.indexOf(Math.min(...columns));",
+        "    // 定位",
+        "    item.style.position = 'absolute';",
+        "    item.style.left = minCol * colWidth + 'px';",
+        "    item.style.top = columns[minCol] + 'px';",
+        "    item.style.width = colWidth + 'px';",
+        "    // 更新该列高度（需等图片加载后才知道实际高度）",
+        "    columns[minCol] += item.offsetHeight;",
+        "  });",
+        "}",
+        "```",
+        "**CSS columns 方案（简单但有顺序问题）**：",
+        "```css",
+        ".masonry { column-count: 3; column-gap: 10px; }",
+        ".masonry > div { break-inside: avoid; margin-bottom: 10px; }",
+        "```"
       ],
       "followups": [
         "瀑布流里图片高度异步加载怎么处理？（提示：onload 后重排）",
@@ -4874,7 +5233,7 @@
       "category": "fe",
       "module": 4,
       "moduleName": "跨端",
-      "index": 36,
+      "index": 4.36,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -4883,7 +5242,30 @@
       "title": "如何实现一个轮播图（carousel）？请手写。",
       "focus": "核心：用 transform: translateX 做位移，定时器自动切换 + 拖拽/点击手动切换；无缝循环靠克隆首尾元素实现。",
       "answer": [
-        "**轮播图核心实现**："
+        "在最后一张后面克隆一份第一张，在第一张前面克隆一份最后一张。",
+        "滚到克隆的第一张时，瞬间（无过渡）跳回真正的第一张，用户感觉是无缝的。",
+        "**示例:**",
+        "**轮播核心逻辑**：",
+        "```javascript",
+        "let current = 0;",
+        "const slides = [cloneLast, ...realSlides, cloneFirst]; // 克隆首尾",
+        "let animating = false;",
+        "function goTo(index, animate = true) {",
+        "  if (animating) return;        // 防快速点击",
+        "  animating = true;",
+        "  track.style.transition = animate ? 'transform 0.3s' : 'none';",
+        "  track.style.transform = `translateX(-${index * slideWidth}px)`;",
+        "  current = index;",
+        "}",
+        "// 过渡结束：如果到了克隆位，瞬间跳回真实位",
+        "track.addEventListener('transitionend', () => {",
+        "  animating = false;",
+        "  if (current === 0) goTo(realLength, false);       // 在克隆的末尾→跳真末尾",
+        "  if (current === slides.length - 1) goTo(1, false); // 在克隆的开头→跳真开头",
+        "});",
+        "// 自动播放",
+        "setInterval(() => goTo(current + 1), 3000);",
+        "```"
       ],
       "followups": [
         "用 CSS scroll-snap 实现轮播和 JS 实现各有什么优劣？",
@@ -4895,7 +5277,7 @@
       "category": "fe",
       "module": 4,
       "moduleName": "跨端",
-      "index": 37,
+      "index": 4.37,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -4904,7 +5286,34 @@
       "title": "Taro 跨端框架的原理是什么？",
       "focus": "Taro 原理是「编译时 + 运行时」：编译时把 React 代码转成各端的代码（小程序转 WXML/WXSS/JS，H5 转原生标签）；运行时提供统一的组件库和 API 适配层，抹平各端差异。本质是「用 React 语法描述 UI，编译器翻译成各端产物」。",
       "answer": [
-        "**Taro 的两层架构**："
+        "你写 React（JSX）代码。",
+        "Taro 编译器把 JSX 转成各端能跑的代码：",
+        "微信小程序：JSX → WXML，CSS → WXSS，JS → 小程序 JS（组件转成 view/text 等小程序标签）。",
+        "H5：JSX → React（标签转成 div/span）。",
+        "RN：JSX → RN 组件（View/Text）。",
+        "这是 Taro3 之前的核心，编译期完成大部分转换。",
+        "提供统一组件库（`<View>`、`<Text>`，各端映射到各自原生组件）。",
+        "提供统一 API（`Taro.request` 等，内部适配各端实现）。",
+        "Taro3 引入了运行时方案：在小程序里实现一个「React 运行时」，不再纯靠编译，更接近 React 原生写法。",
+        "**示例:**",
+        "**Taro 代码 → 多端产物**：",
+        "```jsx",
+        "// 你写的（一套代码）",
+        "<View className=\"box\">",
+        "  <Text>{title}</Text>",
+        "  <Button onClick={handler}>点击</Button>",
+        "</View>",
+        "// 编译到微信小程序",
+        "<view class=\"box\">",
+        "  <text>{{title}}</text>",
+        "  <button bindtap=\"handler\">点击</button>",
+        "</view>",
+        "// 编译到 H5",
+        "<div class=\"box\">",
+        "  <span>{title}</span>",
+        "  <button onClick={handler}>点击</button>",
+        "</div>",
+        "```"
       ],
       "followups": [
         "Taro3 的运行时方案和 Taro2 的纯编译方案有什么区别？为什么改？",
@@ -4916,7 +5325,7 @@
       "category": "fe",
       "module": 4,
       "moduleName": "跨端",
-      "index": 38,
+      "index": 4.38,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -4939,7 +5348,7 @@
       "category": "fe",
       "module": 4,
       "moduleName": "跨端",
-      "index": 39,
+      "index": 4.39,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -4968,7 +5377,7 @@
       "category": "fe",
       "module": 5,
       "moduleName": "CSS",
-      "index": 40,
+      "index": 5.4,
       "type": "qa",
       "difficulty": "初",
       "tags": [
@@ -4996,7 +5405,7 @@
       "category": "fe",
       "module": 5,
       "moduleName": "CSS",
-      "index": 41,
+      "index": 5.41,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5028,7 +5437,7 @@
       "category": "fe",
       "module": 5,
       "moduleName": "CSS",
-      "index": 42,
+      "index": 5.42,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5057,7 +5466,7 @@
       "category": "fe",
       "module": 5,
       "moduleName": "CSS",
-      "index": 43,
+      "index": 5.43,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5088,7 +5497,7 @@
       "category": "fe",
       "module": 5,
       "moduleName": "CSS",
-      "index": 44,
+      "index": 5.44,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5113,7 +5522,7 @@
       "category": "fe",
       "module": 5,
       "moduleName": "CSS",
-      "index": 45,
+      "index": 5.45,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5137,7 +5546,7 @@
       "category": "fe",
       "module": 5,
       "moduleName": "CSS",
-      "index": 46,
+      "index": 5.46,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5147,7 +5556,59 @@
       "title": "如何用 CSS 实现暗黑模式 / 主题切换？",
       "focus": "主流方案：用 CSS 自定义属性（变量）把颜色抽象出来，根元素切换 `data-theme` 属性改变量值，或用 `prefers-color-scheme` 媒体查询跟随系统。JS 只负责切换 data 属性，所有样式靠 CSS 变量自动响应。",
       "answer": [
-        "主题切换的核心思路是「把颜色抽象成变量，切换时只改变量值，不动具体样式」。"
+        "主题切换的核心思路是「把颜色抽象成变量，切换时只改变量值，不动具体样式」。",
+        "**方案一：CSS 变量 + data-theme 属性（最灵活，手动切换）**",
+        "1. `:root` 定义默认（亮色）变量。",
+        "2. `[data-theme=\"dark\"]` 选择器重写变量为暗色。",
+        "3. 业务样式全部用 `var(--xxx)` 引用变量。",
+        "4. JS 切换：`document.documentElement.setAttribute('data-theme', 'dark')`。",
+        "**方案二：prefers-color-scheme 媒体查询（跟随系统）**",
+        "```css",
+        "@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#eee; } }",
+        "```",
+        "适合「自动跟随用户系统设置」，无需手动按钮。",
+        "**方案三对比**：",
+        "| 方案 | 变量定义时机 | 是否可运行时切换 | 适用 |",
+        "|---|---|---|---|",
+        "| CSS 变量 | 运行时 | 是（改属性即生效） | 主题切换首选 |",
+        "| Sass/Less 变量 | 编译期 | 否（需多套 CSS） | 静态多主题 |",
+        "| CSS-in-JS | 运行时 | 是 | React 生态 |",
+        "**为什么 CSS 变量是首选**：运行时可改、浏览器原生、天然支持主题切换、性能好。Sass 变量编译完就固定，切主题要重新加载 CSS。",
+        "**记忆**：主题切换 = 「变量 + 状态切换」。把颜色变成变量是关键，切换方式只是触发器。",
+        "**示例:**",
+        "```css",
+        "/* 1. 定义亮色默认变量 */",
+        ":root {",
+        "  --bg: #ffffff;",
+        "  --text: #333333;",
+        "  --primary: #1890ff;",
+        "}",
+        "/* 2. 定义暗色变量（覆盖同名变量） */",
+        "[data-theme=\"dark\"] {",
+        "  --bg: #1a1a1a;",
+        "  --text: #eeeeee;",
+        "  --primary: #3b9eff;",
+        "}",
+        "/* 3. 业务样式全部用变量 */",
+        "body { background: var(--bg); color: var(--text); }",
+        ".btn  { background: var(--primary); color: var(--bg); }",
+        "```",
+        "```html",
+        "<!-- 切换按钮 -->",
+        "<button onclick=\"toggleTheme()\">切换主题</button>",
+        "<script>",
+        "  function toggleTheme() {",
+        "    const root = document.documentElement;",
+        "    const cur = root.getAttribute('data-theme');",
+        "    const next = cur === 'dark' ? 'light' : 'dark';",
+        "    root.setAttribute('data-theme', next);",
+        "    localStorage.setItem('theme', next); // 持久化用户选择",
+        "  }",
+        "  // 启动时恢复",
+        "  const saved = localStorage.getItem('theme') || 'light';",
+        "  document.documentElement.setAttribute('data-theme', saved);",
+        "</script>",
+        "```"
       ],
       "followups": [
         "CSS 变量和 Sass 变量的本质区别是什么？（提示：运行时 vs 编译时）",
@@ -5160,7 +5621,7 @@
       "category": "fe",
       "module": 5,
       "moduleName": "CSS",
-      "index": 47,
+      "index": 5.47,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5185,7 +5646,7 @@
       "category": "fe",
       "module": 5,
       "moduleName": "CSS",
-      "index": 48,
+      "index": 5.48,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5195,7 +5656,43 @@
       "title": "实现响应式布局有哪些常用方案？",
       "focus": "主流：媒体查询 @media 做断点、弹性单位 rem/em/vw/vh 做缩放、flex/grid 弹性布局做自适应，新特性还有容器查询 @container。核心思想是「一套代码适配多端」。",
       "answer": [
-        "响应式 = 内容和布局随视口/容器变化而自适应。常用方案分三类："
+        "响应式 = 内容和布局随视口/容器变化而自适应。常用方案分三类：",
+        "**方案一：媒体查询 @media（断点切换样式）**",
+        "```css",
+        "@media (max-width: 768px) { /* 移动端 */ }",
+        "@media (min-width: 1200px) { /* 桌面端 */ }",
+        "```",
+        "**方案二：弹性单位（随参照物缩放）**",
+        "| 单位 | 相对什么 | 典型场景 |",
+        "|---|---|---|",
+        "| px | 绝对像素 | 精确控制 |",
+        "| em | 父元素字体大小 | 组件内局部 |",
+        "| rem | 根元素 html 字体大小 | 全局缩放，配媒体查询改 html font-size |",
+        "| vw/vh | 视口宽/高的 1% | 全屏布局 |",
+        "| % | 父元素尺寸 | 弹性容器 |",
+        "| vmin/vmax | 视口较小/较大边的 1% | 横竖屏自适应 |",
+        "**方案三：flex/grid 弹性布局**：本身就能自适应，配合 min-width/max-width 和 flex-wrap 自动换行。",
+        "**方案四：容器查询 @container**（较新）：基于**父容器**宽度而非视口响应，比媒体查询更精确，适合组件化场景。",
+        "**方案五：图片响应式**：`<picture>` + `srcset` 根据屏幕加载合适尺寸图片。",
+        "**移动端常用套路**：rem + flexible.js（动态设 html font-size）+ 媒体查询，或直接用 vw/vh。",
+        "**记忆**：媒体查询是「骨架断点」，弹性单位是「血肉缩放」，flex/grid 是「关节自适应」。",
+        "**示例:**",
+        "```css",
+        "/* rem + 媒体查询：不同屏宽下根字号变化 */",
+        "html { font-size: 16px; }                 /* 默认 */",
+        "@media (max-width: 768px) {",
+        "  html { font-size: 14px; }               /* 移动端缩小 */",
+        "}",
+        ".title { font-size: 1.25rem; }            /* 随根字号缩放 */",
+        "/* flex 自适应卡片：小屏单列、大屏多列 */",
+        ".cards { display: flex; flex-wrap: wrap; gap: 16px; }",
+        ".card  { flex: 1 1 300px; }               /* 最小 300px，自动换行 */",
+        "/* 容器查询：组件自身宽度决定布局 */",
+        ".card-container { container-type: inline-size; }",
+        "@container (min-width: 400px) {",
+        "  .card { display: flex; }                /* 容器够宽就横排 */",
+        "}",
+        "```"
       ],
       "followups": [
         "`rem` 和 `em` 的区别？为什么容易混淆出错？（提示：参照物不同，em 会逐级嵌套放大）",
@@ -5208,7 +5705,7 @@
       "category": "fe",
       "module": 5,
       "moduleName": "CSS",
-      "index": 49,
+      "index": 5.49,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -5231,7 +5728,7 @@
       "category": "fe",
       "module": 5,
       "moduleName": "CSS",
-      "index": 50,
+      "index": 5.5,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -5254,7 +5751,7 @@
       "category": "fe",
       "module": 6,
       "moduleName": "设计模式",
-      "index": 51,
+      "index": 6.51,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5263,7 +5760,27 @@
       "title": "设计模式分为哪三大类？前端常用的是哪些？",
       "focus": "三大类：创建型（怎么创建对象，如单例/工厂）、结构型（怎么组合对象，如装饰器/代理/适配器）、行为型（对象间怎么通信，如观察者/发布订阅/策略）。前端最常用：单例、观察者/发布订阅、策略、装饰器、代理。",
       "answer": [
-        "**GoF 23 种设计模式分三类**："
+        "单例（Singleton）：全局只有一个实例（如全局状态、弹窗）。",
+        "工厂（Factory）：封装对象创建过程（如 React.createElement）。",
+        "建造者（Builder）：分步构建复杂对象。",
+        "原型（Prototype）：通过克隆创建（Object.create）。",
+        "装饰器（Decorator）：动态加功能（高阶组件 HOC）。",
+        "代理（Proxy）：控制访问（Vue3 响应式、缓存代理）。",
+        "适配器（Adapter）：接口转换。",
+        "外观（Facade）：简化复杂接口。",
+        "观察者（Observer）：一对多通知（Vue 响应式）。",
+        "发布订阅（Pub/Sub）：通过中间人解耦（EventBus）。",
+        "策略（Strategy）：算法互换（表单校验规则）。",
+        "责任链（Chain of Responsibility）：请求链式传递（中间件）。",
+        "命令（Command）：封装请求。",
+        "**示例:**",
+        "单例：Vuex/Redux store、全局弹窗、登录态管理。",
+        "观察者：Vue 响应式、MutationObserver。",
+        "发布订阅：EventBus、Node EventEmitter。",
+        "策略：表单校验（不同规则用不同校验函数）。",
+        "装饰器：React HOC、ES7 装饰器语法。",
+        "代理：Vue3 Proxy 响应式、图片懒加载代理。",
+        "责任链：Koa 洋葱圈中间件、Express 中间件。"
       ],
       "followups": [
         "观察者模式和发布订阅模式有什么区别？（核心高频）",
@@ -5276,7 +5793,7 @@
       "category": "fe",
       "module": 6,
       "moduleName": "设计模式",
-      "index": 52,
+      "index": 6.52,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5285,7 +5802,17 @@
       "title": "单例模式是什么？前端有哪些应用场景？",
       "focus": "单例保证一个类全局只有一个实例，并提供全局访问点。前端应用：全局状态（store）、弹窗/登录框（只一个）、日志/请求工具类、全局配置。",
       "answer": [
-        "**单例模式**：保证一个类只有一个实例，并提供全局访问点。"
+        "**单例模式**：保证一个类只有一个实例，并提供全局访问点。",
+        "**前端应用场景**：",
+        "1. **全局状态管理**：Redux/Vuex store 全局一个。",
+        "2. **弹窗/登录框**：整个应用只一个登录弹窗实例，避免重复。",
+        "3. **工具类**：日志、请求封装、缓存——全局复用一个。",
+        "4. **配置**：全局配置对象。",
+        "**实现方式**：",
+        "1. **闭包缓存实例**（经典）：用闭包变量存实例，getInstance 时判断。",
+        "2. **模块单例**（ES Module 天然单例）：ES Module 的导出是单例的（模块只执行一次），直接导出实例就是单例。",
+        "3. **全局变量**（简单粗暴）：挂 window，但不推荐（污染全局）。",
+        "**JS 的「线程安全」**：JS 单线程，不存在多线程竞争。但要防止「重复实例化」（比如惰性单例，第一次用才创建，之后复用）。"
       ],
       "followups": [
         "单例模式有什么缺点？（全局状态难测试、隐式依赖）"
@@ -5296,7 +5823,7 @@
       "category": "fe",
       "module": 6,
       "moduleName": "设计模式",
-      "index": 53,
+      "index": 6.53,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -5306,7 +5833,18 @@
       "title": "观察者模式和发布订阅模式有什么区别？",
       "focus": "观察者模式：目标和观察者直接耦合，目标直接通知观察者。发布订阅：目标和订阅者通过「事件中心（调度中心）」解耦，互不认识。区别就在有没有中间调度中心。手写 EventBus 核心：on 注册、emit 触发、off 取消。",
       "answer": [
-        "**两种模式的区别**（关键考点）："
+        "Subject（目标）直接维护 Observer 列表，状态变化时直接调用 Observer.update()。",
+        "目标和观察者**互相知道**对方（耦合）。",
+        "例子：Vue 的响应式（数据变了直接通知依赖它的渲染函数）。",
+        "Publisher（发布者）和 Subscriber（订阅者）**互不认识**。",
+        "通过**事件中心（EventBus/消息总线）**中转：发布者只管发事件给中心，订阅者只管从中心收。",
+        "完全解耦。",
+        "例子：EventBus、Node EventEmitter、消息队列。",
+        "用一个对象存 {事件名: [回调函数数组]}。",
+        "on(event, fn)：往对应事件数组里加回调。",
+        "emit(event, data)：遍历对应事件数组，逐个调用回调。",
+        "off(event, fn)：从数组里删除回调。",
+        "once(event, fn)：注册只触发一次的回调。"
       ],
       "followups": [
         "EventBus 怎么实现 once（只触发一次）？",
@@ -5319,7 +5857,7 @@
       "category": "fe",
       "module": 6,
       "moduleName": "设计模式",
-      "index": 54,
+      "index": 6.54,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -5346,7 +5884,7 @@
       "category": "fe",
       "module": 7,
       "moduleName": "工程化",
-      "index": 55,
+      "index": 7.55,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5378,7 +5916,7 @@
       "category": "fe",
       "module": 7,
       "moduleName": "工程化",
-      "index": 56,
+      "index": 7.56,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5404,7 +5942,7 @@
       "category": "fe",
       "module": 7,
       "moduleName": "工程化",
-      "index": 57,
+      "index": 7.57,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -5431,7 +5969,7 @@
       "category": "fe",
       "module": 7,
       "moduleName": "工程化",
-      "index": 58,
+      "index": 7.58,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -5441,7 +5979,28 @@
       "title": "Vite 为什么比 Webpack 快？",
       "focus": "Vite 快在：开发时用浏览器原生 ESM「按需加载」（不打包，请求哪个模块编译哪个），只有依赖预构建用 esbuild（极快）。Webpack 要先把所有模块打成 bundle 再启动，项目越大启动越慢。",
       "answer": [
-        "**Vite vs Webpack 的根本区别**："
+        "启动前要把所有 module 打成 bundle，项目越大启动越慢。",
+        "改一个文件，可能要重新构建整个 bundle（HMR 范围大）。",
+        "利用浏览器原生 ESM：`import` 直接发请求加载模块。",
+        "开发服务器拦截请求，按需编译单个模块，返回 ESM 格式。",
+        "**只有请求到的模块才编译**，启动极快（不管项目多大）。",
+        "依赖预构建：第三方依赖（node_modules）用 **esbuild**（Go 写的，比 babel 快 10-100 倍）预打包成 ESM，减少请求数。",
+        "**示例:**",
+        "**Vite 开发时模块加载流程**：",
+        "```",
+        "浏览器请求 index.html",
+        "  → 里面 <script type=\"module\" src=\"/main.js\">",
+        "  → 浏览器请求 main.js（ESM）",
+        "  → main.js import './App.vue'",
+        "  → 浏览器请求 App.vue",
+        "  → Vite 拦截，编译 .vue 成 JS，返回",
+        "  → 浏览器继续解析 import，按需请求",
+        "```",
+        "**对比 Webpack**：",
+        "```",
+        "Webpack: 启动 → 打包所有模块成 bundle → 启动服务 → 访问",
+        "Vite:    启动 → 直接起服务 → 访问时按需编译",
+        "```"
       ],
       "followups": [
         "为什么 Vite 生产环境用 Rollup 不用 esbuild？",
@@ -5453,7 +6012,7 @@
       "category": "fe",
       "module": 7,
       "moduleName": "工程化",
-      "index": 59,
+      "index": 7.59,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -5477,7 +6036,7 @@
       "category": "fe",
       "module": 7,
       "moduleName": "工程化",
-      "index": 60,
+      "index": 7.6,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -5509,7 +6068,7 @@
       "category": "fe",
       "module": 7,
       "moduleName": "工程化",
-      "index": 61,
+      "index": 7.61,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -5534,7 +6093,7 @@
       "category": "fe",
       "module": 8,
       "moduleName": "JS 原理",
-      "index": 62,
+      "index": 8.62,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5561,7 +6120,7 @@
       "category": "fe",
       "module": 8,
       "moduleName": "JS 原理",
-      "index": 63,
+      "index": 8.63,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5583,7 +6142,7 @@
       "category": "fe",
       "module": 8,
       "moduleName": "JS 原理",
-      "index": 64,
+      "index": 8.64,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5607,7 +6166,7 @@
       "category": "fe",
       "module": 8,
       "moduleName": "JS 原理",
-      "index": 65,
+      "index": 8.65,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5637,7 +6196,7 @@
       "category": "fe",
       "module": 8,
       "moduleName": "JS 原理",
-      "index": 66,
+      "index": 8.66,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5661,7 +6220,7 @@
       "category": "fe",
       "module": 8,
       "moduleName": "JS 原理",
-      "index": 67,
+      "index": 8.67,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5693,7 +6252,7 @@
       "category": "fe",
       "module": 8,
       "moduleName": "JS 原理",
-      "index": 68,
+      "index": 8.68,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5703,7 +6262,43 @@
       "title": "箭头函数和普通函数有哪些区别？为什么箭头函数不能用作构造函数或方法？",
       "focus": "箭头函数四大区别：①没有自己的 this（继承外层词法 this）②没有 arguments（用剩余参数...args）③不能作构造函数（无 prototype、不能 new）④不能作 Generator（无 yield）；核心是箭头函数设计目标就是「轻量回调」，所以砍掉了 this 绑定等特性，适合纯函数/回调，不适合方法/构造函数。",
       "answer": [
-        "**箭头函数 vs 普通函数的四大区别**："
+        "普通函数：this 由调用方式决定（谁调用指向谁，参见 fe-js-001）。",
+        "箭头函数：**继承外层词法作用域的 this**（定义时确定，不可变）。",
+        "普通函数：有 arguments（类数组，存所有参数）。",
+        "箭头函数：没有 arguments，用剩余参数 `(...args) =>` 替代。",
+        "箭头函数没有 `prototype` 属性。",
+        "`new` 会报错：`TypeError: X is not a constructor`。",
+        "箭头函数体内不能用 `yield`。",
+        "没有 `new.target`。",
+        "没有 `super`（虽然能在对象方法里用，但绑定外层）。",
+        "不能用 `call`/`apply`/`bind` 改变 this（this 是词法绑定的）。",
+        "砍掉自己的 this，继承外层——回调里能直接用外层 this。",
+        "砍掉 prototype、arguments 等——更纯粹，适合纯函数。",
+        "**示例:**",
+        "**回调里 this 问题**：",
+        "```javascript",
+        "class Counter {",
+        "  count = 0;",
+        "  // 普通函数回调(this丢失)",
+        "  startBad() {",
+        "    setInterval(function() {",
+        "      this.count++;  // this指向window,报错或无效",
+        "    }, 1000);",
+        "  }",
+        "  // 箭头函数回调(继承this)",
+        "  startGood() {",
+        "    setInterval(() => {",
+        "      this.count++;  // 继承startGood的this(指向实例)",
+        "    }, 1000);",
+        "  }",
+        "}",
+        "```",
+        "**箭头函数不能 new**：",
+        "```javascript",
+        "const Foo = () => {};",
+        "new Foo(); // TypeError: Foo is not a constructor",
+        "Foo.prototype; // undefined",
+        "```"
       ],
       "followups": [
         "箭头函数的 this 能用 call/apply/bind 改变吗？为什么？",
@@ -5717,7 +6312,7 @@
       "category": "fe",
       "module": 8,
       "moduleName": "JS 原理",
-      "index": 69,
+      "index": 8.69,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5742,7 +6337,7 @@
       "category": "fe",
       "module": 8,
       "moduleName": "JS 原理",
-      "index": 70,
+      "index": 8.7,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -5769,7 +6364,7 @@
       "category": "fe",
       "module": 8,
       "moduleName": "JS 原理",
-      "index": 71,
+      "index": 8.71,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -5793,7 +6388,7 @@
       "category": "fe",
       "module": 8,
       "moduleName": "JS 原理",
-      "index": 72,
+      "index": 8.72,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -5818,7 +6413,7 @@
       "category": "fe",
       "module": 8,
       "moduleName": "JS 原理",
-      "index": 73,
+      "index": 8.73,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -5839,7 +6434,7 @@
       "category": "fe",
       "module": 8,
       "moduleName": "JS 原理",
-      "index": 74,
+      "index": 8.74,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -5877,7 +6472,7 @@
       "category": "fe",
       "module": 8,
       "moduleName": "JS 原理",
-      "index": 75,
+      "index": 8.75,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -5916,7 +6511,7 @@
       "category": "fe",
       "module": 8,
       "moduleName": "JS 原理",
-      "index": 76,
+      "index": 8.76,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -5941,7 +6536,7 @@
       "category": "fe",
       "module": 9,
       "moduleName": "方法论",
-      "index": 77,
+      "index": 9.77,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5971,7 +6566,7 @@
       "category": "fe",
       "module": 9,
       "moduleName": "方法论",
-      "index": 78,
+      "index": 9.78,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -5997,7 +6592,7 @@
       "category": "fe",
       "module": 9,
       "moduleName": "方法论",
-      "index": 79,
+      "index": 9.79,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6006,7 +6601,12 @@
       "title": "对于一个复杂的大型前端项目，你是怎么做架构设计的？出于哪些考虑选择某种架构？",
       "focus": "架构设计从「理解业务复杂度」出发：业务复杂度（功能多）、协作复杂度（人多）、技术复杂度（多端/多技术栈）。根据复杂度类型选方案：单体 SPA、Monorepo、微前端、SSR 等。选型要权衡团队能力、维护成本、演进路径，不盲目追新。",
       "answer": [
-        "**复杂项目的架构设计思路**："
+        "**业务复杂度**：功能模块多、业务规则复杂。",
+        "**协作复杂度**：多个团队/多人同时开发。",
+        "**技术复杂度**：多端（Web/小程序/App）、多技术栈、历史包袱（老代码）。",
+        "**性能复杂度**：高并发、弱网、首屏要求高。",
+        "**示例:**",
+        "举例：一个多业务线的企业后台。识别复杂度：多团队协作 + 业务模块多 + 老技术栈要迁移。选型：微前端（主应用+多个子应用，各团队独立开发部署）+ 新业务用 React、老业务保留 Vue 渐进迁移 + Monorepo 管理公共组件库。考虑：qiankun 生态成熟先上，CSS 隔离用约定+scoped，模块共享用 Module Federation。"
       ],
       "followups": [
         "微前端是不是 over-engineering？什么规模才需要？",
@@ -6019,7 +6619,7 @@
       "category": "fe",
       "module": 10,
       "moduleName": "微前端",
-      "index": 80,
+      "index": 10.8,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -6046,7 +6646,7 @@
       "category": "fe",
       "module": 10,
       "moduleName": "微前端",
-      "index": 81,
+      "index": 10.81,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6073,7 +6673,7 @@
       "category": "fe",
       "module": 10,
       "moduleName": "微前端",
-      "index": 82,
+      "index": 10.82,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6098,7 +6698,7 @@
       "category": "fe",
       "module": 10,
       "moduleName": "微前端",
-      "index": 83,
+      "index": 10.83,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6127,7 +6727,7 @@
       "category": "fe",
       "module": 11,
       "moduleName": "小程序",
-      "index": 84,
+      "index": 11.84,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6152,7 +6752,7 @@
       "category": "fe",
       "module": 11,
       "moduleName": "小程序",
-      "index": 85,
+      "index": 11.85,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6177,7 +6777,7 @@
       "category": "fe",
       "module": 11,
       "moduleName": "小程序",
-      "index": 86,
+      "index": 11.86,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6186,7 +6786,28 @@
       "title": "小程序有哪些性能优化手段？",
       "focus": "核心优化：减少 setData 的数据量和频率（只传变化的、合并调用）、分包加载（按需加载子包）、长列表虚拟化、图片懒加载、减少节点嵌套层级。",
       "answer": [
-        "**小程序性能优化手段**："
+        "把小程序拆成主包 + 多个子包，按需加载子包。",
+        "减少首次加载体积，加快启动。",
+        "虚拟列表（recycle-view）：只渲染可视区域的项。",
+        "避免一次性 setData 上千条数据。",
+        "图片懒加载、用 CDN、压缩、用 WebP。",
+        "减少包体积（清理无用代码、按需引入）。",
+        "减少节点嵌套层级。",
+        "避免频繁变化的动画（用 CSS 动画而非 JS）。",
+        "合理用 wx:if vs hidden（频繁切换用 hidden，不频繁用 wx:if）。",
+        "主包只放核心页面，其他进分包。",
+        "减少启动时的同步逻辑。",
+        "**示例:**",
+        "**分包配置**：",
+        "```json",
+        "{",
+        "  \"pages\": [\"pages/index/index\"],",
+        "  \"subpackages\": [",
+        "    { \"root\": \"moduleA\", \"pages\": [\"pages/detail/detail\"] }",
+        "  ]",
+        "}",
+        "```",
+        "**资源优化**：图片懒加载 `<image lazy-load />`，用 WebP 格式。"
       ],
       "followups": [
         "小程序启动慢怎么排查？有哪些指标？",
@@ -6199,7 +6820,7 @@
       "category": "fe",
       "module": 12,
       "moduleName": "Node.js",
-      "index": 87,
+      "index": 12.87,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -6232,7 +6853,7 @@
       "category": "fe",
       "module": 12,
       "moduleName": "Node.js",
-      "index": 88,
+      "index": 12.88,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -6262,7 +6883,7 @@
       "category": "fe",
       "module": 12,
       "moduleName": "Node.js",
-      "index": 89,
+      "index": 12.89,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -6284,7 +6905,7 @@
       "category": "fe",
       "module": 12,
       "moduleName": "Node.js",
-      "index": 90,
+      "index": 12.9,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -6311,7 +6932,7 @@
       "category": "fe",
       "module": 12,
       "moduleName": "Node.js",
-      "index": 91,
+      "index": 12.91,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -6340,7 +6961,7 @@
       "category": "fe",
       "module": 12,
       "moduleName": "Node.js",
-      "index": 92,
+      "index": 12.92,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6365,7 +6986,7 @@
       "category": "fe",
       "module": 12,
       "moduleName": "Node.js",
-      "index": 93,
+      "index": 12.93,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6397,7 +7018,7 @@
       "category": "fe",
       "module": 12,
       "moduleName": "Node.js",
-      "index": 94,
+      "index": 12.94,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6428,7 +7049,7 @@
       "category": "fe",
       "module": 12,
       "moduleName": "Node.js",
-      "index": 95,
+      "index": 12.95,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6457,7 +7078,7 @@
       "category": "fe",
       "module": 12,
       "moduleName": "Node.js",
-      "index": 96,
+      "index": 12.96,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6484,7 +7105,7 @@
       "category": "fe",
       "module": 13,
       "moduleName": "React",
-      "index": 97,
+      "index": 13.97,
       "type": "qa",
       "difficulty": "初",
       "tags": [
@@ -6515,7 +7136,7 @@
       "category": "fe",
       "module": 13,
       "moduleName": "React",
-      "index": 98,
+      "index": 13.98,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -6544,7 +7165,7 @@
       "category": "fe",
       "module": 13,
       "moduleName": "React",
-      "index": 99,
+      "index": 13.99,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -6570,7 +7191,7 @@
       "category": "fe",
       "module": 13,
       "moduleName": "React",
-      "index": 100,
+      "index": 13.1,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -6593,7 +7214,7 @@
       "category": "fe",
       "module": 13,
       "moduleName": "React",
-      "index": 101,
+      "index": 13.101,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -6603,7 +7224,30 @@
       "title": "React Router 的原理是什么？`history` 模式和 `hash` 模式有什么区别？",
       "focus": "React Router 监听 URL 变化→匹配路由→渲染组件，全程不刷新页面。hash 模式靠 `hashchange` 事件、URL 带 # 但无需后端配置；history 模式靠 `pushState/popstate`、URL 干净但刷新需后端回退到 index.html。",
       "answer": [
-        "**前端路由的本质**：监听 URL 变化 → 改变视图，不向服务器发请求。"
+        "原理：`#` 后面的部分叫 hash，改变 hash **不会触发请求**，但会触发 `hashchange` 事件。Router 监听该事件，匹配路由渲染组件。",
+        "优点：无需后端配置，兼容性好（IE8+）。",
+        "缺点：URL 丑（带 #），SEO 不友好，不能利用锚点定位。",
+        "原理：用 `history.pushState(state, title, url)` 改 URL 但不刷新页面，`popstate` 事件监听浏览器前进/后退。Router 自己包装了 push/replace/go，触发后重新匹配。",
+        "优点：URL 干净、SEO 友好。",
+        "缺点：用户刷新或直接访问 `/home` 时，浏览器会向服务器请求该路径，**服务器必须配置回退到 index.html**（否则 404）。",
+        "`<BrowserRouter>` 用 History API；`<HashRouter>` 用 hash。",
+        "内部维护一个 `history` 对象（listen/push/replace），`<Route>` 根据 `location.pathname` 匹配渲染。",
+        "`<Link>` 点击时调 `history.push`，阻止默认 a 标签跳转，只改 URL + 通知 Router。",
+        "**示例:**",
+        "```jsx",
+        "// 极简手写 hash router 原理",
+        "function MiniHashRouter() {",
+        "  const [path, setPath] = useState(location.hash.slice(1) || '/');",
+        "  useEffect(() => {",
+        "    const onHash = () => setPath(location.hash.slice(1) || '/');",
+        "    window.addEventListener('hashchange', onHash);",
+        "    return () => window.removeEventListener('hashchange', onHash);",
+        "  }, []);",
+        "  return path === '/about' ? <About/> : <Home/>;",
+        "}",
+        "// history 模式后端配置（nginx）",
+        "// location / { try_files $uri $uri/ /index.html; }",
+        "```"
       ],
       "followups": [
         "history 模式刷新 404 怎么解决？后端怎么配？",
@@ -6616,7 +7260,7 @@
       "category": "fe",
       "module": 13,
       "moduleName": "React",
-      "index": 102,
+      "index": 13.102,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -6638,7 +7282,7 @@
       "category": "fe",
       "module": 13,
       "moduleName": "React",
-      "index": 103,
+      "index": 13.103,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -6661,7 +7305,7 @@
       "category": "fe",
       "module": 13,
       "moduleName": "React",
-      "index": 104,
+      "index": 13.104,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6684,7 +7328,7 @@
       "category": "fe",
       "module": 13,
       "moduleName": "React",
-      "index": 105,
+      "index": 13.105,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6707,7 +7351,7 @@
       "category": "fe",
       "module": 13,
       "moduleName": "React",
-      "index": 106,
+      "index": 13.106,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6734,7 +7378,7 @@
       "category": "fe",
       "module": 13,
       "moduleName": "React",
-      "index": 107,
+      "index": 13.107,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6756,7 +7400,7 @@
       "category": "fe",
       "module": 13,
       "moduleName": "React",
-      "index": 108,
+      "index": 13.108,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6777,7 +7421,7 @@
       "category": "fe",
       "module": 13,
       "moduleName": "React",
-      "index": 109,
+      "index": 13.109,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6802,7 +7446,7 @@
       "category": "fe",
       "module": 13,
       "moduleName": "React",
-      "index": 110,
+      "index": 13.11,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6829,7 +7473,7 @@
       "category": "fe",
       "module": 13,
       "moduleName": "React",
-      "index": 111,
+      "index": 13.111,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6853,7 +7497,7 @@
       "category": "fe",
       "module": 13,
       "moduleName": "React",
-      "index": 112,
+      "index": 13.112,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6863,7 +7507,57 @@
       "title": "React 做了哪些性能优化？开发者层面有哪些常用优化手段？",
       "focus": "React 性能优化分两层：框架层（Fiber 可中断渲染、并发渲染、自动批处理、diff 算法）和开发者层（React.memo 避免子组件重渲染、useMemo/useCallback 缓存值和函数、虚拟化长列表、路由/组件懒加载、合理用 key、状态下沉/拆分）；核心思想是「减少不必要的渲染」和「减少渲染的成本」。",
       "answer": [
-        "React 性能优化可分**框架内置**和**开发者手段**两层："
+        "渲染过程可被中断，让位给高优先级任务（如用户输入）。",
+        "useTransition/useDeferredValue 让开发者标记低优先级更新。",
+        "多次 setState 自动合并成一次重渲染，减少渲染次数。",
+        "React 17 只在事件处理函数里批处理；React 18 在 Promise/setTimeout/原生事件里也自动批处理。",
+        "包裹函数组件，props 不变时跳过重渲染。",
+        "类似 PureComponent（浅比较 state+props）。",
+        "缓存昂贵计算结果，依赖不变时复用。",
+        "缓存函数引用，配合 React.memo 避免子组件因新函数引用而重渲染。",
+        "万级数据只渲染可视区域的几行（react-window/react-virtualized）。",
+        "避免一次性渲染过多 DOM。",
+        "路由懒加载：`const Home = lazy(() => import('./Home'))`。",
+        "组件懒加载：按需加载大组件，减小首屏 bundle。",
+        "把只有子树用的状态下沉到子组件，避免高频变化的 state 在顶层导致整棵树重渲染。",
+        "Context 按需拆分（见 fe-react-013 性能陷阱）。",
+        "**减少不必要的渲染**：memo/useCallback/useMemo/状态拆分。",
+        "**减少渲染的成本**：虚拟化列表、懒加载、key 复用。",
+        "**避免阻塞主线程**：并发渲染、useTransition 标记低优先级。",
+        "**示例:**",
+        "**优化前后对比**：",
+        "```javascript",
+        "// 未优化:每次父组件渲染,子组件都重渲染(即使props没变)",
+        "function Parent() {",
+        "  const [count, setCount] = useState(0);",
+        "  return (",
+        "    <>",
+        "      <button onClick={() => setCount(c => c+1)}>+</button>",
+        "      <Child data={fixedData} onClick={fixedHandler} />",
+        "    </>",
+        "  );",
+        "}",
+        "// 优化后:子组件在props没变时跳过",
+        "function Parent() {",
+        "  const [count, setCount] = useState(0);",
+        "  const handler = useCallback(() => {...}, []);  // 稳定引用",
+        "  return (",
+        "    <>",
+        "      <button onClick={() => setCount(c => c+1)}>+</button>",
+        "      <MemoChild data={fixedData} onClick={handler} />",
+        "    </>",
+        "  );",
+        "}",
+        "const MemoChild = React.memo(Child);",
+        "```",
+        "| 优化手段 | 解决问题 | 场景 |",
+        "|---|---|---|",
+        "| React.memo | 子组件无谓重渲染 | props 稳定 |",
+        "| useMemo | 重复昂贵计算 | 计算耗时 |",
+        "| useCallback | 函数引用变化致重渲染 | 传给memo组件 |",
+        "| 虚拟列表 | 长列表渲染慢 | 大量数据 |",
+        "| 懒加载 | 首屏bundle大 | 路由/重组件 |",
+        "| 并发渲染 | 阻塞主线程 | 用户交互响应 |"
       ],
       "followups": [
         "React.memo 的浅比较有什么局限？怎么自定义比较？",
@@ -6877,7 +7571,7 @@
       "category": "fe",
       "module": 13,
       "moduleName": "React",
-      "index": 113,
+      "index": 13.113,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6904,7 +7598,7 @@
       "category": "fe",
       "module": 13,
       "moduleName": "React",
-      "index": 114,
+      "index": 13.114,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6927,7 +7621,7 @@
       "category": "fe",
       "module": 13,
       "moduleName": "React",
-      "index": 115,
+      "index": 13.115,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6949,7 +7643,7 @@
       "category": "fe",
       "module": 13,
       "moduleName": "React",
-      "index": 116,
+      "index": 13.116,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -6973,7 +7667,7 @@
       "category": "fe",
       "module": 14,
       "moduleName": "场景题",
-      "index": 117,
+      "index": 14.117,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -6996,7 +7690,7 @@
       "category": "fe",
       "module": 14,
       "moduleName": "场景题",
-      "index": 118,
+      "index": 14.118,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -7019,7 +7713,7 @@
       "category": "fe",
       "module": 14,
       "moduleName": "场景题",
-      "index": 119,
+      "index": 14.119,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -7045,7 +7739,7 @@
       "category": "fe",
       "module": 14,
       "moduleName": "场景题",
-      "index": 120,
+      "index": 14.12,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -7071,7 +7765,7 @@
       "category": "fe",
       "module": 14,
       "moduleName": "场景题",
-      "index": 121,
+      "index": 14.121,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -7080,7 +7774,22 @@
       "title": "移动端弱网环境下，如何保证首屏渲染速度在 1 秒内？",
       "focus": "弱网核心瓶颈是资源传输慢，策略：①减少首屏要传的数据量（代码分割、按需加载、SSR/骨架屏）②提前加载关键资源（preload/preconnect）③缓存最大化（强缓存/Service Worker）④传输优化（gzip/brotli、HTTP2、图片优化）。目标是首屏只加载最少必要内容。",
       "answer": [
-        "**弱网首屏优化策略（按优先级）**："
+        "**代码分割**：首屏只加载首屏路由的代码，其他路由懒加载。",
+        "**Tree shaking**：删掉没用到的代码。",
+        "**首屏数据精简**：首屏接口只返回必要字段，别一次返回一大坨。",
+        "**SSR/预渲染**：服务端渲染好 HTML 直接给，不用等 JS 下载执行再渲染。弱网下 SSR 优势巨大。",
+        "**骨架屏**：先显示骨架，给用户「正在加载」的感知，降低白屏焦虑。",
+        "**preload/prefetch**：preload 关键资源（字体、首屏 CSS）提前加载；dns-prefetch/preconnect 提前建连。",
+        "**HTTP2**：多路复用，减少连接数。",
+        "**CDN**：资源离用户近。",
+        "gzip/brotli 压缩文本。",
+        "图片：WebP/AVIF、响应式图片（srcset）、懒加载非首屏图片。",
+        "强缓存（Cache-Control）+ 协商缓存（ETag）。",
+        "Service Worker 离线缓存——弱网甚至无网都能秒开。",
+        "关键 CSS 内联（首屏样式直接写在 HTML，不额外请求）。",
+        "非关键 CSS/JS 延迟加载。",
+        "**示例:**",
+        "优化组合拳：SSR 直出首屏 HTML + 关键 CSS 内联 + 非首屏路由懒加载 + Service Worker 缓存 + 图片 WebP+懒加载 + HTTP2+CDN。弱网下首屏只需传输最小 HTML+关键 CSS，1 秒内可渲染出内容；JS 异步加载后续增强交互。"
       ],
       "followups": [
         "SSR 在弱网下一定比 CSR 快吗？什么情况反而慢？",
@@ -7093,7 +7802,7 @@
       "category": "fe",
       "module": 14,
       "moduleName": "场景题",
-      "index": 122,
+      "index": 14.122,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -7116,7 +7825,7 @@
       "category": "fe",
       "module": 15,
       "moduleName": "安全",
-      "index": 123,
+      "index": 15.123,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -7143,7 +7852,7 @@
       "category": "fe",
       "module": 15,
       "moduleName": "安全",
-      "index": 124,
+      "index": 15.124,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -7164,7 +7873,7 @@
       "category": "fe",
       "module": 15,
       "moduleName": "安全",
-      "index": 125,
+      "index": 15.125,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -7189,7 +7898,7 @@
       "category": "fe",
       "module": 15,
       "moduleName": "安全",
-      "index": 126,
+      "index": 15.126,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -7220,7 +7929,7 @@
       "category": "fe",
       "module": 16,
       "moduleName": "软件设计",
-      "index": 127,
+      "index": 16.127,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -7229,7 +7938,51 @@
       "title": "如何从零设计一个前端监控系统？需要采集哪些数据？错误怎么采集上报？整体架构是怎样的？",
       "focus": "前端监控系统采集三类数据：①错误监控（JS异常 try/catch + window.onerror + unhandledrejection + 资源加载错误）②性能监控（Performance API 拿 FP/FCP/LCP/CLS/TTFB）③用户行为（PV/UV/点击/路由跳转埋点）；架构：SDK 嵌入采集 → 上报（sendBeacon/img/批量合并）→ 服务端收集存储 → 数据清洗分析 → 可视化看板 + 告警；核心难点是采集的全面性+上报不影响性能+海量数据处理。",
       "answer": [
-        "前端监控系统从零设计，分**采集什么、怎么采集、怎么上报、整体架构**四块："
+        "**JS 运行时异常**：",
+        "同步错误：`window.onerror`（捕获全局错误）。",
+        "Promise 未处理拒绝：`window.addEventListener('unhandledrejection')`。",
+        "框架错误：React 的 ErrorBoundary、Vue 的 `app.config.errorHandler`。",
+        "**资源加载错误**：`<img>/<script>/<link>` 加载失败，用 `addEventListener('error', ..., true)` 捕获阶段监听。",
+        "**接口错误**：劫持 fetch/XHR，记录非 2xx 响应或超时。",
+        "**白屏检测**：采样 DOM 关键节点是否渲染。",
+        "`performance.getEntriesByType('navigation')`：TTFB、DOM 解析时间。",
+        "`PerformanceObserver` 监听 paint：FP（首次绘制）、FCP（首次内容绘制）。",
+        "Web Vitals：LCP（最大内容绘制）、CLS（布局偏移）、FID/INP（交互响应）。",
+        "资源加载耗时：各 JS/CSS/图片的加载时间。",
+        "PV/UV：页面访问、独立用户。",
+        "点击埋点：关键按钮点击。",
+        "路由跳转：SPA 路由变化（监听 history/popstate）。",
+        "滚动深度、停留时长。",
+        "**sendBeacon**（首选）：浏览器空闲时异步发送，页面卸载也不丢。`navigator.sendBeacon(url, data)`。",
+        "**img 的 src**：简单 GET，跨域友好，但只能 GET 且数据量受限。`new Image().src = url + '?data=' + data`。",
+        "**fetch keepalive**：类似 sendBeacon，请求在页面关闭后仍发完。",
+        "**批量合并**：不是每个事件立即上报，攒一批（如每 10 条或 30 秒）合并发送，减少请求数。",
+        "**采样率**：海量流量时按比例采样（如 10%），降低服务端压力。",
+        "**示例:**",
+        "**SDK 初始化使用**：",
+        "```javascript",
+        "import Monitor from '@my/monitor';",
+        "Monitor.init({",
+        "  appId: 'my-app',",
+        "  reportUrl: 'https://monitor.example.com/report',",
+        "  // 采样率",
+        "  sampleRate: 1.0,",
+        "  // 开启哪些监控",
+        "  jsError: true,",
+        "  resourceError: true,",
+        "  apiError: true,",
+        "  performance: true,",
+        "  behavior: ['click', 'routeChange']",
+        "});",
+        "// 主动上报",
+        "Monitor.report({ type: 'custom', msg: 'checkout_failed', userId: '123' });",
+        "```",
+        "**错误还原流程**：",
+        "```",
+        "上报: line 1, col 5000 (压缩后)",
+        "服务端: 用SourceMap反解",
+        "结果: src/cart.js, line 45 (源码位置)",
+        "```"
       ],
       "followups": [
         "SourceMap 怎么反解压缩代码的错误栈？安全吗？",
@@ -7243,7 +7996,7 @@
       "category": "fe",
       "module": 17,
       "moduleName": "SSR",
-      "index": 128,
+      "index": 17.128,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -7253,16 +8006,23 @@
       "title": "前端渲染有哪几种模式？各自的工作原理是什么？",
       "focus": "三种主流渲染模式：①CSR 客户端渲染（浏览器拉 JS 后渲染，首屏慢但交互流畅，SPA 典型）②SSR 服务端渲染（服务器拼好 HTML 返回，首屏快利于 SEO，但服务器压力大）③SSG 静态站点生成（构建时预生成 HTML，最快最省，适合内容不变页面）。",
       "answer": [
-        "**一、CSR（Client-Side Rendering，客户端渲染）**"
+        "**一、CSR（Client-Side Rendering，客户端渲染）**",
+        "**原理**：服务器返回空 HTML + JS bundle，浏览器下载 JS 后执行，在客户端渲染出页面。",
+        "```",
+        "浏览器请求 → 服务器返回空HTML+JS链接 → 浏览器下载JS → 执行JS渲染页面",
+        "```",
+        "**适用**：后台管理系统、Web App（不需 SEO 的交互型应用）。典型：传统 React/Vue SPA。"
       ],
-      "followups": []
+      "followups": [
+        ""
+      ]
     },
     {
       "id": "fe.18.129",
       "category": "fe",
       "module": 18,
       "moduleName": "TypeScript",
-      "index": 129,
+      "index": 18.129,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -7287,7 +8047,7 @@
       "category": "fe",
       "module": 18,
       "moduleName": "TypeScript",
-      "index": 130,
+      "index": 18.13,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -7311,7 +8071,7 @@
       "category": "fe",
       "module": 18,
       "moduleName": "TypeScript",
-      "index": 131,
+      "index": 18.131,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -7335,7 +8095,7 @@
       "category": "fe",
       "module": 19,
       "moduleName": "Vue",
-      "index": 132,
+      "index": 19.132,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -7361,7 +8121,7 @@
       "category": "fe",
       "module": 19,
       "moduleName": "Vue",
-      "index": 133,
+      "index": 19.133,
       "type": "qa",
       "difficulty": "中",
       "tags": [
@@ -7386,7 +8146,7 @@
       "category": "fe",
       "module": 19,
       "moduleName": "Vue",
-      "index": 134,
+      "index": 19.134,
       "type": "qa",
       "difficulty": "高",
       "tags": [
@@ -7417,7 +8177,7 @@
       "category": "fe",
       "module": 19,
       "moduleName": "Vue",
-      "index": 135,
+      "index": 19.135,
       "type": "qa",
       "difficulty": "高",
       "tags": [

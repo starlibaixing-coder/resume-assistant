@@ -6,9 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:bank": "node scripts/build.mjs",
+    "audit": "node ../banks/audit/audit.mjs --format-only",
     "preview": "vite preview"
   },
   "dependencies": {
+    "js-yaml": "^5.2.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.0"

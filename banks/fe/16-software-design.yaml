@@ -1,0 +1,60 @@
+module: 16
+moduleName: 软件设计
+questions:
+  - id: '16.127'
+    difficulty: 高
+    tags:
+      - 高频
+    title: 如何从零设计一个前端监控系统？需要采集哪些数据？错误怎么采集上报？整体架构是怎样的？
+    focus: 前端监控系统采集三类数据：①错误监控（JS异常 try/catch + window.onerror + unhandledrejection + 资源加载错误）②性能监控（Performance API 拿 FP/FCP/LCP/CLS/TTFB）③用户行为（PV/UV/点击/路由跳转埋点）；架构：SDK 嵌入采集 → 上报（sendBeacon/img/批量合并）→ 服务端收集存储 → 数据清洗分析 → 可视化看板 + 告警；核心难点是采集的全面性+上报不影响性能+海量数据处理。
+    answer:
+      - '**JS 运行时异常**：'
+      - 同步错误：`window.onerror`（捕获全局错误）。
+      - Promise 未处理拒绝：`window.addEventListener('unhandledrejection')`。
+      - 框架错误：React 的 ErrorBoundary、Vue 的 `app.config.errorHandler`。
+      - '**资源加载错误**：`<img>/<script>/<link>` 加载失败，用 `addEventListener(''error'', ..., true)` 捕获阶段监听。'
+      - '**接口错误**：劫持 fetch/XHR，记录非 2xx 响应或超时。'
+      - '**白屏检测**：采样 DOM 关键节点是否渲染。'
+      - '`performance.getEntriesByType(''navigation'')`：TTFB、DOM 解析时间。'
+      - '`PerformanceObserver` 监听 paint：FP（首次绘制）、FCP（首次内容绘制）。'
+      - Web Vitals：LCP（最大内容绘制）、CLS（布局偏移）、FID/INP（交互响应）。
+      - 资源加载耗时：各 JS/CSS/图片的加载时间。
+      - PV/UV：页面访问、独立用户。
+      - 点击埋点：关键按钮点击。
+      - 路由跳转：SPA 路由变化（监听 history/popstate）。
+      - 滚动深度、停留时长。
+      - '**sendBeacon**（首选）：浏览器空闲时异步发送，页面卸载也不丢。`navigator.sendBeacon(url, data)`。'
+      - '**img 的 src**：简单 GET，跨域友好，但只能 GET 且数据量受限。`new Image().src = url + ''?data='' + data`。'
+      - '**fetch keepalive**：类似 sendBeacon，请求在页面关闭后仍发完。'
+      - '**批量合并**：不是每个事件立即上报，攒一批（如每 10 条或 30 秒）合并发送，减少请求数。'
+      - '**采样率**：海量流量时按比例采样（如 10%），降低服务端压力。'
+      - '**示例:**'
+      - '**SDK 初始化使用**：'
+      - '```javascript'
+      - import Monitor from '@my/monitor';
+      - Monitor.init({
+      - '  appId: ''my-app'','
+      - '  reportUrl: ''https://monitor.example.com/report'','
+      - '  // 采样率'
+      - '  sampleRate: 1.0,'
+      - '  // 开启哪些监控'
+      - '  jsError: true,'
+      - '  resourceError: true,'
+      - '  apiError: true,'
+      - '  performance: true,'
+      - '  behavior: [''click'', ''routeChange'']'
+      - '});'
+      - // 主动上报
+      - 'Monitor.report({ type: ''custom'', msg: ''checkout_failed'', userId: ''123'' });'
+      - '```'
+      - '**错误还原流程**：'
+      - '```'
+      - '上报: line 1, col 5000 (压缩后)'
+      - '服务端: 用SourceMap反解'
+      - '结果: src/cart.js, line 45 (源码位置)'
+      - '```'
+    followups:
+      - SourceMap 怎么反解压缩代码的错误栈？安全吗？
+      - sendBeacon 和 fetch keepalive 有什么区别？什么时候用哪个？
+      - 白屏检测有哪些方案？怎么准确判断？
+      - SDK 怎么保证自身报错不影响业务代码？

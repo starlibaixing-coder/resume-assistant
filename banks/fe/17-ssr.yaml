@@ -1,0 +1,19 @@
+module: 17
+moduleName: SSR
+questions:
+  - id: '17.128'
+    difficulty: 高
+    tags:
+      - 高频
+      - 概念
+    title: 前端渲染有哪几种模式？各自的工作原理是什么？
+    focus: 三种主流渲染模式：①CSR 客户端渲染（浏览器拉 JS 后渲染，首屏慢但交互流畅，SPA 典型）②SSR 服务端渲染（服务器拼好 HTML 返回，首屏快利于 SEO，但服务器压力大）③SSG 静态站点生成（构建时预生成 HTML，最快最省，适合内容不变页面）。
+    answer:
+      - '**一、CSR（Client-Side Rendering，客户端渲染）**'
+      - '**原理**：服务器返回空 HTML + JS bundle，浏览器下载 JS 后执行，在客户端渲染出页面。'
+      - '```'
+      - 浏览器请求 → 服务器返回空HTML+JS链接 → 浏览器下载JS → 执行JS渲染页面
+      - '```'
+      - '**适用**：后台管理系统、Web App（不需 SEO 的交互型应用）。典型：传统 React/Vue SPA。'
+    followups:
+      - ''
