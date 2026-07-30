@@ -1,51 +1,84 @@
-# Resume Assistant
+# AI Agent 求职准备资源库
 
-A local-first agent skill that generates a JD-tailored PDF resume from your code, job descriptions, and business context.
+面向**生产级 AI Agent 工程师岗位**的求职准备资源库。两个核心部分:
 
-## What it does
+- **面试题库**(`interview-bank/`)— 主体。覆盖从底层模型原理到上层认知定位的完整能力栈,15 个模块 / 5 大能力层,既能直接备考,也能作为出题题库。
+- **简历生成 skill**(`skill/`)— 配套工具。一个 ZCode agent skill,从你的项目材料(本地代码、README、文档或代码片段) + JD + 业务背景,生成 JD 定向、可面试的 PDF 简历。
 
-1. **Intake** — collects the JD, your local project path, and any existing resume
-2. **Code extraction** — reads your code as *leads*, extracting candidate technical points
-3. **Endorsement** — cross-examines you on each point: "did you actually do this?"
-4. **JD-tailored rewrite** — rewrites your experience against the JD, under three hard constraints
-5. **Review** — shows you the draft with boundaries called out
-6. **Render** — outputs a PDF via `github-markdown-css` + Puppeteer
+## 目录结构
 
-## The three lines (R1 / R2 / R3)
+```
+├── interview-bank/          # 面试题库(主体)
+│   ├── README.md            # 题库总览:5 大层 / 15 模块导航 / 按岗位刷题路径
+│   └── 01-*.md … 15-*.md    # 各模块题目
+├── skill/                   # 简历生成 skill(配套工具)
+│   ├── SKILL.md             # Skill 指令:三道红线 + 六阶段工作流
+│   ├── scripts/render-pdf.mjs  # Markdown -> HTML -> PDF 渲染器
+│   ├── assets/print.css     # 打印样式(A4、排版、间距)
+│   └── package.json         # 渲染依赖(marked / puppeteer-core / github-markdown-css)
+└── AGENTS.md                # 给 ZCode agent 的工作区说明
+```
 
-These constraints keep the resume honest and interview-survivable:
+## 面试题库
 
-- **R1 Verb locking** — polish tone, never upgrade responsibility. 参与 ≠ 负责, 了解 ≠ 精通.
-- **R2 No fabricated data** — vague metrics get interrogated for precision; no number is invented.
-- **R3 Highlights anchor on fact** — the LLM surfaces candidates; only what you confirm enters the resume. Code complexity ≠ a highlight.
+题库按能力层级分为 5 大层,一个合格的生产级 Agent 工程师应五层兼备:
 
-## Requirements
+```
+┌──────────────────────────────────────────────────────────────┐
+│  第 ⑤ 层  认知 & 行为面          (你如何看待 AI、如何工作)      │
+│           15. AI 时代认知与行为面                              │
+├──────────────────────────────────────────────────────────────┤
+│  第 ④ 层  产品 & 前沿            (主流产品怎么设计的)           │
+│           13. Coding Agent 与产品架构                          │
+│           14. AI 工作流与方法论 (SDD/Skills/Harness)           │
+├──────────────────────────────────────────────────────────────┤
+│  第 ③ 层  工程化 & 生产          (能上线、扛得住、可持续)       │
+│           09. 实战踩坑                                         │
+│           10. 生产级工程化                                     │
+│           08. AI 工具 & 工程基础 (MCP/分布式)                  │
+├──────────────────────────────────────────────────────────────┤
+│  第 ② 层  应用 & 编排            (会搭 Agent、会 RAG)           │
+│           01. Agent 核心机制                                   │
+│           02. LLM 三大范式                                     │
+│           03. RAG & 知识库                                     │
+│           04. 多 Agent 框架                                    │
+│           06. 评测 & 可观测性                                  │
+├──────────────────────────────────────────────────────────────┤
+│  第 ① 层  模型原理              (懂底层,才能调优与排障)        │
+│           12. 大模型原理与架构                                 │
+│           05. 模型训练微调                                     │
+│           07. 程序分析 (代码理解基础)                          │
+│           11. 计算机基础落地                                   │
+└──────────────────────────────────────────────────────────────┘
+```
 
-- Node.js 18+
-- Google Chrome (or Chromium) installed — the renderer uses your system browser, no bundled Chromium download
+完整模块导航、按岗位刷题路径、题目格式规范见 [`interview-bank/README.md`](./interview-bank/README.md)。
 
-## Install
+## 简历生成 skill
+
+把 JD 定向、可面试的简历生成作为配套工具,覆盖题库准备之外的求职环节。
+
+### 三道红线(R1 / R2 / R3)
+
+约束每一条进入简历的文字,保证简历诚实、扛得住面试:
+
+- **R1 动词锁定** — 润色语气,不升级责任。`参与` 可变 `协助完成`,绝不变 `负责`/`主导`。
+- **R2 不编造数据** — 数字必须来自用户。含糊指标必须追问精确值,不杜撰 QPS/百分比。
+- **R3 亮点锚定事实** — 代码复杂度/复用/库使用(或文档里对这些的描述)只是候选线索,需用户确认后才能进简历。
+
+### 使用
 
 ```bash
-npm install
+cd skill
+npm install                                                          # Node.js 18+ + 系统 Chrome
+node scripts/render-pdf.mjs <input.md> <output.pdf>                  # 渲染 Markdown 简历为 PDF
 ```
 
-## Render a resume to PDF
+作为 ZCode skill 使用时,把 `skill/` 目录复制或软链到 `~/.agents/skills/resume-assistant/`,然后让 agent 针对 JD 裁剪简历即可自动触发。
 
-```bash
-node scripts/render-pdf.mjs <input.md> <output.pdf>
-```
+## 贡献与约定
 
-## Use as a ZCode skill
-
-Copy (or symlink) this directory to `~/.agents/skills/resume-assistant/`. Then ask your agent to tailor a resume for a JD — the skill triggers automatically.
-
-## Files
-
-```
-├── SKILL.md                 # Core instructions: three lines + six-phase workflow
-├── scripts/render-pdf.mjs   # Markdown → HTML → PDF renderer
-├── assets/print.css         # Print stylesheet (A4, typography, spacing)
-├── assets/sample-resume.md  # Sample resume for testing
-└── references/              # Reserved for extended docs
-```
+- 题库技术准确性是第一优先级。修订以**就地修复硬错误**为主,不重写。
+- 题目格式保持 `Q[模块号.序号]【难度】题目标题` 的统一结构。
+- 简历输出语言跟随 JD:中文 JD 写中文,英文 JD 写英文。
+- Git commit 使用 conventional-commits 前缀 + 中文描述(如 `docs: 题库深度审查修订`)。

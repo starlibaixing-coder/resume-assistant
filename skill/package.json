@@ -1,7 +1,7 @@
 {
   "name": "resume-assistant",
   "version": "1.0.0",
-  "description": "Render Markdown resume to PDF using github-markdown-css",
+  "description": "Resume Assistant skill - generate a JD-tailored PDF resume from local code and business context (companion tool of the AI Agent interview prep repo)",
   "type": "module",
   "private": true,
   "dependencies": {
