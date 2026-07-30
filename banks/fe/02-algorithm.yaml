@@ -70,7 +70,7 @@ questions:
       - 高频
       - 手写
     title: 反转一个单链表（迭代与递归两种写法）。
-    focus: 迭代：用 prev/curr 双指针，逐个把 next 指向前一个节点。递归：先翻转子链表，再把当前节点接到翻转后链表的末尾。
+    focus: 链表反转的迭代与递归两种实现思路
     answer:
       - 反转链表是链表题的母题。
       - 迭代法（推荐）：维护三个指针 prev、curr、next。每一步：先存 next = curr.next，再把 curr.next 指向 prev，然后 prev、curr 整体后移一位。循环到 curr 为 null，此时 prev 就是新头。

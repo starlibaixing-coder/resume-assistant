@@ -7,7 +7,7 @@ questions:
       - 高频
       - 概念
     title: JavaScript 中 `this` 的指向规则是什么？
-    focus: '`this` 在函数**调用时**才确定（动态），看「谁调用了函数」。5 种规则按优先级：默认绑定 < 隐式绑定 < 显式绑定(call/apply/bind) < new 绑定；箭头函数没有自己的 this，继承外层（静态，不受上述规则影响）。'
+    focus: JavaScript this 指向的判定规则与优先级
     answer:
       - '**`this` 指向规则**（按优先级从低到高）：'
       - 1. **默认绑定**：独立函数调用，非严格模式 `this` 是 window/global，严格模式是 undefined。
@@ -84,7 +84,7 @@ questions:
       - 高频
       - 概念
     title: ES6 的 `class` 和传统构造函数+原型有什么区别？
-    focus: class 本质是构造函数+原型的语法糖，但更严谨：调用必须用 new、方法默认不可枚举、有 static/extends/super 等清晰语法，让面向对象代码更易读易写，但底层原型机制没变。
+    focus: ES6 class 与构造函数+原型的异同
     answer:
       - '**class vs 传统模式的核心区别**：'
       - '| 特性 | 传统构造函数 | ES6 class |'
@@ -106,7 +106,7 @@ questions:
       - 高频
       - 概念
     title: 箭头函数和普通函数有哪些区别？为什么箭头函数不能用作构造函数或方法？
-    focus: 箭头函数四大区别：①没有自己的 this（继承外层词法 this）②没有 arguments（用剩余参数...args）③不能作构造函数（无 prototype、不能 new）④不能作 Generator（无 yield）；核心是箭头函数设计目标就是「轻量回调」，所以砍掉了 this 绑定等特性，适合纯函数/回调，不适合方法/构造函数。
+    focus: 箭头函数与普通函数的核心区别及限制
     answer:
       - 普通函数：this 由调用方式决定（谁调用指向谁，参见 fe-js-001）。
       - 箭头函数：**继承外层词法作用域的 this**（定义时确定，不可变）。
@@ -188,7 +188,7 @@ questions:
       - 高频
       - 概念
     title: 请讲清楚 JavaScript 的原型和原型链。
-    focus: 原型（prototype）是函数的一个属性，指向一个原型对象；实例通过 `__proto__` 指向构造函数的 prototype，从而能访问原型上的方法。原型链是访问属性时沿 `__proto__` 一路向上查找的路径，直到找到或到顶（null）。
+    focus: JavaScript 原型与原型链的机制
     answer:
       - '**原型（Prototype）**：每个函数都有一个 `prototype` 属性，指向它的原型对象。通过 `new Fn()` 创建的实例，有一个 `__proto__`（即 `[[Prototype]]`）指向 `Fn.prototype`，所以实例能访问原型上的方法和属性（方法复用）。'
     followups:
@@ -202,7 +202,7 @@ questions:
       - 高频
       - 概念
     title: Promise 的 `.then(onFulfilled, onRejected)` 和 `.catch()` 有什么区别？为什么推荐用 `.catch`？
-    focus: '`.catch()` 等价于 `.then(null, onRejected)`，但它能捕获**整条链**上前面抛的错误（reject + 同步异常）；而 `.then` 的第二参数 onRejected 只能捕获前一个 Promise 的 reject，抓不到 onFulfilled 里抛的错。所以 `.catch` 更全面，推荐用 `.catch`。'
+    focus: Promise then 第二参数与 catch 的捕获范围差异
     answer:
       - '`.then(onFulfilled, onRejected)` 的 onRejected **只捕获前一个 Promise 的 reject**，捕获不到**同个 then 里 onFulfilled 抛出的同步错误**。'
       - '`.catch()` 能捕获**它之前整条链**上的所有错误（reject + 抛出的异常），因为 `.catch()` 本质是 `.then(null, onRejected)`，挂在了链的后端。'

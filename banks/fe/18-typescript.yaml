@@ -18,7 +18,7 @@ questions:
     difficulty: 高
     tags: [高频, 概念]
     title: "TypeScript 的 `Record<K, T>` 是怎么实现的？"
-    focus: "Record<K,T> 本质是 `type Record<K extends keyof any, T> = { [P in K]: T }`，用映射类型把 K 的每个键映射成 T 类型值。用于快速构造「键是 K、值是 T」的对象类型。"
+    focus: TypeScript Record 类型的实现原理
     answer:
     - "`K extends keyof any`：K 必须是合法的键类型（string | number | symbol）。"
     - "`{ [P in K]: T }`：映射类型，遍历 K 的每个键 P，定义为 T 类型。"

@@ -7,7 +7,7 @@ questions:
       - 高频
       - 概念
     title: Webpack 里 module、chunk、bundle 这三个概念分别是什么？
-    focus: module 是源码里的单个文件（一切皆模块）；chunk 是 webpack 内部构建的代码块（打包过程的中间态，含入口chunk/异步chunk）；bundle 是最终输出的文件（chunk 经过处理后的产物）。关系：module → 组成 chunk → 输出 bundle。
+    focus: Webpack 中 module/chunk/bundle 三个概念的关系
     answer:
       - 你写的每一个源文件就是一个 module（JS、CSS、图片，一切皆模块）。
       - webpack 从入口开始，通过 import/require 把所有依赖的 module 收集起来，形成依赖图。
@@ -45,7 +45,7 @@ questions:
       - 高频
       - 概念
     title: Webpack 的打包原理是什么？
-    focus: webpack 从入口出发递归构建依赖图，用 loader 把各类文件转成 JS 模块，分组生成 chunk，经 plugin 在生命周期各阶段干预后输出 bundle。
+    focus: Webpack 从入口到输出的打包流程
     answer:
       - '**Webpack 打包原理**：'
       - 1. **读配置**：entry、output、loader、plugin。
@@ -62,7 +62,7 @@ questions:
       - 高频
       - 概念
     title: Vite 为什么比 Webpack 快？
-    focus: Vite 快在：开发时用浏览器原生 ESM「按需加载」（不打包，请求哪个模块编译哪个），只有依赖预构建用 esbuild（极快）。Webpack 要先把所有模块打成 bundle 再启动，项目越大启动越慢。
+    focus: Vite 比 Webpack 快的根本原因
     answer:
       - 启动前要把所有 module 打成 bundle，项目越大启动越慢。
       - 改一个文件，可能要重新构建整个 bundle（HMR 范围大）。
@@ -94,7 +94,7 @@ questions:
     tags:
       - 概念
     title: Rsbuild（基于 Rspack）为什么比 Vite/Webpack 快？它的定位是什么？
-    focus: Rspack 用 Rust 重写了 webpack 核心（兼容 webpack 生态），Rsbuild 是基于 Rspack 的开箱即用方案。比 Vite 快在：生产环境也极快（Vite 生产用 Rollup 较慢）；比 Webpack 快在：Rust 编译（多核并行、无 JS 开销）。定位：webpack 的性能替代品，迁移成本低。
+    focus: Rsbuild/Rspack 的性能优势与定位
     answer:
       - 用 **Rust** 重写 webpack 核心。
       - 兼容 webpack 的 loader/plugin API，迁移成本低（webpack 配置几乎能直接用）。
@@ -109,7 +109,7 @@ questions:
       - 高频
       - 概念
     title: CommonJS（CJS）和 ES Modules（ESM）有什么区别？为什么 ESM 是趋势？
-    focus: CJS 用 require/module.exports（运行时加载、同步、可动态），ESM 用 import/export（编译时静态分析、异步、支持 tree-shaking）。ESM 是趋势因为：静态分析能力强（tree-shaking/优化）、官方标准、支持顶层 await、浏览器原生支持。
+    focus: CJS 与 ESM 的加载机制差异及 ESM 趋势原因
     answer:
       - '**核心区别对比**：'
       - '| 维度 | CommonJS | ESM |'

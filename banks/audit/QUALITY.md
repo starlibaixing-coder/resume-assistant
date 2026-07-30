@@ -39,6 +39,17 @@
 - ❌ Function Calling 和 Tool Use 混为一谈（tool use 是更上层概念，基于 function calling 实现）
 - ❌ 把"浏览器渲染过程"和"关键渲染路径"当成同义词提问（后者是前者的性能优化子集）
 
+### 缺陷 5：focus（考察点）泄漏答案
+
+focus 字段应写"这道题考察什么能力"，不是答案摘要。如果 focus 把答案结论说完了，答题人看 focus 就等于看了答案。
+
+- ❌ focus: "Function Calling 让 LLM 输出结构化的工具调用，由外部代码执行后喂回 LLM。本质是 LLM 学会了识别时机+生成 JSON" -- 这是答案浓缩，不是考察点
+- ✅ focus: "理解 Function Calling 的本质：LLM 负责生成调用指令，外部代码负责执行" -- 点明考察方向，不给完整答案
+- ❌ focus: "SSE 是服务器单向推消息的协议，和 WebSocket 区别是 SSE 单向基于 HTTP..." -- 答案全说了
+- ✅ focus: "区分 SSE 和 WebSocket 的通信方向与协议基础" -- 只说考察什么
+
+**判断标准**：focus 超过 40 字且关键词与答案高度重叠（≥5 个实词），疑似答案泄漏。
+
 ## 自动化检查（audit.mjs 实现）
 
 | 检查项 | 自动化程度 | 规则 |

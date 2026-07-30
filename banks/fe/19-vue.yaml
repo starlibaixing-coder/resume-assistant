@@ -19,7 +19,7 @@ questions:
     difficulty: 中
     tags: [概念]
     title: Vue 的虚拟 DOM 和编译优化是什么？Vue 3 的编译时优化比 Vue 2 强在哪？
-    focus: Vue 用虚拟 DOM 描述 UI，数据变→生成新 vnode→diff 出最小变更→更新真实 DOM。Vue3 的突破是「编译时优化」：编译器分析模板，给静态节点打标记、给动态节点加 patchFlag，diff 时跳过静态部分，比 Vue2 的全量 diff 快很多。
+    focus: Vue 虚拟 DOM 与编译时优化的原理
     answer:
     - "**虚拟 DOM 流程**："
     - 1. 数据变 → 重新渲染生成新的虚拟 DOM 树（vnode）。
@@ -33,7 +33,7 @@ questions:
     difficulty: 高
     tags: [高频, 概念]
     title: Vue 和 React 的核心区别是什么？从响应式机制、数据流、设计理念对比。
-    focus: Vue 是「响应式驱动」（数据变自动更新，mutable）+ 编译优化模板；React 是「状态驱动重新渲染」（setState 触发全组件重渲染，immutable）+ JSX 运行时 diff。Vue 更自动化、上手快；React 更灵活、可控、生态大。
+    focus: Vue 与 React 在响应式机制和设计理念上的差异
     answer:
     - "**核心区别对比**："
     - "| 维度 | Vue | React |"
@@ -52,7 +52,7 @@ questions:
     difficulty: 高
     tags: [高频, 概念]
     title: Vue 3 的 Composition API 相比 Options API 解决了什么问题？
-    focus: Composition API 解决 Options API「相关逻辑分散在不同选项（data/methods/computed）」的碎片化问题，让同一功能的逻辑聚合到一个函数，便于复用和维护。
+    focus: Composition API 解决了 Options API 的什么问题
     answer:
     - "**Options API 的痛点**："
     - 同一个功能（如「搜索」）的逻辑被拆散：状态在 data、方法在 methods、计算在 computed、监听在 watch。功能一多，代码在不同选项间跳来跳去，难维护、难复用。

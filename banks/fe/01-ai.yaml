@@ -5,7 +5,7 @@ questions:
     difficulty: 中
     tags: [高频, 概念]
     title: 什么是 Function Calling？LLM 是怎么学会调用外部工具的？
-    focus: Function Calling 让 LLM 能根据用户意图，输出结构化的工具调用（函数名+参数），由外部代码执行后把结果喂回 LLM。本质是 LLM 经训练学会了「识别何时该用工具 + 生成合法的函数调用 JSON」，实际执行靠外部代码。
+    focus: 理解 Function Calling 的本质:LLM 生成调用指令,外部代码执行
     answer:
     - "**Function Calling 工作流程**："
     - 1. 开发者定义一批工具（函数），每个工具有名称、描述、参数 schema。
@@ -22,7 +22,7 @@ questions:
     difficulty: 中
     tags: [高频, 概念]
     title: SSE（Server-Sent Events）是什么？和 WebSocket 有什么区别？
-    focus: SSE 是服务器单向推消息给浏览器的协议（基于 HTTP，服务器→客户端）。和 WebSocket 区别：SSE 单向（服务器推）、基于 HTTP、简单轻量、自动重连；WebSocket 双向、独立协议、更复杂。
+    focus: 区分 SSE 和 WebSocket 的通信方向与协议基础
     answer:
     - "**SSE vs WebSocket**："
     - "| 维度 | SSE | WebSocket |"

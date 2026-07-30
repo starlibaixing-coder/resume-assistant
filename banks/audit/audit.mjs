@@ -82,6 +82,20 @@ function main() {
 
         // --- 题目设计质量检查（启发式，见 QUALITY.md）---
 
+        // 检查 0：focus 泄漏答案（focus >40字且与答案关键词重叠≥5）
+        if (q.focus && q.focus.length > 40 && Array.isArray(q.answer)) {
+          const focusWords = q.focus.match(/[\u4e00-\u9fa5]{2,}|[A-Za-z]{3,}/g) || [];
+          const answerText = q.answer.join('');
+          const leaked = focusWords.filter((w) => answerText.includes(w));
+          if (leaked.length >= 5) {
+            issues.push({
+              type: 'design', severity: '中', id: fullId, loc,
+              msg: `focus 疑似泄漏答案(${q.focus.length}字, 重叠${leaked.length}词)`,
+              title: q.title,
+            });
+          }
+        }
+
         // 检查 1：多问一题（题干含 ≥3 个问号，2个问号递进太常见不报）
         const qMarkCount = (q.title.match(/？/g) || []).length;
         if (qMarkCount >= 3) {
@@ -169,12 +183,20 @@ function main() {
 
   if (designIssues.length) {
     reportLines.push('## 题目设计疑似问题（启发式，需人工确认）');
-    reportLines.push('依据 QUALITY.md 四条原则。以下为自动扫描结果，可能误报。');
+    reportLines.push('依据 QUALITY.md 五条原则。以下为自动扫描结果，可能误报。');
     reportLines.push('');
     // 按问题类型分组
+    const focusLeak = designIssues.filter((i) => i.msg.includes('focus 疑似泄漏'));
     const multiQ = designIssues.filter((i) => i.msg.includes('多问一题'));
     const parenHint = designIssues.filter((i) => i.msg.includes('答案提示'));
-    const leak = designIssues.filter((i) => i.msg.includes('答案泄漏'));
+    const leak = designIssues.filter((i) => i.msg.includes('答案泄漏进题干'));
+    if (focusLeak.length) {
+      reportLines.push(`### focus 疑似泄漏答案（${focusLeak.length}）`);
+      for (const i of focusLeak) {
+        reportLines.push(`- **${i.id}** (${i.loc}): ${i.msg}`);
+      }
+      reportLines.push('');
+    }
     if (multiQ.length) {
       reportLines.push(`### 疑似多问一题（${multiQ.length}）`);
       for (const i of multiQ) {

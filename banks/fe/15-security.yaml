@@ -42,7 +42,7 @@ questions:
     difficulty: 高
     tags: [概念]
     title: 除了 XSS 和 CSRF，前端还有哪些常见安全威胁？点击劫持怎么防？
-    focus: 常见还有：点击劫持（用透明 iframe 诱骗点击）、中间人攻击、依赖供应链攻击、开放重定向。点击劫持靠 X-Frame-Options 或 CSP frame-ancestors 禁止页面被嵌套来防御。CSP 是缓解多种威胁的万能基石。
+    focus: 前端常见安全威胁及点击劫持防御
     answer:
     - 攻击者用透明 iframe 把目标网站盖在自己页面上，诱导用户点击看似正常的按钮，实际点的是目标网站的敏感按钮（如点赞、授权）。
     - "防御：X-Frame-Options: DENY/SAMEORIGIN 禁止被嵌套；或 CSP 的 frame-ancestors 指令。"

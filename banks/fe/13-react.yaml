@@ -7,7 +7,7 @@ questions:
       - 高频
       - 概念
     title: 项目中常用的 React Hook 有哪些？各自的使用场景和注意事项是什么？
-    focus: 常用 Hook：`useState`(状态)、`useEffect`(副作用)、`useRef`(可变值/DOM引用)、`useMemo`(缓存计算结果)、`useCallback`(缓存函数引用)、`useContext`(跨层传值)、`useReducer`(复杂状态)。核心原则：按需用，别过度 memo。
+    focus: 常用 React Hook 的场景与注意事项
     answer:
       - '| Hook | 用途 | 关键注意 |'
       - '|---|---|---|'
@@ -28,7 +28,7 @@ questions:
       - 高频
       - 概念
     title: '`useEffect` 和 `useLayoutEffect` 有什么区别？分别在什么场景下使用？'
-    focus: '`useEffect` 在浏览器**绘制之后**异步执行（不阻塞页面）；`useLayoutEffect` 在 DOM 变更后、绘制前**同步**执行（阻塞绘制）。绝大多数副作用用 useEffect，只有会引起「视觉闪烁」的 DOM 测量/布局操作才用 useLayoutEffect。'
+    focus: useEffect 与 useLayoutEffect 的执行时机差异
     answer:
       - '**执行时机对比**（一次渲染的生命周期）：'
       - '```'
@@ -47,7 +47,7 @@ questions:
       - 高频
       - 概念
     title: React Hook 相比 Class 组件有哪些优势？为什么 React 团队要推 Hook？
-    focus: Hook 解决了 Class 的三大痛点：①**逻辑复用难**（HOC/渲染 props 嵌套地狱）→ 自定义 Hook 直接复用；②**生命周期拆散相关逻辑**（同一逻辑分散在 didMount/didUpdate/willUnmount）→ useEffect 聚合；③**this 指向和绑定心智负担重**。Hook 让函数组件也能有 state 和副作用，代码更简洁。
+    focus: React Hook 解决了 Class 组件的哪些痛点
     answer:
       - '**Class 组件的三大痛点**：'
       - 1. **逻辑复用难**：早期复用状态逻辑只能靠 HOC（高阶组件）或 render props，结果是组件树层层嵌套（「wrapper hell」），调试时 React DevTools 里一长串匿名组件。
@@ -63,7 +63,7 @@ questions:
       - 高频
       - 概念
     title: '`useRef` 有哪些使用场景？'
-    focus: '`useRef` 两大用途：①**获取 DOM 元素引用**（focus、测量尺寸、播放媒体）；②**存放不触发重渲染的可变值**（定时器 id、上次值、缓存）。它返回一个 `{ current: 初始值 }` 对象，整个组件生命周期里引用稳定，改 `.current` 不触发重渲染。'
+    focus: useRef 的两大使用场景
     answer:
       - '**useRef 返回什么**：一个 `{ current: 初始值 }` 对象，整个组件生命周期里**始终是同一个对象**（引用稳定），改 `.current` 不会触发重渲染。'
     followups:
@@ -76,7 +76,7 @@ questions:
       - 高频
       - 概念
     title: React Router 的原理是什么？`history` 模式和 `hash` 模式有什么区别？
-    focus: 'React Router 监听 URL 变化→匹配路由→渲染组件，全程不刷新页面。hash 模式靠 `hashchange` 事件、URL 带 # 但无需后端配置；history 模式靠 `pushState/popstate`、URL 干净但刷新需后端回退到 index.html。'
+    focus: React Router 原理及 hash/history 模式区别
     answer:
       - 原理：`#` 后面的部分叫 hash，改变 hash **不会触发请求**，但会触发 `hashchange` 事件。Router 监听该事件，匹配路由渲染组件。
       - 优点：无需后端配置，兼容性好（IE8+）。
@@ -124,7 +124,7 @@ questions:
       - 高频
       - 概念
     title: React 列表渲染时 `key` 的作用是什么？默认行为是什么？
-    focus: '`key` 是 React diff 列表时识别元素身份的标识——帮助 React 判断「这个节点是移动了还是新建了」，从而复用 DOM、减少重渲染。没写 key 默认用数组 index 匹配，遇到列表增删会导致后续元素错位重渲染。key 必须稳定、唯一。'
+    focus: React 列表 key 的作用与默认行为的影响
     answer:
       - '**key 的作用**：在 reconcile 阶段，React 对比新旧 children 列表时，靠 key 把新列表的元素和旧列表的元素对应起来。有 key 才能判断「A 元素从位置 3 移到了位置 0」，于是只移动 DOM 节点而不是销毁重建。'
     followups:
@@ -137,7 +137,7 @@ questions:
       - 高频
       - 概念
     title: React 19 有哪些重要新特性？项目中如何使用？
-    focus: React 19 三大类特性：①**Actions**（`useTransition` + 异步表单，自动处理 pending/error）；②新 hooks（`use`、`useActionState`、`useFormStatus`、`useOptimistic`、`use`）；③编译器（React Compiler 自动 memo，不用手写 useMemo/useCallback）；外加 ref 作为 prop、Document Metadata、Server Components 稳定。
+    focus: React 19 的主要新特性
     answer:
       - '**1. Actions（异步动作）**：把异步操作（提交表单、请求接口）用 `useTransition` 包裹，自动给 pending 状态、错误处理、乐观更新。'
     followups:
@@ -203,7 +203,7 @@ questions:
       - 高频
       - 手写
     title: 请手写一个简化版的 `useState`。
-    focus: 简化版 useState 用「**模块级变量 + hook 链表索引**」模拟：把 state 存在 fiber 的链表节点上，setState 把更新 push 到队列，下次渲染时按队列算新值。
+    focus: useState 的底层实现思路
     answer:
       - '**简化版实现要点**：'
       - 1. 用一个模块级变量 `state`（或链表节点）+ `index` 指针。
@@ -218,7 +218,7 @@ questions:
       - 高频
       - 概念
     title: 对比 Redux、Zustand、MobX 三种状态管理方案，它们的核心思想和适用场景有什么不同？
-    focus: Redux=不可变+纯函数reducer+单一store，强约束可回溯，适合大型项目；Zustand=极简，基于 useSyncExternalStore 精准订阅，灵活轻量；MobX=可变数据+Proxy自动追踪依赖，写法像普通对象全自动响应。
+    focus: Redux/Zustand/MobX 的核心思想与适用场景
     answer:
       - 单一全局 store，state 不可变（每次返回新对象）。
       - '`reducer(state, action) => newState` 纯函数。'
@@ -235,7 +235,7 @@ questions:
       - 高频
       - 概念
     title: Zustand 是如何工作的？
-    focus: Zustand 的 store 本质是个带 `subscribe/getSnapshot` 的普通对象，用 React 18 的 `useSyncExternalStore` 让组件订阅；setState 时遍历所有订阅者，逐个跑 selector 比对，决定谁要更新。
+    focus: Zustand 的工作原理
     answer:
       - '`create((set,get)=>({...}))` 返回一个 hook，内部维护 state + 订阅者列表。'
       - 组件调 `useStore(s => s.count)` 时，底层走 `useSyncExternalStore(subscribe, getSnapshot)`。
@@ -249,7 +249,7 @@ questions:
       - 高频
       - 概念
     title: React 做了哪些性能优化？开发者层面有哪些常用优化手段？
-    focus: React 性能优化分两层：框架层（Fiber 可中断渲染、并发渲染、自动批处理、diff 算法）和开发者层（React.memo 避免子组件重渲染、useMemo/useCallback 缓存值和函数、虚拟化长列表、路由/组件懒加载、合理用 key、状态下沉/拆分）；核心思想是「减少不必要的渲染」和「减少渲染的成本」。
+    focus: React 性能优化的框架层与开发者层手段
     answer:
       - 渲染过程可被中断，让位给高优先级任务（如用户输入）。
       - useTransition/useDeferredValue 让开发者标记低优先级更新。
@@ -313,7 +313,7 @@ questions:
       - 高频
       - 概念
     title: React Hook 的实现原理是什么？
-    focus: Hook 的实现核心是**函数组件 fiber 上的单向链表**：每次渲染时按调用顺序把每个 Hook 串成链表节点挂在 fiber 上。React 靠「调用顺序」定位每个 Hook 对应的 state。
+    focus: React Hook 的链表实现原理
     answer:
       - '**数据结构**：每个函数组件对应的 fiber 节点上有个 `memoizedState` 字段，指向一条**单向链表**。链表每个节点对应一次 Hook 调用：'
       - '```'
@@ -355,7 +355,7 @@ questions:
       - 高频
       - 概念
     title: MobX 的响应式原理是什么？
-    focus: MobX 用 Proxy（或旧版 defineProperty）把数据变成可观察值；组件 render 时访问这些属性会自动注册依赖；属性变化时 MobX 通知所有依赖它的组件重渲染——全自动追踪，无需手动订阅。
+    focus: MobX 响应式的自动依赖追踪原理
     answer:
       - '**三步响应式机制**：'
       - 1. **可观察化（Observable）**：`makeAutoObservable(this)` 用 Proxy 拦截对象属性的 get/set。读属性时收集「谁在读」，写属性时通知「读过的那些人」。

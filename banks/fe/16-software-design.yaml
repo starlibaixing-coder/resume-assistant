@@ -6,7 +6,7 @@ questions:
     tags:
       - 高频
     title: 如何从零设计一个前端监控系统？整体架构是怎样的？
-    focus: 前端监控系统采集三类数据：①错误监控（JS异常 try/catch + window.onerror + unhandledrejection + 资源加载错误）②性能监控（Performance API 拿 FP/FCP/LCP/CLS/TTFB）③用户行为（PV/UV/点击/路由跳转埋点）；架构：SDK 嵌入采集 → 上报（sendBeacon/img/批量合并）→ 服务端收集存储 → 数据清洗分析 → 可视化看板 + 告警；核心难点是采集的全面性+上报不影响性能+海量数据处理。
+    focus: 前端监控系统的整体架构与采集维度
     answer:
       - '**JS 运行时异常**：'
       - 同步错误：`window.onerror`（捕获全局错误）。

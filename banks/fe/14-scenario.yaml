@@ -49,7 +49,7 @@ questions:
       - 高频
       - 概念
     title: 如何实现 token 的无感刷新（过期时自动续期，用户无感知）？token 怎么安全存储？
-    focus: 双 token 方案：短期的 access token（用于请求）+ 长期的 refresh token（用于续期）。请求遇 401（过期）时，用 refresh token 换新 access token，重发失败的请求，用户全程无感。存储：access token 放内存（短期），refresh token 放 HttpOnly cookie（安全），不要放 localStorage（XSS 能偷）。
+    focus: token 无感刷新的方案与安全存储策略
     answer:
       - 拦截这个 401，暂停后续请求。
       - 用 refresh token 调刷新接口，拿新的 access token。
@@ -64,7 +64,7 @@ questions:
     tags:
       - 高频
     title: 移动端弱网环境下，如何保证首屏渲染速度在 1 秒内？
-    focus: 弱网核心瓶颈是资源传输慢，策略：①减少首屏要传的数据量（代码分割、按需加载、SSR/骨架屏）②提前加载关键资源（preload/preconnect）③缓存最大化（强缓存/Service Worker）④传输优化（gzip/brotli、HTTP2、图片优化）。目标是首屏只加载最少必要内容。
+    focus: 弱网环境下首屏渲染加速的策略
     answer:
       - '**代码分割**：首屏只加载首屏路由的代码，其他路由懒加载。'
       - '**Tree shaking**：删掉没用到的代码。'

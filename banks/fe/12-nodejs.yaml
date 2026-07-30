@@ -5,7 +5,7 @@ questions:
     difficulty: 中
     tags: [高频, 概念]
     title: Node.js 的事件循环和浏览器的事件循环有什么区别？
-    focus: Node.js 用 6 个阶段（timers、pending、poll、check、close + 微任务队列），浏览器只有宏任务+微任务两类；Node 11 以前 timers 阶段会一次性清空所有到期回调，11 之后对齐浏览器「每个宏任务后清空微任务」。
+    focus: Node.js 与浏览器事件循环的阶段差异
     answer:
     - 浏览器的循环模型很简单：执行一个宏任务 → 清空所有微任务 → 渲染 → 取下一个宏任务，循环往复。
     - Node.js 把宏任务分成 6 个阶段（phase），按固定顺序轮转：
@@ -26,7 +26,7 @@ questions:
     difficulty: 中
     tags: [概念]
     title: pm2 在 Node.js 部署中起什么作用？它的核心能力有哪些？
-    focus: pm2 是 Node.js 的进程管理器，核心能力：守护进程（崩溃自动重启）、多进程集群（cluster 模式利用多核）、日志管理、零停机重载、状态监控。
+    focus: pm2 在 Node 部署中的核心能力
     answer:
     - Node.js 单线程跑业务逻辑，一个未捕获异常就整个进程挂掉；单进程也只能用一个 CPU 核。pm2 解决的就是这两类生产问题：
     - "| 能力 | 说明 |"
@@ -45,7 +45,7 @@ questions:
     difficulty: 中
     tags: [高频, 概念]
     title: Node.js 的 Buffer 是什么？
-    focus: "Buffer 是 Node 用来存二进制数据的「定长字节序列」，类似 `Uint8Array` 的子类，用于在网络/文件读写时高效处理原始字节，不像字符串需要编码转换。"
+    focus: "pm2 在 Node 部署中的核心能力"
     answer:
     - JavaScript 原生没有处理二进制的方便手段（早期），Node 设计 Buffer 来处理 TCP 流、文件 I/O 这类字节流数据。
     followups:
@@ -55,7 +55,7 @@ questions:
     difficulty: 中
     tags: [高频, 概念]
     title: 什么是服务端渲染（SSR）？它的基本原理是什么？
-    focus: SSR 是在服务器上把组件渲染成 HTML 字符串发给浏览器，用户拿到的是「带内容的完整页面」，而不是 CSR 那种「空 HTML + JS 再渲染」。原理：服务端执行组件代码生成 HTML → 客户端 hydrate（注水）接管交互。
+    focus: SSR 的基本原理与 CSR 的区别
     answer:
     - 对比两种渲染方式：
     - "| 方式 | HTML 返回内容 | 首屏 | SEO | 流程 |"
@@ -87,7 +87,7 @@ questions:
     difficulty: 高
     tags: [高频, 概念]
     title: 什么是洋葱圈模型？Koa 中间件如何实现请求进、响应出的嵌套执行？
-    focus: "洋葱圈是中间件「先进后出」的执行模型：请求从外向内穿过每一层中间件到核心，响应再从内向外穿回去，每层中间件用 `await next()` 把控制权交给下一层，next 之后的代码在响应阶段执行。"
+    focus: "SSR 的基本原理与 CSR 的区别"
     answer:
     - "`next()` 之前的代码：请求阶段执行（从外向内）"
     - "`await next()`：暂停当前中间件，进入下一层"
@@ -100,7 +100,7 @@ questions:
     difficulty: 高
     tags: [高频, 概念]
     title: Node.js 中 CommonJS 和 ESM 两种模块加载方式有什么区别？
-    focus: "CommonJS 用 `require/module.exports`，同步加载、运行时求值、可动态 require、值是拷贝；ESM 用 `import/export`，静态分析（编译期确定依赖）、异步加载、值是实时绑定（live binding），`this` 在顶层是 undefined。"
+    focus: Node.js 中 CJS 与 ESM 加载方式的区别
     answer:
     - 两者从语法到运行机制都不同：
     - "| 维度 | CommonJS (CJS) | ES Modules (ESM) |"
@@ -139,7 +139,7 @@ questions:
     difficulty: 高
     tags: [高频, 概念]
     title: Node.js 的 Stream（流）是什么？
-    focus: Stream 是「分块处理数据」的抽象，数据像水流一样一段段过来，边到边处理，不必把整个数据加载进内存。分 4 种：Readable（可读）、Writable（可写）、Duplex（双工）、Transform（转换）。
+    focus: Stream 的概念与四种类型
     answer:
     - "**4 种流**："
     - "| 类型 | 含义 | 例子 |"
@@ -156,7 +156,7 @@ questions:
     difficulty: 高
     tags: [高频, 概念]
     title: 现代框架（Next.js/Nuxt）有哪几种渲染模式？它们各是什么？
-    focus: 主要有 4 种：CSR（客户端渲染）、SSR（请求时服务端渲染）、SSG（构建时生成静态 HTML）、ISR（增量静态再生成，定时更新静态页）。Next.js/Nuxt 都支持按页面混用。
+    focus: 现代框架各渲染模式的定义与区别
     answer:
     - "| 模式 | 何时生成 HTML | 特点 | 适用 |"
     - "|---|---|---|---|"

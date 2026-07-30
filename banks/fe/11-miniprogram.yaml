@@ -7,7 +7,7 @@ questions:
       - 高频
       - 概念
     title: 微信小程序为什么采用「双线程架构」（视图层和逻辑层分离）？这种架构有什么优缺点？
-    focus: 双线程：视图层（WebView 渲染）和逻辑层（JSCore 跑 JS）分离，通过 Native 桥通信。目的是安全和可控——逻辑层拿不到 DOM，防止开发者操作 DOM 跳转/改 UI，便于微信管控；同时多页面复用 WebView。代价是通信有延迟、不能用 DOM API。
+    focus: 小程序双线程架构的设计目的与代价
     answer:
       - '**视图层（WebView）**：每个页面一个 WebView，负责渲染 WXML/WXSS。可以有多个（多页面）。'
       - '**逻辑层（JSCore/V8）**：只有一个，跑所有 JS 逻辑（数据、事件处理）。**没有 DOM/BOM API**。'
@@ -22,7 +22,7 @@ questions:
       - 高频
       - 概念
     title: 小程序的 WXML/WXSS 最终编译成什么？为什么不能直接用 HTML/CSS？
-    focus: WXML 编译成 JS（通过 WCC 编译器转成 render 函数生成虚拟 DOM），不是直接转 HTML；WXSS 编译成 JS 注入的样式。因为双线程架构下视图层要动态生成、要适配多端、要做安全管控（不能让开发者写任意 HTML/JS 操作 DOM），所以用自定义标签再编译。
+    focus: WXML/WXSS 的编译产物与不能直接用 HTML 的原因
     answer:
       - WXML 不是直接转成 HTML。它经过 **WCC 编译器**，编译成一个 JS 函数（$gwx）。
       - 运行时，逻辑层把数据传给这个函数，函数生成**虚拟 DOM 树（JS 对象）**。
@@ -36,7 +36,7 @@ questions:
     tags:
       - 概念
     title: 小程序有哪些性能优化手段？
-    focus: 核心优化：减少 setData 的数据量和频率（只传变化的、合并调用）、分包加载（按需加载子包）、长列表虚拟化、图片懒加载、减少节点嵌套层级。
+    focus: 小程序性能优化的关键手段
     answer:
       - 把小程序拆成主包 + 多个子包，按需加载子包。
       - 减少首次加载体积，加快启动。

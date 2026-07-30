@@ -6,7 +6,7 @@ questions:
     tags:
       - 手写
     title: 瀑布流布局怎么实现？有哪些方案？
-    focus: 三种方案：①CSS columns（最简单，但顺序是列优先）②JS 分列（计算每列高度，新元素放最短列，顺序正确）③CSS Grid（masonry 还在实验中）。实际项目多用 JS 分列方案，控制精确、顺序正确。
+    focus: 瀑布流布局的实现方案与各自优劣
     answer:
       - '`column-count` 分列，元素自动流入。'
       - 优点：纯 CSS，代码少。
@@ -85,7 +85,7 @@ questions:
     tags:
       - 概念
     title: Taro 跨端框架的原理是什么？
-    focus: Taro 原理是「编译时 + 运行时」：编译时把 React 代码转成各端的代码（小程序转 WXML/WXSS/JS，H5 转原生标签）；运行时提供统一的组件库和 API 适配层，抹平各端差异。本质是「用 React 语法描述 UI，编译器翻译成各端产物」。
+    focus: Taro 跨端框架的编译时与运行时原理
     answer:
       - 你写 React（JSX）代码。
       - Taro 编译器把 JSX 转成各端能跑的代码：
@@ -136,7 +136,7 @@ questions:
     tags:
       - 概念
     title: Electron 和 NW.js（node-webkit）有什么区别？
-    focus: 两者都用 Chromium + Node 做 Web 桌面应用，区别在架构：Electron 多进程（主进程用 Node + 渲染进程用 Chromium），渲染进程默认隔离、要 IPC 调 Node；NW.js 单进程，把 Node 直接注入 DOM。Electron 进程隔离更安全、生态更主流，NW.js 基本被淘汰。
+    focus: Electron 与 NW.js 的架构差异与选型
     answer:
       - '**Electron vs NW.js**：'
       - '| 维度 | Electron | NW.js |'

@@ -5,7 +5,7 @@ questions:
     difficulty: 中
     tags: [高频, 概念]
     title: 什么是微前端？它解决什么问题？
-    focus: 微前端是把一个大型前端应用拆成多个独立的小应用（可独立开发/部署/技术栈），再整合成一个整体。解决巨石应用的「协作难、部署耦合、技术栈锁定」问题。
+    focus: 微前端的概念与它解决的核心问题
     answer:
     - "**微前端解决的核心问题**："
     - 随着项目变大变老，出现「巨石应用」：
@@ -20,7 +20,7 @@ questions:
     difficulty: 高
     tags: [高频, 概念]
     title: qiankun 微前端框架的优缺点和核心机制是什么？
-    focus: qiankun 基于 single-spa，核心是「HTML Entry」——通过加载子应用的 HTML，解析出 JS/CSS 并在沙箱里执行。优点：接入简单（几行代码）、JS 沙箱隔离、生态成熟。缺点：JS 沙箱有性能开销、CSS 隔离不彻底（默认没做）、子应用要改造、多实例复杂。
+    focus: qiankun 的核心机制与优缺点
     answer:
     - "**qiankun 核心机制**："
     - "1. **HTML Entry**：主应用配置子应用的入口 HTML 地址。qiankun fetch 这个 HTML，解析出里面的 `<script>`、`<style>`、`<link>`。"
@@ -35,7 +35,7 @@ questions:
     difficulty: 高
     tags: [概念]
     title: 微前端项目中，主应用加载子应用资源时的跨域问题怎么解决？
-    focus: 主应用要动态 fetch 子应用的 JS/CSS，跨域会触发 CORS：子应用服务端配 Access-Control-Allow-Origin 放行主应用域名，或主应用用反向代理把子应用资源代理到同域。qiankun 用 fetch 加载资源，所以 CORS 必须配。
+    focus: 微前端主应用加载子应用资源的跨域解法
     answer:
     - "**原因**：主应用域名和子应用资源域名不同，浏览器拦截跨域请求。"
     - "**解决**："
