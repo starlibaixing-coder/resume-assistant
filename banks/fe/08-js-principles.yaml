@@ -16,8 +16,8 @@ questions:
       - 4. **new 绑定**：`new fn()`，this 指向新创建的对象（优先级最高之一）。
       - 5. **箭头函数**：**没有自己的 this**，继承定义时外层的 this（静态，不可被 call/apply/bind 改变）。
     followups:
-      - 箭头函数能用 call 改变 this 吗？为什么？（提示：没有自己的 this）
-      - bind 之后再用 new 调用，this 指向谁？（提示：new 优先级更高）
+      - 箭头函数能用 call 改变 this 吗？为什么？
+      - bind 之后再用 new 调用，this 指向谁？
   - id: '08.63'
     difficulty: 中
     tags:
@@ -28,8 +28,8 @@ questions:
     answer:
       - '**解决什么问题**：高频事件（input、resize、按钮连点）每秒触发几十上百次，直接执行会导致频繁请求/DOM 操作，卡顿。'
     followups:
-      - 防抖要不要支持「立即执行」版本？怎么实现？（提示：加 immediate 参数，首次触发立即执行，之后进入冷却）
-      - 节流（throttle）和防抖的区别是什么？（提示：节流是匀速执行，见 fe-js-007）
+      - 防抖要不要支持「立即执行」版本？怎么实现？
+      - 节流（throttle）和防抖的区别是什么？
   - id: '08.64'
     difficulty: 中
     tags:
@@ -40,10 +40,10 @@ questions:
     answer:
       - '**节流策略**：**保证固定节奏**。第一次触发立即执行，之后进入冷却期；冷却期内无视所有后续触发，冷却结束才允许下一次执行。'
     followups:
-      - 节流的时间戳版和定时器版各有什么短板？（提示：时间戳版漏末次，定时器版首次延迟）
-      - 怎么写一个「首尾都执行」的节流？（提示：时间戳判断 + 定时器兜底末次）
-      - 防抖和节流怎么选？（提示：看是否需要「过程中也响应」——要则节流，不要则防抖）
-      - requestAnimationFrame 和节流什么关系？（提示：rAF 相当于 ~16ms 的节流，且跟随刷新率）
+      - 节流的时间戳版和定时器版各有什么短板？
+      - 怎么写一个「首尾都执行」的节流？
+      - 防抖和节流怎么选？
+      - requestAnimationFrame 和节流什么关系？
   - id: '08.65'
     difficulty: 中
     tags:
@@ -60,10 +60,10 @@ questions:
       - '| `Promise.race` | 第一个完成（**不论成败**） | 第一个若是失败→失败 | 超时控制、取最快响应 |'
       - '| `Promise.allSettled` | **全部完成**（不论成败） | 永不 reject，返回状态数组 | 批量执行后统一汇总结果 |'
     followups:
-      - 如何手写 Promise.all？遇到非 Promise 值怎么处理？（提示：用 Promise.resolve 包一层，按索引保证返回顺序）
-      - 如何手写 Promise.race？（提示：谁先 settle 谁就 resolve/reject 外层 Promise）
-      - Promise.all 中一个失败后，其他还在 pending 的 Promise 会取消吗？（提示：不会，Promise 无法取消，只是结果被丢弃）
-      - 为什么没有 `Promise.none` 或 `Promise.first`？实际怎么模拟？（提示：用 allSettled + filter）
+      - 如何手写 Promise.all？遇到非 Promise 值怎么处理？
+      - 如何手写 Promise.race？
+      - Promise.all 中一个失败后，其他还在 pending 的 Promise 会取消吗？
+      - 为什么没有 `Promise.none` 或 `Promise.first`？实际怎么模拟？
   - id: '08.66'
     difficulty: 中
     tags:
@@ -76,7 +76,7 @@ questions:
     followups:
       - 词法作用域和动态作用域的区别？this 是哪种？
       - let/const 的块级作用域和 var 的函数作用域有什么本质区别？
-      - 作用域链和原型链有什么区别？（一个查变量，一个查属性）
+      - 作用域链和原型链有什么区别？
       - 闭包是怎么利用作用域链的？
   - id: '08.67'
     difficulty: 中
@@ -147,7 +147,7 @@ questions:
       - '```'
     followups:
       - 箭头函数的 this 能用 call/apply/bind 改变吗？为什么？
-      - 对象方法用箭头函数有什么坑？（this 不指向实例）
+      - 对象方法用箭头函数有什么坑？
       - React 类组件为什么用箭头函数做事件处理？函数组件呢？
       - 箭头函数和普通函数在性能上有差异吗？
   - id: '08.69'
@@ -179,8 +179,8 @@ questions:
       - 3. **改变 this 执行**：`const result = Foo.apply(obj, args)`，构造函数里的 `this` 指向新对象，给新对象添加属性。
       - 4. **处理返回值**：如果构造函数显式 `return` 了一个**对象**（或函数），则用那个返回值；否则返回新创建的 obj。
     followups:
-      - 如果构造函数 return 一个基本类型（如 return 1），new 的结果会变吗？（提示：不变，仍返回 obj）
-      - '`Object.create(Constructor.prototype)` 和 `obj.__proto__ = ...` 有什么区别？（提示：前者更安全，不依赖已废弃的 __proto__）'
+      - 如果构造函数 return 一个基本类型，new 的结果会变吗？
+      - "`Object.create` 和 `obj.__proto__ = ...` 有什么区别？"
       - class 的 new 和构造函数的 new 底层一样吗？
   - id: '08.71'
     difficulty: 高
@@ -192,10 +192,10 @@ questions:
     answer:
       - '**原型（Prototype）**：每个函数都有一个 `prototype` 属性，指向它的原型对象。通过 `new Fn()` 创建的实例，有一个 `__proto__`（即 `[[Prototype]]`）指向 `Fn.prototype`，所以实例能访问原型上的方法和属性（方法复用）。'
     followups:
-      - 箭头函数有 prototype 吗？（提示：没有，不能作为构造函数）
+      - 箭头函数有 prototype 吗？
       - ES6 class 的 extends 底层是怎么实现原型链继承的？
-      - '`instanceof` 的原理是什么？它和原型链什么关系？（提示：沿 __proto__ 查找右侧的 prototype）'
-      - 为什么 `Object.create(null)` 创建的对象「最干净」？（提示：没有原型链上的方法）
+      - "`instanceof` 的原理是什么？它和原型链什么关系？"
+      - 为什么 `Object.create(null)` 创建的对象「最干净」？
   - id: '08.72'
     difficulty: 高
     tags:
@@ -207,10 +207,10 @@ questions:
       - '`.then(onFulfilled, onRejected)` 的 onRejected **只捕获前一个 Promise 的 reject**，捕获不到**同个 then 里 onFulfilled 抛出的同步错误**。'
       - '`.catch()` 能捕获**它之前整条链**上的所有错误（reject + 抛出的异常），因为 `.catch()` 本质是 `.then(null, onRejected)`，挂在了链的后端。'
     followups:
-      - Promise 的状态一旦改变还能再变吗？（提示：不可逆，pending→fulfilled/rejected 是终态）
-      - async/await 里怎么捕获 reject？（提示：用 try/catch 包住 await，更同步化）
-      - 如果一个 Promise 链没有任何 `.catch`，未捕获的 rejection 会怎样？（提示：触发 unhandledrejection 事件，Node 会警告/退出）
-      - '`.catch` 之后还能继续 `.then` 吗？catch 之后的链是什么状态？（提示：能，catch 返回 fulfilled 的 Promise）'
+      - Promise 的状态一旦改变还能再变吗？
+      - async/await 里怎么捕获 reject？
+      - 如果一个 Promise 链没有任何 `.catch`，未捕获的 rejection 会怎样？
+      - "`.catch` 之后还能继续 `.then` 吗？catch 之后的链是什么状态？"
   - id: '08.73'
     difficulty: 高
     tags:
@@ -221,7 +221,7 @@ questions:
     answer:
       - '**闭包的定义**：函数与其词法环境（外层作用域）的组合。当一个内部函数引用了外部函数的变量，就形成了闭包。'
     followups:
-      - 箭头函数的闭包和普通函数有什么不同？（this 绑定）
+      - 箭头函数的闭包和普通函数有什么不同？
   - id: '08.74'
     difficulty: 高
     tags:
@@ -247,7 +247,7 @@ questions:
       - '```'
     followups:
       - 为什么普通对象不能 for...of？怎么让它可迭代？
-      - Generator 怎么做异步流程控制？（co 库原理）
+      - Generator 怎么做异步流程控制？
       - async/await 和 Generator 是什么关系？
       - yield* 是什么？委托生成器？
   - id: '08.75'
@@ -278,7 +278,7 @@ questions:
       - curry 函数里的 fn.length 是什么？为什么能靠它判断参数够不够？
       - 柯里化和 async/await 的链式调用有什么本质不同？
       - 函数式编程里的 compose/pipe 和柯里化怎么配合？
-      - lodash 的 _.curry 和手写的有什么增强？(placeholder)
+      - lodash 的 _.curry 和手写的有什么增强？
   - id: '08.76'
     difficulty: 高
     tags:

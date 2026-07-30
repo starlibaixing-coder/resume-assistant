@@ -19,9 +19,9 @@ questions:
       - '| useContext | 消费 Context，跨层共享 | Context 值变化会让所有消费者重渲染 |'
       - '| useReducer | 复杂状态（多字段联动） | 替代多个 useState，逻辑集中 |'
     followups:
-      - useMemo 和 useCallback 的关系？（提示：useCallback(fn, dep) === useMemo(() => fn, dep)）
+      - useMemo 和 useCallback 的关系？ === useMemo(() => fn, dep)）
       - useEffect 的依赖数组写错会有什么后果？
-      - 什么时候该用 useReducer 而不是 useState？（提示：状态多、转换逻辑复杂、下一个状态依赖前一个）
+      - 什么时候该用 useReducer 而不是 useState？
   - id: '13.98'
     difficulty: 中
     tags:
@@ -38,8 +38,8 @@ questions:
       - '         → useEffect 异步执行（用户已经看到画面了）'
       - '```'
     followups:
-      - useEffect 的清除函数（return）在什么时机执行？（提示：下次 effect 执行前 + 组件卸载时）
-      - useLayoutEffect 里调用 setState 会怎样？（提示：会在浏览器绘制前再触发一次同步渲染）
+      - useEffect 的清除函数（return）在什么时机执行？
+      - useLayoutEffect 里调用 setState 会怎样？
       - 如何在 SSR 中安全使用 useLayoutEffect而不报警告？
   - id: '13.99'
     difficulty: 中
@@ -54,8 +54,8 @@ questions:
       - 2. **生命周期割裂相关逻辑**：比如「订阅 + 取消订阅」要拆到 `componentDidMount` 和 `componentWillUnmount`，而「订阅依赖 id 变化时重新订阅」又要加 `componentDidUpdate` 比较 props——一个完整逻辑被切到三个地方，难维护。
       - 3. **this 麻烦**：事件处理函数要手动 `bind(this)` 或用箭头函数，初学者经常踩 `this is undefined` 的坑。
     followups:
-      - 为什么自定义 Hook 能复用，但 state 不会互相干扰？（提示：每个组件独立 fiber，独立 hook 链表）
-      - Hook 能完全替代 Class 吗？哪些场景还必须用 Class？（提示：React 19 前 error boundary）
+      - 为什么自定义 Hook 能复用，但 state 不会互相干扰？
+      - Hook 能完全替代 Class 吗？哪些场景还必须用 Class？
       - 为什么 Hook 不能在 if 里调用？
   - id: '13.100'
     difficulty: 中
@@ -67,7 +67,7 @@ questions:
     answer:
       - '**useRef 返回什么**：一个 `{ current: 初始值 }` 对象，整个组件生命周期里**始终是同一个对象**（引用稳定），改 `.current` 不会触发重渲染。'
     followups:
-      - 为什么 useRef 改了不重渲染？底层 ref 对象存在哪？（提示：存在 fiber 的 hook 链表，不触发 scheduleUpdate）
+      - 为什么 useRef 改了不重渲染？底层 ref 对象存在哪？
       - useEffect 里读写 ref 安全吗？useLayoutEffect 呢？
       - React 19 里 ref 作为 prop 传递，forwardRef 还需要吗？
   - id: '13.101'
@@ -117,7 +117,7 @@ questions:
       - 全局/半全局数据：主题（dark/light）、当前用户、i18n 语言包、路由状态、UI 配置。
       - 数据变化频率不高、消费组件不多。
     followups:
-      - Context 和 Redux/Zustand 的本质区别？（提示：Context 是依赖注入机制，不是状态管理库）
+      - Context 和 Redux/Zustand 的本质区别？
   - id: '13.103'
     difficulty: 中
     tags:
@@ -128,9 +128,9 @@ questions:
     answer:
       - '**key 的作用**：在 reconcile 阶段，React 对比新旧 children 列表时，靠 key 把新列表的元素和旧列表的元素对应起来。有 key 才能判断「A 元素从位置 3 移到了位置 0」，于是只移动 DOM 节点而不是销毁重建。'
     followups:
-      - 用 Math.random() 做 key 会怎样？为什么？（提示：每次渲染 key 变 → 全部重建）
-      - key 必须全局唯一吗？（提示：不需要，只需兄弟节点间唯一）
-      - 删除列表中间一项，有 key 和无 key 分别发生什么？（提示：有 key 只删一个 DOM，无 key 全部重渲染）
+      - 用 Math.random() 做 key 会怎样？为什么？
+      - key 必须全局唯一吗？
+      - 删除列表中间一项，有 key 和无 key 分别发生什么？
   - id: '13.104'
     difficulty: 高
     tags:
@@ -141,8 +141,8 @@ questions:
     answer:
       - '**1. Actions（异步动作）**：把异步操作（提交表单、请求接口）用 `useTransition` 包裹，自动给 pending 状态、错误处理、乐观更新。'
     followups:
-      - React Compiler 开启后，是不是就完全不用写 useMemo/useCallback 了？（提示：少数复杂计算仍需）
-      - useOptimistic 失败后状态如何回滚？（提示：重新渲染用真实 state 覆盖）
+      - React Compiler 开启后，是不是就完全不用写 useMemo/useCallback 了？
+      - useOptimistic 失败后状态如何回滚？
       - Server Components 在 React 19 是 stable 了吗？和 Client Component 怎么区分？
   - id: '13.105'
     difficulty: 高
@@ -154,9 +154,9 @@ questions:
     answer:
       - '**为什么需要 diff**：状态变化后 React 拿到新 VDOM，要和旧 VDOM 对比，找出最小变更再去更新真实 DOM。朴素对比两棵树是 O(n³)，工程不可用。'
     followups:
-      - 用 index 做 key 会出什么问题？什么时候用 index 做 key 反而 OK？（提示：纯展示、无增删、无受控 state）
-      - 为什么跨层级移动不复用？（提示：复用成本高于重建，且场景罕见）
-      - Vue 的 diff 和 React 的 diff 有何区别？（提示：Vue3 双端 diff + 最长递增子序列优化移动）
+      - 用 index 做 key 会出什么问题？什么时候用 index 做 key 反而 OK？
+      - 为什么跨层级移动不复用？
+      - Vue 的 diff 和 React 的 diff 有何区别？
   - id: '13.106'
     difficulty: 高
     tags:
@@ -171,8 +171,8 @@ questions:
       - 3. **统一的事件流控制**：React 能在合成事件层实现自己的「事件优先级」（discrete/continuous）、与 fiber 调度整合、批处理 setState。
       - 4. **更安全**：合成事件对象是池化的（React 16 及以前），避免每次创建对象的开销（React 17 移除了事件池）。
     followups:
-      - React 16 的合成事件对象池（event pooling）是什么？为什么 17 移除了？（提示：异步访问 e.target 为 null 的坑）
-      - 原生事件里的 setState 和合成事件里的 setState 有什么区别？（提示：React 18 后都是批处理）
+      - React 16 的合成事件对象池是什么？为什么 17 移除了？
+      - 原生事件里的 setState 和合成事件里的 setState 有什么区别？
       - 如果想阻止合成事件冒泡到原生 document，怎么做？
   - id: '13.107'
     difficulty: 高
@@ -196,7 +196,7 @@ questions:
     answer:
       - '**什么是竞态**：用户快速切换 id（1→2→3），三次请求发出。若请求 1 最慢，最后返回，它的结果会覆盖最新的请求 3 的结果，UI 显示了 id=1 的数据，但当前页是 id=3——数据错乱。'
     followups:
-      - useEffect 的 cleanup 执行时机是什么？（提示：下次 effect 执行前 + 卸载时）
+      - useEffect 的 cleanup 执行时机是什么？
   - id: '13.109'
     difficulty: 高
     tags:
@@ -211,7 +211,7 @@ questions:
       - 3. setState 把新值/更新函数记下来，标记组件需要重渲染。
       - 4. 重渲染时 index 归零，重新按顺序读。
     followups:
-      - useState 的初始值传函数 `useState(() => init())` 有什么好处？（提示：惰性初始化，避免每次渲染都跑）
+      - useState 的初始值传函数 `useState(() => init())` 有什么好处？
   - id: '13.110'
     difficulty: 高
     tags:
@@ -226,8 +226,8 @@ questions:
       - 缺点：样板代码多（action/reducer/types）、异步要 middleware。
       - 性能：需手写 selector（reselect）避免不必要渲染。
     followups:
-      - 为什么 Zustand 不像 Redux 强调不可变？（见 fe-react-018）
-      - MobX 的响应式和 Vue 有什么关系？（见 fe-react-019）
+      - 为什么 Zustand 不像 Redux 强调不可变？
+      - MobX 的响应式和 Vue 有什么关系？
       - 什么时候该用 Context 而不是状态管理库？
   - id: '13.111'
     difficulty: 高
@@ -241,8 +241,8 @@ questions:
       - 组件调 `useStore(s => s.count)` 时，底层走 `useSyncExternalStore(subscribe, getSnapshot)`。
       - '`setState` 时遍历所有订阅者，逐个跑 selector 比对，决定谁要更新。'
     followups:
-      - Object.is 比 === 有什么区别？为什么用它做比较？（提示：区分 +0/-0、NaN）
-      - 多个 selector 组合怎么避免重复渲染？（提示：shallow 比较）
+      - Object.is 比 === 有什么区别？为什么用它做比较？
+      - 多个 selector 组合怎么避免重复渲染？
   - id: '13.112'
     difficulty: 高
     tags:
@@ -304,7 +304,7 @@ questions:
       - '| 并发渲染 | 阻塞主线程 | 用户交互响应 |'
     followups:
       - React.memo 的浅比较有什么局限？怎么自定义比较？
-      - useMemo/useCallback 滥用会有什么问题？（记忆本身有成本）
+      - useMemo/useCallback 滥用会有什么问题？
       - useTransition 和 useDeferredValue 有什么区别？
       - React Profiler 怎么看哪个组件渲染慢？
   - id: '13.113'
@@ -321,9 +321,9 @@ questions:
       - '                       {memoizedState, next} ...'
       - '```'
     followups:
-      - useEffect 和 useState 在链表节点里存的数据结构有何不同？（提示：useState 存 state+queue，useEffect 存 effect 对象+依赖）
-      - 为什么自定义 Hook 不会产生新的链表节点？（提示：自定义 Hook 内部的 Hook 仍归属宿主组件）
-      - useMemo 的依赖数组是怎么和链表节点关联的？（提示：存在 hook 节点上，下次渲染比较决定是否重算）
+      - useEffect 和 useState 在链表节点里存的数据结构有何不同？
+      - 为什么自定义 Hook 不会产生新的链表节点？
+      - useMemo 的依赖数组是怎么和链表节点关联的？
   - id: '13.114'
     difficulty: 高
     tags:
@@ -335,8 +335,8 @@ questions:
       - '**为什么需要 Fiber（要解决的问题）**：'
       - React 15（Stack Reconciler）的渲染是**同步递归**的——一旦开始 reconcile 一棵大树，必须一口气跑完才能让出主线程。大树更新可能占用主线程几百毫秒，期间动画掉帧、用户点击无响应（卡顿）。
     followups:
-      - 为什么 commit 阶段不能中断？（提示：DOM 操作必须一致，否则 UI 闪烁）
-      - 双缓冲（current/workInProgress）解决了什么问题？
+      - 为什么 commit 阶段不能中断？
+      - 双缓冲解决了什么问题？
   - id: '13.115'
     difficulty: 高
     tags:
@@ -347,8 +347,8 @@ questions:
       - '**优先级演进**：React 15 无优先级（同步）；React 16 expirationTime（单一数值，粒度粗）；React 18 改成 **Lane Model**（位运算，可批量、可重叠）。'
     followups:
       - React 18 的 Automatic Batching 和 lane 有什么关系？
-      - startTransition 标记的更新被打断后，之前的计算结果会丢吗？（提示：会，需要重跑，但 React 会尽量复用）
-      - lane 用 31 位有什么限制？为什么不直接用数组存优先级？（提示：位运算 O(1)，数组开销大）
+      - startTransition 标记的更新被打断后，之前的计算结果会丢吗？
+      - lane 用 31 位有什么限制？为什么不直接用数组存优先级？，数组开销大）
   - id: '13.116'
     difficulty: 高
     tags:

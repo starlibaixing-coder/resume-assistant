@@ -20,7 +20,7 @@ questions:
     - "**Amazon Kiro**:spec-first 的 IDE;"
     - "**Claude Code 的 plan mode**:先出计划再实现。"
     followups:
-    - "Spec 要写到多细?(够 AI 理解即可,不必逐行;关键是接口/边界/验收标准)"
+    - "Spec 要写到多细?"
   - id: "14.2"
     difficulty: 中
     tags: []
@@ -68,7 +68,7 @@ questions:
     - 可被 agent 自动发现并按需加载。
     - "**实例**:本简历项目就是一个 skill(`SKILL.md`);代码评审、部署、测试生成、文档生成都可封装成 skill。"
     followups:
-    - "Skill 和普通 prompt 模板的区别?(Skill 有触发逻辑、有结构化 SOP、可调用工具、可组合)"
+    - "Skill 和普通 prompt 模板的区别?"
   - id: "14.4"
     difficulty: 高
     tags: [必问]
@@ -133,7 +133,7 @@ questions:
     - "**类比**:Harness 之于 AI = 框架之于程序员 —— 不用从零搭,在结构内高效产出。"
     - "**与 SDD 的关系**:SDD 是方法论(怎么想),Harness 是工程实现(怎么做);SDD + Harness = 完整的 AI 工程化开发体系。"
     followups:
-    - "你搭过什么样的 Harness?(结合项目讲:工具链 + 流程 + 验证 + 环境)"
+    - "你搭过什么样的 Harness?"
   - id: "14.7"
     difficulty: 高
     tags: [必问]

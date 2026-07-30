@@ -22,7 +22,7 @@ questions:
     - "位置编码:告诉模型 token 的顺序(Attention 本身无序)。"
     - "**Decoder-only 的特点**:训练时用 mask 让每个位置只能看到上文(不能偷看未来),适合生成任务。"
     followups:
-    - "为什么现在主流是 Decoder-only 而不是 Encoder-Decoder(如 T5)?(训练效率高、scale 后能力强、统一为 next-token prediction)"
+    - "为什么现在主流是 Decoder-only 而不是 Encoder-Decoder(如 T5)?"
   - id: "12.2"
     difficulty: 中
     tags: []
@@ -41,7 +41,7 @@ questions:
     - "多轮对话中,system + history 的 KV Cache 可复用(prefix caching),降成本;"
     - 这也是 Prompt Caching 的底层原理。
     followups:
-    - "为什么 Batch 时代 KV Cache 会成为瓶颈?(显存碎片 + 并发会话数受限 → vLLM 的 PagedAttention 解决)"
+    - "为什么 Batch 时代 KV Cache 会成为瓶颈?"
   - id: "12.3"
     difficulty: 中
     tags: []
@@ -93,7 +93,7 @@ questions:
     - "temperature=0 也不保证 100% 确定性(浮点、batch 内 padding 等导致微小差异)——这是\"本地复现不了线上 bug\"的根因之一(见 Q09.5);"
     - "生产 Agent 推荐 temperature 低(0~0.3)+ top-p,保证稳定。"
     followups:
-    - "为什么 temperature=0 还是不完全可复现?(batch size 不同导致 padding/数值归约差异)"
+    - "为什么 temperature=0 还是不完全可复现?"
   - id: "12.6"
     difficulty: 中
     tags: []
@@ -235,4 +235,4 @@ questions:
     - 但要权衡延迟/成本(思维链 token 也要付费);
     - 上下文管理变复杂(要给推理过程留空间)。
     followups:
-    - "R1-Zero 为什么重要?(证明纯 RL 也能涌现推理,无需大量人类思维链数据)"
+    - "R1-Zero 为什么重要?"

@@ -83,7 +83,7 @@ function main() {
   const allErrors = [];
 
   const catDirs = readdirSync(BANKS_DIR, { withFileTypes: true })
-    .filter((d) => d.isDirectory())
+    .filter((d) => d.isDirectory() && d.name !== 'clean' && d.name !== 'audit')
     .map((d) => d.name)
     .sort();
 

@@ -15,7 +15,7 @@ questions:
     - "**生产实践**：百万级常用 HNSW 或 IVF + PQ；再加 rerank 精排提精度。"
     - "**trade-off**：**召回率 vs 延迟 vs 内存**三维权衡，按业务调参。"
     followups:
-    - HNSW 的 efSearch / M 参数怎么调？（M 影响图的连接度，efSearch 影响搜索范围）
+    - HNSW 的 efSearch / M 参数怎么调？
   - id: "11.2"
     difficulty: 中
     tags: []
@@ -45,7 +45,7 @@ questions:
     - "**容错**：节点失败 → 重试 / 跳过 / 回退；记录状态，支持续跑（对应 Q09.6）。"
     - "**检测环**：拓扑排序能检测依赖环（环 = 死锁，需避免）。"
     followups:
-    - 如果是动态依赖（执行中才知道下一步）怎么办？（运行时按结果决定后继，类似 ReAct）
+    - 如果是动态依赖怎么办？
   - id: "11.4"
     difficulty: 中
     tags: []
@@ -103,7 +103,7 @@ questions:
     - "**策略模式**：运行时按任务选择模型路由策略（成本优先 / 质量优先 / 降级链）。"
     - "**价值**：新增 provider 只加一个适配器；加监控不改核心代码；切换模型一行配置。"
     followups:
-    - 装饰器在 Python 里怎么实现？（函数装饰器 / 类装饰器；注意保持签名与异步兼容）
+    - 装饰器在 Python 里怎么实现？
   - id: "11.8"
     difficulty: 中
     tags: []

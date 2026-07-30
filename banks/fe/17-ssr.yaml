@@ -16,4 +16,4 @@ questions:
       - '```'
       - '**适用**：后台管理系统、Web App（不需 SEO 的交互型应用）。典型：传统 React/Vue SPA。'
     followups:
-      - ''
+      - ""

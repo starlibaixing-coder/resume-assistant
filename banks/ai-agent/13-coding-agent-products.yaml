@@ -33,7 +33,7 @@ questions:
     - 与开发者既有工作流(终端)融合。
     - "**核心挑战**:① 上下文管理(代码库大);② 长任务可靠性(见 Q09.6);③ 工具调用准确率;④ 成本控制。"
     followups:
-    - "Claude Code 怎么决定读哪些文件?(grep 关键词 → 看目录结构 → 按需读 → AST 找依赖)"
+    - "Claude Code 怎么决定读哪些文件?"
   - id: "13.3"
     difficulty: 高
     tags: [必问]
@@ -47,7 +47,7 @@ questions:
     - "**安全敏感(代码不能上云)** → 本地(Desktop/CLI);"
     - "**生产实操主流**:Cursor(日常)+ Claude Code(复杂/自动化)组合。"
     followups:
-    - "为什么企业级场景对 Cloud Agent 有顾虑?(代码安全、数据合规、可控性)"
+    - "为什么企业级场景对 Cloud Agent 有顾虑?"
   - id: "13.4"
     difficulty: 中
     tags: []
@@ -121,7 +121,7 @@ questions:
     - 进度可见、可打断、可回滚。
     - "**核心难点**:**可靠性** —— 长链条上任何一步出错都导致整体失败,需要强验证 + 强纠错。"
     followups:
-    - "Devin 为什么难做成?(长链可靠性 + 复杂环境适配 + 成本)"
+    - "Devin 为什么难做成?"
   - id: "13.7"
     difficulty: 中
     tags: []

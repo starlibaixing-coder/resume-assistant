@@ -71,7 +71,7 @@ questions:
     - 调用链路：用户消息 → host 聚合各 MCP server 的 tools 成 schema → 模型用 function calling 决定调哪个 → host 路由到对应 MCP server → 执行并返回结果 → 回灌模型。
     - "**价值**：工具复用、生态共享、解耦模型与工具。"
     followups:
-    - "MCP 的 transport 有哪些？（**stdio / Streamable HTTP**——2025-03 spec 起 Streamable HTTP 取代了旧的 HTTP+SSE，支持无状态部署与更好的 resumability）"
+    - "MCP 的 transport 有哪些？"
   - id: "08.5"
     difficulty: 中
     tags: []

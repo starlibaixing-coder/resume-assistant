@@ -21,7 +21,7 @@ questions:
     - "**上下文组装**：检索到的相关代码 + 调用链 + 注释，按 token 预算裁剪后喂给模型。"
     - "**工具栈**：Tree-sitter（AST）、LSP（语义）、ripgrep（文本）、向量库（语义检索）。"
     followups:
-    - 改一个函数，怎么找出所有受影响的调用方？（call graph 反向遍历）
+    - 改一个函数，怎么找出所有受影响的调用方？
   - id: "07.2"
     difficulty: 中
     tags: []

@@ -6,7 +6,7 @@ questions:
     tags:
       - 高频
       - 概念
-    title: CSS 盒模型有哪几种？`box-sizing` 的作用是什么？两种盒模型的区别是什么？
+    title: CSS 盒模型有哪几种？`box-sizing` 的作用是什么？
     focus: 盒模型分标准盒模型（content-box，默认）和怪异盒模型（border-box）。前者 width 只含内容，后者 width 包含内容+padding+border，开发中几乎都用 border-box。
     answer:
       - 盒模型由内到外四部分：**content（内容）、padding（内边距）、border（边框）、margin（外边距）**。
@@ -16,7 +16,7 @@ questions:
       - '| 标准盒模型（默认） | content-box | 仅 content | width + padding + border，盒子被撑大 |'
       - '| 怪异盒模型 | border-box | content+padding+border | 不变，padding 从 content 里扣 |'
     followups:
-      - '`outline`（轮廓）算在盒模型里吗？它和 border 有什么区别？（提示：outline 不占布局空间）'
+      - "`outline`（轮廓）算在盒模型里吗？它和 border 有什么区别？"
       - 相邻块级元素的 margin 为什么会「折叠」？折叠规则是什么？
       - inline 元素的 padding/margin 在垂直方向上表现有什么不同？
   - id: '05.41'
@@ -38,9 +38,9 @@ questions:
       - 比较时**从左到右逐位比**，左边大的直接赢（注意不是简单的十进制加法，11 个 class 不会超过 1 个 ID）。
       - 举例：`#nav .item:hover` = (0,1,2,0)；`div ul li a` = (0,0,0,4)。
     followups:
-      - 两个 `!important` 规则冲突时谁赢？（提示：再回到 specificity 比较）
-      - 继承来的样式优先级是多少？（提示：比通配符还低，会被任意直接规则覆盖）
-      - '`:not()`、`:is()`、`:where()` 对优先级有什么影响？（提示：:where() 永远是 0）'
+      - 两个 `!important` 规则冲突时谁赢？
+      - 继承来的样式优先级是多少？
+      - "`:not()`、`:is()`、`:where()` 对优先级有什么影响？ 永远是 0）"
   - id: '05.42'
     difficulty: 中
     tags:
@@ -57,9 +57,9 @@ questions:
       - '| fixed | 浏览器视口（有 transform 祖先时例外） | 是 | 不保留 |'
       - '| sticky | 滚动容器，阈值前 relative、阈值后 fixed | 否（达标前）/是（达标后） | 阈值前保留 |'
     followups:
-      - '`absolute` 元素的父级都是 static，它相对谁定位？（提示：html / 初始包含块）'
-      - '`fixed` 元素的祖先有 `transform`，会带来什么问题？（提示：参考系变了）'
-      - '`sticky` 为什么有时候不生效？常见失效原因有哪些？'
+      - "`absolute` 元素的父级都是 static，它相对谁定位？"
+      - "`fixed` 元素的祖先有 `transform`，会带来什么问题？（提示：参考系变了）"
+      - "`sticky` 为什么有时候不生效？常见失效原因有哪些？"
   - id: '05.43'
     difficulty: 中
     tags:
@@ -78,9 +78,9 @@ questions:
       - '| absolute + margin auto | 子 `position:absolute; inset:0; margin:auto;` | 是 | 需知宽高 |'
       - '| 行内文本 | 父 `text-align:center; line-height=高;` 或 table-cell | — | 适合单行文字 |'
     followups:
-      - '`transform:translate(-50%,-50%)` 为什么不需要知道元素宽高？（提示：% 基于自身尺寸）'
+      - "`transform:translate` 为什么不需要知道元素宽高？"
       - flex 布局里子项太多时，`align-items` 和 `align-content` 有什么区别？
-      - 如何让一段多行文字垂直居中？（提示：flex 或 `display:table-cell; vertical-align:middle;`）
+      - 如何让一段多行文字垂直居中？
   - id: '05.44'
     difficulty: 中
     tags:
@@ -93,9 +93,9 @@ questions:
       - 第二个 1 → flex-shrink=1（缩小比例）
       - 0% → flex-basis=0%（基准尺寸）
     followups:
-      - '`flex:1` 和 `flex:1 1 auto` 在视觉上为什么可能不一样？（提示：basis 不同）'
-      - '`flex-basis` 和 `width` 同时设置时谁优先？（提示：basis 优先，auto 时才回退到 width）'
-      - 如何实现「左侧固定宽、右侧自适应」的两栏布局？（提示：flex:0 0 200px + flex:1）
+      - "`flex:1` 和 `flex:1 1 auto` 在视觉上为什么可能不一样？"
+      - "`flex-basis` 和 `width` 同时设置时谁优先？"
+      - 如何实现「左侧固定宽、右侧自适应」的两栏布局？
   - id: '05.45'
     difficulty: 中
     tags:
@@ -107,9 +107,9 @@ questions:
       - CSS3 为了区分「伪类」（单冒号，如 `:hover :first-child`）和「伪元素」（双冒号，如 `::before ::after`），规定伪元素统一用双冒号。
       - 为向后兼容，浏览器对 `:before` 仍按伪元素处理，所以两者等价。实际开发推荐双冒号以符合规范。
     followups:
-      - 伪元素能被 `document.querySelector` 选中吗？能用 JS 修改它的 content 吗？（提示：不能直接选中，但可改父元素 class 间接切换）
-      - '`content: counter()` 计数器怎么配合 `counter-reset`/`counter-increment` 使用？'
-      - 为什么 clearfix 清除浮动要用伪元素而不是直接给父元素 overflow:hidden？（提示：避免副作用）
+      - 伪元素能被 `document.querySelector` 选中吗？能用 JS 修改它的 content 吗？
+      - "`content: counter()` 计数器怎么配合 `counter-reset`/`counter-increment` 使用？"
+      - 为什么 clearfix 清除浮动要用伪元素而不是直接给父元素 overflow:hidden？
   - id: '05.46'
     difficulty: 中
     tags:
@@ -172,8 +172,8 @@ questions:
       - </script>
       - '```'
     followups:
-      - CSS 变量和 Sass 变量的本质区别是什么？（提示：运行时 vs 编译时）
-      - 如何让主题跟随系统又允许用户手动覆盖？（提示：prefers-color-scheme 设默认值 + JS 改 data-theme 覆盖）
+      - CSS 变量和 Sass 变量的本质区别是什么？
+      - 如何让主题跟随系统又允许用户手动覆盖？
       - 为什么 CSS 变量切换主题比改 class 名重新加载样式性能好？
   - id: '05.47'
     difficulty: 中
@@ -187,9 +187,9 @@ questions:
       - '**transition**：定义「属性值变化时怎么平滑过渡」。语法 `transition: property duration timing-function delay;`。只支持可插值的属性（颜色、数值），不支持从 `display:none` 过渡。'
       - '**animation**：用 `@keyframes` 定义关键帧，配合 `animation: name duration timing-function delay iteration-count direction` 播放，支持循环、反向、暂停。'
     followups:
-      - '`transition` 能让 `display:none → block` 平滑过渡吗？为什么？（提示：不能，display 不可插值，需用 opacity/visibility 替代）'
-      - '`transform` 为什么能 GPU 加速、不触发回流？（提示：作用于合成层，不改布局）'
-      - '`animation` 的 `steps()` 函数有什么用？（提示：雪碧图逐帧动画）'
+      - "`transition` 能让 `display:none → block` 平滑过渡吗？为什么？"
+      - "`transform` 为什么能 GPU 加速、不触发回流？"
+      - "`animation` 的 `steps()` 函数有什么用？"
   - id: '05.48'
     difficulty: 中
     tags:
@@ -236,9 +236,9 @@ questions:
       - '}'
       - '```'
     followups:
-      - '`rem` 和 `em` 的区别？为什么容易混淆出错？（提示：参照物不同，em 会逐级嵌套放大）'
-      - 移动端为什么常用 rem 配合 flexible.js？（提示：动态算 html font-size 适配不同 dpr）
-      - 移动端「1px 边框」问题怎么解决？（提示：用 transform:scaleY(0.5) 或媒体查询按 dpr 调整）
+      - "`rem` 和 `em` 的区别？为什么容易混淆出错？"
+      - 移动端为什么常用 rem 配合 flexible.js？
+      - 移动端「1px 边框」问题怎么解决？ 或媒体查询按 dpr 调整）
   - id: '05.49'
     difficulty: 高
     tags:
@@ -249,9 +249,9 @@ questions:
     answer:
       - 当 flex-shrink > 0 且主轴空间不够时，浏览器先算出溢出量，再按权重把溢出量分摊到各子项。
     followups:
-      - '如果某项 `flex-shrink: 0`，空间不足时会怎样？（提示：不收缩，可能溢出容器）'
-      - flex 子项会被压缩到 0 宽度吗？什么在保护它？（提示：min-width:auto 默认保护）
-      - 为什么三个 shrink 都等于 1 时，收缩量却不相等？（提示：basis 不同导致权重不同）
+      - "如果某项 `flex-shrink: 0`，空间不足时会怎样？"
+      - flex 子项会被压缩到 0 宽度吗？什么在保护它？
+      - 为什么三个 shrink 都等于 1 时，收缩量却不相等？
   - id: '05.50'
     difficulty: 高
     tags:
@@ -262,6 +262,6 @@ questions:
     answer:
       - BFC = Block Formatting Context，块级格式化上下文。可理解为给元素套一个「结界」，里面元素的布局不影响外面，外面也不影响里面。
     followups:
-      - margin 塌陷发生在哪三种情况？（父子、相邻兄弟、空元素）
+      - margin 塌陷发生在哪三种情况？
       - 为什么 `overflow:hidden` 能清除浮动？它的原理是什么？
-      - '`display:flow-root` 相比 `overflow:hidden` 触发 BFC 有什么优势？（提示：无裁剪副作用）'
+      - "`display:flow-root` 相比 `overflow:hidden` 触发 BFC 有什么优势？"

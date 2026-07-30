@@ -13,7 +13,7 @@ questions:
       - setTimeout(fn, 0) 会把 fn 推入宏任务队列，**当前同步代码先执行完**，try/catch 块已经结束。
       - 等事件循环下一轮取出 fn 执行时，它在**新的执行上下文**里抛错，外层栈早已销毁，catch 自然接不到。
     followups:
-      - async/await 里 await 一个会 reject 的 Promise，try/catch 能抓到吗？（能）
+      - async/await 里 await 一个会 reject 的 Promise，try/catch 能抓到吗？
       - 为什么 Promise.reject 不加 .catch 会报 unhandledrejection？
   - id: '03.20'
     difficulty: 中
@@ -26,7 +26,7 @@ questions:
       - '**回流（Reflow / Layout）**：当**几何信息**变化时，浏览器要重新跑 Layout 阶段。触发：增删 DOM、改宽高/margin/padding/位置、窗口 resize、读取 offsetWidth/getComputedStyle 等「强制同步布局」API。'
     followups:
       - 为什么读 offsetTop 会触发强制同步布局？
-      - transform 动画为什么不卡？（合成层 + GPU）
+      - transform 动画为什么不卡？
       - 如何用 Chrome DevTools 排查布局抖动？
   - id: '03.21'
     difficulty: 中
@@ -62,7 +62,7 @@ questions:
       - '| dns-prefetch | 立刻 | 低 | 仅提前 DNS 解析 |'
       - '| lazyload | 滚动**可见时** | 按需 | 图片/组件懒加载，省首屏带宽 |'
     followups:
-      - preload 加多了会有什么副作用？（挤占带宽、抢关键资源）
+      - preload 加多了会有什么副作用？
       - loading=lazy 的浏览器兼容性？怎么 polyfill？
   - id: '03.23'
     difficulty: 中
@@ -119,8 +119,8 @@ questions:
       - '```'
     followups:
       - requestAnimationFrame 属于宏任务还是微任务？它在事件循环哪个阶段执行？
-      - await 后面的代码等价于什么？（提示：包在 Promise.then 里，是微任务）
-      - 为什么微任务会阻塞渲染？（提示：本轮渲染必须等微任务清空）
+      - await 后面的代码等价于什么？
+      - 为什么微任务会阻塞渲染？
   - id: '03.25'
     difficulty: 高
     tags:
@@ -137,7 +137,7 @@ questions:
       - 6. **合成 Composite**：页面分层，GPU 合成各层（transform/opacity 在独立层，性能最好）。
     followups:
       - display:none 和 visibility:hidden 在渲染树上有什么区别？
-      - 为什么 transform 做动画不触发回流？（提示：合成层）
+      - 为什么 transform 做动画不触发回流？
       - 首屏渲染要等所有 CSS 加载完吗？
   - id: '03.26'
     difficulty: 高
@@ -154,9 +154,9 @@ questions:
       - '| FID | First Input Delay | 交互响应（首次输入到响应）| ≤100ms | 100–300ms | >300ms |'
       - '| INP | Interaction to Next Paint | 全程交互响应（FID 的继任者，2024 生效）| ≤200ms | 200–500ms | >500ms |'
     followups:
-      - 为什么 FID 被 INP 替代？（提示：FID 只测第一次，覆盖不全）
-      - 如何优化 LCP？（图片优先级、预加载关键资源、SSR）
-      - CLS 常见根因有哪些？（图片无尺寸、动态注入内容、字体闪烁）
+      - 为什么 FID 被 INP 替代？
+      - 如何优化 LCP？
+      - CLS 常见根因有哪些？
   - id: '03.27'
     difficulty: 高
     tags:
@@ -191,7 +191,7 @@ questions:
     followups:
       - 如果第三次握手（ACK）丢了会怎样？
       - 为什么 TIME_WAIT 是 2MSL？大量 TIME_WAIT 怎么排查？
-      - TCP 为什么是面向连接的、可靠的？靠哪些机制？（序列号、确认、重传、滑动窗口、拥塞控制）
+      - TCP 为什么是面向连接的、可靠的？靠哪些机制？
   - id: '03.29'
     difficulty: 高
     tags:
@@ -217,8 +217,8 @@ questions:
       - '**递归**：客户端只发一次给本地 DNS「你帮我把答案找全」，自己等结果。'
       - '**迭代**：本地 DNS 替你一层层问各级服务器「你不知道就告诉下一步问谁」。'
     followups:
-      - DNS 解析慢怎么办？（dns-prefetch、HTTPDNS、本地缓存）
-      - 为什么有了 HTTPDNS？（移动端 DNS 劫持、解析慢）
+      - DNS 解析慢怎么办？
+      - 为什么有了 HTTPDNS？
       - 浏览器 DNS 缓存和 OS 缓存的 TTL 冲突怎么处理？
   - id: '03.31'
     difficulty: 高
@@ -238,7 +238,7 @@ questions:
       - '| 性能 | 略快 | 多 1-2 RTT 握手（TLS 1.3 已优化到 1-RTT/0-RTT）|'
       - '| SEO | 弱 | Google 优先 |'
     followups:
-      - TLS 1.3 相比 1.2 改进了什么？（1-RTT/0-RTT、去掉不安全算法）
+      - TLS 1.3 相比 1.2 改进了什么？
       - 为什么对称加密快、非对称加密慢？为什么不全用非对称？
       - HSTS 是什么？解决什么问题？
   - id: '03.32'
@@ -257,7 +257,7 @@ questions:
     followups:
       - HTTP/2 还需要打包/雪碧图吗？为什么？
       - QUIC 怎么在 UDP 上实现可靠性？
-      - 为什么 HTTP/3 部署比 HTTP/2 慢？（UDP 在中间设备/防火墙常被限）
+      - 为什么 HTTP/3 部署比 HTTP/2 慢？
   - id: '03.33'
     difficulty: 高
     tags:
@@ -269,8 +269,8 @@ questions:
       - '**栈**：基本类型、引用地址。函数执行完，上下文出栈，ESP（栈顶指针）下移，该空间自动「失效」（被后续覆盖）。**没有显式 GC**。'
       - '**堆**：对象、闭包变量。靠**垃圾回收器**识别「不可达」对象并释放。'
     followups:
-      - WeakMap/WeakSet 为什么不会阻止 GC？（弱引用，不计入可达性）
-      - 如何排查页面内存泄漏？（Heap snapshot 三段对比法）
+      - WeakMap/WeakSet 为什么不会阻止 GC？
+      - 如何排查页面内存泄漏？
   - id: '03.34'
     difficulty: 高
     tags:
@@ -289,7 +289,7 @@ questions:
       - '| HTTPS | 不强制 | 强制（开发 localhost 例外）|'
       - '| 典型场景 | 大数据计算、图片处理、解析 | PWA 离线、推送通知、资源缓存 |'
     followups:
-      - 为什么 Worker 不能操作 DOM？（避免多线程并发修改 DOM 的竞态）
-      - postMessage 传大对象性能差怎么办？（Transferable / SharedArrayBuffer）
-      - Service Worker 更新后旧页面还用旧版本，怎么平滑升级？（skipWaiting + clients.claim）
+      - 为什么 Worker 不能操作 DOM？
+      - postMessage 传大对象性能差怎么办？
+      - Service Worker 更新后旧页面还用旧版本，怎么平滑升级？
       - PWA 离线原理是什么？

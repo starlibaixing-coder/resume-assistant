@@ -29,7 +29,7 @@ questions:
     - "Prompt 引导（\"仅依据以下内容回答\"）。"
     - "**方法论**：先建评测集定位是召回问题还是排序问题，再对症下药。"
     followups:
-    - "怎么判断是召回不足还是排序不准？（对照标注的 relevant docs，看 recall@k 和 MRR）"
+    - "怎么判断是召回不足还是排序不准？"
   - id: "03.2"
     difficulty: 高
     tags: [必问]
@@ -99,7 +99,7 @@ questions:
     - 分区 / 分片（按业务维度分区，缩小检索范围）；
     - metadata 预过滤（先过滤再检索，降候选集）。
     followups:
-    - HNSW 和 IVF 的区别？（图索引 vs 聚类索引，详见模块 11）
+    - HNSW 和 IVF 的区别？（详见模块 11）
   - id: "03.6"
     difficulty: 中
     tags: []

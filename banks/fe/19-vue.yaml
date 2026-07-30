@@ -13,7 +13,7 @@ questions:
     - "3. **派发更新（写时）**：数据被修改时，通知所有依赖它的组件重新渲染。"
     followups:
     - Vue3 的 ref 和 reactive 有什么区别？为什么要两个？
-    - Proxy 能监听不了什么？（提示：原始值要用 ref 包装）
+    - Proxy 能监听不了什么？
     - Vue 的依赖收集和 MobX 的有什么异同？
   - id: "19.133"
     difficulty: 中
@@ -27,7 +27,7 @@ questions:
     - 3. 只把差异部分更新到真实 DOM。
     followups:
     - Vue3 的 Block tree 是怎么收集动态节点的？
-    - 为什么 React 不做编译时优化？（提示：JSX 运行时才知道结构）
+    - 为什么 React 不做编译时优化？
     - 虚拟 DOM 一定比直接操作 DOM 快吗？什么情况反而慢？
   - id: "19.134"
     difficulty: 高

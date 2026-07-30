@@ -240,7 +240,7 @@
         "**分类辨析(易被追问)**:\"短期/长期\"是按**持续时间**分类,\"episodic(情节)/semantic(语义)\"是按**内容类型**分类,两套维度正交(如 Reflexion 的反思记忆是 episodic 但可长期留存)。"
       ],
       "followups": [
-        "记忆写入会出错(写入幻觉事实)怎么办?(校验机制 + 可信度标记 + 衰减)"
+        "记忆写入会出错(写入幻觉事实)怎么办?"
       ]
     },
     {
@@ -262,7 +262,7 @@
         "**回流**：bad case 自动归集，补进评测集（见模块 10 数据飞轮）。"
       ],
       "followups": [
-        "Reflection 自己也会死循环怎么办？（限制反思轮数 + 判定收敛）"
+        "Reflection 自己也会死循环怎么办？"
       ]
     },
     {
@@ -356,7 +356,7 @@
         "**可观测**：每步落 trace，便于排查（见模块 06）。"
       ],
       "followups": [
-        "用户中途说\"算了不退了\"，Agent 怎么响应？（取消机制 + 已执行步骤的回滚策略）"
+        "用户中途说\"算了不退了\"，Agent 怎么响应？"
       ]
     },
     {
@@ -482,7 +482,7 @@
         "**语义缓存**:相似 query 命中历史结果(embedding 相似度判断),适合容错场景,注意私有数据不能跨用户共享。"
       ],
       "followups": [
-        "长上下文模型（如 1M context）是否就解决问题了？（不一定，长上下文有 needle-in-haystack 衰减、成本高、注意力分散）"
+        "长上下文模型是否就解决问题了？"
       ]
     },
     {
@@ -537,7 +537,7 @@
         "适当降温度。"
       ],
       "followups": [
-        "工具有 50 个，模型选不过来怎么办？（工具检索 / 路由：先用 embedding 检索 top-k 相关工具再选）"
+        "工具有 50 个，模型选不过来怎么办？"
       ]
     },
     {
@@ -646,7 +646,7 @@
         "**方法论**：先建评测集定位是召回问题还是排序问题，再对症下药。"
       ],
       "followups": [
-        "怎么判断是召回不足还是排序不准？（对照标注的 relevant docs，看 recall@k 和 MRR）"
+        "怎么判断是召回不足还是排序不准？"
       ]
     },
     {
@@ -754,7 +754,7 @@
         "metadata 预过滤（先过滤再检索，降候选集）。"
       ],
       "followups": [
-        "HNSW 和 IVF 的区别？（图索引 vs 聚类索引，详见模块 11）"
+        "HNSW 和 IVF 的区别？（详见模块 11）"
       ]
     },
     {
@@ -1239,7 +1239,7 @@
         "**工程侧**：缓存常见 query、异步流式、预热。"
       ],
       "followups": [
-        "vLLM 的 PagedAttention 解决了什么问题？（KV Cache 的显存碎片化，参考 OS 虚拟内存的分页）"
+        "vLLM 的 PagedAttention 解决了什么问题？（参考 OS 虚拟内存的分页）"
       ]
     },
     {
@@ -1388,7 +1388,7 @@
         "计算 judge 与人工的一致性（如 Cohen's Kappa）。"
       ],
       "followups": [
-        "pairwise 比较如何避免 position bias？（随机化顺序、双向各判一次）"
+        "pairwise 比较如何避免 position bias？"
       ]
     },
     {
@@ -1448,7 +1448,7 @@
         "数据脱敏（PII）。"
       ],
       "followups": [
-        "如何在不改业务代码的前提下接入 trace？（装饰器 / SDK 自动埋点 / proxy）"
+        "如何在不改业务代码的前提下接入 trace？"
       ]
     },
     {
@@ -1604,7 +1604,7 @@
         "**工具栈**：Tree-sitter（AST）、LSP（语义）、ripgrep（文本）、向量库（语义检索）。"
       ],
       "followups": [
-        "改一个函数，怎么找出所有受影响的调用方？（call graph 反向遍历）"
+        "改一个函数，怎么找出所有受影响的调用方？"
       ]
     },
     {
@@ -1886,7 +1886,7 @@
         "**价值**：工具复用、生态共享、解耦模型与工具。"
       ],
       "followups": [
-        "MCP 的 transport 有哪些？（**stdio / Streamable HTTP**——2025-03 spec 起 Streamable HTTP 取代了旧的 HTTP+SSE，支持无状态部署与更好的 resumability）"
+        "MCP 的 transport 有哪些？"
       ]
     },
     {
@@ -2098,7 +2098,7 @@
         "回流：bad case 归集补评测集。"
       ],
       "followups": [
-        "如果是\"工具一直返回错误导致重试\"呢？（区分可重试 vs 不可重试错误，见模块 10）"
+        "如果是\"工具一直返回错误导致重试\"呢？"
       ]
     },
     {
@@ -2199,7 +2199,7 @@
         "**长期机制**：建失败 case 自动归集 + 离线回放管道（见模块 10）。"
       ],
       "followups": [
-        "如何固定 LLM 输出便于复现？（固定 seed/temperature=0，但仍非 100% 确定性，需理解原因）"
+        "如何固定 LLM 输出便于复现？"
       ]
     },
     {
@@ -2228,7 +2228,7 @@
         "**成本控制**：子任务可并行；预算上限保护。"
       ],
       "followups": [
-        "用什么数据结构管理子任务依赖？（拓扑排序 + DAG，见模块 11）"
+        "用什么数据结构管理子任务依赖？"
       ]
     },
     {
@@ -2308,7 +2308,7 @@
         "**关键认知**：离线高分 ≠ 线上好用，要持续校准离线指标与线上体验的对应关系。"
       ],
       "followups": [
-        "LLM-as-Judge 怎么保证可信？（校准、交叉验证、人工抽检、position bias 规避）"
+        "LLM-as-Judge 怎么保证可信？"
       ]
     },
     {
@@ -2358,7 +2358,7 @@
         "**告警**：错误率、延迟、token 成超阈值自动告警。"
       ],
       "followups": [
-        "trace 数据量大、成本高，怎么平衡？（采样 + 异常全量 + 慢查询全采）",
+        "trace 数据量大、成本高，怎么平衡？",
         "### ③ 稳定性（高可用）"
       ]
     },
@@ -2389,7 +2389,7 @@
         "**容量规划**：多 provider 配额、预热连接池。"
       ],
       "followups": [
-        "主备模型切换时，Prompt / 工具描述要不要改？（可能要适配，见模块 11 适配器模式）"
+        "主备模型切换时，Prompt / 工具描述要不要改？"
       ]
     },
     {
@@ -2440,7 +2440,7 @@
         "**量化经验**：能说出每招的典型收益（如路由省 70%、缓存省 30%）。"
       ],
       "followups": [
-        "模型路由怎么判断\"简单 vs 复杂\"？（用小模型先答 + 置信度判断 / 规则预筛）",
+        "模型路由怎么判断\"简单 vs 复杂\"？",
         "### ⑤ 安全合规"
       ]
     },
@@ -2470,7 +2470,7 @@
         "**进阶**：用独立\"判官模型\"检测注入；对齐训练降低注入成功率。"
       ],
       "followups": [
-        "间接注入（indirect injection，通过检索内容注入）怎么防？（检索内容也要当不可信数据，结构化隔离）"
+        "间接注入怎么防？"
       ]
     },
     {
@@ -2525,7 +2525,7 @@
         "**工程化**：整个流程平台化、自动化（不是人肉搬运）。"
       ],
       "followups": [
-        "如何判断一个 case 是\"模型问题\"还是\"知识缺失\"？（归因分析，可借 LLM 辅助 + 规则）"
+        "如何判断一个 case 是\"模型问题\"还是\"知识缺失\"？"
       ]
     },
     {
@@ -2549,7 +2549,7 @@
         "**trade-off**：**召回率 vs 延迟 vs 内存**三维权衡，按业务调参。"
       ],
       "followups": [
-        "HNSW 的 efSearch / M 参数怎么调？（M 影响图的连接度，efSearch 影响搜索范围）"
+        "HNSW 的 efSearch / M 参数怎么调？"
       ]
     },
     {
@@ -2597,7 +2597,7 @@
         "**检测环**：拓扑排序能检测依赖环（环 = 死锁，需避免）。"
       ],
       "followups": [
-        "如果是动态依赖（执行中才知道下一步）怎么办？（运行时按结果决定后继，类似 ReAct）"
+        "如果是动态依赖怎么办？"
       ]
     },
     {
@@ -2695,7 +2695,7 @@
         "**价值**：新增 provider 只加一个适配器；加监控不改核心代码；切换模型一行配置。"
       ],
       "followups": [
-        "装饰器在 Python 里怎么实现？（函数装饰器 / 类装饰器；注意保持签名与异步兼容）"
+        "装饰器在 Python 里怎么实现？"
       ]
     },
     {
@@ -2798,7 +2798,7 @@
         "**Decoder-only 的特点**:训练时用 mask 让每个位置只能看到上文(不能偷看未来),适合生成任务。"
       ],
       "followups": [
-        "为什么现在主流是 Decoder-only 而不是 Encoder-Decoder(如 T5)?(训练效率高、scale 后能力强、统一为 next-token prediction)"
+        "为什么现在主流是 Decoder-only 而不是 Encoder-Decoder(如 T5)?"
       ]
     },
     {
@@ -2826,7 +2826,7 @@
         "这也是 Prompt Caching 的底层原理。"
       ],
       "followups": [
-        "为什么 Batch 时代 KV Cache 会成为瓶颈?(显存碎片 + 并发会话数受限 → vLLM 的 PagedAttention 解决)"
+        "为什么 Batch 时代 KV Cache 会成为瓶颈?"
       ]
     },
     {
@@ -2907,7 +2907,7 @@
         "生产 Agent 推荐 temperature 低(0~0.3)+ top-p,保证稳定。"
       ],
       "followups": [
-        "为什么 temperature=0 还是不完全可复现?(batch size 不同导致 padding/数值归约差异)"
+        "为什么 temperature=0 还是不完全可复现?"
       ]
     },
     {
@@ -3127,7 +3127,7 @@
         "上下文管理变复杂(要给推理过程留空间)。"
       ],
       "followups": [
-        "R1-Zero 为什么重要?(证明纯 RL 也能涌现推理,无需大量人类思维链数据)"
+        "R1-Zero 为什么重要?"
       ]
     },
     {
@@ -3182,7 +3182,7 @@
         "**核心挑战**:① 上下文管理(代码库大);② 长任务可靠性(见 Q09.6);③ 工具调用准确率;④ 成本控制。"
       ],
       "followups": [
-        "Claude Code 怎么决定读哪些文件?(grep 关键词 → 看目录结构 → 按需读 → AST 找依赖)"
+        "Claude Code 怎么决定读哪些文件?"
       ]
     },
     {
@@ -3207,7 +3207,7 @@
         "**生产实操主流**:Cursor(日常)+ Claude Code(复杂/自动化)组合。"
       ],
       "followups": [
-        "为什么企业级场景对 Cloud Agent 有顾虑?(代码安全、数据合规、可控性)"
+        "为什么企业级场景对 Cloud Agent 有顾虑?"
       ]
     },
     {
@@ -3321,7 +3321,7 @@
         "**核心难点**:**可靠性** —— 长链条上任何一步出错都导致整体失败,需要强验证 + 强纠错。"
       ],
       "followups": [
-        "Devin 为什么难做成?(长链可靠性 + 复杂环境适配 + 成本)"
+        "Devin 为什么难做成?"
       ]
     },
     {
@@ -3434,7 +3434,7 @@
         "**Claude Code 的 plan mode**:先出计划再实现。"
       ],
       "followups": [
-        "Spec 要写到多细?(够 AI 理解即可,不必逐行;关键是接口/边界/验收标准)"
+        "Spec 要写到多细?"
       ]
     },
     {
@@ -3502,7 +3502,7 @@
         "**实例**:本简历项目就是一个 skill(`SKILL.md`);代码评审、部署、测试生成、文档生成都可封装成 skill。"
       ],
       "followups": [
-        "Skill 和普通 prompt 模板的区别?(Skill 有触发逻辑、有结构化 SOP、可调用工具、可组合)"
+        "Skill 和普通 prompt 模板的区别?"
       ]
     },
     {
@@ -3598,7 +3598,7 @@
         "**与 SDD 的关系**:SDD 是方法论(怎么想),Harness 是工程实现(怎么做);SDD + Harness = 完整的 AI 工程化开发体系。"
       ],
       "followups": [
-        "你搭过什么样的 Harness?(结合项目讲:工具链 + 流程 + 验证 + 环境)"
+        "你搭过什么样的 Harness?"
       ]
     },
     {
@@ -3800,7 +3800,7 @@
         "**自我定位**(结合个人讲):我把自己定位为\"驾驭 AI 解决问题的工程师\",重心在定义问题、设计、把关,AI 帮我把执行效率放大 10 倍。"
       ],
       "followups": [
-        "那初级程序员怎么办?(学习用 AI 放大自己、往上走做判断,而非和 AI 比编码速度)"
+        "那初级程序员怎么办?"
       ]
     },
     {
@@ -4205,8 +4205,8 @@
         "6. 把结果喂回 LLM，LLM 据此生成最终回答。"
       ],
       "followups": [
-        "Function Calling 和 MCP 有什么关系？（MCP 是标准化的工具访问协议）",
-        "LLM 生成的参数不对（类型错/缺字段）怎么处理？",
+        "Function Calling 和 MCP 有什么关系？",
+        "LLM 生成的参数不对怎么处理？",
         "多个工具时，LLM 怎么选对的？描述写不好会怎样？"
       ]
     },
@@ -4259,7 +4259,7 @@
         "MCP：定义一套统一的协议规范，所有工具都按这套规范暴露能力。LLM/Agent 用统一 client 访问。"
       ],
       "followups": [
-        "MCP 和 Function Calling 什么关系？（Function Calling 是 LLM 能力，MCP 是工具访问协议）",
+        "MCP 和 Function Calling 什么关系？",
         "MCP Server 怎么开发？暴露一个工具要做什么？",
         "MCP 生态现在有哪些现成的 Server？"
       ]
@@ -4276,7 +4276,7 @@
         "高频",
         "概念"
       ],
-      "title": "AI 如何改变前端研发流程？怎么高效使用 AI 编码工具（如 Cursor/Copilot）？如何保证 AI 生成代码的质量？",
+      "title": "如何高效使用 AI 编码工具（如 Cursor/Copilot）进行前端研发？",
       "focus": "AI 贯穿研发全流程：需求（分析/拆解）、编码（生成/补全/重构）、测试（生成用例）、文档、CR（辅助审查）。高效用 AI 的关键：写好上下文和 Prompt、让 AI 做重复劳动、人做决策和审查。质量保证：必须人工 review、理解每行代码、写测试验证、不盲目信任。",
       "answer": [
         "代码补全（Copilot）：写一句补一段。",
@@ -4286,7 +4286,7 @@
       ],
       "followups": [
         "AI 生成的代码你怎么判断该不该用？",
-        "AI 会不会取代前端？你怎么看？（AI 与程序员的关系）",
+        "AI 会不会取代前端？你怎么看？",
         "团队引入 AI 编码工具，怎么制定规范防滥用？"
       ]
     },
@@ -4310,9 +4310,9 @@
         "复杂度：时间 O(m+n)，空间 O(1)（原地）。"
       ],
       "followups": [
-        "为什么 LeetCode 88 要从后往前合并？（从前会覆盖未处理元素）",
-        "如果要求合并 K 个有序链表/数组怎么做？（堆 / 分治两两合并）",
-        "能否用二分优化？（可以但常数更大，工程上没必要）"
+        "为什么 LeetCode 88 要从后往前合并？",
+        "如果要求合并 K 个有序链表/数组怎么做？",
+        "能否用二分优化？"
       ]
     },
     {
@@ -4333,9 +4333,9 @@
         "**回文串**：首尾对称，正读反读相同。双指针 i=0、j=len-1，向中间走，任一处不等则非回文。"
       ],
       "followups": [
-        "最长回文子串怎么求？（LeetCode 5，中心扩展 / Manacher）",
-        "最长回文子序列呢？（LeetCode 516，区间 DP）",
-        "回文数字为什么不直接反转整个数字再比？（反转可能溢出，反转一半更安全）"
+        "最长回文子串怎么求？",
+        "最长回文子序列呢？",
+        "回文数字为什么不直接反转整个数字再比？"
       ]
     },
     {
@@ -4363,8 +4363,8 @@
         "注意坑：不能用字符串直接比（'10' < '2' 字典序错）；不能简单 parseFloat 整个串（会丢小数段信息）。"
       ],
       "followups": [
-        "带字母的语义化版本（如 1.0.0-alpha）怎么比？（semver 规范，预发版 < 正式版）",
-        "如果版本号段可能极大（超过 Number 范围）怎么办？（用 BigInt 或逐字符比较）",
+        "带字母的语义化版本怎么比？",
+        "如果版本号段可能极大怎么办？",
         "semver 中 `^` 和 `~` 的区别？"
       ]
     },
@@ -4388,8 +4388,8 @@
         "不稳定排序。"
       ],
       "followups": [
-        "快排最坏情况是什么？如何避免？（提示：有序数组 + 端点 pivot；随机化 pivot）",
-        "快排是稳定排序吗？为什么？（不稳定，分区时相等元素的相对顺序可能改变）",
+        "快排最坏情况是什么？如何避免？",
+        "快排是稳定排序吗？为什么？",
         "原地快排（in-place）怎么写？为什么要用双指针交换？"
       ]
     },
@@ -4414,9 +4414,9 @@
         "复杂度：迭代 O(n) 时间 O(1) 空间；递归 O(n) 时间 O(n) 空间（栈）。"
       ],
       "followups": [
-        "如何只翻转链表中 [m, n] 区间的节点？（LeetCode 92，定位前驱后局部翻转）",
-        "K 个一组翻转链表怎么做？（LeetCode 25，先数 k 个再翻转一段）",
-        "判断反转后链表是否正确（无环、长度一致）。"
+        "如何只翻转链表中 [m, n] 区间的节点？",
+        "K 个一组翻转链表怎么做？",
+        "判断反转后链表是否正确。"
       ]
     },
     {
@@ -4438,9 +4438,9 @@
         "1. 快指针 fast 每次走 2 步，慢指针 slow 每次走 1 步。若无环，fast 先到 null；若有环，fast 终会追上 slow（在环内每轮拉近 1 步，必然相遇）。"
       ],
       "followups": [
-        "为什么快慢指针一定能相遇，不会跳过？（每轮相对靠近 1 步）",
+        "为什么快慢指针一定能相遇，不会跳过？",
         "用 Set 记录访问过的节点也能判环，空间复杂度是多少？（O(n)）",
-        "如果要求出环的长度怎么做？（相遇后让一个指针再走一圈计数）"
+        "如果要求出环的长度怎么做？"
       ]
     },
     {
@@ -4467,9 +4467,9 @@
         "复杂度：时间 O(n)，空间 O(n)（最坏全左括号）。"
       ],
       "followups": [
-        "如果要返回最长合法括号子串长度怎么做？（LeetCode 32，栈存下标 / DP）",
-        "只用 O(1) 空间判断只有 `(` `)` 的字符串是否合法怎么做？（计数 left/right）",
-        "如何生成所有合法的 n 对括号组合？（LeetCode 22，回溯）"
+        "如果要返回最长合法括号子串长度怎么做？",
+        "只用 O(1) 空间判断只有 `(` `)` 的字符串是否合法怎么做？",
+        "如何生成所有合法的 n 对括号组合？"
       ]
     },
     {
@@ -4490,9 +4490,9 @@
         "**方法一：小顶堆**。维护一个大小为 K 的最小堆，遍历数组：元素数 < K 直接入堆；否则若当前值 > 堆顶，弹出堆顶再入。遍历完后堆顶就是第 K 大。时间 O(n log K)，空间 O(K)。适合 K 很小或数据流场景。"
       ],
       "followups": [
-        "数据流场景下如何动态维护第 K 大？（LeetCode 703，固定大小堆）",
-        "快速选择为什么平均 O(n)？（每轮只剩一半规模，n+n/2+n/4+...=2n）",
-        "海量数据求 TopK 怎么做？（分桶 + 归并，或外部排序）"
+        "数据流场景下如何动态维护第 K 大？",
+        "快速选择为什么平均 O(n)？",
+        "海量数据求 TopK 怎么做？"
       ]
     },
     {
@@ -4519,7 +4519,7 @@
       ],
       "followups": [
         "允许多次买卖（122）怎么做？为什么贪心是对的？",
-        "最多允许 k 次交易（188）状态怎么设计？（dp[i][k][0/1]）",
+        "最多允许 k 次交易（188）状态怎么设计？",
         "含冷冻期 / 手续费怎么改状态转移？"
       ]
     },
@@ -4585,9 +4585,9 @@
         "```"
       ],
       "followups": [
-        "如何检测对象的循环引用？（DFS/BFS + WeakSet，或 JSON.stringify 捕获异常）",
-        "深拷贝时如何用 DFS 处理循环引用？（WeakMap 缓存已拷贝对象）",
-        "二叉树的 DFS 三种序（前/中/后）怎么区分？"
+        "如何检测对象的循环引用？",
+        "深拷贝时如何用 DFS 处理循环引用？",
+        "二叉树的 DFS 三种序怎么区分？"
       ]
     },
     {
@@ -4642,9 +4642,9 @@
         "```"
       ],
       "followups": [
-        "反过来，用两个栈实现队列怎么做？（LeetCode 232，一个入栈一个出栈，出栈空了再倒）",
+        "反过来，用两个栈实现队列怎么做？",
         "方案 A 和方案 B 的均摊复杂度哪个更优？",
-        "能否用单个队列实现栈？（把新元素后的所有元素依次出队再入队）"
+        "能否用单个队列实现栈？"
       ]
     },
     {
@@ -4668,7 +4668,7 @@
       ],
       "followups": [
         "为什么归并排序是稳定的，而快排不是？",
-        "归并排序在链表上为什么比快排更合适？（链表合并不需要随机访问，O(1) 额外空间）",
+        "归并排序在链表上为什么比快排更合适？ 额外空间）",
         "迭代版（自底向上）的归并排序怎么实现？避免了递归栈开销。"
       ]
     },
@@ -4690,9 +4690,9 @@
         "**核心公式**：位置 i 能接的雨水 = max(0, min(leftMax[i], rightMax[i]) - height[i])。"
       ],
       "followups": [
-        "如果柱子是二维的（盛水容器为 3D），怎么做？（LeetCode 407，优先队列 BFS）",
-        "单调栈解法怎么写？（按层接水，遇到凹槽出栈计算）",
-        "「盛最多水的容器」(LeetCode 11) 和接雨水有什么区别？（前者是两条线围成的面积，不是凹槽）"
+        "如果柱子是二维的（盛水容器为 3D），怎么做？",
+        "单调栈解法怎么写？",
+        "「盛最多水的容器」 和接雨水有什么区别？"
       ]
     },
     {
@@ -4716,9 +4716,9 @@
         "答案：dp[amount]，若仍为 Infinity 返回 -1。"
       ],
       "followups": [
-        "求组合方案数（而非最少硬币数）怎么改 DP？（dp[i] += dp[i-coin]，先遍历硬币）",
-        "贪心（每次取最大面额）为什么不一定对？（如 [1,3,4] amount=6，贪心取 4+1+1=3 枚，最优是 3+3=2 枚）",
-        "如果每种硬币只能用一次呢？（0-1 背包，金额从大到小遍历避免重复取）"
+        "求组合方案数（而非最少硬币数）怎么改 DP？",
+        "贪心（每次取最大面额）为什么不一定对？",
+        "如果每种硬币只能用一次呢？"
       ]
     },
     {
@@ -4741,7 +4741,7 @@
         "等事件循环下一轮取出 fn 执行时，它在**新的执行上下文**里抛错，外层栈早已销毁，catch 自然接不到。"
       ],
       "followups": [
-        "async/await 里 await 一个会 reject 的 Promise，try/catch 能抓到吗？（能）",
+        "async/await 里 await 一个会 reject 的 Promise，try/catch 能抓到吗？",
         "为什么 Promise.reject 不加 .catch 会报 unhandledrejection？"
       ]
     },
@@ -4764,7 +4764,7 @@
       ],
       "followups": [
         "为什么读 offsetTop 会触发强制同步布局？",
-        "transform 动画为什么不卡？（合成层 + GPU）",
+        "transform 动画为什么不卡？",
         "如何用 Chrome DevTools 排查布局抖动？"
       ]
     },
@@ -4820,7 +4820,7 @@
         "| lazyload | 滚动**可见时** | 按需 | 图片/组件懒加载，省首屏带宽 |"
       ],
       "followups": [
-        "preload 加多了会有什么副作用？（挤占带宽、抢关键资源）",
+        "preload 加多了会有什么副作用？",
         "loading=lazy 的浏览器兼容性？怎么 polyfill？"
       ]
     },
@@ -4897,8 +4897,8 @@
       ],
       "followups": [
         "requestAnimationFrame 属于宏任务还是微任务？它在事件循环哪个阶段执行？",
-        "await 后面的代码等价于什么？（提示：包在 Promise.then 里，是微任务）",
-        "为什么微任务会阻塞渲染？（提示：本轮渲染必须等微任务清空）"
+        "await 后面的代码等价于什么？",
+        "为什么微任务会阻塞渲染？"
       ]
     },
     {
@@ -4925,7 +4925,7 @@
       ],
       "followups": [
         "display:none 和 visibility:hidden 在渲染树上有什么区别？",
-        "为什么 transform 做动画不触发回流？（提示：合成层）",
+        "为什么 transform 做动画不触发回流？",
         "首屏渲染要等所有 CSS 加载完吗？"
       ]
     },
@@ -4952,9 +4952,9 @@
         "| INP | Interaction to Next Paint | 全程交互响应（FID 的继任者，2024 生效）| ≤200ms | 200–500ms | >500ms |"
       ],
       "followups": [
-        "为什么 FID 被 INP 替代？（提示：FID 只测第一次，覆盖不全）",
-        "如何优化 LCP？（图片优先级、预加载关键资源、SSR）",
-        "CLS 常见根因有哪些？（图片无尺寸、动态注入内容、字体闪烁）"
+        "为什么 FID 被 INP 替代？",
+        "如何优化 LCP？",
+        "CLS 常见根因有哪些？"
       ]
     },
     {
@@ -5009,7 +5009,7 @@
       "followups": [
         "如果第三次握手（ACK）丢了会怎样？",
         "为什么 TIME_WAIT 是 2MSL？大量 TIME_WAIT 怎么排查？",
-        "TCP 为什么是面向连接的、可靠的？靠哪些机制？（序列号、确认、重传、滑动窗口、拥塞控制）"
+        "TCP 为什么是面向连接的、可靠的？靠哪些机制？"
       ]
     },
     {
@@ -5055,8 +5055,8 @@
         "**迭代**：本地 DNS 替你一层层问各级服务器「你不知道就告诉下一步问谁」。"
       ],
       "followups": [
-        "DNS 解析慢怎么办？（dns-prefetch、HTTPDNS、本地缓存）",
-        "为什么有了 HTTPDNS？（移动端 DNS 劫持、解析慢）",
+        "DNS 解析慢怎么办？",
+        "为什么有了 HTTPDNS？",
         "浏览器 DNS 缓存和 OS 缓存的 TTL 冲突怎么处理？"
       ]
     },
@@ -5086,7 +5086,7 @@
         "| SEO | 弱 | Google 优先 |"
       ],
       "followups": [
-        "TLS 1.3 相比 1.2 改进了什么？（1-RTT/0-RTT、去掉不安全算法）",
+        "TLS 1.3 相比 1.2 改进了什么？",
         "为什么对称加密快、非对称加密慢？为什么不全用非对称？",
         "HSTS 是什么？解决什么问题？"
       ]
@@ -5115,7 +5115,7 @@
       "followups": [
         "HTTP/2 还需要打包/雪碧图吗？为什么？",
         "QUIC 怎么在 UDP 上实现可靠性？",
-        "为什么 HTTP/3 部署比 HTTP/2 慢？（UDP 在中间设备/防火墙常被限）"
+        "为什么 HTTP/3 部署比 HTTP/2 慢？"
       ]
     },
     {
@@ -5137,8 +5137,8 @@
         "**堆**：对象、闭包变量。靠**垃圾回收器**识别「不可达」对象并释放。"
       ],
       "followups": [
-        "WeakMap/WeakSet 为什么不会阻止 GC？（弱引用，不计入可达性）",
-        "如何排查页面内存泄漏？（Heap snapshot 三段对比法）"
+        "WeakMap/WeakSet 为什么不会阻止 GC？",
+        "如何排查页面内存泄漏？"
       ]
     },
     {
@@ -5167,9 +5167,9 @@
         "| 典型场景 | 大数据计算、图片处理、解析 | PWA 离线、推送通知、资源缓存 |"
       ],
       "followups": [
-        "为什么 Worker 不能操作 DOM？（避免多线程并发修改 DOM 的竞态）",
-        "postMessage 传大对象性能差怎么办？（Transferable / SharedArrayBuffer）",
-        "Service Worker 更新后旧页面还用旧版本，怎么平滑升级？（skipWaiting + clients.claim）",
+        "为什么 Worker 不能操作 DOM？",
+        "postMessage 传大对象性能差怎么办？",
+        "Service Worker 更新后旧页面还用旧版本，怎么平滑升级？",
         "PWA 离线原理是什么？"
       ]
     },
@@ -5223,7 +5223,7 @@
         "```"
       ],
       "followups": [
-        "瀑布流里图片高度异步加载怎么处理？（提示：onload 后重排）",
+        "瀑布流里图片高度异步加载怎么处理？",
         "无限滚动的瀑布流，新数据来了怎么高效追加？",
         "CSS columns 的列优先顺序问题能解决吗？"
       ]
@@ -5338,8 +5338,8 @@
         "**为什么需要虚拟滚动**：列表有上万条，全渲染 DOM 会卡死（DOM 太多）。虚拟列表只渲染可视区的几十条，滚动时动态替换。"
       ],
       "followups": [
-        "不定高虚拟列表怎么实现？（提示：预估高度 + 实际测量缓存 + 二分查找）",
-        "虚拟滚动滚动过快会白屏怎么办？（提示：加 buffer、预渲染）",
+        "不定高虚拟列表怎么实现？",
+        "虚拟滚动滚动过快会白屏怎么办？",
         "React Window / react-virtualized 这些库比手写强在哪？"
       ]
     },
@@ -5384,7 +5384,7 @@
         "高频",
         "概念"
       ],
-      "title": "CSS 盒模型有哪几种？`box-sizing` 的作用是什么？两种盒模型的区别是什么？",
+      "title": "CSS 盒模型有哪几种？`box-sizing` 的作用是什么？",
       "focus": "盒模型分标准盒模型（content-box，默认）和怪异盒模型（border-box）。前者 width 只含内容，后者 width 包含内容+padding+border，开发中几乎都用 border-box。",
       "answer": [
         "盒模型由内到外四部分：**content（内容）、padding（内边距）、border（边框）、margin（外边距）**。",
@@ -5395,7 +5395,7 @@
         "| 怪异盒模型 | border-box | content+padding+border | 不变，padding 从 content 里扣 |"
       ],
       "followups": [
-        "`outline`（轮廓）算在盒模型里吗？它和 border 有什么区别？（提示：outline 不占布局空间）",
+        "`outline`（轮廓）算在盒模型里吗？它和 border 有什么区别？",
         "相邻块级元素的 margin 为什么会「折叠」？折叠规则是什么？",
         "inline 元素的 padding/margin 在垂直方向上表现有什么不同？"
       ]
@@ -5427,9 +5427,9 @@
         "举例：`#nav .item:hover` = (0,1,2,0)；`div ul li a` = (0,0,0,4)。"
       ],
       "followups": [
-        "两个 `!important` 规则冲突时谁赢？（提示：再回到 specificity 比较）",
-        "继承来的样式优先级是多少？（提示：比通配符还低，会被任意直接规则覆盖）",
-        "`:not()`、`:is()`、`:where()` 对优先级有什么影响？（提示：:where() 永远是 0）"
+        "两个 `!important` 规则冲突时谁赢？",
+        "继承来的样式优先级是多少？",
+        "`:not()`、`:is()`、`:where()` 对优先级有什么影响？ 永远是 0）"
       ]
     },
     {
@@ -5456,7 +5456,7 @@
         "| sticky | 滚动容器，阈值前 relative、阈值后 fixed | 否（达标前）/是（达标后） | 阈值前保留 |"
       ],
       "followups": [
-        "`absolute` 元素的父级都是 static，它相对谁定位？（提示：html / 初始包含块）",
+        "`absolute` 元素的父级都是 static，它相对谁定位？",
         "`fixed` 元素的祖先有 `transform`，会带来什么问题？（提示：参考系变了）",
         "`sticky` 为什么有时候不生效？常见失效原因有哪些？"
       ]
@@ -5487,9 +5487,9 @@
         "| 行内文本 | 父 `text-align:center; line-height=高;` 或 table-cell | — | 适合单行文字 |"
       ],
       "followups": [
-        "`transform:translate(-50%,-50%)` 为什么不需要知道元素宽高？（提示：% 基于自身尺寸）",
+        "`transform:translate` 为什么不需要知道元素宽高？",
         "flex 布局里子项太多时，`align-items` 和 `align-content` 有什么区别？",
-        "如何让一段多行文字垂直居中？（提示：flex 或 `display:table-cell; vertical-align:middle;`）"
+        "如何让一段多行文字垂直居中？"
       ]
     },
     {
@@ -5512,9 +5512,9 @@
         "0% → flex-basis=0%（基准尺寸）"
       ],
       "followups": [
-        "`flex:1` 和 `flex:1 1 auto` 在视觉上为什么可能不一样？（提示：basis 不同）",
-        "`flex-basis` 和 `width` 同时设置时谁优先？（提示：basis 优先，auto 时才回退到 width）",
-        "如何实现「左侧固定宽、右侧自适应」的两栏布局？（提示：flex:0 0 200px + flex:1）"
+        "`flex:1` 和 `flex:1 1 auto` 在视觉上为什么可能不一样？",
+        "`flex-basis` 和 `width` 同时设置时谁优先？",
+        "如何实现「左侧固定宽、右侧自适应」的两栏布局？"
       ]
     },
     {
@@ -5536,9 +5536,9 @@
         "为向后兼容，浏览器对 `:before` 仍按伪元素处理，所以两者等价。实际开发推荐双冒号以符合规范。"
       ],
       "followups": [
-        "伪元素能被 `document.querySelector` 选中吗？能用 JS 修改它的 content 吗？（提示：不能直接选中，但可改父元素 class 间接切换）",
+        "伪元素能被 `document.querySelector` 选中吗？能用 JS 修改它的 content 吗？",
         "`content: counter()` 计数器怎么配合 `counter-reset`/`counter-increment` 使用？",
-        "为什么 clearfix 清除浮动要用伪元素而不是直接给父元素 overflow:hidden？（提示：避免副作用）"
+        "为什么 clearfix 清除浮动要用伪元素而不是直接给父元素 overflow:hidden？"
       ]
     },
     {
@@ -5611,8 +5611,8 @@
         "```"
       ],
       "followups": [
-        "CSS 变量和 Sass 变量的本质区别是什么？（提示：运行时 vs 编译时）",
-        "如何让主题跟随系统又允许用户手动覆盖？（提示：prefers-color-scheme 设默认值 + JS 改 data-theme 覆盖）",
+        "CSS 变量和 Sass 变量的本质区别是什么？",
+        "如何让主题跟随系统又允许用户手动覆盖？",
         "为什么 CSS 变量切换主题比改 class 名重新加载样式性能好？"
       ]
     },
@@ -5636,9 +5636,9 @@
         "**animation**：用 `@keyframes` 定义关键帧，配合 `animation: name duration timing-function delay iteration-count direction` 播放，支持循环、反向、暂停。"
       ],
       "followups": [
-        "`transition` 能让 `display:none → block` 平滑过渡吗？为什么？（提示：不能，display 不可插值，需用 opacity/visibility 替代）",
-        "`transform` 为什么能 GPU 加速、不触发回流？（提示：作用于合成层，不改布局）",
-        "`animation` 的 `steps()` 函数有什么用？（提示：雪碧图逐帧动画）"
+        "`transition` 能让 `display:none → block` 平滑过渡吗？为什么？",
+        "`transform` 为什么能 GPU 加速、不触发回流？",
+        "`animation` 的 `steps()` 函数有什么用？"
       ]
     },
     {
@@ -5695,9 +5695,9 @@
         "```"
       ],
       "followups": [
-        "`rem` 和 `em` 的区别？为什么容易混淆出错？（提示：参照物不同，em 会逐级嵌套放大）",
-        "移动端为什么常用 rem 配合 flexible.js？（提示：动态算 html font-size 适配不同 dpr）",
-        "移动端「1px 边框」问题怎么解决？（提示：用 transform:scaleY(0.5) 或媒体查询按 dpr 调整）"
+        "`rem` 和 `em` 的区别？为什么容易混淆出错？",
+        "移动端为什么常用 rem 配合 flexible.js？",
+        "移动端「1px 边框」问题怎么解决？ 或媒体查询按 dpr 调整）"
       ]
     },
     {
@@ -5718,9 +5718,9 @@
         "当 flex-shrink > 0 且主轴空间不够时，浏览器先算出溢出量，再按权重把溢出量分摊到各子项。"
       ],
       "followups": [
-        "如果某项 `flex-shrink: 0`，空间不足时会怎样？（提示：不收缩，可能溢出容器）",
-        "flex 子项会被压缩到 0 宽度吗？什么在保护它？（提示：min-width:auto 默认保护）",
-        "为什么三个 shrink 都等于 1 时，收缩量却不相等？（提示：basis 不同导致权重不同）"
+        "如果某项 `flex-shrink: 0`，空间不足时会怎样？",
+        "flex 子项会被压缩到 0 宽度吗？什么在保护它？",
+        "为什么三个 shrink 都等于 1 时，收缩量却不相等？"
       ]
     },
     {
@@ -5741,9 +5741,9 @@
         "BFC = Block Formatting Context，块级格式化上下文。可理解为给元素套一个「结界」，里面元素的布局不影响外面，外面也不影响里面。"
       ],
       "followups": [
-        "margin 塌陷发生在哪三种情况？（父子、相邻兄弟、空元素）",
+        "margin 塌陷发生在哪三种情况？",
         "为什么 `overflow:hidden` 能清除浮动？它的原理是什么？",
-        "`display:flow-root` 相比 `overflow:hidden` 触发 BFC 有什么优势？（提示：无裁剪副作用）"
+        "`display:flow-root` 相比 `overflow:hidden` 触发 BFC 有什么优势？"
       ]
     },
     {
@@ -5783,7 +5783,7 @@
         "责任链：Koa 洋葱圈中间件、Express 中间件。"
       ],
       "followups": [
-        "观察者模式和发布订阅模式有什么区别？（核心高频）",
+        "观察者模式和发布订阅模式有什么区别？",
         "单例模式在前端怎么实现？有什么坑？",
         "策略模式相比 if-else 优势在哪？"
       ]
@@ -5815,7 +5815,7 @@
         "**JS 的「线程安全」**：JS 单线程，不存在多线程竞争。但要防止「重复实例化」（比如惰性单例，第一次用才创建，之后复用）。"
       ],
       "followups": [
-        "单例模式有什么缺点？（全局状态难测试、隐式依赖）"
+        "单例模式有什么缺点？"
       ]
     },
     {
@@ -5848,8 +5848,8 @@
       ],
       "followups": [
         "EventBus 怎么实现 once（只触发一次）？",
-        "发布订阅模式会不会内存泄漏？（回调没 off 掉）",
-        "Vue 的响应式是观察者还是发布订阅？（提示：观察者）"
+        "发布订阅模式会不会内存泄漏？",
+        "Vue 的响应式是观察者还是发布订阅？"
       ]
     },
     {
@@ -5933,7 +5933,7 @@
       ],
       "followups": [
         "幽灵依赖具体会带来什么问题？",
-        "pnpm 的软链接结构有没有兼容性问题？（有些工具不认软链接）",
+        "pnpm 的软链接结构有没有兼容性问题？",
         "monorepo 里 pnpm workspace 怎么管理内部包依赖？"
       ]
     },
@@ -6027,7 +6027,7 @@
       ],
       "followups": [
         "Rspack 怎么做到兼容 webpack 的 loader/plugin？有兼容性坑吗？",
-        "Rust 写的构建工具（Rspack/swc/esbuild）为什么比 JS 快这么多？",
+        "Rust 写的构建工具为什么比 JS 快这么多？",
         "Rsbuild 和 Turbopack（Vercel）有什么区别？"
       ]
     },
@@ -6058,9 +6058,9 @@
         "| tree-shaking | 不支持（运行时才知道导出啥） | 支持（静态分析知道用了啥） |"
       ],
       "followups": [
-        "Node.js 怎么区分一个文件是 CJS 还是 ESM？（package.json type / .mjs/.cjs）",
-        "ESM 里怎么用 __dirname/__filename？（提示：import.meta.url）",
-        "CJS 和 ESM 互操作（CJS 里 import ESM）有什么坑？"
+        "Node.js 怎么区分一个文件是 CJS 还是 ESM？",
+        "ESM 里怎么用 __dirname/__filename？",
+        "CJS 和 ESM 互操作有什么坑？"
       ]
     },
     {
@@ -6111,8 +6111,8 @@
         "5. **箭头函数**：**没有自己的 this**，继承定义时外层的 this（静态，不可被 call/apply/bind 改变）。"
       ],
       "followups": [
-        "箭头函数能用 call 改变 this 吗？为什么？（提示：没有自己的 this）",
-        "bind 之后再用 new 调用，this 指向谁？（提示：new 优先级更高）"
+        "箭头函数能用 call 改变 this 吗？为什么？",
+        "bind 之后再用 new 调用，this 指向谁？"
       ]
     },
     {
@@ -6133,8 +6133,8 @@
         "**解决什么问题**：高频事件（input、resize、按钮连点）每秒触发几十上百次，直接执行会导致频繁请求/DOM 操作，卡顿。"
       ],
       "followups": [
-        "防抖要不要支持「立即执行」版本？怎么实现？（提示：加 immediate 参数，首次触发立即执行，之后进入冷却）",
-        "节流（throttle）和防抖的区别是什么？（提示：节流是匀速执行，见 fe-js-007）"
+        "防抖要不要支持「立即执行」版本？怎么实现？",
+        "节流（throttle）和防抖的区别是什么？"
       ]
     },
     {
@@ -6155,10 +6155,10 @@
         "**节流策略**：**保证固定节奏**。第一次触发立即执行，之后进入冷却期；冷却期内无视所有后续触发，冷却结束才允许下一次执行。"
       ],
       "followups": [
-        "节流的时间戳版和定时器版各有什么短板？（提示：时间戳版漏末次，定时器版首次延迟）",
-        "怎么写一个「首尾都执行」的节流？（提示：时间戳判断 + 定时器兜底末次）",
-        "防抖和节流怎么选？（提示：看是否需要「过程中也响应」——要则节流，不要则防抖）",
-        "requestAnimationFrame 和节流什么关系？（提示：rAF 相当于 ~16ms 的节流，且跟随刷新率）"
+        "节流的时间戳版和定时器版各有什么短板？",
+        "怎么写一个「首尾都执行」的节流？",
+        "防抖和节流怎么选？",
+        "requestAnimationFrame 和节流什么关系？"
       ]
     },
     {
@@ -6185,10 +6185,10 @@
         "| `Promise.allSettled` | **全部完成**（不论成败） | 永不 reject，返回状态数组 | 批量执行后统一汇总结果 |"
       ],
       "followups": [
-        "如何手写 Promise.all？遇到非 Promise 值怎么处理？（提示：用 Promise.resolve 包一层，按索引保证返回顺序）",
-        "如何手写 Promise.race？（提示：谁先 settle 谁就 resolve/reject 外层 Promise）",
-        "Promise.all 中一个失败后，其他还在 pending 的 Promise 会取消吗？（提示：不会，Promise 无法取消，只是结果被丢弃）",
-        "为什么没有 `Promise.none` 或 `Promise.first`？实际怎么模拟？（提示：用 allSettled + filter）"
+        "如何手写 Promise.all？遇到非 Promise 值怎么处理？",
+        "如何手写 Promise.race？",
+        "Promise.all 中一个失败后，其他还在 pending 的 Promise 会取消吗？",
+        "为什么没有 `Promise.none` 或 `Promise.first`？实际怎么模拟？"
       ]
     },
     {
@@ -6211,7 +6211,7 @@
       "followups": [
         "词法作用域和动态作用域的区别？this 是哪种？",
         "let/const 的块级作用域和 var 的函数作用域有什么本质区别？",
-        "作用域链和原型链有什么区别？（一个查变量，一个查属性）",
+        "作用域链和原型链有什么区别？",
         "闭包是怎么利用作用域链的？"
       ]
     },
@@ -6302,7 +6302,7 @@
       ],
       "followups": [
         "箭头函数的 this 能用 call/apply/bind 改变吗？为什么？",
-        "对象方法用箭头函数有什么坑？（this 不指向实例）",
+        "对象方法用箭头函数有什么坑？",
         "React 类组件为什么用箭头函数做事件处理？函数组件呢？",
         "箭头函数和普通函数在性能上有差异吗？"
       ]
@@ -6354,8 +6354,8 @@
         "4. **处理返回值**：如果构造函数显式 `return` 了一个**对象**（或函数），则用那个返回值；否则返回新创建的 obj。"
       ],
       "followups": [
-        "如果构造函数 return 一个基本类型（如 return 1），new 的结果会变吗？（提示：不变，仍返回 obj）",
-        "`Object.create(Constructor.prototype)` 和 `obj.__proto__ = ...` 有什么区别？（提示：前者更安全，不依赖已废弃的 __proto__）",
+        "如果构造函数 return 一个基本类型，new 的结果会变吗？",
+        "`Object.create` 和 `obj.__proto__ = ...` 有什么区别？",
         "class 的 new 和构造函数的 new 底层一样吗？"
       ]
     },
@@ -6377,10 +6377,10 @@
         "**原型（Prototype）**：每个函数都有一个 `prototype` 属性，指向它的原型对象。通过 `new Fn()` 创建的实例，有一个 `__proto__`（即 `[[Prototype]]`）指向 `Fn.prototype`，所以实例能访问原型上的方法和属性（方法复用）。"
       ],
       "followups": [
-        "箭头函数有 prototype 吗？（提示：没有，不能作为构造函数）",
+        "箭头函数有 prototype 吗？",
         "ES6 class 的 extends 底层是怎么实现原型链继承的？",
-        "`instanceof` 的原理是什么？它和原型链什么关系？（提示：沿 __proto__ 查找右侧的 prototype）",
-        "为什么 `Object.create(null)` 创建的对象「最干净」？（提示：没有原型链上的方法）"
+        "`instanceof` 的原理是什么？它和原型链什么关系？",
+        "为什么 `Object.create(null)` 创建的对象「最干净」？"
       ]
     },
     {
@@ -6402,10 +6402,10 @@
         "`.catch()` 能捕获**它之前整条链**上的所有错误（reject + 抛出的异常），因为 `.catch()` 本质是 `.then(null, onRejected)`，挂在了链的后端。"
       ],
       "followups": [
-        "Promise 的状态一旦改变还能再变吗？（提示：不可逆，pending→fulfilled/rejected 是终态）",
-        "async/await 里怎么捕获 reject？（提示：用 try/catch 包住 await，更同步化）",
-        "如果一个 Promise 链没有任何 `.catch`，未捕获的 rejection 会怎样？（提示：触发 unhandledrejection 事件，Node 会警告/退出）",
-        "`.catch` 之后还能继续 `.then` 吗？catch 之后的链是什么状态？（提示：能，catch 返回 fulfilled 的 Promise）"
+        "Promise 的状态一旦改变还能再变吗？",
+        "async/await 里怎么捕获 reject？",
+        "如果一个 Promise 链没有任何 `.catch`，未捕获的 rejection 会怎样？",
+        "`.catch` 之后还能继续 `.then` 吗？catch 之后的链是什么状态？"
       ]
     },
     {
@@ -6426,7 +6426,7 @@
         "**闭包的定义**：函数与其词法环境（外层作用域）的组合。当一个内部函数引用了外部函数的变量，就形成了闭包。"
       ],
       "followups": [
-        "箭头函数的闭包和普通函数有什么不同？（this 绑定）"
+        "箭头函数的闭包和普通函数有什么不同？"
       ]
     },
     {
@@ -6462,7 +6462,7 @@
       ],
       "followups": [
         "为什么普通对象不能 for...of？怎么让它可迭代？",
-        "Generator 怎么做异步流程控制？（co 库原理）",
+        "Generator 怎么做异步流程控制？",
         "async/await 和 Generator 是什么关系？",
         "yield* 是什么？委托生成器？"
       ]
@@ -6503,7 +6503,7 @@
         "curry 函数里的 fn.length 是什么？为什么能靠它判断参数够不够？",
         "柯里化和 async/await 的链式调用有什么本质不同？",
         "函数式编程里的 compose/pipe 和柯里化怎么配合？",
-        "lodash 的 _.curry 和手写的有什么增强？(placeholder)"
+        "lodash 的 _.curry 和手写的有什么增强？"
       ]
     },
     {
@@ -6718,7 +6718,7 @@
       ],
       "followups": [
         "Proxy 沙箱能拦住所有对 window 的操作吗？有逃逸的情况吗？",
-        "Shadow DOM 的弹窗逃逸问题（portal 到 body）怎么解决？",
+        "Shadow DOM 的弹窗逃逸问题怎么解决？",
         "wujie 用 iframe 做隔离，和 Proxy 沙箱比有什么优劣？"
       ]
     },
@@ -6742,7 +6742,7 @@
         "**Native 层（微信客户端）**：作为中间人，在两个线程间转发数据和事件。"
       ],
       "followups": [
-        "setData 为什么慢？怎么优化？（提示：只传变化的数据、合并调用）",
+        "setData 为什么慢？怎么优化？",
         "小程序为什么不能用 jQuery/直接操作 DOM？",
         "双线程架构和浏览器的单线程模型比，开发上有什么不便？"
       ]
@@ -6844,7 +6844,7 @@
       ],
       "followups": [
         "`process.nextTick` 和 `queueMicrotask` 哪个先执行？为什么 nextTick 不建议滥用？",
-        "在 I/O 回调里，`setTimeout(fn,0)` 和 `setImmediate(fn)` 谁先？（提示：I/O 回调后 check 阶段在前）",
+        "在 I/O 回调里，`setTimeout` 和 `setImmediate(fn)` 谁先？",
         "Node 11 之后为什么对齐浏览器？解决了什么问题？"
       ]
     },
@@ -6873,9 +6873,9 @@
         "| 启动项 | `pm2 startup` + `pm2 save` 让服务开机自启 |"
       ],
       "followups": [
-        "`cluster` 模式下多个 worker 共享一个端口，连接是如何分配给各 worker 的？（提示：master round-robin）",
-        "pm2 reload 是如何做到「零停机」的？（提示：逐个 worker 重启）",
-        "多 worker 之间如何共享 session/缓存？（提示：用 Redis 等外部存储，进程内存不共享）"
+        "`cluster` 模式下多个 worker 共享一个端口，连接是如何分配给各 worker 的？",
+        "pm2 reload 是如何做到「零停机」的？",
+        "多 worker 之间如何共享 session/缓存？"
       ]
     },
     {
@@ -6897,7 +6897,7 @@
       ],
       "followups": [
         "`Buffer.alloc` 和 `Buffer.allocUnsafe` 有什么区别？为什么不推荐 `new Buffer()`？",
-        "Buffer 和 `Uint8Array` / `ArrayBuffer` 是什么关系？（提示：Buffer 是 Uint8Array 子类，buf.buffer 是底层 ArrayBuffer）"
+        "Buffer 和 `Uint8Array` / `ArrayBuffer` 是什么关系？"
       ]
     },
     {
@@ -6923,8 +6923,8 @@
       ],
       "followups": [
         "什么是 hydration mismatch（注水不匹配）？什么情况下会发生？",
-        "服务端没有 window/document，组件里用到浏览器 API 怎么办？（提示：用 onMounted/useEffect 或 typeof window 判断）",
-        "SSR 一定要全做吗？有没有折中方案？（提示：部分预渲染、 Islands 架构）"
+        "服务端没有 window/document，组件里用到浏览器 API 怎么办？",
+        "SSR 一定要全做吗？有没有折中方案？"
       ]
     },
     {
@@ -6951,9 +6951,9 @@
         "| 社交分享预览好 | 链接卡片能抓到 og 标签和内容（CSR 抓不到） |"
       ],
       "followups": [
-        "SSR 的 TTFB 为什么比 CSR 慢？怎么优化？（提示：数据预取并行化、缓存、流式渲染）",
-        "什么场景下 SSR 反而比 CSR 更慢？（提示：服务器渲染慢 + 数据请求多，没缓存）",
-        "纯静态内容（公司官网）该用 SSR 还是 SSG？（提示：SSG 构建时生成，更省服务器）"
+        "SSR 的 TTFB 为什么比 CSR 慢？怎么优化？",
+        "什么场景下 SSR 反而比 CSR 更慢？",
+        "纯静态内容（公司官网）该用 SSR 还是 SSG？"
       ]
     },
     {
@@ -6976,9 +6976,9 @@
         "`next()` 之后的代码：等内层全部执行完，响应阶段执行（从内向外）"
       ],
       "followups": [
-        "如果某个中间件忘了写 `await next()`，会有什么后果？（提示：响应阶段提前执行、时序错乱）",
+        "如果某个中间件忘了写 `await next()`，会有什么后果？",
         "Koa 的洋葱圈和 Express 的中间件执行顺序有什么本质区别？",
-        "如何在洋葱圈里实现统一错误处理？（提示：最外层 try/catch + app.on('error')）"
+        "如何在洋葱圈里实现统一错误处理？）"
       ]
     },
     {
@@ -7008,9 +7008,9 @@
         "| 循环引用 | 返回已执行部分的快照，可能拿到空对象 | 用引用避免部分问题，但仍有 TDZ 风险 |"
       ],
       "followups": [
-        "CJS 中循环引用（A require B、B require A）会怎样？（提示：B 拿到 A 未完成的部分导出）",
-        "ESM 的 tree-shaking 为什么对 CJS 不起作用？（提示：CJS 导出是运行时求值，静态分析不出未用）",
-        "`import()` 动态导入和 `require()` 有什么区别？（提示：异步 vs 同步、返回 Promise）"
+        "CJS 中循环引用会怎样？",
+        "ESM 的 tree-shaking 为什么对 CJS 不起作用？",
+        "`import()` 动态导入和 `require()` 有什么区别？"
       ]
     },
     {
@@ -7039,7 +7039,7 @@
         "如果回调里写了异步代码（如 setTimeout），那部分异步，但「调用 listener 这个动作」是同步的。"
       ],
       "followups": [
-        "如果一个 listener 里抛错，后续 listener 还会执行吗？（提示：Node 默认会抛出，用 `ee.emit('error')` 走 error 事件）",
+        "如果一个 listener 里抛错，后续 listener 还会执行吗？` 走 error 事件）",
         "如何在 `emit` 遍历时安全移除监听器而不跳过元素？（提示：遍历副本）",
         "EventEmitter 和 Promise/async 在处理异步流程时各有什么取舍？"
       ]
@@ -7068,9 +7068,9 @@
         "| Transform | 可读可写，写进去经变换再读出 | zlib（压缩）、加密 |"
       ],
       "followups": [
-        "`pipe` 是如何处理背压的？手动 `on('data')` 会有什么问题？（提示：不背压，要用 pause/resume 或 pipeline）",
+        "`pipe` 是如何处理背压的？手动 `on('data')` 会有什么问题？",
         "Duplex 和 Transform 流的区别是什么？各自典型场景？",
-        "为什么推荐用 `stream.pipeline` 替代 `pipe`？（提示：错误处理 + 资源清理）"
+        "为什么推荐用 `stream.pipeline` 替代 `pipe`？"
       ]
     },
     {
@@ -7096,8 +7096,8 @@
         "| **ISR** | 构建+按需定时重新生成 | 兼具 SSG 的快和内容的更新 | 大量页面、内容偶尔变化的站点（如博客、商品列表） |"
       ],
       "followups": [
-        "ISR 的 `revalidate` 是如何做到「先返回旧的、后台生成新的」？（提示：stale-while-revalidate 策略）",
-        "Next.js 的 React Server Component（RSC）和传统 SSR 有什么区别？（提示：RSC 是组件级、零 JS 下发）"
+        "ISR 的 `revalidate` 是如何做到「先返回旧的、后台生成新的」？",
+        "Next.js 的 React Server Component（RSC）和传统 SSR 有什么区别？"
       ]
     },
     {
@@ -7126,9 +7126,9 @@
         "| useReducer | 复杂状态（多字段联动） | 替代多个 useState，逻辑集中 |"
       ],
       "followups": [
-        "useMemo 和 useCallback 的关系？（提示：useCallback(fn, dep) === useMemo(() => fn, dep)）",
+        "useMemo 和 useCallback 的关系？ === useMemo(() => fn, dep)）",
         "useEffect 的依赖数组写错会有什么后果？",
-        "什么时候该用 useReducer 而不是 useState？（提示：状态多、转换逻辑复杂、下一个状态依赖前一个）"
+        "什么时候该用 useReducer 而不是 useState？"
       ]
     },
     {
@@ -7155,8 +7155,8 @@
         "```"
       ],
       "followups": [
-        "useEffect 的清除函数（return）在什么时机执行？（提示：下次 effect 执行前 + 组件卸载时）",
-        "useLayoutEffect 里调用 setState 会怎样？（提示：会在浏览器绘制前再触发一次同步渲染）",
+        "useEffect 的清除函数（return）在什么时机执行？",
+        "useLayoutEffect 里调用 setState 会怎样？",
         "如何在 SSR 中安全使用 useLayoutEffect而不报警告？"
       ]
     },
@@ -7181,8 +7181,8 @@
         "3. **this 麻烦**：事件处理函数要手动 `bind(this)` 或用箭头函数，初学者经常踩 `this is undefined` 的坑。"
       ],
       "followups": [
-        "为什么自定义 Hook 能复用，但 state 不会互相干扰？（提示：每个组件独立 fiber，独立 hook 链表）",
-        "Hook 能完全替代 Class 吗？哪些场景还必须用 Class？（提示：React 19 前 error boundary）",
+        "为什么自定义 Hook 能复用，但 state 不会互相干扰？",
+        "Hook 能完全替代 Class 吗？哪些场景还必须用 Class？",
         "为什么 Hook 不能在 if 里调用？"
       ]
     },
@@ -7204,7 +7204,7 @@
         "**useRef 返回什么**：一个 `{ current: 初始值 }` 对象，整个组件生命周期里**始终是同一个对象**（引用稳定），改 `.current` 不会触发重渲染。"
       ],
       "followups": [
-        "为什么 useRef 改了不重渲染？底层 ref 对象存在哪？（提示：存在 fiber 的 hook 链表，不触发 scheduleUpdate）",
+        "为什么 useRef 改了不重渲染？底层 ref 对象存在哪？",
         "useEffect 里读写 ref 安全吗？useLayoutEffect 呢？",
         "React 19 里 ref 作为 prop 传递，forwardRef 还需要吗？"
       ]
@@ -7274,7 +7274,7 @@
         "数据变化频率不高、消费组件不多。"
       ],
       "followups": [
-        "Context 和 Redux/Zustand 的本质区别？（提示：Context 是依赖注入机制，不是状态管理库）"
+        "Context 和 Redux/Zustand 的本质区别？"
       ]
     },
     {
@@ -7295,9 +7295,9 @@
         "**key 的作用**：在 reconcile 阶段，React 对比新旧 children 列表时，靠 key 把新列表的元素和旧列表的元素对应起来。有 key 才能判断「A 元素从位置 3 移到了位置 0」，于是只移动 DOM 节点而不是销毁重建。"
       ],
       "followups": [
-        "用 Math.random() 做 key 会怎样？为什么？（提示：每次渲染 key 变 → 全部重建）",
-        "key 必须全局唯一吗？（提示：不需要，只需兄弟节点间唯一）",
-        "删除列表中间一项，有 key 和无 key 分别发生什么？（提示：有 key 只删一个 DOM，无 key 全部重渲染）"
+        "用 Math.random() 做 key 会怎样？为什么？",
+        "key 必须全局唯一吗？",
+        "删除列表中间一项，有 key 和无 key 分别发生什么？"
       ]
     },
     {
@@ -7318,8 +7318,8 @@
         "**1. Actions（异步动作）**：把异步操作（提交表单、请求接口）用 `useTransition` 包裹，自动给 pending 状态、错误处理、乐观更新。"
       ],
       "followups": [
-        "React Compiler 开启后，是不是就完全不用写 useMemo/useCallback 了？（提示：少数复杂计算仍需）",
-        "useOptimistic 失败后状态如何回滚？（提示：重新渲染用真实 state 覆盖）",
+        "React Compiler 开启后，是不是就完全不用写 useMemo/useCallback 了？",
+        "useOptimistic 失败后状态如何回滚？",
         "Server Components 在 React 19 是 stable 了吗？和 Client Component 怎么区分？"
       ]
     },
@@ -7341,9 +7341,9 @@
         "**为什么需要 diff**：状态变化后 React 拿到新 VDOM，要和旧 VDOM 对比，找出最小变更再去更新真实 DOM。朴素对比两棵树是 O(n³)，工程不可用。"
       ],
       "followups": [
-        "用 index 做 key 会出什么问题？什么时候用 index 做 key 反而 OK？（提示：纯展示、无增删、无受控 state）",
-        "为什么跨层级移动不复用？（提示：复用成本高于重建，且场景罕见）",
-        "Vue 的 diff 和 React 的 diff 有何区别？（提示：Vue3 双端 diff + 最长递增子序列优化移动）"
+        "用 index 做 key 会出什么问题？什么时候用 index 做 key 反而 OK？",
+        "为什么跨层级移动不复用？",
+        "Vue 的 diff 和 React 的 diff 有何区别？"
       ]
     },
     {
@@ -7368,8 +7368,8 @@
         "4. **更安全**：合成事件对象是池化的（React 16 及以前），避免每次创建对象的开销（React 17 移除了事件池）。"
       ],
       "followups": [
-        "React 16 的合成事件对象池（event pooling）是什么？为什么 17 移除了？（提示：异步访问 e.target 为 null 的坑）",
-        "原生事件里的 setState 和合成事件里的 setState 有什么区别？（提示：React 18 后都是批处理）",
+        "React 16 的合成事件对象池是什么？为什么 17 移除了？",
+        "原生事件里的 setState 和合成事件里的 setState 有什么区别？",
         "如果想阻止合成事件冒泡到原生 document，怎么做？"
       ]
     },
@@ -7413,7 +7413,7 @@
         "**什么是竞态**：用户快速切换 id（1→2→3），三次请求发出。若请求 1 最慢，最后返回，它的结果会覆盖最新的请求 3 的结果，UI 显示了 id=1 的数据，但当前页是 id=3——数据错乱。"
       ],
       "followups": [
-        "useEffect 的 cleanup 执行时机是什么？（提示：下次 effect 执行前 + 卸载时）"
+        "useEffect 的 cleanup 执行时机是什么？"
       ]
     },
     {
@@ -7438,7 +7438,7 @@
         "4. 重渲染时 index 归零，重新按顺序读。"
       ],
       "followups": [
-        "useState 的初始值传函数 `useState(() => init())` 有什么好处？（提示：惰性初始化，避免每次渲染都跑）"
+        "useState 的初始值传函数 `useState(() => init())` 有什么好处？"
       ]
     },
     {
@@ -7463,8 +7463,8 @@
         "性能：需手写 selector（reselect）避免不必要渲染。"
       ],
       "followups": [
-        "为什么 Zustand 不像 Redux 强调不可变？（见 fe-react-018）",
-        "MobX 的响应式和 Vue 有什么关系？（见 fe-react-019）",
+        "为什么 Zustand 不像 Redux 强调不可变？",
+        "MobX 的响应式和 Vue 有什么关系？",
         "什么时候该用 Context 而不是状态管理库？"
       ]
     },
@@ -7488,8 +7488,8 @@
         "`setState` 时遍历所有订阅者，逐个跑 selector 比对，决定谁要更新。"
       ],
       "followups": [
-        "Object.is 比 === 有什么区别？为什么用它做比较？（提示：区分 +0/-0、NaN）",
-        "多个 selector 组合怎么避免重复渲染？（提示：shallow 比较）"
+        "Object.is 比 === 有什么区别？为什么用它做比较？",
+        "多个 selector 组合怎么避免重复渲染？"
       ]
     },
     {
@@ -7561,7 +7561,7 @@
       ],
       "followups": [
         "React.memo 的浅比较有什么局限？怎么自定义比较？",
-        "useMemo/useCallback 滥用会有什么问题？（记忆本身有成本）",
+        "useMemo/useCallback 滥用会有什么问题？",
         "useTransition 和 useDeferredValue 有什么区别？",
         "React Profiler 怎么看哪个组件渲染慢？"
       ]
@@ -7588,9 +7588,9 @@
         "```"
       ],
       "followups": [
-        "useEffect 和 useState 在链表节点里存的数据结构有何不同？（提示：useState 存 state+queue，useEffect 存 effect 对象+依赖）",
-        "为什么自定义 Hook 不会产生新的链表节点？（提示：自定义 Hook 内部的 Hook 仍归属宿主组件）",
-        "useMemo 的依赖数组是怎么和链表节点关联的？（提示：存在 hook 节点上，下次渲染比较决定是否重算）"
+        "useEffect 和 useState 在链表节点里存的数据结构有何不同？",
+        "为什么自定义 Hook 不会产生新的链表节点？",
+        "useMemo 的依赖数组是怎么和链表节点关联的？"
       ]
     },
     {
@@ -7612,8 +7612,8 @@
         "React 15（Stack Reconciler）的渲染是**同步递归**的——一旦开始 reconcile 一棵大树，必须一口气跑完才能让出主线程。大树更新可能占用主线程几百毫秒，期间动画掉帧、用户点击无响应（卡顿）。"
       ],
       "followups": [
-        "为什么 commit 阶段不能中断？（提示：DOM 操作必须一致，否则 UI 闪烁）",
-        "双缓冲（current/workInProgress）解决了什么问题？"
+        "为什么 commit 阶段不能中断？",
+        "双缓冲解决了什么问题？"
       ]
     },
     {
@@ -7634,8 +7634,8 @@
       ],
       "followups": [
         "React 18 的 Automatic Batching 和 lane 有什么关系？",
-        "startTransition 标记的更新被打断后，之前的计算结果会丢吗？（提示：会，需要重跑，但 React 会尽量复用）",
-        "lane 用 31 位有什么限制？为什么不直接用数组存优先级？（提示：位运算 O(1)，数组开销大）"
+        "startTransition 标记的更新被打断后，之前的计算结果会丢吗？",
+        "lane 用 31 位有什么限制？为什么不直接用数组存优先级？，数组开销大）"
       ]
     },
     {
@@ -7682,7 +7682,7 @@
       "followups": [
         "如果要支持任务优先级怎么做？",
         "任务失败后要不要重试？怎么实现重试？",
-        "Promise 池（如 p-limit 库）还做了哪些优化？"
+        "Promise 池还做了哪些优化？"
       ]
     },
     {
@@ -7704,8 +7704,8 @@
       ],
       "followups": [
         "怎么支持 {{#each list}} 循环语法？",
-        "取值时遇到函数要不要执行？（mustache 会执行）",
-        "Vue 的模板编译比这个复杂在哪？（指令、事件、双向绑定）"
+        "取值时遇到函数要不要执行？",
+        "Vue 的模板编译比这个复杂在哪？"
       ]
     },
     {
@@ -7729,7 +7729,7 @@
         "4. 闭包：用一个外部变量（或函数属性）累加所有调用传入的值。"
       ],
       "followups": [
-        "怎么让 sum(1,2) + 0 也能等于 3？（提示：重写 valueOf）",
+        "怎么让 sum + 0 也能等于 3？",
         "这种链式调用和 Promise 的链式有什么本质区别？",
         "怎么限制最多调用 N 次？"
       ]
@@ -7755,9 +7755,9 @@
         "用户全程无感知。"
       ],
       "followups": [
-        "多个请求同时 401 怎么保证只刷新一次？（提示：isRefreshing + 请求队列）",
+        "多个请求同时 401 怎么保证只刷新一次？",
         "refresh token 放 cookie，怎么防 CSRF？",
-        "token 续期失败（refresh 也过期）怎么处理？"
+        "token 续期失败怎么处理？"
       ]
     },
     {
@@ -7815,7 +7815,7 @@
         "**问题本质**：React/Vue 默认父组件重渲染会带着所有子组件重渲染。一个大列表，改一项，整个列表重渲染，卡。"
       ],
       "followups": [
-        "memo 的浅比较（shallow compare）在嵌套对象时会失效，怎么办？",
+        "memo 的浅比较在嵌套对象时会失效，怎么办？",
         "Redux 的 useSelector 怎么实现精准订阅？",
         "虚拟列表 + memo，性能还能再优化吗？"
       ]
@@ -7843,8 +7843,8 @@
         "5. A 收到带合法 cookie 的请求，以为是用户本人操作，执行了转账。"
       ],
       "followups": [
-        "CSRF 和 XSS 有什么区别？（XSS 是偷数据，CSRF 是借身份）",
-        "用了 JWT（不放 cookie）还会受 CSRF 攻击吗？"
+        "CSRF 和 XSS 有什么区别？",
+        "用了 JWT还会受 CSRF 攻击吗？"
       ]
     },
     {
@@ -7890,7 +7890,7 @@
       "followups": [
         "为什么 HttpOnly 只能服务端设？这样设计有什么好处？",
         "SameSite=Lax 为什么是默认值而不是 Strict？",
-        "token 放 cookie 和放 localStorage 各有什么优劣（XSS/CSRF 角度）？"
+        "token 放 cookie 和放 localStorage 各有什么优劣？"
       ]
     },
     {
@@ -7935,7 +7935,7 @@
       "tags": [
         "高频"
       ],
-      "title": "如何从零设计一个前端监控系统？需要采集哪些数据？错误怎么采集上报？整体架构是怎样的？",
+      "title": "如何从零设计一个前端监控系统？整体架构是怎样的？",
       "focus": "前端监控系统采集三类数据：①错误监控（JS异常 try/catch + window.onerror + unhandledrejection + 资源加载错误）②性能监控（Performance API 拿 FP/FCP/LCP/CLS/TTFB）③用户行为（PV/UV/点击/路由跳转埋点）；架构：SDK 嵌入采集 → 上报（sendBeacon/img/批量合并）→ 服务端收集存储 → 数据清洗分析 → 可视化看板 + 告警；核心难点是采集的全面性+上报不影响性能+海量数据处理。",
       "answer": [
         "**JS 运行时异常**：",
@@ -8038,8 +8038,8 @@
       ],
       "followups": [
         "为什么 babel 不做类型检查？这样设计有什么好处？",
-        "TS 的 enum 编译后是什么？（不是简单擦除）",
-        "怎么在运行时保留类型信息（如校验 API 返回的数据结构）？（提示：zod/io-ts 运行时校验库）"
+        "TS 的 enum 编译后是什么？",
+        "怎么在运行时保留类型信息？"
       ]
     },
     {
@@ -8086,7 +8086,7 @@
       ],
       "followups": [
         "infer 关键字具体怎么用？什么场景？",
-        "映射类型 + 条件类型能实现什么（如 keyof + in）？",
+        "映射类型 + 条件类型能实现什么？",
         "泛型约束（extends）怎么限制泛型范围？"
       ]
     },
@@ -8112,7 +8112,7 @@
       ],
       "followups": [
         "Vue3 的 ref 和 reactive 有什么区别？为什么要两个？",
-        "Proxy 能监听不了什么？（提示：原始值要用 ref 包装）",
+        "Proxy 能监听不了什么？",
         "Vue 的依赖收集和 MobX 的有什么异同？"
       ]
     },
@@ -8137,7 +8137,7 @@
       ],
       "followups": [
         "Vue3 的 Block tree 是怎么收集动态节点的？",
-        "为什么 React 不做编译时优化？（提示：JSX 运行时才知道结构）",
+        "为什么 React 不做编译时优化？",
         "虚拟 DOM 一定比直接操作 DOM 快吗？什么情况反而慢？"
       ]
     },

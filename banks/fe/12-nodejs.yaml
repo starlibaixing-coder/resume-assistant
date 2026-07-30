@@ -20,7 +20,7 @@ questions:
     - "两个微任务队列穿插在阶段之间：**Promise.then / queueMicrotask** 和 **process.nextTick**（nextTick 优先级更高，会在每个阶段切换前清空）。"
     followups:
     - "`process.nextTick` 和 `queueMicrotask` 哪个先执行？为什么 nextTick 不建议滥用？"
-    - "在 I/O 回调里，`setTimeout(fn,0)` 和 `setImmediate(fn)` 谁先？（提示：I/O 回调后 check 阶段在前）"
+    - "在 I/O 回调里，`setTimeout` 和 `setImmediate(fn)` 谁先？"
     - Node 11 之后为什么对齐浏览器？解决了什么问题？
   - id: "12.88"
     difficulty: 中
@@ -38,9 +38,9 @@ questions:
     - "| 监控 | `pm2 monit` 看内存/CPU/事件，`pm2 list` 看进程状态 |"
     - "| 启动项 | `pm2 startup` + `pm2 save` 让服务开机自启 |"
     followups:
-    - "`cluster` 模式下多个 worker 共享一个端口，连接是如何分配给各 worker 的？（提示：master round-robin）"
-    - pm2 reload 是如何做到「零停机」的？（提示：逐个 worker 重启）
-    - 多 worker 之间如何共享 session/缓存？（提示：用 Redis 等外部存储，进程内存不共享）
+    - "`cluster` 模式下多个 worker 共享一个端口，连接是如何分配给各 worker 的？"
+    - pm2 reload 是如何做到「零停机」的？
+    - 多 worker 之间如何共享 session/缓存？
   - id: "12.89"
     difficulty: 中
     tags: [高频, 概念]
@@ -50,7 +50,7 @@ questions:
     - JavaScript 原生没有处理二进制的方便手段（早期），Node 设计 Buffer 来处理 TCP 流、文件 I/O 这类字节流数据。
     followups:
     - "`Buffer.alloc` 和 `Buffer.allocUnsafe` 有什么区别？为什么不推荐 `new Buffer()`？"
-    - "Buffer 和 `Uint8Array` / `ArrayBuffer` 是什么关系？（提示：Buffer 是 Uint8Array 子类，buf.buffer 是底层 ArrayBuffer）"
+    - "Buffer 和 `Uint8Array` / `ArrayBuffer` 是什么关系？"
   - id: "12.90"
     difficulty: 中
     tags: [高频, 概念]
@@ -64,8 +64,8 @@ questions:
     - "| SSR（服务端渲染） | 完整带内容的 HTML | 快（直接看到内容） | 好（HTML 里有内容） | 服务器跑组件出 HTML，浏览器拿到后 hydrate |"
     followups:
     - 什么是 hydration mismatch（注水不匹配）？什么情况下会发生？
-    - 服务端没有 window/document，组件里用到浏览器 API 怎么办？（提示：用 onMounted/useEffect 或 typeof window 判断）
-    - SSR 一定要全做吗？有没有折中方案？（提示：部分预渲染、 Islands 架构）
+    - 服务端没有 window/document，组件里用到浏览器 API 怎么办？
+    - SSR 一定要全做吗？有没有折中方案？
   - id: "12.91"
     difficulty: 中
     tags: [高频, 概念]
@@ -80,9 +80,9 @@ questions:
     - "| 弱网/低端机体验好 | 不依赖客户端 JS 执行能力，老机器也能快速看到内容 |"
     - "| 社交分享预览好 | 链接卡片能抓到 og 标签和内容（CSR 抓不到） |"
     followups:
-    - SSR 的 TTFB 为什么比 CSR 慢？怎么优化？（提示：数据预取并行化、缓存、流式渲染）
-    - 什么场景下 SSR 反而比 CSR 更慢？（提示：服务器渲染慢 + 数据请求多，没缓存）
-    - 纯静态内容（公司官网）该用 SSR 还是 SSG？（提示：SSG 构建时生成，更省服务器）
+    - SSR 的 TTFB 为什么比 CSR 慢？怎么优化？
+    - 什么场景下 SSR 反而比 CSR 更慢？
+    - 纯静态内容（公司官网）该用 SSR 还是 SSG？
   - id: "12.92"
     difficulty: 高
     tags: [高频, 概念]
@@ -93,9 +93,9 @@ questions:
     - "`await next()`：暂停当前中间件，进入下一层"
     - "`next()` 之后的代码：等内层全部执行完，响应阶段执行（从内向外）"
     followups:
-    - "如果某个中间件忘了写 `await next()`，会有什么后果？（提示：响应阶段提前执行、时序错乱）"
+    - "如果某个中间件忘了写 `await next()`，会有什么后果？"
     - Koa 的洋葱圈和 Express 的中间件执行顺序有什么本质区别？
-    - "如何在洋葱圈里实现统一错误处理？（提示：最外层 try/catch + app.on('error')）"
+    - "如何在洋葱圈里实现统一错误处理？）"
   - id: "12.93"
     difficulty: 高
     tags: [高频, 概念]
@@ -113,9 +113,9 @@ questions:
     - "| 是否提升 | 否，按顺序执行 | `import` 声明会被提升到顶部 |"
     - "| 循环引用 | 返回已执行部分的快照，可能拿到空对象 | 用引用避免部分问题，但仍有 TDZ 风险 |"
     followups:
-    - CJS 中循环引用（A require B、B require A）会怎样？（提示：B 拿到 A 未完成的部分导出）
-    - ESM 的 tree-shaking 为什么对 CJS 不起作用？（提示：CJS 导出是运行时求值，静态分析不出未用）
-    - "`import()` 动态导入和 `require()` 有什么区别？（提示：异步 vs 同步、返回 Promise）"
+    - CJS 中循环引用会怎样？
+    - ESM 的 tree-shaking 为什么对 CJS 不起作用？
+    - "`import()` 动态导入和 `require()` 有什么区别？"
   - id: "12.94"
     difficulty: 高
     tags: [高频, 手写]
@@ -132,7 +132,7 @@ questions:
     - "```"
     - 如果回调里写了异步代码（如 setTimeout），那部分异步，但「调用 listener 这个动作」是同步的。
     followups:
-    - "如果一个 listener 里抛错，后续 listener 还会执行吗？（提示：Node 默认会抛出，用 `ee.emit('error')` 走 error 事件）"
+    - "如果一个 listener 里抛错，后续 listener 还会执行吗？` 走 error 事件）"
     - "如何在 `emit` 遍历时安全移除监听器而不跳过元素？（提示：遍历副本）"
     - EventEmitter 和 Promise/async 在处理异步流程时各有什么取舍？
   - id: "12.95"
@@ -149,9 +149,9 @@ questions:
     - "| Duplex | 可读可写，两端独立 | TCP socket（收发独立） |"
     - "| Transform | 可读可写，写进去经变换再读出 | zlib（压缩）、加密 |"
     followups:
-    - "`pipe` 是如何处理背压的？手动 `on('data')` 会有什么问题？（提示：不背压，要用 pause/resume 或 pipeline）"
+    - "`pipe` 是如何处理背压的？手动 `on('data')` 会有什么问题？"
     - Duplex 和 Transform 流的区别是什么？各自典型场景？
-    - "为什么推荐用 `stream.pipeline` 替代 `pipe`？（提示：错误处理 + 资源清理）"
+    - "为什么推荐用 `stream.pipeline` 替代 `pipe`？"
   - id: "12.96"
     difficulty: 高
     tags: [高频, 概念]
@@ -165,5 +165,5 @@ questions:
     - "| **SSG** | 构建时一次性生成 | 首屏最快、SEO 好、可全 CDN、内容固定 | 博客、文档、官网、营销页 |"
     - "| **ISR** | 构建+按需定时重新生成 | 兼具 SSG 的快和内容的更新 | 大量页面、内容偶尔变化的站点（如博客、商品列表） |"
     followups:
-    - "ISR 的 `revalidate` 是如何做到「先返回旧的、后台生成新的」？（提示：stale-while-revalidate 策略）"
-    - Next.js 的 React Server Component（RSC）和传统 SSR 有什么区别？（提示：RSC 是组件级、零 JS 下发）
+    - "ISR 的 `revalidate` 是如何做到「先返回旧的、后台生成新的」？"
+    - Next.js 的 React Server Component（RSC）和传统 SSR 有什么区别？

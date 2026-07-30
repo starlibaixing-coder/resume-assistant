@@ -14,8 +14,8 @@ questions:
     - "4. 浏览器发起对 A 的请求时**自动带上 A 的 cookie**（这是关键——cookie 会自动随请求发送）。"
     - 5. A 收到带合法 cookie 的请求，以为是用户本人操作，执行了转账。
     followups:
-    - CSRF 和 XSS 有什么区别？（XSS 是偷数据，CSRF 是借身份）
-    - 用了 JWT（不放 cookie）还会受 CSRF 攻击吗？
+    - CSRF 和 XSS 有什么区别？
+    - 用了 JWT还会受 CSRF 攻击吗？
   - id: "15.124"
     difficulty: 中
     tags: [高频, 概念]
@@ -37,7 +37,7 @@ questions:
     followups:
     - 为什么 HttpOnly 只能服务端设？这样设计有什么好处？
     - SameSite=Lax 为什么是默认值而不是 Strict？
-    - token 放 cookie 和放 localStorage 各有什么优劣（XSS/CSRF 角度）？
+    - token 放 cookie 和放 localStorage 各有什么优劣？
   - id: "15.126"
     difficulty: 高
     tags: [概念]

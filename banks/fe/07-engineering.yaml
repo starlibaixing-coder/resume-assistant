@@ -37,7 +37,7 @@ questions:
       - pnpm：node_modules 用软链接结构，**只有 package.json 声明的依赖才能被访问**。杜绝幽灵依赖，更安全。
     followups:
       - 幽灵依赖具体会带来什么问题？
-      - pnpm 的软链接结构有没有兼容性问题？（有些工具不认软链接）
+      - pnpm 的软链接结构有没有兼容性问题？
       - monorepo 里 pnpm workspace 怎么管理内部包依赖？
   - id: '07.57'
     difficulty: 高
@@ -101,7 +101,7 @@ questions:
       - Rust 性能：多核并行、无 JIT 开销、内存安全，编译速度比 webpack 快 5-10 倍。
     followups:
       - Rspack 怎么做到兼容 webpack 的 loader/plugin？有兼容性坑吗？
-      - Rust 写的构建工具（Rspack/swc/esbuild）为什么比 JS 快这么多？
+      - Rust 写的构建工具为什么比 JS 快这么多？
       - Rsbuild 和 Turbopack（Vercel）有什么区别？
   - id: '07.60'
     difficulty: 高
@@ -122,9 +122,9 @@ questions:
       - '| this | module.exports = {} | undefined |'
       - '| tree-shaking | 不支持（运行时才知道导出啥） | 支持（静态分析知道用了啥） |'
     followups:
-      - Node.js 怎么区分一个文件是 CJS 还是 ESM？（package.json type / .mjs/.cjs）
-      - ESM 里怎么用 __dirname/__filename？（提示：import.meta.url）
-      - CJS 和 ESM 互操作（CJS 里 import ESM）有什么坑？
+      - Node.js 怎么区分一个文件是 CJS 还是 ESM？
+      - ESM 里怎么用 __dirname/__filename？
+      - CJS 和 ESM 互操作有什么坑？
   - id: '07.61'
     difficulty: 高
     tags:

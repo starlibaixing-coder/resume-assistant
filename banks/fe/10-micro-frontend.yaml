@@ -60,5 +60,5 @@ questions:
     - 这是现代主流方案。
     followups:
     - Proxy 沙箱能拦住所有对 window 的操作吗？有逃逸的情况吗？
-    - Shadow DOM 的弹窗逃逸问题（portal 到 body）怎么解决？
+    - Shadow DOM 的弹窗逃逸问题怎么解决？
     - wujie 用 iframe 做隔离，和 Proxy 沙箱比有什么优劣？

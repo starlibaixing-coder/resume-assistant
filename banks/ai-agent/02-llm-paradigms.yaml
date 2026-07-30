@@ -37,7 +37,7 @@ questions:
     - "**Prompt Caching**:Anthropic/OpenAI 原生支持,稳定前缀(如 system prompt、长文档)的 KV Cache 复用,命中即降价降延迟;关键是**前缀必须逐 token 完全一致**(中间任何变化都会断开命中),所以稳定内容放最前、动态内容放最后;"
     - "**语义缓存**:相似 query 命中历史结果(embedding 相似度判断),适合容错场景,注意私有数据不能跨用户共享。"
     followups:
-    - 长上下文模型（如 1M context）是否就解决问题了？（不一定，长上下文有 needle-in-haystack 衰减、成本高、注意力分散）
+    - 长上下文模型是否就解决问题了？
   - id: "02.3"
     difficulty: 中
     tags: []
@@ -72,7 +72,7 @@ questions:
     - 工具分组 / 分层检索（先选类，再选具体工具）；
     - 适当降温度。
     followups:
-    - 工具有 50 个，模型选不过来怎么办？（工具检索 / 路由：先用 embedding 检索 top-k 相关工具再选）
+    - 工具有 50 个，模型选不过来怎么办？
   - id: "02.5"
     difficulty: 中
     tags: []

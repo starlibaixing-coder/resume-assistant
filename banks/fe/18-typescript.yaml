@@ -12,8 +12,8 @@ questions:
     - 运行时没有任何类型信息（这正是 TS 是「编译时类型」的原因）。
     followups:
     - 为什么 babel 不做类型检查？这样设计有什么好处？
-    - TS 的 enum 编译后是什么？（不是简单擦除）
-    - 怎么在运行时保留类型信息（如校验 API 返回的数据结构）？（提示：zod/io-ts 运行时校验库）
+    - TS 的 enum 编译后是什么？
+    - 怎么在运行时保留类型信息？
   - id: "18.130"
     difficulty: 高
     tags: [高频, 概念]
@@ -37,5 +37,5 @@ questions:
     - "常见场景：数组 `Array<T>`、Promise `Promise<T>`、API 请求返回值 `request<T>(): Promise<T>`。"
     followups:
     - infer 关键字具体怎么用？什么场景？
-    - 映射类型 + 条件类型能实现什么（如 keyof + in）？
+    - 映射类型 + 条件类型能实现什么？
     - 泛型约束（extends）怎么限制泛型范围？

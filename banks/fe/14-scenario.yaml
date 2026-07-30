@@ -13,7 +13,7 @@ questions:
     followups:
       - 如果要支持任务优先级怎么做？
       - 任务失败后要不要重试？怎么实现重试？
-      - Promise 池（如 p-limit 库）还做了哪些优化？
+      - Promise 池还做了哪些优化？
   - id: '14.118'
     difficulty: 中
     tags:
@@ -25,8 +25,8 @@ questions:
       - 从 data 对象逐层取值：data['user']['name']。
     followups:
       - 怎么支持 {{#each list}} 循环语法？
-      - 取值时遇到函数要不要执行？（mustache 会执行）
-      - Vue 的模板编译比这个复杂在哪？（指令、事件、双向绑定）
+      - 取值时遇到函数要不要执行？
+      - Vue 的模板编译比这个复杂在哪？
   - id: '14.119'
     difficulty: 高
     tags:
@@ -40,7 +40,7 @@ questions:
       - 3. 这个函数要挂一个 sumOf 方法，调用时返回 total。
       - 4. 闭包：用一个外部变量（或函数属性）累加所有调用传入的值。
     followups:
-      - 怎么让 sum(1,2) + 0 也能等于 3？（提示：重写 valueOf）
+      - 怎么让 sum + 0 也能等于 3？
       - 这种链式调用和 Promise 的链式有什么本质区别？
       - 怎么限制最多调用 N 次？
   - id: '14.120'
@@ -56,9 +56,9 @@ questions:
       - 用新 token 重发刚才失败的请求。
       - 用户全程无感知。
     followups:
-      - 多个请求同时 401 怎么保证只刷新一次？（提示：isRefreshing + 请求队列）
+      - 多个请求同时 401 怎么保证只刷新一次？
       - refresh token 放 cookie，怎么防 CSRF？
-      - token 续期失败（refresh 也过期）怎么处理？
+      - token 续期失败怎么处理？
   - id: '14.121'
     difficulty: 高
     tags:
@@ -96,6 +96,6 @@ questions:
     answer:
       - '**问题本质**：React/Vue 默认父组件重渲染会带着所有子组件重渲染。一个大列表，改一项，整个列表重渲染，卡。'
     followups:
-      - memo 的浅比较（shallow compare）在嵌套对象时会失效，怎么办？
+      - memo 的浅比较在嵌套对象时会失效，怎么办？
       - Redux 的 useSelector 怎么实现精准订阅？
       - 虚拟列表 + memo，性能还能再优化吗？

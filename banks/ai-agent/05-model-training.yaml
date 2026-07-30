@@ -106,7 +106,7 @@ questions:
     - "**模型侧**：蒸馏出小模型(见 Q05.8)、MoE 路由。"
     - "**工程侧**：缓存常见 query、异步流式、预热。"
     followups:
-    - vLLM 的 PagedAttention 解决了什么问题？（KV Cache 的显存碎片化，参考 OS 虚拟内存的分页）
+    - vLLM 的 PagedAttention 解决了什么问题？（参考 OS 虚拟内存的分页）
   - id: "05.6"
     difficulty: 中
     tags: []

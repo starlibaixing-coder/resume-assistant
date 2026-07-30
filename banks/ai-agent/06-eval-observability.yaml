@@ -45,7 +45,7 @@ questions:
     - 关键 case 仍要人工抽检；
     - "计算 judge 与人工的一致性（如 Cohen's Kappa）。"
     followups:
-    - pairwise 比较如何避免 position bias？（随机化顺序、双向各判一次）
+    - pairwise 比较如何避免 position bias？
   - id: "06.3"
     difficulty: 高
     tags: []
@@ -85,7 +85,7 @@ questions:
     - 全量采成本高 → 采样策略（正常采样 + 异常全量 + 慢请求全采）；
     - 数据脱敏（PII）。
     followups:
-    - 如何在不改业务代码的前提下接入 trace？（装饰器 / SDK 自动埋点 / proxy）
+    - 如何在不改业务代码的前提下接入 trace？
   - id: "06.5"
     difficulty: 中
     tags: []
