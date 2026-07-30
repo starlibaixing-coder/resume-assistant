@@ -1,0 +1,638 @@
+# 模块 03：浏览器原理
+
+### Q03.19【中·高频·概念】`setTimeout` 里的错误能否被外层 `try/catch` 捕获？为什么？
+
+**考察点:** 不能。setTimeout 回调被放入宏任务队列，等执行时外层 try/catch 早已出栈，栈帧不连续无法捕获。
+
+**参考答案要点:**
+**为什么捕获不到**：
+- try/catch 只能捕获**同步调用栈**上的错误。
+- setTimeout(fn, 0) 会把 fn 推入宏任务队列，**当前同步代码先执行完**，try/catch 块已经结束。
+- 等事件循环下一轮取出 fn 执行时，它在**新的执行上下文**里抛错，外层栈早已销毁，catch 自然接不到。
+
+**追问方向:**
+- async/await 里 await 一个会 reject 的 Promise，try/catch 能抓到吗？（能）
+- 为什么 Promise.reject 不加 .catch 会报 unhandledrejection？
+
+---
+
+### Q03.20【中·高频·概念】什么是重绘（Repaint）和回流/重排（Reflow）？
+
+**考察点:** 回流是重新算几何（位置/大小），重绘是重新填像素。回流必然引发重绘，重绘不一定引发回流。改 layout 属性（宽高/top/left）触发回流，改外观属性（color/background）只触发重绘。
+
+**参考答案要点:**
+**回流（Reflow / Layout）**：当**几何信息**变化时，浏览器要重新跑 Layout 阶段。触发：增删 DOM、改宽高/margin/padding/位置、窗口 resize、读取 offsetWidth/getComputedStyle 等「强制同步布局」API。
+
+**示例:**
+```javascript
+// ✗ 布局抖动：每次读都强制 flush
+for (let i = 0; i < 100; i++) {
+  el.style.width = box.offsetWidth + 10 + 'px'; // 读→写→读→写
+}
+```
+
+**追问方向:**
+- 为什么读 offsetTop 会触发强制同步布局？
+- transform 动画为什么不卡？（合成层 + GPU）
+- 如何用 Chrome DevTools 排查布局抖动？
+
+---
+
+### Q03.21【中·高频·概念】`<script>` 标签的 `defer` 和 `async` 属性有什么区别？应该怎么选？
+
+**考察点:** 普通 script 阻塞 HTML 解析；async 下载时不阻塞，但**下载完立刻执行**（执行时阻塞），执行顺序不可控；defer 下载不阻塞，**等 HTML 解析完后按出现顺序执行**，DOMContentLoaded 之前。第三方库用 defer，与 DOM 无强依赖且无序的用 async。
+
+**参考答案要点:**
+**三种 script 行为**：
+
+| 属性 | HTML 解析时下载 | 执行时机 | 执行顺序 | 是否阻塞解析 |
+|---|---|---|---|---|
+| 无属性 | ✗ 阻塞解析去下载 | 下载完立刻执行 | 按出现顺序 | 是 |
+| async | ✓ 并行下载 | **下载完立刻**执行 | 不保证（先下完先执行）| 执行时阻塞 |
+| defer | ✓ 并行下载 | HTML 解析完、DOMContentLoaded **之前** | **按出现顺序** | 否 |
+
+**示例:**
+```html
+<!-- ✓ 推荐写法：业务脚本用 defer，保序、不阻塞 -->
+<head>
+  <script defer src="react.js"></script>
+  <script defer src="app.js"></script>   <!-- react 先执行，app 后执行 -->
+</head>
+
+<!-- ✓ 独立脚本用 async，不关心顺序 -->
+<script async src="ga.js"></script>
+<script async src="ads.js"></script>
+
+<!-- type=module 默认 defer 行为 -->
+<script type="module" src="main.js"></script>
+```
+
+**追问方向:**
+- DOMContentLoaded 和 load 事件分别在 defer 脚本执行的前还是后？
+- 为什么 async 脚本不能依赖 DOM？
+- type=module 和普通 script 还有什么区别？
+
+---
+
+### Q03.22【中·概念】`preload`、`prefetch`、`lazyload` 分别是什么？
+
+**考察点:** preload 提前加载本页关键资源（高优先级）；prefetch 空闲时预取下页可能用的资源（低优先级）；lazyload 延迟到滚动可见才加载。
+
+**参考答案要点:**
+**资源加载策略对比**：
+
+| 手段 | 时机 | 优先级 | 用途 |
+|---|---|---|---|
+| preload | 当前页**立刻**需要 | 高 | 提前加载首屏关键字体/JS/CSS |
+| prefetch | 浏览器**空闲** | 低 | 预取下一页资源（如路由跳转）|
+| preconnect | 立刻建连 | 中 | 提前完成 DNS/TCP/TLS 握手 |
+| dns-prefetch | 立刻 | 低 | 仅提前 DNS 解析 |
+| lazyload | 滚动**可见时** | 按需 | 图片/组件懒加载，省首屏带宽 |
+
+**示例:**
+```html
+<!-- preload：首屏关键字体 -->
+<link rel="preload" href="/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
+
+<!-- prefetch：预测用户会去商品页 -->
+<link rel="prefetch" href="/product.js" as="script">
+
+<!-- preconnect：提前与第三方建连 -->
+<link rel="preconnect" href="https://cdn.example.com" crossorigin>
+<link rel="dns-prefetch" href="//stats.example.com">
+```
+
+```html
+<!-- 原生图片懒加载 -->
+<img src="img.jpg" loading="lazy" decoding="async" width="300" height="200">
+```
+
+**追问方向:**
+- preload 加多了会有什么副作用？（挤占带宽、抢关键资源）
+- loading=lazy 的浏览器兼容性？怎么 polyfill？
+
+---
+
+### Q03.23【中·概念】为什么做动画推荐用 `requestAnimationFrame` 而不是 `setTimeout`？
+
+**考察点:** rAF 的回调在浏览器每次重绘前触发，频率自动匹配刷新率（通常 60fps/120Hz），与渲染同步、切后台自动暂停、不丢帧也不过度绘制；setTimeout 固定间隔，无法与渲染同步，切后台仍跑、耗电。
+
+**参考答案要点:**
+**requestAnimationFrame 优势**：
+1. **跟随刷新率**：60Hz 显示器约 16.6ms 一次，120Hz 约 8.3ms 一次，自动适应。
+2. **与渲染同步**：回调在「微任务清空后、Paint 之前」执行，保证这帧的改动能被画出。
+3. **后台节流**：页面切到后台，rAF 自动暂停（省电）；setTimeout 还在傻跑。
+4. **CPU/GPU 友好**：浏览器可合并多个 rAF 调度。
+
+**示例:**
+```javascript
+// rAF 动画循环
+let start = null;
+function animate(ts) {
+  if (!start) start = ts;
+  const progress = (ts - start) / 1000; // 秒
+  box.style.transform = `translateX(${Math.min(progress * 100, 300)}px)`;
+  if (progress < 3) requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+
+// 停止动画
+const id = requestAnimationFrame(animate);
+cancelAnimationFrame(id);
+```
+
+```css
+/* 关键帧动画 */
+@keyframes spin { to { transform: rotate(360deg); } }
+.loader { animation: spin 1s linear infinite; }
+```
+
+**追问方向:**
+- 为什么 rAF 在后台标签页会被暂停？对性能监控有什么影响？
+- CSS 动画和 JS 动画（rAF）哪个性能更好？
+
+---
+
+### Q03.24【高·高频·概念】浏览器的 Event Loop（事件循环）机制是怎样的？宏任务和微任务的执行顺序如何？
+
+**考察点:** JS 单线程靠 Event Loop 调度任务。每一轮：先执行一个宏任务（含同步代码），清空其产生的所有微任务，再执行 UI 渲染，然后取下一个宏任务。微任务插队，优先级高于下一个宏任务。
+
+**参考答案要点:**
+**核心模型**：调用栈 + 微任务队列 + 宏任务队列 + 渲染。
+
+**示例:**
+```javascript
+console.log('1 同步');
+
+setTimeout(() => console.log('4 宏任务'), 0);
+
+Promise.resolve().then(() => console.log('3 微任务'));
+
+console.log('2 同步');
+// 输出顺序：1 → 2 → 3 → 4
+```
+
+```javascript
+// 嵌套场景：微任务里再产生微任务，仍在本轮清空
+Promise.resolve().then(() => {
+  console.log('a');
+  Promise.resolve().then(() => console.log('b'));
+}).then(() => console.log('c'));
+// 输出：a → b → c（每个 then 入队时都已 ready，按入队顺序执行）
+```
+
+**追问方向:**
+- requestAnimationFrame 属于宏任务还是微任务？它在事件循环哪个阶段执行？
+- await 后面的代码等价于什么？（提示：包在 Promise.then 里，是微任务）
+- 为什么微任务会阻塞渲染？（提示：本轮渲染必须等微任务清空）
+
+---
+
+### Q03.25【高·高频】浏览器从拿到 HTML 到把页面画到屏幕上，经历了哪些步骤？（关键渲染路径）
+
+**考察点:** 六步：解析 HTML→DOM，解析 CSS→CSSOM，合并→渲染树（Render Tree），布局（Layout/Reflow）算几何，绘制（Paint）填像素，合成（Composite）分层合并。JS/CSS 会阻塞对应阶段。
+
+**参考答案要点:**
+**关键渲染路径（Critical Rendering Path）**：
+
+1. **构建 DOM**：字节→字符→令牌→节点→DOM 树。HTML 解析容错性强（缺失标签会补）。
+2. **构建 CSSOM**：解析 CSS 文本→CSSOM 树。CSS 解析不会阻塞 HTML，但**会阻塞渲染**（避免无样式闪烁 FOUC）。
+3. **构建渲染树**：DOM + CSSOM → 渲染树。**只包含可见节点**（`display:none` 不进渲染树，但 `visibility:hidden` 进——它占位）。
+4. **布局 Layout（回流 Reflow）**：根据视口计算每个节点的**几何信息**（位置、大小）。
+5. **绘制 Paint**：把每个节点转成屏幕上的**像素**（颜色、文字、阴影、边框）。
+6. **合成 Composite**：页面分层，GPU 合成各层（transform/opacity 在独立层，性能最好）。
+
+**示例:**
+```text
+HTML: <div id="a"><p>hi</p></div>
+
+1. DOM:        div#a ── p ── "hi"
+2. CSSOM:      (规则树，匹配选择器)
+3. RenderTree: div#a(p="block") ── p ── "hi"   ← display:none 的节点被剔除
+4. Layout:     div#a {x:0,y:0,w:100,h:50}   p{x:0,y:0,w:100,h:20}
+5. Paint:      把每个框涂成像素
+6. Composite:  GPU 合成图层
+```
+
+```html
+<!-- 优化点：CSS 放 head（尽早开始 CSSOM），JS 放 body 末尾或加 defer -->
+<head>
+  <link rel="stylesheet" href="a.css"> <!-- 不阻塞 DOM 解析，但阻塞首次渲染 -->
+</head>
+<body>
+  <script defer src="b.js"></script>   <!-- defer：DOM 解析完才执行 -->
+</body>
+```
+
+**追问方向:**
+- display:none 和 visibility:hidden 在渲染树上有什么区别？
+- 为什么 transform 做动画不触发回流？（提示：合成层）
+- 首屏渲染要等所有 CSS 加载完吗？
+
+---
+
+### Q03.26【高·概念】Chrome 的 Web Vitals 核心性能指标（LCP/CLS/FID）分别是什么？怎么测量？
+
+**考察点:** LCP（最大内容绘制，衡量加载，应 <2.5s）、CLS（累积布局偏移，衡量视觉稳定，应 <0.1）、FID（首次输入延迟，衡量交互响应，应 <100ms；新版已用 INP 替代）。用 PerformanceObserver / web-vitals 库采集上报。
+
+**参考答案要点:**
+**Core Web Vitals 三大指标**：
+
+| 指标 | 全称 | 衡量维度 | 好 | 需改进 | 差 |
+|---|---|---|---|---|---|
+| LCP | Largest Contentful Paint | 加载性能（最大块内容出现时间）| ≤2.5s | 2.5–4s | >4s |
+| CLS | Cumulative Layout Shift | 视觉稳定（内容跳动）| ≤0.1 | 0.1–0.25 | >0.25 |
+| FID | First Input Delay | 交互响应（首次输入到响应）| ≤100ms | 100–300ms | >300ms |
+| INP | Interaction to Next Paint | 全程交互响应（FID 的继任者，2024 生效）| ≤200ms | 200–500ms | >500ms |
+
+**示例:**
+```javascript
+// 用 PerformanceObserver 采集 LCP
+new PerformanceObserver((list) => {
+  const entries = list.getEntries();
+  const lastEntry = entries[entries.length - 1];
+  console.log('LCP:', lastEntry.startTime, lastEntry.element);
+}).observe({ type: 'largest-contentful-paint', buffered: true });
+
+// 采集 CLS
+let cls = 0;
+new PerformanceObserver((list) => {
+  for (const entry of list.getEntries()) {
+    if (!entry.hadRecentInput) cls += entry.value;
+  }
+  console.log('CLS:', cls);
+}).observe({ type: 'layout-shift', buffered: true });
+
+// 采集 FID / INP
+new PerformanceObserver((list) => {
+  for (const entry of list.getEntries()) {
+    console.log('FID:', entry.processingStart - entry.startTime);
+  }
+}).observe({ type: 'first-input', buffered: true });
+```
+
+```javascript
+// 推荐用官方 web-vitals 库
+import { onLCP, onCLS, onINP } from 'web-vitals';
+onLCP(metric => report(metric));
+onCLS(metric => report(metric));
+onINP(metric => report(metric));
+```
+
+**追问方向:**
+- 为什么 FID 被 INP 替代？（提示：FID 只测第一次，覆盖不全）
+- 如何优化 LCP？（图片优先级、预加载关键资源、SSR）
+- CLS 常见根因有哪些？（图片无尺寸、动态注入内容、字体闪烁）
+
+---
+
+### Q03.27【高·高频·概念】浏览器的强缓存和协商缓存是怎么工作的？完整判定流程是怎样的？
+
+**考察点:** 三步判定：①查本地强缓存（Cache-Control/Expires），未过期→直接用（200 from cache）；②过期→发请求带上 ETag/If-None-Match、Last-Modified/If-Modified-Since 协商；③服务器判断资源没变→304 用本地，变了→200 返回新资源。
+
+**参考答案要点:**
+**完整缓存判定流程**：
+
+```
+请求资源
+  ↓
+① 本地有缓存？
+  ├ 无 → 直接向服务器请求（200）
+  └ 有 → 看强缓存
+② 强缓存有效？(看 Cache-Control.max-age 或 Expires)
+  ├ 有效 → 直接用本地，不发请求 (200 from disk/memory cache)
+  └ 过期 → 进入协商缓存
+③ 发条件请求，带上：
+    - If-None-Match: <ETag>
+    - If-Modified-Since: <Last-Modified>
+  ↓
+④ 服务器对比：
+  ├ 资源没变 → 304 Not Modified（不带 body，省流量）
+  └ 资源变了 → 200 + 新资源 + 新的缓存头
+```
+
+**示例:**
+```http
+# 首次响应
+HTTP/1.1 200 OK
+Cache-Control: max-age=600
+ETag: "v3-abc"
+Last-Modified: Wed, 24 Jul 2026 10:00:00 GMT
+
+[资源内容]
+```
+
+```http
+# 600 秒内再次请求：不发请求，直接用本地
+# (DevTools 显示 200 from disk cache，无网络记录)
+```
+
+```http
+# 600 秒后：发条件请求
+GET /app.js
+If-None-Match: "v3-abc"
+If-Modified-Since: Wed, 24 Jul 2026 10:00:00 GMT
+
+# 资源没变 →
+HTTP/1.1 304 Not Modified
+# 资源变了 →
+HTTP/1.1 200 OK
+[新内容 + 新 ETag]
+```
+
+```text
+# 常用 Cache-Control 指令
+max-age=600      强缓存 600 秒
+no-cache         强制每次都协商（协商缓存）
+no-store         完全不缓存（连本地都不存）
+public/private   是否允许中间代理缓存
+s-maxage         共享缓存（CDN）专用时长
+immutable        资源永不变（用户刷新也不协商）
+```
+
+**追问方向:**
+- no-cache 和 no-store 有什么区别？
+- 用户按 F5 刷新和 Ctrl+F5 强刷，缓存行为有何不同？
+- 如何让带 hash 的静态资源永久缓存、HTML 不缓存？
+- ETag 是怎么生成的？强 ETag 和弱 ETag 有何区别？
+
+---
+
+### Q03.28【高·高频·概念】TCP 的三次握手和四次挥手是怎样的？
+
+**考察点:** 三次握手建连：SYN→SYN+ACK→ACK，双方确认收发能力并同步序列号。四次挥手断连：FIN→ACK→FIN→ACK，主动方先关、被动方发完剩余数据后再关。
+
+**参考答案要点:**
+**三次握手（建立连接）**：
+```
+Client                          Server
+  | --- SYN, seq=x ------------> |   (1) 我要连
+  | <--- SYN+ACK, seq=y, ack=x+1-|   (2) 同意，我也要连
+  | --- ACK, ack=y+1 ----------> |   (3) 收到，开始传
+  |=== 连接建立（ESTABLISHED）===|
+```
+
+**示例:**
+```text
+# 用 tcpdump / Wireshark 看握手
+$ tcpdump -i any -n 'tcp port 443 and (tcp-syn|tcp-fin) != 0'
+
+# 典型 HTTPS 连接时序
+1. TCP 三次握手       (RTT 1)
+2. TLS 握手          (1-2 RTT)
+3. HTTP 请求/响应     (RTT + 处理)
+# 这就是为什么 HTTP/2、HTTP/3(QUIC) 要减少握手次数
+```
+
+```text
+# 半关闭状态的应用：shutdown(SHUT_WR) 后仍可读
+# 服务端能继续发完剩余数据再关
+```
+
+**追问方向:**
+- 如果第三次握手（ACK）丢了会怎样？
+- 为什么 TIME_WAIT 是 2MSL？大量 TIME_WAIT 怎么排查？
+- TCP 为什么是面向连接的、可靠的？靠哪些机制？（序列号、确认、重传、滑动窗口、拥塞控制）
+
+---
+
+### Q03.29【高·高频】什么是浏览器同源策略？
+
+**考察点:** 同源策略：协议+域名+端口三者全相同才同源，跨源的 DOM 访问、Cookie、AJAX 受限。注意 `<img>`/`<script>`/`<link>` 标签本身不受同源限制（能加载，但读内容受限）。
+
+**参考答案要点:**
+**同源策略**：浏览器对「不同源」的资源做了三类限制：
+1. **跨源 DOM 访问**：iframe / window 跨源拿不到对方的 DOM（可用 postMessage 通信）。
+2. **跨源 Cookie/Storage**：隔离。
+3. **跨源 AJAX**：fetch/XHR 默认被拦截（除非服务器允许）。
+
+注：`<img>`、`<script>`、`<link>` 标签本身**不受同源限制**（能加载，但读内容受限），这是 JSONP 等跨域方案的基础。
+
+跨源的解决方案（CORS / JSONP / 代理）详见追问。
+
+**示例:**
+```javascript
+// 跨源 DOM 访问受限示例
+const iframe = document.querySelector('iframe');
+// 若 iframe 跨源，下面会抛 SecurityError
+iframe.contentWindow.document;
+
+// 用 postMessage 安全通信
+iframe.contentWindow.postMessage('hello', 'https://trusted.com');
+window.addEventListener('message', (e) => {
+  if (e.origin === 'https://trusted.com') console.log(e.data); // 校验 origin
+});
+```
+
+**追问方向:**
+- postMessage 怎么安全通信？为什么要校验 origin？
+
+---
+
+### Q03.30【高·高频】DNS 的查询过程是怎样的？递归和迭代有什么区别？
+
+**考察点:** DNS 查询：浏览器缓存→OS 缓存→hosts→本地 DNS（递归）→根→顶级域→权威服务器，拿到 IP。递归是客户端把活全交给本地 DNS「你帮我把答案找全」；迭代是本地 DNS 替你一层层问「你不知道就告诉下一步问谁」。
+
+**参考答案要点:**
+**两类查询**：
+- **递归**：客户端只发一次给本地 DNS「你帮我把答案找全」，自己等结果。
+- **迭代**：本地 DNS 替你一层层问各级服务器「你不知道就告诉下一步问谁」。
+
+**示例:**
+```bash
+# 查看某域名的 DNS 解析链
+$ dig +trace example.com
+$ nslookup example.com
+```
+
+```html
+<!-- 优化 DNS：dns-prefetch 提前解析第三方域名 -->
+<link rel="dns-prefetch" href="//cdn.example.com">
+<link rel="preconnect" href="//api.example.com">
+```
+
+**追问方向:**
+- DNS 解析慢怎么办？（dns-prefetch、HTTPDNS、本地缓存）
+- 为什么有了 HTTPDNS？（移动端 DNS 劫持、解析慢）
+- 浏览器 DNS 缓存和 OS 缓存的 TTL 冲突怎么处理？
+
+---
+
+### Q03.31【高·高频·概念】HTTP 和 HTTPS 有什么区别？HTTPS 的握手认证过程是怎样的？
+
+**考察点:** HTTP 明文传输、端口 80；HTTPS = HTTP + TLS，加密+身份认证+完整性校验，端口 443。握手：客户端发起→服务器返证书→客户端用 CA 公钥验签→协商对称密钥→后续用对称加密通信。
+
+**参考答案要点:**
+**HTTP vs HTTPS**：
+| 维度 | HTTP | HTTPS |
+|---|---|---|
+| 传输 | 明文 | TLS 加密 |
+| 端口 | 80 | 443 |
+| 身份 | 无 | 证书认证 |
+| 完整性 | 无 | 有（MAC）|
+| 性能 | 略快 | 多 1-2 RTT 握手（TLS 1.3 已优化到 1-RTT/0-RTT）|
+| SEO | 弱 | Google 优先 |
+
+**示例:**
+```text
+# 浏览器点小锁 → 证书 → 看证书链
+  根 CA (DigiCert)
+   └ 中间 CA
+      └ example.com (服务器证书)
+
+# 浏览器校验：签名有效 + 域名匹配 + 未过期 + 未被吊销(CRL/OCSP)
+```
+
+```nginx
+# 启用 HTTPS + 强制 HSTS（防降级）
+server {
+  listen 443 ssl http2;
+  ssl_certificate     /etc/ssl/fullchain.pem;
+  ssl_certificate_key /etc/ssl/privkey.pem;
+  add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+}
+server {
+  listen 80;
+  return 301 https://$host$request_uri;  # HTTP 跳 HTTPS
+}
+```
+
+**追问方向:**
+- TLS 1.3 相比 1.2 改进了什么？（1-RTT/0-RTT、去掉不安全算法）
+- 为什么对称加密快、非对称加密慢？为什么不全用非对称？
+- HSTS 是什么？解决什么问题？
+
+---
+
+### Q03.32【高·概念】HTTP/2 和 HTTP/3 相比 HTTP/1.1 有什么改进？为什么 HTTP/3 改用 UDP？
+
+**考察点:** HTTP/2：二进制分帧、多路复用（一个 TCP 连接并发多请求）、头部压缩 HPACK、服务端推送。HTTP/3：抛弃 TCP，基于 QUIC（UDP），解决 TCP 层队头阻塞、握手更快（TLS 1.3 内建 1-RTT/0-RTT）、支持连接迁移。
+
+**参考答案要点:**
+**HTTP 版本演进**：
+| 版本 | 传输 | 关键特性 | 痛点 |
+|---|---|---|---|
+| HTTP/1.1 | TCP | 持久连接、管道化 | 队头阻塞、连接数受限、文本头大 |
+| HTTP/2 | TCP | 二进制分帧、**多路复用**、HPACK 头部压缩、Server Push | TCP 层队头阻塞（丢一个包全堵）|
+| HTTP/3 | **QUIC(UDP)** | 无队头阻塞、0/1-RTT 握手、连接迁移 | 部署/兼容仍在推进 |
+
+**示例:**
+```nginx
+# 启用 HTTP/2 / HTTP/3
+listen 443 ssl http2;        # HTTP/2
+listen 443 quic reuseport;   # HTTP/3 (QUIC, UDP)
+add_header Alt-Svc 'h3=":443"'; # 告诉浏览器可升级到 H3
+```
+
+**追问方向:**
+- HTTP/2 还需要打包/雪碧图吗？为什么？
+- QUIC 怎么在 UDP 上实现可靠性？
+- 为什么 HTTP/3 部署比 HTTP/2 慢？（UDP 在中间设备/防火墙常被限）
+
+---
+
+### Q03.33【高·高频·概念】JavaScript 的垃圾回收机制是怎样的？
+
+**考察点:** JS 栈由执行上下文进出自动回收（ESP 指针下移即销毁）；堆靠 GC。判断可达性：从根（全局对象、当前栈上的变量）出发遍历，能到达的对象存活，到达不了的就是垃圾，靠「标记-清除」算法回收。GC 在代码执行间隙分批进行，避免长时间卡顿。
+
+**参考答案要点:**
+**栈 vs 堆的回收**：
+- **栈**：基本类型、引用地址。函数执行完，上下文出栈，ESP（栈顶指针）下移，该空间自动「失效」（被后续覆盖）。**没有显式 GC**。
+- **堆**：对象、闭包变量。靠**垃圾回收器**识别「不可达」对象并释放。
+
+**示例:**
+```javascript
+// 触发垃圾回收的常见场景
+let user = { name: 'tom' };
+user = null;  // 原对象不可达 → 下次 GC 回收
+
+// 闭包持有：不会被回收
+function makeCounter() {
+  let count = 0;
+  return () => ++count;  // count 被闭包引用，常驻堆
+}
+
+// 常见内存泄漏（对象仍可达）
+let cache = {};
+function add(k, v) { cache[k] = v; } // 只加不删 → 永久持有
+```
+
+```text
+// DevTools → Memory → Heap snapshot
+//   对比两次快照，看 Retained Size 增长的对象
+// Performance → 看GC事件占比
+```
+
+**追问方向:**
+- WeakMap/WeakSet 为什么不会阻止 GC？（弱引用，不计入可达性）
+- 如何排查页面内存泄漏？（Heap snapshot 三段对比法）
+
+---
+
+### Q03.34【高·概念】Web Worker 和 Service Worker 分别是什么？有什么区别和使用场景？
+
+**考察点:** Web Worker 是给页面跑耗时计算的后台线程（纯计算，用完销毁），与主线程 postMessage 通信。Service Worker 是浏览器和网络之间的可编程代理（离线缓存、推送、后台同步），独立于页面、有生命周期、可拦截 fetch 请求。两者都不能操作 DOM。
+
+**参考答案要点:**
+**对比**：
+| 维度 | Web Worker | Service Worker |
+|---|---|---|
+| 角色 | 页面的「计算助手」 | 浏览器/网络的「代理+缓存层」 |
+| 生命周期 | 随页面 | 独立，跨页面/重启仍存在 |
+| 通信 | postMessage | postMessage + fetch 拦截 + 消息推送 |
+| DOM | ✗ | ✗ |
+| 持久化 | ✗（SharedWorker 例外）| ✓（Cache API）|
+| HTTPS | 不强制 | 强制（开发 localhost 例外）|
+| 典型场景 | 大数据计算、图片处理、解析 | PWA 离线、推送通知、资源缓存 |
+
+**示例:**
+```javascript
+// Web Worker —— 主线程
+const worker = new Worker('./heavy.js');
+worker.postMessage({ data: bigArray }, [bigArray.buffer]); // Transferable 零拷贝
+worker.onmessage = (e) => console.log('结果', e.data);
+
+// heavy.js (worker 内)
+self.onmessage = (e) => {
+  const result = heavyCompute(e.data.data);
+  self.postMessage(result);
+};
+```
+
+```javascript
+// Service Worker —— 注册（主线程）
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').then(reg => console.log('registered', reg));
+}
+
+// sw.js (Service Worker)
+const CACHE = 'v1';
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/','/app.js','/style.css'])));
+});
+
+self.addEventListener('activate', e => {
+  // 清理旧缓存
+  e.waitUntil(caches.keys().then(keys =>
+    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))));
+});
+
+self.addEventListener('fetch', e => {
+  // 缓存优先，回退网络
+  e.respondWith(
+    caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
+      const copy = res.clone();
+      caches.open(CACHE).then(c => c.put(e.request, copy));
+      return res;
+    }))
+  );
+});
+```
+
+**追问方向:**
+- 为什么 Worker 不能操作 DOM？（避免多线程并发修改 DOM 的竞态）
+- postMessage 传大对象性能差怎么办？（Transferable / SharedArrayBuffer）
+- Service Worker 更新后旧页面还用旧版本，怎么平滑升级？（skipWaiting + clients.claim）
+- PWA 离线原理是什么？
+
+---

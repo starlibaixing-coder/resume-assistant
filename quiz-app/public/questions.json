@@ -82,6 +82,109 @@
         }
       ],
       "count": 147
+    },
+    {
+      "slug": "fe",
+      "name": "前端工程师",
+      "description": "前端工程师面试题库，按知识板块分组，覆盖 JS 原理、框架、浏览器、工程化等。",
+      "modules": [
+        {
+          "id": 1,
+          "name": "AI",
+          "count": 4
+        },
+        {
+          "id": 2,
+          "name": "算法",
+          "count": 14
+        },
+        {
+          "id": 3,
+          "name": "浏览器原理",
+          "count": 16
+        },
+        {
+          "id": 4,
+          "name": "跨端",
+          "count": 5
+        },
+        {
+          "id": 5,
+          "name": "CSS",
+          "count": 11
+        },
+        {
+          "id": 6,
+          "name": "设计模式",
+          "count": 4
+        },
+        {
+          "id": 7,
+          "name": "工程化",
+          "count": 7
+        },
+        {
+          "id": 8,
+          "name": "JS 原理",
+          "count": 15
+        },
+        {
+          "id": 9,
+          "name": "方法论",
+          "count": 3
+        },
+        {
+          "id": 10,
+          "name": "微前端",
+          "count": 4
+        },
+        {
+          "id": 11,
+          "name": "小程序",
+          "count": 3
+        },
+        {
+          "id": 12,
+          "name": "Node.js",
+          "count": 10
+        },
+        {
+          "id": 13,
+          "name": "React",
+          "count": 20
+        },
+        {
+          "id": 14,
+          "name": "场景题",
+          "count": 6
+        },
+        {
+          "id": 15,
+          "name": "安全",
+          "count": 4
+        },
+        {
+          "id": 16,
+          "name": "软件设计",
+          "count": 1
+        },
+        {
+          "id": 17,
+          "name": "SSR",
+          "count": 1
+        },
+        {
+          "id": 18,
+          "name": "TypeScript",
+          "count": 3
+        },
+        {
+          "id": 19,
+          "name": "Vue",
+          "count": 4
+        }
+      ],
+      "count": 135
     }
   ],
   "questions": [
@@ -3859,7 +3962,3479 @@
         "**价值**:好问题 = 展示你懂行 + 真感兴趣。"
       ],
       "followups": []
+    },
+    {
+      "id": "fe.01.1",
+      "category": "fe",
+      "module": 1,
+      "moduleName": "AI",
+      "index": 1,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "什么是 Function Calling？LLM 是怎么学会调用外部工具的？",
+      "focus": "Function Calling 让 LLM 能根据用户意图，输出结构化的工具调用（函数名+参数），由外部代码执行后把结果喂回 LLM。本质是 LLM 经训练学会了「识别何时该用工具 + 生成合法的函数调用 JSON」，实际执行靠外部代码。",
+      "answer": [
+        "**Function Calling 工作流程**：",
+        "1. 开发者定义一批工具（函数），每个工具有名称、描述、参数 schema。",
+        "2. 用户提问时，把「工具清单 + 用户问题」一起发给 LLM。",
+        "3. LLM 判断：需不需要用工具？用哪个？参数是什么？",
+        "4. LLM 输出结构化的工具调用（函数名 + 参数 JSON），而不是自然语言。",
+        "5. 外部代码执行这个函数，拿到结果。",
+        "6. 把结果喂回 LLM，LLM 据此生成最终回答。"
+      ],
+      "followups": [
+        "Function Calling 和 MCP 有什么关系？（MCP 是标准化的工具访问协议）",
+        "LLM 生成的参数不对（类型错/缺字段）怎么处理？",
+        "多个工具时，LLM 怎么选对的？描述写不好会怎样？"
+      ]
+    },
+    {
+      "id": "fe.01.2",
+      "category": "fe",
+      "module": 1,
+      "moduleName": "AI",
+      "index": 2,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "SSE（Server-Sent Events）是什么？和 WebSocket 有什么区别？",
+      "focus": "SSE 是服务器单向推消息给浏览器的协议（基于 HTTP，服务器→客户端）。和 WebSocket 区别：SSE 单向（服务器推）、基于 HTTP、简单轻量、自动重连；WebSocket 双向、独立协议、更复杂。",
+      "answer": [
+        "**SSE vs WebSocket**：",
+        "| 维度 | SSE | WebSocket |",
+        "|---|---|---|",
+        "| 方向 | 单向（服务器到客户端） | 双向 |",
+        "| 协议 | 基于 HTTP | 独立协议（ws） |",
+        "| 复杂度 | 简单 | 复杂 |",
+        "| 自动重连 | 内置 | 要自己实现 |",
+        "| 数据格式 | 文本（UTF-8） | 文本+二进制 |",
+        "| 适合 | 服务器推送（通知、流式输出） | 实时双向通信（聊天、游戏） |"
+      ],
+      "followups": [
+        "EventSource 为什么不能设请求头？（只能 GET）怎么带 token？",
+        "SSE 怎么处理断线重连？"
+      ]
+    },
+    {
+      "id": "fe.01.3",
+      "category": "fe",
+      "module": 1,
+      "moduleName": "AI",
+      "index": 3,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "MCP（Model Context Protocol）是什么？它解决了什么问题？",
+      "focus": "MCP 是 Anthropic 提出的「LLM 访问外部工具/资源的标准化协议」。解决「每个工具都要单独写适配、千差万别」的碎片化问题——用统一协议，所有工具按同一标准暴露能力，LLM/Agent 用同一套方式访问。类似 USB 之于外设。",
+      "answer": [
+        "传统：LLM 要用 GitHub、数据库、文件系统……每个都要写专门适配，接口各不相同，维护成本高。",
+        "MCP：定义一套统一的协议规范，所有工具都按这套规范暴露能力。LLM/Agent 用统一 client 访问。"
+      ],
+      "followups": [
+        "MCP 和 Function Calling 什么关系？（Function Calling 是 LLM 能力，MCP 是工具访问协议）",
+        "MCP Server 怎么开发？暴露一个工具要做什么？",
+        "MCP 生态现在有哪些现成的 Server？"
+      ]
+    },
+    {
+      "id": "fe.01.4",
+      "category": "fe",
+      "module": 1,
+      "moduleName": "AI",
+      "index": 4,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "AI 如何改变前端研发流程？怎么高效使用 AI 编码工具（如 Cursor/Copilot）？如何保证 AI 生成代码的质量？",
+      "focus": "AI 贯穿研发全流程：需求（分析/拆解）、编码（生成/补全/重构）、测试（生成用例）、文档、CR（辅助审查）。高效用 AI 的关键：写好上下文和 Prompt、让 AI 做重复劳动、人做决策和审查。质量保证：必须人工 review、理解每行代码、写测试验证、不盲目信任。",
+      "answer": [
+        "代码补全（Copilot）：写一句补一段。",
+        "生成代码（Cursor Chat）：描述需求生成实现。",
+        "重构/优化：让 AI 优化性能、改写法。",
+        "解释代码：快速理解陌生代码。"
+      ],
+      "followups": [
+        "AI 生成的代码你怎么判断该不该用？",
+        "AI 会不会取代前端？你怎么看？（AI 与程序员的关系）",
+        "团队引入 AI 编码工具，怎么制定规范防滥用？"
+      ]
+    },
+    {
+      "id": "fe.02.5",
+      "category": "fe",
+      "module": 2,
+      "moduleName": "算法",
+      "index": 5,
+      "type": "qa",
+      "difficulty": "初",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "给定两个已排序数组，将它们合并成一个新的有序数组（或把 nums2 合并进 nums1 末尾的预留空间）。",
+      "focus": "双指针从后往前（原地合并）或从前往后（新数组）依次比较填入，O(m+n) 时间。",
+      "answer": [
+        "经典合并：两个数组各自有序，用两个指针 i、j 分别指向开头，比较后把较小者放入结果，移动对应指针；任一数组遍历完后，把另一个数组剩余部分直接接上。",
+        "LeetCode 88 变种（nums1 末尾预留 m 个空位，原地合并）：从**后往前**填，避免从前向后移动元素。三个指针：i 指向 nums1 有效末尾、j 指向 nums2 末尾、k 指向 nums1 总末尾。",
+        "复杂度：时间 O(m+n)，空间 O(1)（原地）。"
+      ],
+      "followups": [
+        "为什么 LeetCode 88 要从后往前合并？（从前会覆盖未处理元素）",
+        "如果要求合并 K 个有序链表/数组怎么做？（堆 / 分治两两合并）",
+        "能否用二分优化？（可以但常数更大，工程上没必要）"
+      ]
+    },
+    {
+      "id": "fe.02.6",
+      "category": "fe",
+      "module": 2,
+      "moduleName": "算法",
+      "index": 6,
+      "type": "qa",
+      "difficulty": "初",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "判断一个字符串（或整数）是否是回文。",
+      "focus": "字符串：左右双指针向中间靠拢，逐字符比较。整数：转字符串同法，或反转数字后比较（注意溢出用 BigInt）。",
+      "answer": [
+        "**回文串**：首尾对称，正读反读相同。双指针 i=0、j=len-1，向中间走，任一处不等则非回文。"
+      ],
+      "followups": [
+        "最长回文子串怎么求？（LeetCode 5，中心扩展 / Manacher）",
+        "最长回文子序列呢？（LeetCode 516，区间 DP）",
+        "回文数字为什么不直接反转整个数字再比？（反转可能溢出，反转一半更安全）"
+      ]
+    },
+    {
+      "id": "fe.02.7",
+      "category": "fe",
+      "module": 2,
+      "moduleName": "算法",
+      "index": 7,
+      "type": "qa",
+      "difficulty": "初",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "比较两个版本号 version1 和 version2（形如 `1.0.1`、`1.01`、`7.5.2.4`）。若 v1 > v2 返回 1，< 返回 -1，相等返回 0。",
+      "focus": "按 `.` 切分成修订号数组，从左到右逐段比较（当作数字比，忽略前导零），某段短的补 0。",
+      "answer": [
+        "版本号由若干修订号用 `.` 连接。比较规则：从左到右逐段比较每个修订号的**整数值**（忽略前导零，如 `01` == `1`）。若长度不一，缺失段按 0 处理。",
+        "步骤：",
+        "1. 用 split('.') 切分两个版本。",
+        "2. 取两者较长长度作为循环次数。",
+        "3. 每段用 Number() 转数字（自动去前导零），比较大小。",
+        "4. 全部相等则返回 0。",
+        "复杂度：O(max(m,n)) 时间，O(m+n) 空间。",
+        "注意坑：不能用字符串直接比（'10' < '2' 字典序错）；不能简单 parseFloat 整个串（会丢小数段信息）。"
+      ],
+      "followups": [
+        "带字母的语义化版本（如 1.0.0-alpha）怎么比？（semver 规范，预发版 < 正式版）",
+        "如果版本号段可能极大（超过 Number 范围）怎么办？（用 BigInt 或逐字符比较）",
+        "semver 中 `^` 和 `~` 的区别？"
+      ]
+    },
+    {
+      "id": "fe.02.8",
+      "category": "fe",
+      "module": 2,
+      "moduleName": "算法",
+      "index": 8,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "实现快速排序，并分析时间复杂度。",
+      "focus": "选一个基准（pivot），把小于 pivot 的放左、大于的放右，再对左右两段递归排序。",
+      "answer": [
+        "平均时间 O(n log n)，最坏 O(n²)（数组已有序且 pivot 取端点）。",
+        "空间 O(log n)（递归栈），原地版本可做到 O(1) 额外空间。",
+        "不稳定排序。"
+      ],
+      "followups": [
+        "快排最坏情况是什么？如何避免？（提示：有序数组 + 端点 pivot；随机化 pivot）",
+        "快排是稳定排序吗？为什么？（不稳定，分区时相等元素的相对顺序可能改变）",
+        "原地快排（in-place）怎么写？为什么要用双指针交换？"
+      ]
+    },
+    {
+      "id": "fe.02.9",
+      "category": "fe",
+      "module": 2,
+      "moduleName": "算法",
+      "index": 9,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "反转一个单链表（迭代与递归两种写法）。",
+      "focus": "迭代：用 prev/curr 双指针，逐个把 next 指向前一个节点。递归：先翻转子链表，再把当前节点接到翻转后链表的末尾。",
+      "answer": [
+        "反转链表是链表题的母题。",
+        "迭代法（推荐）：维护三个指针 prev、curr、next。每一步：先存 next = curr.next，再把 curr.next 指向 prev，然后 prev、curr 整体后移一位。循环到 curr 为 null，此时 prev 就是新头。",
+        "递归法：`reverse(head)` 返回翻转后的新头。先把 head.next 之后的部分翻转，得到 newHead；此时 head.next 仍是翻转后链表的尾节点，令 head.next.next = head 把 head 接到尾部，再断开 head.next = null 防止环。",
+        "复杂度：迭代 O(n) 时间 O(1) 空间；递归 O(n) 时间 O(n) 空间（栈）。"
+      ],
+      "followups": [
+        "如何只翻转链表中 [m, n] 区间的节点？（LeetCode 92，定位前驱后局部翻转）",
+        "K 个一组翻转链表怎么做？（LeetCode 25，先数 k 个再翻转一段）",
+        "判断反转后链表是否正确（无环、长度一致）。"
+      ]
+    },
+    {
+      "id": "fe.02.10",
+      "category": "fe",
+      "module": 2,
+      "moduleName": "算法",
+      "index": 10,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "判断链表中是否有环。如果有，能否找到环的入口节点？",
+      "focus": "判断有环：快慢指针（Floyd 判圈），快指针每次走 2 步、慢指针每次走 1 步，相遇即有环。找入口：相遇后让一个指针回到头，两者同速再走，再次相遇点就是入口。",
+      "answer": [
+        "**Floyd 判圈算法（龟兔赛跑）**：",
+        "1. 快指针 fast 每次走 2 步，慢指针 slow 每次走 1 步。若无环，fast 先到 null；若有环，fast 终会追上 slow（在环内每轮拉近 1 步，必然相遇）。"
+      ],
+      "followups": [
+        "为什么快慢指针一定能相遇，不会跳过？（每轮相对靠近 1 步）",
+        "用 Set 记录访问过的节点也能判环，空间复杂度是多少？（O(n)）",
+        "如果要求出环的长度怎么做？（相遇后让一个指针再走一圈计数）"
+      ]
+    },
+    {
+      "id": "fe.02.11",
+      "category": "fe",
+      "module": 2,
+      "moduleName": "算法",
+      "index": 11,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "给定一个只包含 `(`、`)`、`{`、`}`、`[`、`]` 的字符串，判断括号是否合法匹配。",
+      "focus": "用栈：遇左括号入栈，遇右括号看栈顶是否是对应的左括号，匹配则出栈，最后栈空即合法。",
+      "answer": [
+        "经典栈应用。思路：",
+        "1. 遍历每个字符。",
+        "2. 是左括号 → 压栈。",
+        "3. 是右括号 → 若栈空或栈顶不是其对应的左括号，则非法；否则弹栈。",
+        "4. 遍历完，栈空说明全部配对成功，合法。",
+        "用哈希表存「右括号 → 左括号」的映射，方便查对应关系。",
+        "复杂度：时间 O(n)，空间 O(n)（最坏全左括号）。"
+      ],
+      "followups": [
+        "如果要返回最长合法括号子串长度怎么做？（LeetCode 32，栈存下标 / DP）",
+        "只用 O(1) 空间判断只有 `(` `)` 的字符串是否合法怎么做？（计数 left/right）",
+        "如何生成所有合法的 n 对括号组合？（LeetCode 22，回溯）"
+      ]
+    },
+    {
+      "id": "fe.02.12",
+      "category": "fe",
+      "module": 2,
+      "moduleName": "算法",
+      "index": 12,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "在未排序数组中找到第 K 大的元素。",
+      "focus": "两种主流解法：①小顶堆维护 size=K，堆顶即第 K 大；②快速选择（quickSelect），平均 O(n)。",
+      "answer": [
+        "**方法一：小顶堆**。维护一个大小为 K 的最小堆，遍历数组：元素数 < K 直接入堆；否则若当前值 > 堆顶，弹出堆顶再入。遍历完后堆顶就是第 K 大。时间 O(n log K)，空间 O(K)。适合 K 很小或数据流场景。"
+      ],
+      "followups": [
+        "数据流场景下如何动态维护第 K 大？（LeetCode 703，固定大小堆）",
+        "快速选择为什么平均 O(n)？（每轮只剩一半规模，n+n/2+n/4+...=2n）",
+        "海量数据求 TopK 怎么做？（分桶 + 归并，或外部排序）"
+      ]
+    },
+    {
+      "id": "fe.02.13",
+      "category": "fe",
+      "module": 2,
+      "moduleName": "算法",
+      "index": 13,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "给定股票每日价格，只能买卖一次，求最大利润（买卖股票的最佳时机）。",
+      "focus": "遍历过程中维护「历史最低价」minPrice，每天算「当天卖出能赚多少 = price - minPrice」，取最大值。",
+      "answer": [
+        "维护两个变量：minPrice（到当前为止的最低价）、maxProfit（最大利润）。",
+        "遍历每天价格：先更新 maxProfit = max(maxProfit, price - minPrice)，再更新 minPrice = min(minPrice, price)。",
+        "一趟 O(n)，空间 O(1)。",
+        "122 多次交易：贪心，所有上涨段都吃。",
+        "123/188 限次数：状态机 DP（持有/不持有 + 已交易次数）。",
+        "309 含冷冻期：多一个冷冻状态。"
+      ],
+      "followups": [
+        "允许多次买卖（122）怎么做？为什么贪心是对的？",
+        "最多允许 k 次交易（188）状态怎么设计？（dp[i][k][0/1]）",
+        "含冷冻期 / 手续费怎么改状态转移？"
+      ]
+    },
+    {
+      "id": "fe.02.14",
+      "category": "fe",
+      "module": 2,
+      "moduleName": "算法",
+      "index": 14,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "实现对象的深度优先遍历（DFS）与广度优先遍历（BFS）。",
+      "focus": "DFS 用递归（或栈）一路向下钻；BFS 用队列一层一层扫。两者都需 visited 集合防环。",
+      "answer": [
+        "前端常考「对象/树」的遍历（区别于图，但写法类似）。"
+      ],
+      "followups": [
+        "如何检测对象的循环引用？（DFS/BFS + WeakSet，或 JSON.stringify 捕获异常）",
+        "深拷贝时如何用 DFS 处理循环引用？（WeakMap 缓存已拷贝对象）",
+        "二叉树的 DFS 三种序（前/中/后）怎么区分？"
+      ]
+    },
+    {
+      "id": "fe.02.15",
+      "category": "fe",
+      "module": 2,
+      "moduleName": "算法",
+      "index": 15,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "手写"
+      ],
+      "title": "用两个队列实现一个栈，支持 push / pop / top 操作。",
+      "focus": "两种实现：①push 时把新元素加到空队列 q2，再把 q1 全部倒进 q2，交换 q1/q2（保证 q1 队首始终是栈顶）；②pop 时把 q1 前 n-1 个倒进 q2，剩最后一个弹出。",
+      "answer": [
+        "**思路**：栈是 LIFO，队列是 FIFO。用两个队列互相倒腾，让「最后进的元素」跑到队首。"
+      ],
+      "followups": [
+        "反过来，用两个栈实现队列怎么做？（LeetCode 232，一个入栈一个出栈，出栈空了再倒）",
+        "方案 A 和方案 B 的均摊复杂度哪个更优？",
+        "能否用单个队列实现栈？（把新元素后的所有元素依次出队再入队）"
+      ]
+    },
+    {
+      "id": "fe.02.16",
+      "category": "fe",
+      "module": 2,
+      "moduleName": "算法",
+      "index": 16,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "归并排序和快速排序有什么区别？",
+      "focus": "归并排序是「自顶向下分两半 → 递归排序 → 合并两个有序数组」，稳定且始终 O(n log n)，但需要 O(n) 额外空间。",
+      "answer": [
+        "时间 O(n log n)（最佳/平均/最坏都是），分 log n 层，每层合并 O(n)。",
+        "空间 O(n)（合并时用的辅助数组）。",
+        "稳定排序（合并时相等元素取左边在前）。"
+      ],
+      "followups": [
+        "为什么归并排序是稳定的，而快排不是？",
+        "归并排序在链表上为什么比快排更合适？（链表合并不需要随机访问，O(1) 额外空间）",
+        "迭代版（自底向上）的归并排序怎么实现？避免了递归栈开销。"
+      ]
+    },
+    {
+      "id": "fe.02.17",
+      "category": "fe",
+      "module": 2,
+      "moduleName": "算法",
+      "index": 17,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "给定 n 个非负整数表示柱子的高度图，计算按此排列能接多少雨水。",
+      "focus": "每个位置能接的水 = min(左边最高, 右边最高) - 当前高度。可用动态规划预处理左右最大值，或用左右双指针 O(1) 空间。",
+      "answer": [
+        "**核心公式**：位置 i 能接的雨水 = max(0, min(leftMax[i], rightMax[i]) - height[i])。"
+      ],
+      "followups": [
+        "如果柱子是二维的（盛水容器为 3D），怎么做？（LeetCode 407，优先队列 BFS）",
+        "单调栈解法怎么写？（按层接水，遇到凹槽出栈计算）",
+        "「盛最多水的容器」(LeetCode 11) 和接雨水有什么区别？（前者是两条线围成的面积，不是凹槽）"
+      ]
+    },
+    {
+      "id": "fe.02.18",
+      "category": "fe",
+      "module": 2,
+      "moduleName": "算法",
+      "index": 18,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "给定不同面额的硬币 coins 和总金额 amount，求凑成总金额所需的最少硬币数。每种硬币可使用无限次。",
+      "focus": "完全背包 DP：dp[i] 表示金额 i 的最少硬币数，dp[i] = min(dp[i], dp[i-coin]+1)，遍历所有 coin。",
+      "answer": [
+        "状态：dp[i] 表示凑出金额 i 所需的最少硬币数。",
+        "转移：对每个硬币 coin，dp[i] = min(dp[i], dp[i - coin] + 1)（前提 i >= coin）。",
+        "初始化：dp[0] = 0，其余设为 Infinity。",
+        "答案：dp[amount]，若仍为 Infinity 返回 -1。"
+      ],
+      "followups": [
+        "求组合方案数（而非最少硬币数）怎么改 DP？（dp[i] += dp[i-coin]，先遍历硬币）",
+        "贪心（每次取最大面额）为什么不一定对？（如 [1,3,4] amount=6，贪心取 4+1+1=3 枚，最优是 3+3=2 枚）",
+        "如果每种硬币只能用一次呢？（0-1 背包，金额从大到小遍历避免重复取）"
+      ]
+    },
+    {
+      "id": "fe.03.19",
+      "category": "fe",
+      "module": 3,
+      "moduleName": "浏览器原理",
+      "index": 19,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "`setTimeout` 里的错误能否被外层 `try/catch` 捕获？为什么？",
+      "focus": "不能。setTimeout 回调被放入宏任务队列，等执行时外层 try/catch 早已出栈，栈帧不连续无法捕获。",
+      "answer": [
+        "try/catch 只能捕获**同步调用栈**上的错误。",
+        "setTimeout(fn, 0) 会把 fn 推入宏任务队列，**当前同步代码先执行完**，try/catch 块已经结束。",
+        "等事件循环下一轮取出 fn 执行时，它在**新的执行上下文**里抛错，外层栈早已销毁，catch 自然接不到。"
+      ],
+      "followups": [
+        "async/await 里 await 一个会 reject 的 Promise，try/catch 能抓到吗？（能）",
+        "为什么 Promise.reject 不加 .catch 会报 unhandledrejection？"
+      ]
+    },
+    {
+      "id": "fe.03.20",
+      "category": "fe",
+      "module": 3,
+      "moduleName": "浏览器原理",
+      "index": 20,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "什么是重绘（Repaint）和回流/重排（Reflow）？",
+      "focus": "回流是重新算几何（位置/大小），重绘是重新填像素。回流必然引发重绘，重绘不一定引发回流。改 layout 属性（宽高/top/left）触发回流，改外观属性（color/background）只触发重绘。",
+      "answer": [
+        "**回流（Reflow / Layout）**：当**几何信息**变化时，浏览器要重新跑 Layout 阶段。触发：增删 DOM、改宽高/margin/padding/位置、窗口 resize、读取 offsetWidth/getComputedStyle 等「强制同步布局」API。"
+      ],
+      "followups": [
+        "为什么读 offsetTop 会触发强制同步布局？",
+        "transform 动画为什么不卡？（合成层 + GPU）",
+        "如何用 Chrome DevTools 排查布局抖动？"
+      ]
+    },
+    {
+      "id": "fe.03.21",
+      "category": "fe",
+      "module": 3,
+      "moduleName": "浏览器原理",
+      "index": 21,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "`<script>` 标签的 `defer` 和 `async` 属性有什么区别？应该怎么选？",
+      "focus": "普通 script 阻塞 HTML 解析；async 下载时不阻塞，但**下载完立刻执行**（执行时阻塞），执行顺序不可控；defer 下载不阻塞，**等 HTML 解析完后按出现顺序执行**，DOMContentLoaded 之前。第三方库用 defer，与 DOM 无强依赖且无序的用 async。",
+      "answer": [
+        "**三种 script 行为**：",
+        "| 属性 | HTML 解析时下载 | 执行时机 | 执行顺序 | 是否阻塞解析 |",
+        "|---|---|---|---|---|",
+        "| 无属性 | ✗ 阻塞解析去下载 | 下载完立刻执行 | 按出现顺序 | 是 |",
+        "| async | ✓ 并行下载 | **下载完立刻**执行 | 不保证（先下完先执行）| 执行时阻塞 |",
+        "| defer | ✓ 并行下载 | HTML 解析完、DOMContentLoaded **之前** | **按出现顺序** | 否 |"
+      ],
+      "followups": [
+        "DOMContentLoaded 和 load 事件分别在 defer 脚本执行的前还是后？",
+        "为什么 async 脚本不能依赖 DOM？",
+        "type=module 和普通 script 还有什么区别？"
+      ]
+    },
+    {
+      "id": "fe.03.22",
+      "category": "fe",
+      "module": 3,
+      "moduleName": "浏览器原理",
+      "index": 22,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "概念"
+      ],
+      "title": "`preload`、`prefetch`、`lazyload` 分别是什么？",
+      "focus": "preload 提前加载本页关键资源（高优先级）；prefetch 空闲时预取下页可能用的资源（低优先级）；lazyload 延迟到滚动可见才加载。",
+      "answer": [
+        "**资源加载策略对比**：",
+        "| 手段 | 时机 | 优先级 | 用途 |",
+        "|---|---|---|---|",
+        "| preload | 当前页**立刻**需要 | 高 | 提前加载首屏关键字体/JS/CSS |",
+        "| prefetch | 浏览器**空闲** | 低 | 预取下一页资源（如路由跳转）|",
+        "| preconnect | 立刻建连 | 中 | 提前完成 DNS/TCP/TLS 握手 |",
+        "| dns-prefetch | 立刻 | 低 | 仅提前 DNS 解析 |",
+        "| lazyload | 滚动**可见时** | 按需 | 图片/组件懒加载，省首屏带宽 |"
+      ],
+      "followups": [
+        "preload 加多了会有什么副作用？（挤占带宽、抢关键资源）",
+        "loading=lazy 的浏览器兼容性？怎么 polyfill？"
+      ]
+    },
+    {
+      "id": "fe.03.23",
+      "category": "fe",
+      "module": 3,
+      "moduleName": "浏览器原理",
+      "index": 23,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "概念"
+      ],
+      "title": "为什么做动画推荐用 `requestAnimationFrame` 而不是 `setTimeout`？",
+      "focus": "rAF 的回调在浏览器每次重绘前触发，频率自动匹配刷新率（通常 60fps/120Hz），与渲染同步、切后台自动暂停、不丢帧也不过度绘制；setTimeout 固定间隔，无法与渲染同步，切后台仍跑、耗电。",
+      "answer": [
+        "**requestAnimationFrame 优势**：",
+        "1. **跟随刷新率**：60Hz 显示器约 16.6ms 一次，120Hz 约 8.3ms 一次，自动适应。",
+        "2. **与渲染同步**：回调在「微任务清空后、Paint 之前」执行，保证这帧的改动能被画出。",
+        "3. **后台节流**：页面切到后台，rAF 自动暂停（省电）；setTimeout 还在傻跑。",
+        "4. **CPU/GPU 友好**：浏览器可合并多个 rAF 调度。"
+      ],
+      "followups": [
+        "为什么 rAF 在后台标签页会被暂停？对性能监控有什么影响？",
+        "CSS 动画和 JS 动画（rAF）哪个性能更好？"
+      ]
+    },
+    {
+      "id": "fe.03.24",
+      "category": "fe",
+      "module": 3,
+      "moduleName": "浏览器原理",
+      "index": 24,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "浏览器的 Event Loop（事件循环）机制是怎样的？宏任务和微任务的执行顺序如何？",
+      "focus": "JS 单线程靠 Event Loop 调度任务。每一轮：先执行一个宏任务（含同步代码），清空其产生的所有微任务，再执行 UI 渲染，然后取下一个宏任务。微任务插队，优先级高于下一个宏任务。",
+      "answer": [
+        "**核心模型**：调用栈 + 微任务队列 + 宏任务队列 + 渲染。"
+      ],
+      "followups": [
+        "requestAnimationFrame 属于宏任务还是微任务？它在事件循环哪个阶段执行？",
+        "await 后面的代码等价于什么？（提示：包在 Promise.then 里，是微任务）",
+        "为什么微任务会阻塞渲染？（提示：本轮渲染必须等微任务清空）"
+      ]
+    },
+    {
+      "id": "fe.03.25",
+      "category": "fe",
+      "module": 3,
+      "moduleName": "浏览器原理",
+      "index": 25,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频"
+      ],
+      "title": "浏览器从拿到 HTML 到把页面画到屏幕上，经历了哪些步骤？（关键渲染路径）",
+      "focus": "六步：解析 HTML→DOM，解析 CSS→CSSOM，合并→渲染树（Render Tree），布局（Layout/Reflow）算几何，绘制（Paint）填像素，合成（Composite）分层合并。JS/CSS 会阻塞对应阶段。",
+      "answer": [
+        "**关键渲染路径（Critical Rendering Path）**：",
+        "1. **构建 DOM**：字节→字符→令牌→节点→DOM 树。HTML 解析容错性强（缺失标签会补）。",
+        "2. **构建 CSSOM**：解析 CSS 文本→CSSOM 树。CSS 解析不会阻塞 HTML，但**会阻塞渲染**（避免无样式闪烁 FOUC）。",
+        "3. **构建渲染树**：DOM + CSSOM → 渲染树。**只包含可见节点**（`display:none` 不进渲染树，但 `visibility:hidden` 进——它占位）。",
+        "4. **布局 Layout（回流 Reflow）**：根据视口计算每个节点的**几何信息**（位置、大小）。",
+        "5. **绘制 Paint**：把每个节点转成屏幕上的**像素**（颜色、文字、阴影、边框）。",
+        "6. **合成 Composite**：页面分层，GPU 合成各层（transform/opacity 在独立层，性能最好）。"
+      ],
+      "followups": [
+        "display:none 和 visibility:hidden 在渲染树上有什么区别？",
+        "为什么 transform 做动画不触发回流？（提示：合成层）",
+        "首屏渲染要等所有 CSS 加载完吗？"
+      ]
+    },
+    {
+      "id": "fe.03.26",
+      "category": "fe",
+      "module": 3,
+      "moduleName": "浏览器原理",
+      "index": 26,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "概念"
+      ],
+      "title": "Chrome 的 Web Vitals 核心性能指标（LCP/CLS/FID）分别是什么？怎么测量？",
+      "focus": "LCP（最大内容绘制，衡量加载，应 <2.5s）、CLS（累积布局偏移，衡量视觉稳定，应 <0.1）、FID（首次输入延迟，衡量交互响应，应 <100ms；新版已用 INP 替代）。用 PerformanceObserver / web-vitals 库采集上报。",
+      "answer": [
+        "**Core Web Vitals 三大指标**：",
+        "| 指标 | 全称 | 衡量维度 | 好 | 需改进 | 差 |",
+        "|---|---|---|---|---|---|",
+        "| LCP | Largest Contentful Paint | 加载性能（最大块内容出现时间）| ≤2.5s | 2.5–4s | >4s |",
+        "| CLS | Cumulative Layout Shift | 视觉稳定（内容跳动）| ≤0.1 | 0.1–0.25 | >0.25 |",
+        "| FID | First Input Delay | 交互响应（首次输入到响应）| ≤100ms | 100–300ms | >300ms |",
+        "| INP | Interaction to Next Paint | 全程交互响应（FID 的继任者，2024 生效）| ≤200ms | 200–500ms | >500ms |"
+      ],
+      "followups": [
+        "为什么 FID 被 INP 替代？（提示：FID 只测第一次，覆盖不全）",
+        "如何优化 LCP？（图片优先级、预加载关键资源、SSR）",
+        "CLS 常见根因有哪些？（图片无尺寸、动态注入内容、字体闪烁）"
+      ]
+    },
+    {
+      "id": "fe.03.27",
+      "category": "fe",
+      "module": 3,
+      "moduleName": "浏览器原理",
+      "index": 27,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "浏览器的强缓存和协商缓存是怎么工作的？完整判定流程是怎样的？",
+      "focus": "三步判定：①查本地强缓存（Cache-Control/Expires），未过期→直接用（200 from cache）；②过期→发请求带上 ETag/If-None-Match、Last-Modified/If-Modified-Since 协商；③服务器判断资源没变→304 用本地，变了→200 返回新资源。",
+      "answer": [
+        "If-None-Match: <ETag>",
+        "If-Modified-Since: <Last-Modified>"
+      ],
+      "followups": [
+        "no-cache 和 no-store 有什么区别？",
+        "用户按 F5 刷新和 Ctrl+F5 强刷，缓存行为有何不同？",
+        "如何让带 hash 的静态资源永久缓存、HTML 不缓存？",
+        "ETag 是怎么生成的？强 ETag 和弱 ETag 有何区别？"
+      ]
+    },
+    {
+      "id": "fe.03.28",
+      "category": "fe",
+      "module": 3,
+      "moduleName": "浏览器原理",
+      "index": 28,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "TCP 的三次握手和四次挥手是怎样的？",
+      "focus": "三次握手建连：SYN→SYN+ACK→ACK，双方确认收发能力并同步序列号。四次挥手断连：FIN→ACK→FIN→ACK，主动方先关、被动方发完剩余数据后再关。",
+      "answer": [
+        "**三次握手（建立连接）**：",
+        "```",
+        "Client                          Server",
+        "  | --- SYN, seq=x ------------> |   (1) 我要连",
+        "  | <--- SYN+ACK, seq=y, ack=x+1-|   (2) 同意，我也要连",
+        "  | --- ACK, ack=y+1 ----------> |   (3) 收到，开始传",
+        "  |=== 连接建立（ESTABLISHED）===|",
+        "```"
+      ],
+      "followups": [
+        "如果第三次握手（ACK）丢了会怎样？",
+        "为什么 TIME_WAIT 是 2MSL？大量 TIME_WAIT 怎么排查？",
+        "TCP 为什么是面向连接的、可靠的？靠哪些机制？（序列号、确认、重传、滑动窗口、拥塞控制）"
+      ]
+    },
+    {
+      "id": "fe.03.29",
+      "category": "fe",
+      "module": 3,
+      "moduleName": "浏览器原理",
+      "index": 29,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频"
+      ],
+      "title": "什么是浏览器同源策略？",
+      "focus": "同源策略：协议+域名+端口三者全相同才同源，跨源的 DOM 访问、Cookie、AJAX 受限。注意 `<img>`/`<script>`/`<link>` 标签本身不受同源限制（能加载，但读内容受限）。",
+      "answer": [
+        "**同源策略**：浏览器对「不同源」的资源做了三类限制：",
+        "1. **跨源 DOM 访问**：iframe / window 跨源拿不到对方的 DOM（可用 postMessage 通信）。",
+        "2. **跨源 Cookie/Storage**：隔离。",
+        "3. **跨源 AJAX**：fetch/XHR 默认被拦截（除非服务器允许）。",
+        "注：`<img>`、`<script>`、`<link>` 标签本身**不受同源限制**（能加载，但读内容受限），这是 JSONP 等跨域方案的基础。",
+        "跨源的解决方案（CORS / JSONP / 代理）详见追问。"
+      ],
+      "followups": [
+        "postMessage 怎么安全通信？为什么要校验 origin？"
+      ]
+    },
+    {
+      "id": "fe.03.30",
+      "category": "fe",
+      "module": 3,
+      "moduleName": "浏览器原理",
+      "index": 30,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频"
+      ],
+      "title": "DNS 的查询过程是怎样的？递归和迭代有什么区别？",
+      "focus": "DNS 查询：浏览器缓存→OS 缓存→hosts→本地 DNS（递归）→根→顶级域→权威服务器，拿到 IP。递归是客户端把活全交给本地 DNS「你帮我把答案找全」；迭代是本地 DNS 替你一层层问「你不知道就告诉下一步问谁」。",
+      "answer": [
+        "**递归**：客户端只发一次给本地 DNS「你帮我把答案找全」，自己等结果。",
+        "**迭代**：本地 DNS 替你一层层问各级服务器「你不知道就告诉下一步问谁」。"
+      ],
+      "followups": [
+        "DNS 解析慢怎么办？（dns-prefetch、HTTPDNS、本地缓存）",
+        "为什么有了 HTTPDNS？（移动端 DNS 劫持、解析慢）",
+        "浏览器 DNS 缓存和 OS 缓存的 TTL 冲突怎么处理？"
+      ]
+    },
+    {
+      "id": "fe.03.31",
+      "category": "fe",
+      "module": 3,
+      "moduleName": "浏览器原理",
+      "index": 31,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "HTTP 和 HTTPS 有什么区别？HTTPS 的握手认证过程是怎样的？",
+      "focus": "HTTP 明文传输、端口 80；HTTPS = HTTP + TLS，加密+身份认证+完整性校验，端口 443。握手：客户端发起→服务器返证书→客户端用 CA 公钥验签→协商对称密钥→后续用对称加密通信。",
+      "answer": [
+        "**HTTP vs HTTPS**：",
+        "| 维度 | HTTP | HTTPS |",
+        "|---|---|---|",
+        "| 传输 | 明文 | TLS 加密 |",
+        "| 端口 | 80 | 443 |",
+        "| 身份 | 无 | 证书认证 |",
+        "| 完整性 | 无 | 有（MAC）|",
+        "| 性能 | 略快 | 多 1-2 RTT 握手（TLS 1.3 已优化到 1-RTT/0-RTT）|",
+        "| SEO | 弱 | Google 优先 |"
+      ],
+      "followups": [
+        "TLS 1.3 相比 1.2 改进了什么？（1-RTT/0-RTT、去掉不安全算法）",
+        "为什么对称加密快、非对称加密慢？为什么不全用非对称？",
+        "HSTS 是什么？解决什么问题？"
+      ]
+    },
+    {
+      "id": "fe.03.32",
+      "category": "fe",
+      "module": 3,
+      "moduleName": "浏览器原理",
+      "index": 32,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "概念"
+      ],
+      "title": "HTTP/2 和 HTTP/3 相比 HTTP/1.1 有什么改进？为什么 HTTP/3 改用 UDP？",
+      "focus": "HTTP/2：二进制分帧、多路复用（一个 TCP 连接并发多请求）、头部压缩 HPACK、服务端推送。HTTP/3：抛弃 TCP，基于 QUIC（UDP），解决 TCP 层队头阻塞、握手更快（TLS 1.3 内建 1-RTT/0-RTT）、支持连接迁移。",
+      "answer": [
+        "**HTTP 版本演进**：",
+        "| 版本 | 传输 | 关键特性 | 痛点 |",
+        "|---|---|---|---|",
+        "| HTTP/1.1 | TCP | 持久连接、管道化 | 队头阻塞、连接数受限、文本头大 |",
+        "| HTTP/2 | TCP | 二进制分帧、**多路复用**、HPACK 头部压缩、Server Push | TCP 层队头阻塞（丢一个包全堵）|",
+        "| HTTP/3 | **QUIC(UDP)** | 无队头阻塞、0/1-RTT 握手、连接迁移 | 部署/兼容仍在推进 |"
+      ],
+      "followups": [
+        "HTTP/2 还需要打包/雪碧图吗？为什么？",
+        "QUIC 怎么在 UDP 上实现可靠性？",
+        "为什么 HTTP/3 部署比 HTTP/2 慢？（UDP 在中间设备/防火墙常被限）"
+      ]
+    },
+    {
+      "id": "fe.03.33",
+      "category": "fe",
+      "module": 3,
+      "moduleName": "浏览器原理",
+      "index": 33,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "JavaScript 的垃圾回收机制是怎样的？",
+      "focus": "JS 栈由执行上下文进出自动回收（ESP 指针下移即销毁）；堆靠 GC。判断可达性：从根（全局对象、当前栈上的变量）出发遍历，能到达的对象存活，到达不了的就是垃圾，靠「标记-清除」算法回收。GC 在代码执行间隙分批进行，避免长时间卡顿。",
+      "answer": [
+        "**栈**：基本类型、引用地址。函数执行完，上下文出栈，ESP（栈顶指针）下移，该空间自动「失效」（被后续覆盖）。**没有显式 GC**。",
+        "**堆**：对象、闭包变量。靠**垃圾回收器**识别「不可达」对象并释放。"
+      ],
+      "followups": [
+        "WeakMap/WeakSet 为什么不会阻止 GC？（弱引用，不计入可达性）",
+        "如何排查页面内存泄漏？（Heap snapshot 三段对比法）"
+      ]
+    },
+    {
+      "id": "fe.03.34",
+      "category": "fe",
+      "module": 3,
+      "moduleName": "浏览器原理",
+      "index": 34,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "概念"
+      ],
+      "title": "Web Worker 和 Service Worker 分别是什么？有什么区别和使用场景？",
+      "focus": "Web Worker 是给页面跑耗时计算的后台线程（纯计算，用完销毁），与主线程 postMessage 通信。Service Worker 是浏览器和网络之间的可编程代理（离线缓存、推送、后台同步），独立于页面、有生命周期、可拦截 fetch 请求。两者都不能操作 DOM。",
+      "answer": [
+        "**对比**：",
+        "| 维度 | Web Worker | Service Worker |",
+        "|---|---|---|",
+        "| 角色 | 页面的「计算助手」 | 浏览器/网络的「代理+缓存层」 |",
+        "| 生命周期 | 随页面 | 独立，跨页面/重启仍存在 |",
+        "| 通信 | postMessage | postMessage + fetch 拦截 + 消息推送 |",
+        "| DOM | ✗ | ✗ |",
+        "| 持久化 | ✗（SharedWorker 例外）| ✓（Cache API）|",
+        "| HTTPS | 不强制 | 强制（开发 localhost 例外）|",
+        "| 典型场景 | 大数据计算、图片处理、解析 | PWA 离线、推送通知、资源缓存 |"
+      ],
+      "followups": [
+        "为什么 Worker 不能操作 DOM？（避免多线程并发修改 DOM 的竞态）",
+        "postMessage 传大对象性能差怎么办？（Transferable / SharedArrayBuffer）",
+        "Service Worker 更新后旧页面还用旧版本，怎么平滑升级？（skipWaiting + clients.claim）",
+        "PWA 离线原理是什么？"
+      ]
+    },
+    {
+      "id": "fe.04.35",
+      "category": "fe",
+      "module": 4,
+      "moduleName": "跨端",
+      "index": 35,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "手写"
+      ],
+      "title": "瀑布流布局怎么实现？有哪些方案？",
+      "focus": "三种方案：①CSS columns（最简单，但顺序是列优先）②JS 分列（计算每列高度，新元素放最短列，顺序正确）③CSS Grid（masonry 还在实验中）。实际项目多用 JS 分列方案，控制精确、顺序正确。",
+      "answer": [
+        "**瀑布流特点**：等宽不等高的卡片，像 Pinterest 那样错落排列，填满空间无大空白。"
+      ],
+      "followups": [
+        "瀑布流里图片高度异步加载怎么处理？（提示：onload 后重排）",
+        "无限滚动的瀑布流，新数据来了怎么高效追加？",
+        "CSS columns 的列优先顺序问题能解决吗？"
+      ]
+    },
+    {
+      "id": "fe.04.36",
+      "category": "fe",
+      "module": 4,
+      "moduleName": "跨端",
+      "index": 36,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "手写"
+      ],
+      "title": "如何实现一个轮播图（carousel）？请手写。",
+      "focus": "核心：用 transform: translateX 做位移，定时器自动切换 + 拖拽/点击手动切换；无缝循环靠克隆首尾元素实现。",
+      "answer": [
+        "**轮播图核心实现**："
+      ],
+      "followups": [
+        "用 CSS scroll-snap 实现轮播和 JS 实现各有什么优劣？",
+        "轮播图在 SSR 下要注意什么？"
+      ]
+    },
+    {
+      "id": "fe.04.37",
+      "category": "fe",
+      "module": 4,
+      "moduleName": "跨端",
+      "index": 37,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "概念"
+      ],
+      "title": "Taro 跨端框架的原理是什么？",
+      "focus": "Taro 原理是「编译时 + 运行时」：编译时把 React 代码转成各端的代码（小程序转 WXML/WXSS/JS，H5 转原生标签）；运行时提供统一的组件库和 API 适配层，抹平各端差异。本质是「用 React 语法描述 UI，编译器翻译成各端产物」。",
+      "answer": [
+        "**Taro 的两层架构**："
+      ],
+      "followups": [
+        "Taro3 的运行时方案和 Taro2 的纯编译方案有什么区别？为什么改？",
+        "Taro 和 uni-app 跨端原理有什么不同？"
+      ]
+    },
+    {
+      "id": "fe.04.38",
+      "category": "fe",
+      "module": 4,
+      "moduleName": "跨端",
+      "index": 38,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "虚拟滚动（virtual scroll）的实现原理是什么？",
+      "focus": "虚拟滚动只渲染可视区域的列表项，用绝对定位 + transform 偏移，滚动时动态替换内容，靠一个大的占位元素撑出总高度。核心：计算可视区间 [startIndex, endIndex]，只渲染这部分，用 padding/transform 撑出滚动条。",
+      "answer": [
+        "**为什么需要虚拟滚动**：列表有上万条，全渲染 DOM 会卡死（DOM 太多）。虚拟列表只渲染可视区的几十条，滚动时动态替换。"
+      ],
+      "followups": [
+        "不定高虚拟列表怎么实现？（提示：预估高度 + 实际测量缓存 + 二分查找）",
+        "虚拟滚动滚动过快会白屏怎么办？（提示：加 buffer、预渲染）",
+        "React Window / react-virtualized 这些库比手写强在哪？"
+      ]
+    },
+    {
+      "id": "fe.04.39",
+      "category": "fe",
+      "module": 4,
+      "moduleName": "跨端",
+      "index": 39,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "概念"
+      ],
+      "title": "Electron 和 NW.js（node-webkit）有什么区别？",
+      "focus": "两者都用 Chromium + Node 做 Web 桌面应用，区别在架构：Electron 多进程（主进程用 Node + 渲染进程用 Chromium），渲染进程默认隔离、要 IPC 调 Node；NW.js 单进程，把 Node 直接注入 DOM。Electron 进程隔离更安全、生态更主流，NW.js 基本被淘汰。",
+      "answer": [
+        "**Electron vs NW.js**：",
+        "| 维度 | Electron | NW.js |",
+        "|---|---|---|",
+        "| 架构 | 主进程(Node)+渲染进程(Chromium)，多进程 | 单进程，Node 直接注入 DOM |",
+        "| Node 访问 | 渲染进程默认隔离，要 IPC 调主进程 | DOM 里直接能用 Node API |",
+        "| 安全 | 更好（进程隔离） | 较弱（DOM 直接碰 Node） |",
+        "| 生态 | 极成熟（VSCode/Slack/Discord） | 衰落 |",
+        "两者都是 Chromium + Node，但 Electron 的多进程架构更安全、更主流，NW.js 基本被淘汰。"
+      ],
+      "followups": [
+        "Electron 的 contextIsolation 和 nodeIntegration 为什么默认关？",
+        "Electron 的 IPC 通信有性能瓶颈吗？",
+        "为什么 NW.js 输给了 Electron？"
+      ]
+    },
+    {
+      "id": "fe.05.40",
+      "category": "fe",
+      "module": 5,
+      "moduleName": "CSS",
+      "index": 40,
+      "type": "qa",
+      "difficulty": "初",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "CSS 盒模型有哪几种？`box-sizing` 的作用是什么？两种盒模型的区别是什么？",
+      "focus": "盒模型分标准盒模型（content-box，默认）和怪异盒模型（border-box）。前者 width 只含内容，后者 width 包含内容+padding+border，开发中几乎都用 border-box。",
+      "answer": [
+        "盒模型由内到外四部分：**content（内容）、padding（内边距）、border（边框）、margin（外边距）**。",
+        "两种模型的区别就在 `width` 到底算哪部分：",
+        "| 模型 | box-sizing | width 包含 | 加 padding 后盒子的实际占地宽度 |",
+        "|---|---|---|---|",
+        "| 标准盒模型（默认） | content-box | 仅 content | width + padding + border，盒子被撑大 |",
+        "| 怪异盒模型 | border-box | content+padding+border | 不变，padding 从 content 里扣 |"
+      ],
+      "followups": [
+        "`outline`（轮廓）算在盒模型里吗？它和 border 有什么区别？（提示：outline 不占布局空间）",
+        "相邻块级元素的 margin 为什么会「折叠」？折叠规则是什么？",
+        "inline 元素的 padding/margin 在垂直方向上表现有什么不同？"
+      ]
+    },
+    {
+      "id": "fe.05.41",
+      "category": "fe",
+      "module": 5,
+      "moduleName": "CSS",
+      "index": 41,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "CSS 选择器的优先级（specificity）如何计算？`!important` 在其中起什么作用？",
+      "focus": "优先级按 (行内样式, ID, 类/属性/伪类, 元素/伪元素) 四级比较，从左到右高位大的胜出；同级则后写的覆盖先写的；`!important` 凌驾于所有规则之上但应慎用。",
+      "answer": [
+        "浏览器用「特指度」（specificity）四元组 (a, b, c, d) 判断谁赢：",
+        "| 级别 | 对应选择器 | 权重示例 |",
+        "|---|---|---|",
+        "| a 行内样式 | `style=\"\"` | (1,0,0,0) |",
+        "| b ID | `#id` | (0,1,0,0) |",
+        "| c 类/属性/伪类 | `.class`、`[type]`、`:hover` | (0,0,1,0) |",
+        "| d 元素/伪元素 | `div`、`::before` | (0,0,0,1) |",
+        "| 通配/继承 | `*`、继承来的 | (0,0,0,0) |",
+        "比较时**从左到右逐位比**，左边大的直接赢（注意不是简单的十进制加法，11 个 class 不会超过 1 个 ID）。",
+        "举例：`#nav .item:hover` = (0,1,2,0)；`div ul li a` = (0,0,0,4)。"
+      ],
+      "followups": [
+        "两个 `!important` 规则冲突时谁赢？（提示：再回到 specificity 比较）",
+        "继承来的样式优先级是多少？（提示：比通配符还低，会被任意直接规则覆盖）",
+        "`:not()`、`:is()`、`:where()` 对优先级有什么影响？（提示：:where() 永远是 0）"
+      ]
+    },
+    {
+      "id": "fe.05.42",
+      "category": "fe",
+      "module": 5,
+      "moduleName": "CSS",
+      "index": 42,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "CSS `position` 的五个取值（static/relative/absolute/fixed/sticky）各有什么区别？",
+      "focus": "static 默认不定位；relative 相对自己原位置偏移且占位；absolute 相对最近非 static 祖先且脱标不占位；fixed 相对视口且脱标；sticky 滚动未达阈值时像 relative、达到阈值后像 fixed。",
+      "answer": [
+        "| 取值 | 定位参考系 | 是否脱离文档流 | 原位置是否保留 |",
+        "|---|---|---|---|",
+        "| static（默认） | 不定位，top/left 无效 | 否 | — |",
+        "| relative | 自身原本在文档流中的位置 | 否 | 保留（占位） |",
+        "| absolute | 最近的 position ≠ static 的祖先，没有则 html | 是 | 不保留 |",
+        "| fixed | 浏览器视口（有 transform 祖先时例外） | 是 | 不保留 |",
+        "| sticky | 滚动容器，阈值前 relative、阈值后 fixed | 否（达标前）/是（达标后） | 阈值前保留 |"
+      ],
+      "followups": [
+        "`absolute` 元素的父级都是 static，它相对谁定位？（提示：html / 初始包含块）",
+        "`fixed` 元素的祖先有 `transform`，会带来什么问题？（提示：参考系变了）",
+        "`sticky` 为什么有时候不生效？常见失效原因有哪些？"
+      ]
+    },
+    {
+      "id": "fe.05.43",
+      "category": "fe",
+      "module": 5,
+      "moduleName": "CSS",
+      "index": 43,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "实现元素水平垂直居中有哪些方案？各自适用什么场景？",
+      "focus": "现代首选 `display:flex; justify-content:center; align-items:center;`（一行搞定）；grid 用 `place-items:center` 更简洁；不知宽高时用 `absolute + transform:translate(-50%,-50%)`。",
+      "answer": [
+        "按「是否需要知道宽高」分类记忆：",
+        "| 方案 | 关键代码 | 是否需知宽高 | 备注 |",
+        "|---|---|---|---|",
+        "| flex | 父 `display:flex; justify-content:center; align-items:center;` | 否 | 现代首选 |",
+        "| grid | 父 `display:grid; place-items:center;` | 否 | 最简洁 |",
+        "| absolute + transform | 子 `position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);` | 否 | 不需知宽高 |",
+        "| absolute + margin 负值 | 子 `left:50%; top:50%; margin:-w/2 -h/2;` | 是 | 需知宽高 |",
+        "| absolute + margin auto | 子 `position:absolute; inset:0; margin:auto;` | 是 | 需知宽高 |",
+        "| 行内文本 | 父 `text-align:center; line-height=高;` 或 table-cell | — | 适合单行文字 |"
+      ],
+      "followups": [
+        "`transform:translate(-50%,-50%)` 为什么不需要知道元素宽高？（提示：% 基于自身尺寸）",
+        "flex 布局里子项太多时，`align-items` 和 `align-content` 有什么区别？",
+        "如何让一段多行文字垂直居中？（提示：flex 或 `display:table-cell; vertical-align:middle;`）"
+      ]
+    },
+    {
+      "id": "fe.05.44",
+      "category": "fe",
+      "module": 5,
+      "moduleName": "CSS",
+      "index": 44,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "`flex: 1` 这个缩写的完整含义是什么？",
+      "focus": "`flex: 1` 等价于 `flex: 1 1 0%`，即 grow=1（有剩余则放大占满）、shrink=1（空间不足则缩小）、basis=0%（初始基准为 0，完全靠 grow 分配）。所以 `flex:1` 的元素会自动占满剩余空间。",
+      "answer": [
+        "第一个 1 → flex-grow=1（放大比例）",
+        "第二个 1 → flex-shrink=1（缩小比例）",
+        "0% → flex-basis=0%（基准尺寸）"
+      ],
+      "followups": [
+        "`flex:1` 和 `flex:1 1 auto` 在视觉上为什么可能不一样？（提示：basis 不同）",
+        "`flex-basis` 和 `width` 同时设置时谁优先？（提示：basis 优先，auto 时才回退到 width）",
+        "如何实现「左侧固定宽、右侧自适应」的两栏布局？（提示：flex:0 0 200px + flex:1）"
+      ]
+    },
+    {
+      "id": "fe.05.45",
+      "category": "fe",
+      "module": 5,
+      "moduleName": "CSS",
+      "index": 45,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "概念"
+      ],
+      "title": "伪元素 `::before` 和 `:before` 有什么区别？`content` 属性起什么作用？",
+      "focus": "`::before`（双冒号）是 CSS3 规范的伪元素写法，`:before`（单冒号）是 CSS2 旧写法，效果完全等价，现代浏览器都支持，推荐用双冒号。伪元素默认不生成，必须设置 `content` 属性才会出现在渲染树中。",
+      "answer": [
+        "CSS2 时代伪类和伪元素都用单冒号（`:hover`、`:before`）。",
+        "CSS3 为了区分「伪类」（单冒号，如 `:hover :first-child`）和「伪元素」（双冒号，如 `::before ::after`），规定伪元素统一用双冒号。",
+        "为向后兼容，浏览器对 `:before` 仍按伪元素处理，所以两者等价。实际开发推荐双冒号以符合规范。"
+      ],
+      "followups": [
+        "伪元素能被 `document.querySelector` 选中吗？能用 JS 修改它的 content 吗？（提示：不能直接选中，但可改父元素 class 间接切换）",
+        "`content: counter()` 计数器怎么配合 `counter-reset`/`counter-increment` 使用？",
+        "为什么 clearfix 清除浮动要用伪元素而不是直接给父元素 overflow:hidden？（提示：避免副作用）"
+      ]
+    },
+    {
+      "id": "fe.05.46",
+      "category": "fe",
+      "module": 5,
+      "moduleName": "CSS",
+      "index": 46,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "如何用 CSS 实现暗黑模式 / 主题切换？",
+      "focus": "主流方案：用 CSS 自定义属性（变量）把颜色抽象出来，根元素切换 `data-theme` 属性改变量值，或用 `prefers-color-scheme` 媒体查询跟随系统。JS 只负责切换 data 属性，所有样式靠 CSS 变量自动响应。",
+      "answer": [
+        "主题切换的核心思路是「把颜色抽象成变量，切换时只改变量值，不动具体样式」。"
+      ],
+      "followups": [
+        "CSS 变量和 Sass 变量的本质区别是什么？（提示：运行时 vs 编译时）",
+        "如何让主题跟随系统又允许用户手动覆盖？（提示：prefers-color-scheme 设默认值 + JS 改 data-theme 覆盖）",
+        "为什么 CSS 变量切换主题比改 class 名重新加载样式性能好？"
+      ]
+    },
+    {
+      "id": "fe.05.47",
+      "category": "fe",
+      "module": 5,
+      "moduleName": "CSS",
+      "index": 47,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "CSS3 的 `transform`、`transition`、`animation` 有什么区别？分别怎么用？",
+      "focus": "transform 是「变换动作」（位移/缩放/旋转，不触发回流）；transition 是「被动过渡」（状态改变时平滑过渡，需触发）；animation 是「主动动画」（用 @keyframes 关键帧自动循环播放）。三者常配合使用。",
+      "answer": [
+        "**transform**：`translate()/scale()/rotate()/skew()`，改变视觉但**不影响文档流和布局**，走 GPU 合成层，性能最佳。它常作为动画的「动作来源」。",
+        "**transition**：定义「属性值变化时怎么平滑过渡」。语法 `transition: property duration timing-function delay;`。只支持可插值的属性（颜色、数值），不支持从 `display:none` 过渡。",
+        "**animation**：用 `@keyframes` 定义关键帧，配合 `animation: name duration timing-function delay iteration-count direction` 播放，支持循环、反向、暂停。"
+      ],
+      "followups": [
+        "`transition` 能让 `display:none → block` 平滑过渡吗？为什么？（提示：不能，display 不可插值，需用 opacity/visibility 替代）",
+        "`transform` 为什么能 GPU 加速、不触发回流？（提示：作用于合成层，不改布局）",
+        "`animation` 的 `steps()` 函数有什么用？（提示：雪碧图逐帧动画）"
+      ]
+    },
+    {
+      "id": "fe.05.48",
+      "category": "fe",
+      "module": 5,
+      "moduleName": "CSS",
+      "index": 48,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "实现响应式布局有哪些常用方案？",
+      "focus": "主流：媒体查询 @media 做断点、弹性单位 rem/em/vw/vh 做缩放、flex/grid 弹性布局做自适应，新特性还有容器查询 @container。核心思想是「一套代码适配多端」。",
+      "answer": [
+        "响应式 = 内容和布局随视口/容器变化而自适应。常用方案分三类："
+      ],
+      "followups": [
+        "`rem` 和 `em` 的区别？为什么容易混淆出错？（提示：参照物不同，em 会逐级嵌套放大）",
+        "移动端为什么常用 rem 配合 flexible.js？（提示：动态算 html font-size 适配不同 dpr）",
+        "移动端「1px 边框」问题怎么解决？（提示：用 transform:scaleY(0.5) 或媒体查询按 dpr 调整）"
+      ]
+    },
+    {
+      "id": "fe.05.49",
+      "category": "fe",
+      "module": 5,
+      "moduleName": "CSS",
+      "index": 49,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "flex 容器空间不足时，`flex-shrink` 如何计算各子项实际收缩的宽度？",
+      "focus": "收缩不是简单等比例缩小，而是按 `shrink × basis` 的加权比例分配。某子项的收缩量 = 总溢出量 × (本项shrink×basis) / Σ(各项shrink×basis)。",
+      "answer": [
+        "当 flex-shrink > 0 且主轴空间不够时，浏览器先算出溢出量，再按权重把溢出量分摊到各子项。"
+      ],
+      "followups": [
+        "如果某项 `flex-shrink: 0`，空间不足时会怎样？（提示：不收缩，可能溢出容器）",
+        "flex 子项会被压缩到 0 宽度吗？什么在保护它？（提示：min-width:auto 默认保护）",
+        "为什么三个 shrink 都等于 1 时，收缩量却不相等？（提示：basis 不同导致权重不同）"
+      ]
+    },
+    {
+      "id": "fe.05.50",
+      "category": "fe",
+      "module": 5,
+      "moduleName": "CSS",
+      "index": 50,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "什么是 BFC（块级格式化上下文）？如何触发？有哪些典型应用场景？",
+      "focus": "BFC 是一块独立隔离的渲染区域，内部元素与外部互不影响。触发方式：overflow:hidden/auto、float、position:absolute/fixed、display:flex/inline-block/flow-root 等。应用：清除浮动、避免 margin 塌陷、自适应两栏布局。",
+      "answer": [
+        "BFC = Block Formatting Context，块级格式化上下文。可理解为给元素套一个「结界」，里面元素的布局不影响外面，外面也不影响里面。"
+      ],
+      "followups": [
+        "margin 塌陷发生在哪三种情况？（父子、相邻兄弟、空元素）",
+        "为什么 `overflow:hidden` 能清除浮动？它的原理是什么？",
+        "`display:flow-root` 相比 `overflow:hidden` 触发 BFC 有什么优势？（提示：无裁剪副作用）"
+      ]
+    },
+    {
+      "id": "fe.06.51",
+      "category": "fe",
+      "module": 6,
+      "moduleName": "设计模式",
+      "index": 51,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "概念"
+      ],
+      "title": "设计模式分为哪三大类？前端常用的是哪些？",
+      "focus": "三大类：创建型（怎么创建对象，如单例/工厂）、结构型（怎么组合对象，如装饰器/代理/适配器）、行为型（对象间怎么通信，如观察者/发布订阅/策略）。前端最常用：单例、观察者/发布订阅、策略、装饰器、代理。",
+      "answer": [
+        "**GoF 23 种设计模式分三类**："
+      ],
+      "followups": [
+        "观察者模式和发布订阅模式有什么区别？（核心高频）",
+        "单例模式在前端怎么实现？有什么坑？",
+        "策略模式相比 if-else 优势在哪？"
+      ]
+    },
+    {
+      "id": "fe.06.52",
+      "category": "fe",
+      "module": 6,
+      "moduleName": "设计模式",
+      "index": 52,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "概念"
+      ],
+      "title": "单例模式是什么？前端有哪些应用场景？",
+      "focus": "单例保证一个类全局只有一个实例，并提供全局访问点。前端应用：全局状态（store）、弹窗/登录框（只一个）、日志/请求工具类、全局配置。",
+      "answer": [
+        "**单例模式**：保证一个类只有一个实例，并提供全局访问点。"
+      ],
+      "followups": [
+        "单例模式有什么缺点？（全局状态难测试、隐式依赖）"
+      ]
+    },
+    {
+      "id": "fe.06.53",
+      "category": "fe",
+      "module": 6,
+      "moduleName": "设计模式",
+      "index": 53,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "观察者模式和发布订阅模式有什么区别？",
+      "focus": "观察者模式：目标和观察者直接耦合，目标直接通知观察者。发布订阅：目标和订阅者通过「事件中心（调度中心）」解耦，互不认识。区别就在有没有中间调度中心。手写 EventBus 核心：on 注册、emit 触发、off 取消。",
+      "answer": [
+        "**两种模式的区别**（关键考点）："
+      ],
+      "followups": [
+        "EventBus 怎么实现 once（只触发一次）？",
+        "发布订阅模式会不会内存泄漏？（回调没 off 掉）",
+        "Vue 的响应式是观察者还是发布订阅？（提示：观察者）"
+      ]
+    },
+    {
+      "id": "fe.06.54",
+      "category": "fe",
+      "module": 6,
+      "moduleName": "设计模式",
+      "index": 54,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "概念"
+      ],
+      "title": "策略模式、责任链模式、装饰器模式各自解决什么问题？它们的共同思想是什么？",
+      "focus": "策略模式替代 if-else（把可互换的算法/规则封装起来）；责任链让请求沿链传递、每个节点决定处理或下传（中间件）；装饰器在不改原对象的前提下动态叠加功能（HOC）。三者都服务于「开闭原则」——对扩展开放、对修改封闭。",
+      "answer": [
+        "**三种模式各自定位**：",
+        "| 模式 | 解决的问题 | 前端经典场景 |",
+        "|---|---|---|",
+        "| 策略模式（Strategy） | 多种算法/规则用 if-else 写很乱 → 封装成可互换策略 | 表单校验、折扣计算 |",
+        "| 责任链（Chain of Responsibility） | 一个请求要经过多个处理步骤、顺序可变 → 链式传递 | Koa/Express 中间件、事件冒泡 |",
+        "| 装饰器（Decorator） | 想加功能但不想改原对象 → 包一层叠加 | React HOC（withRouter、connect） |"
+      ],
+      "followups": [
+        "策略模式和状态模式有什么区别？",
+        "中间件（洋葱圈）和经典责任链有什么不同？",
+        "React HOC 和 Hook，哪个更符合装饰器思想？"
+      ]
+    },
+    {
+      "id": "fe.07.55",
+      "category": "fe",
+      "module": 7,
+      "moduleName": "工程化",
+      "index": 55,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "Webpack 里 module、chunk、bundle 这三个概念分别是什么？",
+      "focus": "module 是源码里的单个文件（一切皆模块）；chunk 是 webpack 内部构建的代码块（打包过程的中间态，含入口chunk/异步chunk）；bundle 是最终输出的文件（chunk 经过处理后的产物）。关系：module → 组成 chunk → 输出 bundle。",
+      "answer": [
+        "你写的每一个源文件就是一个 module（JS、CSS、图片，一切皆模块）。",
+        "webpack 从入口开始，通过 import/require 把所有依赖的 module 收集起来，形成依赖图。",
+        "webpack 构建过程中的**中间态**。一个 chunk 由多个 module 组成。",
+        "分类：",
+        "**Entry Chunk（入口 chunk）**：从 entry 生成的。",
+        "**Async Chunk（异步 chunk）**：动态 import（`() => import()`）产生的，按需加载。",
+        "**Common Chunk（公共 chunk）**：SplitChunksPlugin 抽取的公共代码。",
+        "chunk 是 webpack 内部的概念，最终会被处理成 bundle。",
+        "chunk 经过 webpack 处理（加运行时、压缩等）后输出的最终文件。",
+        "一个 chunk 通常对应一个 bundle 文件（但配置 minchunks/split 可能变化）。"
+      ],
+      "followups": [
+        "SplitChunksPlugin 是怎么把公共代码抽成单独 chunk 的？",
+        "动态 import 产生的 chunk 怎么加载？",
+        "bundle 和 chunk 在什么情况下不是一一对应？"
+      ]
+    },
+    {
+      "id": "fe.07.56",
+      "category": "fe",
+      "module": 7,
+      "moduleName": "工程化",
+      "index": 56,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "pnpm 相比 npm/yarn 有什么优势？",
+      "focus": "pnpm 优势：用硬链接 + 软链接（content-addressable store）节省磁盘、严格依赖隔离（防幽灵依赖）、安装快、原生支持 monorepo。",
+      "answer": [
+        "npm/yarn：每个项目的 node_modules 都拷贝一份依赖，10 个项目用 React 就存 10 份。",
+        "pnpm：全局 store 只存一份，各项目的 node_modules 用**硬链接**指向 store。省磁盘。",
+        "npm/yarn 的 node_modules 是扁平的，你能 import 没在 package.json 里声明但被其他包安装的依赖（幽灵依赖）。",
+        "pnpm：node_modules 用软链接结构，**只有 package.json 声明的依赖才能被访问**。杜绝幽灵依赖，更安全。"
+      ],
+      "followups": [
+        "幽灵依赖具体会带来什么问题？",
+        "pnpm 的软链接结构有没有兼容性问题？（有些工具不认软链接）",
+        "monorepo 里 pnpm workspace 怎么管理内部包依赖？"
+      ]
+    },
+    {
+      "id": "fe.07.57",
+      "category": "fe",
+      "module": 7,
+      "moduleName": "工程化",
+      "index": 57,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "Webpack 的打包原理是什么？",
+      "focus": "webpack 从入口出发递归构建依赖图，用 loader 把各类文件转成 JS 模块，分组生成 chunk，经 plugin 在生命周期各阶段干预后输出 bundle。",
+      "answer": [
+        "**Webpack 打包原理**：",
+        "1. **读配置**：entry、output、loader、plugin。",
+        "2. **构建依赖图**：从 entry 开始，递归解析每个 import/require，用 loader 处理非 JS 文件，收集所有 module 及其依赖。",
+        "3. **生成 chunk**：根据依赖关系把 module 分组成 chunk。",
+        "4. **应用 plugin**：在编译生命周期的各钩子（编译开始/模块构建/优化/输出）执行 plugin 逻辑。",
+        "5. **输出 bundle**：把 chunk 写到 output 目录。",
+        "6. **产物**：bundle（含 webpack 运行时 + 模块代码）。"
+      ],
+      "followups": [
+        "webpack 的构建生命周期有哪些关键 hook？"
+      ]
+    },
+    {
+      "id": "fe.07.58",
+      "category": "fe",
+      "module": 7,
+      "moduleName": "工程化",
+      "index": 58,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "Vite 为什么比 Webpack 快？",
+      "focus": "Vite 快在：开发时用浏览器原生 ESM「按需加载」（不打包，请求哪个模块编译哪个），只有依赖预构建用 esbuild（极快）。Webpack 要先把所有模块打成 bundle 再启动，项目越大启动越慢。",
+      "answer": [
+        "**Vite vs Webpack 的根本区别**："
+      ],
+      "followups": [
+        "为什么 Vite 生产环境用 Rollup 不用 esbuild？",
+        "Vite 的 ESM 模式在旧浏览器怎么办？"
+      ]
+    },
+    {
+      "id": "fe.07.59",
+      "category": "fe",
+      "module": 7,
+      "moduleName": "工程化",
+      "index": 59,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "概念"
+      ],
+      "title": "Rsbuild（基于 Rspack）为什么比 Vite/Webpack 快？它的定位是什么？",
+      "focus": "Rspack 用 Rust 重写了 webpack 核心（兼容 webpack 生态），Rsbuild 是基于 Rspack 的开箱即用方案。比 Vite 快在：生产环境也极快（Vite 生产用 Rollup 较慢）；比 Webpack 快在：Rust 编译（多核并行、无 JS 开销）。定位：webpack 的性能替代品，迁移成本低。",
+      "answer": [
+        "用 **Rust** 重写 webpack 核心。",
+        "兼容 webpack 的 loader/plugin API，迁移成本低（webpack 配置几乎能直接用）。",
+        "Rust 性能：多核并行、无 JIT 开销、内存安全，编译速度比 webpack 快 5-10 倍。"
+      ],
+      "followups": [
+        "Rspack 怎么做到兼容 webpack 的 loader/plugin？有兼容性坑吗？",
+        "Rust 写的构建工具（Rspack/swc/esbuild）为什么比 JS 快这么多？",
+        "Rsbuild 和 Turbopack（Vercel）有什么区别？"
+      ]
+    },
+    {
+      "id": "fe.07.60",
+      "category": "fe",
+      "module": 7,
+      "moduleName": "工程化",
+      "index": 60,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "CommonJS（CJS）和 ES Modules（ESM）有什么区别？为什么 ESM 是趋势？",
+      "focus": "CJS 用 require/module.exports（运行时加载、同步、可动态），ESM 用 import/export（编译时静态分析、异步、支持 tree-shaking）。ESM 是趋势因为：静态分析能力强（tree-shaking/优化）、官方标准、支持顶层 await、浏览器原生支持。",
+      "answer": [
+        "**核心区别对比**：",
+        "| 维度 | CommonJS | ESM |",
+        "|---|---|---|",
+        "| 语法 | require/module.exports | import/export |",
+        "| 加载时机 | 运行时（动态） | 编译时静态分析 |",
+        "| 同步/异步 | 同步（阻塞） | 异步 |",
+        "| 动态导入 | require 可在任意位置 | 静态 import 顶层；动态用 import() |",
+        "| 值的拷贝 | 导出值的拷贝（改了不影响原） | 导出值的引用（绑定） |",
+        "| this | module.exports = {} | undefined |",
+        "| tree-shaking | 不支持（运行时才知道导出啥） | 支持（静态分析知道用了啥） |"
+      ],
+      "followups": [
+        "Node.js 怎么区分一个文件是 CJS 还是 ESM？（package.json type / .mjs/.cjs）",
+        "ESM 里怎么用 __dirname/__filename？（提示：import.meta.url）",
+        "CJS 和 ESM 互操作（CJS 里 import ESM）有什么坑？"
+      ]
+    },
+    {
+      "id": "fe.07.61",
+      "category": "fe",
+      "module": 7,
+      "moduleName": "工程化",
+      "index": 61,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "概念"
+      ],
+      "title": "Webpack 的模块联邦（Module Federation）是什么？它和微前端是什么关系？",
+      "focus": "模块联邦让多个独立打包的应用在运行时共享模块——一个应用 expose 暴露模块，另一个远程 consume 消费，无需重新打包。它本质是一种微前端实现方案（运行时集成独立应用），也可用于组件/库的动态共享。",
+      "answer": [
+        "**模块联邦核心概念**：",
+        "1. **Host（消费者）**：引用其他应用模块的应用。",
+        "2. **Remote（提供者）**：暴露模块给其他应用用的应用。",
+        "3. **运行时共享**：Host 启动时从 Remote 动态加载模块，不需要打包时静态引入。"
+      ],
+      "followups": [
+        "模块联邦怎么处理共享依赖的版本冲突？",
+        "模块联邦和 qiankun 在微前端场景下各有什么优劣？",
+        "remoteEntry.js 是怎么被加载和解析的？"
+      ]
+    },
+    {
+      "id": "fe.08.62",
+      "category": "fe",
+      "module": 8,
+      "moduleName": "JS 原理",
+      "index": 62,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "JavaScript 中 `this` 的指向规则是什么？",
+      "focus": "`this` 在函数**调用时**才确定（动态），看「谁调用了函数」。5 种规则按优先级：默认绑定 < 隐式绑定 < 显式绑定(call/apply/bind) < new 绑定；箭头函数没有自己的 this，继承外层（静态，不受上述规则影响）。",
+      "answer": [
+        "**`this` 指向规则**（按优先级从低到高）：",
+        "1. **默认绑定**：独立函数调用，非严格模式 `this` 是 window/global，严格模式是 undefined。",
+        "2. **隐式绑定**：`obj.fn()`，`this` 指向 obj（谁调用指向谁）。注意隐式丢失：`var bar = obj.fn; bar()` 会丢成默认绑定。",
+        "3. **显式绑定**：`fn.call(obj)` / `fn.apply(obj)`，强行指定 this（见追问1）。",
+        "4. **new 绑定**：`new fn()`，this 指向新创建的对象（优先级最高之一）。",
+        "5. **箭头函数**：**没有自己的 this**，继承定义时外层的 this（静态，不可被 call/apply/bind 改变）。"
+      ],
+      "followups": [
+        "箭头函数能用 call 改变 this 吗？为什么？（提示：没有自己的 this）",
+        "bind 之后再用 new 调用，this 指向谁？（提示：new 优先级更高）"
+      ]
+    },
+    {
+      "id": "fe.08.63",
+      "category": "fe",
+      "module": 8,
+      "moduleName": "JS 原理",
+      "index": 63,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "什么是防抖（debounce）？它解决什么问题？",
+      "focus": "防抖：事件频繁触发时，只在「最后一次触发后等一段时间」才执行——连续触发期间一直不执行。核心是「每次触发都清掉上一次的定时器，重新计时」。",
+      "answer": [
+        "**解决什么问题**：高频事件（input、resize、按钮连点）每秒触发几十上百次，直接执行会导致频繁请求/DOM 操作，卡顿。"
+      ],
+      "followups": [
+        "防抖要不要支持「立即执行」版本？怎么实现？（提示：加 immediate 参数，首次触发立即执行，之后进入冷却）",
+        "节流（throttle）和防抖的区别是什么？（提示：节流是匀速执行，见 fe-js-007）"
+      ]
+    },
+    {
+      "id": "fe.08.64",
+      "category": "fe",
+      "module": 8,
+      "moduleName": "JS 原理",
+      "index": 64,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "请手写一个节流函数（throttle）。",
+      "focus": "节流：固定时间间隔只执行一次，期间无视后续触发——匀速执行。和防抖（只执行最后一次）相反，节流保证「按固定节奏」执行。",
+      "answer": [
+        "**节流策略**：**保证固定节奏**。第一次触发立即执行，之后进入冷却期；冷却期内无视所有后续触发，冷却结束才允许下一次执行。"
+      ],
+      "followups": [
+        "节流的时间戳版和定时器版各有什么短板？（提示：时间戳版漏末次，定时器版首次延迟）",
+        "怎么写一个「首尾都执行」的节流？（提示：时间戳判断 + 定时器兜底末次）",
+        "防抖和节流怎么选？（提示：看是否需要「过程中也响应」——要则节流，不要则防抖）",
+        "requestAnimationFrame 和节流什么关系？（提示：rAF 相当于 ~16ms 的节流，且跟随刷新率）"
+      ]
+    },
+    {
+      "id": "fe.08.65",
+      "category": "fe",
+      "module": 8,
+      "moduleName": "JS 原理",
+      "index": 65,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "`Promise.all`、`Promise.race`、`Promise.allSettled`、`Promise.any` 这四个组合方法各自的行为和适用场景是什么？",
+      "focus": "按「等不等全部完成 / 取成功还是失败」分：all 要全部成功，any 要一个成功，race 取最快不管成败，allSettled 等全部完成不管成败。",
+      "answer": [
+        "**四个方法的本质差异**（一张表记住）：",
+        "| 方法 | 成功条件 | 失败行为 | 适用场景 |",
+        "|---|---|---|---|",
+        "| `Promise.all` | **全部**成功 | 任一失败→整体失败（短路） | 多个请求都要成功才继续 |",
+        "| `Promise.any` | **任一**成功 | 全失败→整体失败 | 取最快的一个成功响应 |",
+        "| `Promise.race` | 第一个完成（**不论成败**） | 第一个若是失败→失败 | 超时控制、取最快响应 |",
+        "| `Promise.allSettled` | **全部完成**（不论成败） | 永不 reject，返回状态数组 | 批量执行后统一汇总结果 |"
+      ],
+      "followups": [
+        "如何手写 Promise.all？遇到非 Promise 值怎么处理？（提示：用 Promise.resolve 包一层，按索引保证返回顺序）",
+        "如何手写 Promise.race？（提示：谁先 settle 谁就 resolve/reject 外层 Promise）",
+        "Promise.all 中一个失败后，其他还在 pending 的 Promise 会取消吗？（提示：不会，Promise 无法取消，只是结果被丢弃）",
+        "为什么没有 `Promise.none` 或 `Promise.first`？实际怎么模拟？（提示：用 allSettled + filter）"
+      ]
+    },
+    {
+      "id": "fe.08.66",
+      "category": "fe",
+      "module": 8,
+      "moduleName": "JS 原理",
+      "index": 66,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "什么是 JavaScript 的作用域和作用域链？",
+      "focus": "作用域是变量/函数的可访问范围（JS 用词法作用域，由代码书写位置决定）；作用域链是当前作用域→外层作用域→...→全局的层层查找路径；变量查找时从内层作用域开始，沿作用域链向外逐层找，找到即停，找不到报 ReferenceError；本质由执行上下文的变量对象（VO/AO）链构成。",
+      "answer": [
+        "**作用域（Scope）**：变量和函数的可访问范围。JS 是**词法作用域（静态作用域）**——作用域由代码书写位置决定，而非调用位置。"
+      ],
+      "followups": [
+        "词法作用域和动态作用域的区别？this 是哪种？",
+        "let/const 的块级作用域和 var 的函数作用域有什么本质区别？",
+        "作用域链和原型链有什么区别？（一个查变量，一个查属性）",
+        "闭包是怎么利用作用域链的？"
+      ]
+    },
+    {
+      "id": "fe.08.67",
+      "category": "fe",
+      "module": 8,
+      "moduleName": "JS 原理",
+      "index": 67,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "ES6 的 `class` 和传统构造函数+原型有什么区别？",
+      "focus": "class 本质是构造函数+原型的语法糖，但更严谨：调用必须用 new、方法默认不可枚举、有 static/extends/super 等清晰语法，让面向对象代码更易读易写，但底层原型机制没变。",
+      "answer": [
+        "**class vs 传统模式的核心区别**：",
+        "| 特性 | 传统构造函数 | ES6 class |",
+        "|---|---|---|",
+        "| 调用方式 | 可不用 new（结果异常） | **必须 new**，否则报错 |",
+        "| 方法定义 | `Person.prototype.say` | `say() {}` 写在 class 内 |",
+        "| 可枚举性 | 方法可枚举 | **方法默认不可枚举** |",
+        "| 继承 | 原型链/借用构造函数/组合 | `extends` + `super` |",
+        "| 静态方法 | `Person.static` | `static method()` |",
+        "| 语法 | 松散 | 集中、清晰 |"
+      ],
+      "followups": [
+        "class 的 `super()` 为什么必须在 constructor 第一行？",
+        "class 的静态方法和实例方法在原型链上分别在哪？",
+        "class 能实现多继承吗？mix-in 怎么做？",
+        "私有属性 `#field` 和传统闭包私有化比，有什么优势？"
+      ]
+    },
+    {
+      "id": "fe.08.68",
+      "category": "fe",
+      "module": 8,
+      "moduleName": "JS 原理",
+      "index": 68,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "箭头函数和普通函数有哪些区别？为什么箭头函数不能用作构造函数或方法？",
+      "focus": "箭头函数四大区别：①没有自己的 this（继承外层词法 this）②没有 arguments（用剩余参数...args）③不能作构造函数（无 prototype、不能 new）④不能作 Generator（无 yield）；核心是箭头函数设计目标就是「轻量回调」，所以砍掉了 this 绑定等特性，适合纯函数/回调，不适合方法/构造函数。",
+      "answer": [
+        "**箭头函数 vs 普通函数的四大区别**："
+      ],
+      "followups": [
+        "箭头函数的 this 能用 call/apply/bind 改变吗？为什么？",
+        "对象方法用箭头函数有什么坑？（this 不指向实例）",
+        "React 类组件为什么用箭头函数做事件处理？函数组件呢？",
+        "箭头函数和普通函数在性能上有差异吗？"
+      ]
+    },
+    {
+      "id": "fe.08.69",
+      "category": "fe",
+      "module": 8,
+      "moduleName": "JS 原理",
+      "index": 69,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "JavaScript 的深拷贝和浅拷贝有什么区别？",
+      "focus": "浅拷贝只复制一层、嵌套对象仍共享引用；深拷贝递归复制所有层级、新旧完全独立，常用 JSON 序列化、structuredClone 或手写递归三种方案。",
+      "answer": [
+        "浅拷贝：只复制一层，嵌套对象仍共享引用。`Object.assign({}, obj)`、扩展运算符 `{...obj}` 都是浅拷贝。",
+        "深拷贝：递归复制所有层级，新旧对象完全独立。"
+      ],
+      "followups": [
+        "structuredClone 为什么不能克隆函数？设计原因？",
+        "WeakMap 和 Map 的区别？为什么深拷贝用 WeakMap？",
+        "如何拷贝一个包含 Symbol 键的对象？",
+        "Immutable.js 的持久化数据结构和深拷贝有什么不同？"
+      ]
+    },
+    {
+      "id": "fe.08.70",
+      "category": "fe",
+      "module": 8,
+      "moduleName": "JS 原理",
+      "index": 70,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "手写 `new` 操作符的实现。`new` 做了哪些事？",
+      "focus": "`new` 做四件事：①创建空对象 ②链接原型（指向构造函数的 prototype）③绑定 this 执行构造函数 ④若构造函数返回对象则用它，否则返回新对象。",
+      "answer": [
+        "**`new Foo(...)` 的四步**：",
+        "1. **创建对象**：`const obj = {}`，一块新的内存。",
+        "2. **绑定原型**：`obj.__proto__ = Foo.prototype`，让新对象能访问原型链上的方法。这是「实例能共享构造函数原型方法」的关键。",
+        "3. **改变 this 执行**：`const result = Foo.apply(obj, args)`，构造函数里的 `this` 指向新对象，给新对象添加属性。",
+        "4. **处理返回值**：如果构造函数显式 `return` 了一个**对象**（或函数），则用那个返回值；否则返回新创建的 obj。"
+      ],
+      "followups": [
+        "如果构造函数 return 一个基本类型（如 return 1），new 的结果会变吗？（提示：不变，仍返回 obj）",
+        "`Object.create(Constructor.prototype)` 和 `obj.__proto__ = ...` 有什么区别？（提示：前者更安全，不依赖已废弃的 __proto__）",
+        "class 的 new 和构造函数的 new 底层一样吗？"
+      ]
+    },
+    {
+      "id": "fe.08.71",
+      "category": "fe",
+      "module": 8,
+      "moduleName": "JS 原理",
+      "index": 71,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "请讲清楚 JavaScript 的原型和原型链。",
+      "focus": "原型（prototype）是函数的一个属性，指向一个原型对象；实例通过 `__proto__` 指向构造函数的 prototype，从而能访问原型上的方法。原型链是访问属性时沿 `__proto__` 一路向上查找的路径，直到找到或到顶（null）。",
+      "answer": [
+        "**原型（Prototype）**：每个函数都有一个 `prototype` 属性，指向它的原型对象。通过 `new Fn()` 创建的实例，有一个 `__proto__`（即 `[[Prototype]]`）指向 `Fn.prototype`，所以实例能访问原型上的方法和属性（方法复用）。"
+      ],
+      "followups": [
+        "箭头函数有 prototype 吗？（提示：没有，不能作为构造函数）",
+        "ES6 class 的 extends 底层是怎么实现原型链继承的？",
+        "`instanceof` 的原理是什么？它和原型链什么关系？（提示：沿 __proto__ 查找右侧的 prototype）",
+        "为什么 `Object.create(null)` 创建的对象「最干净」？（提示：没有原型链上的方法）"
+      ]
+    },
+    {
+      "id": "fe.08.72",
+      "category": "fe",
+      "module": 8,
+      "moduleName": "JS 原理",
+      "index": 72,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "Promise 的 `.then(onFulfilled, onRejected)` 和 `.catch()` 有什么区别？为什么推荐用 `.catch`？",
+      "focus": "`.catch()` 等价于 `.then(null, onRejected)`，但它能捕获**整条链**上前面抛的错误（reject + 同步异常）；而 `.then` 的第二参数 onRejected 只能捕获前一个 Promise 的 reject，抓不到 onFulfilled 里抛的错。所以 `.catch` 更全面，推荐用 `.catch`。",
+      "answer": [
+        "`.then(onFulfilled, onRejected)` 的 onRejected **只捕获前一个 Promise 的 reject**，捕获不到**同个 then 里 onFulfilled 抛出的同步错误**。",
+        "`.catch()` 能捕获**它之前整条链**上的所有错误（reject + 抛出的异常），因为 `.catch()` 本质是 `.then(null, onRejected)`，挂在了链的后端。"
+      ],
+      "followups": [
+        "Promise 的状态一旦改变还能再变吗？（提示：不可逆，pending→fulfilled/rejected 是终态）",
+        "async/await 里怎么捕获 reject？（提示：用 try/catch 包住 await，更同步化）",
+        "如果一个 Promise 链没有任何 `.catch`，未捕获的 rejection 会怎样？（提示：触发 unhandledrejection 事件，Node 会警告/退出）",
+        "`.catch` 之后还能继续 `.then` 吗？catch 之后的链是什么状态？（提示：能，catch 返回 fulfilled 的 Promise）"
+      ]
+    },
+    {
+      "id": "fe.08.73",
+      "category": "fe",
+      "module": 8,
+      "moduleName": "JS 原理",
+      "index": 73,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "什么是「闭包（Closure）」？",
+      "focus": "闭包是函数与其词法环境（外层作用域）的组合——内部函数引用了外部函数的变量，就形成了闭包；本质是作用域链的延伸。",
+      "answer": [
+        "**闭包的定义**：函数与其词法环境（外层作用域）的组合。当一个内部函数引用了外部函数的变量，就形成了闭包。"
+      ],
+      "followups": [
+        "箭头函数的闭包和普通函数有什么不同？（this 绑定）"
+      ]
+    },
+    {
+      "id": "fe.08.74",
+      "category": "fe",
+      "module": 8,
+      "moduleName": "JS 原理",
+      "index": 74,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "JavaScript 的「迭代器（Iterator）」和「生成器（Generator）」是什么？",
+      "focus": "迭代器是实现 next() 方法返回 {value, done} 的对象；生成器是 function* + yield 定义的函数，调用返回一个迭代器，能暂停执行。Generator 是创建迭代器的便捷方式，用于惰性求值、异步流程控制。",
+      "answer": [
+        "**迭代器（Iterator）**：",
+        "一个实现了 `next()` 方法的对象，每次调用返回 `{value, done}`：",
+        "```javascript",
+        "const iter = {",
+        "  i: 0,",
+        "  next() {",
+        "    if (this.i < 3) return { value: this.i++, done: false };",
+        "    return { value: undefined, done: true };",
+        "  }",
+        "};",
+        "iter.next(); // {value:0, done:false}",
+        "iter.next(); // {value:1, done:false}",
+        "iter.next(); // {value:2, done:false}",
+        "iter.next(); // {value:undefined, done:true}",
+        "```"
+      ],
+      "followups": [
+        "为什么普通对象不能 for...of？怎么让它可迭代？",
+        "Generator 怎么做异步流程控制？（co 库原理）",
+        "async/await 和 Generator 是什么关系？",
+        "yield* 是什么？委托生成器？"
+      ]
+    },
+    {
+      "id": "fe.08.75",
+      "category": "fe",
+      "module": 8,
+      "moduleName": "JS 原理",
+      "index": 75,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "什么是「函数柯里化（Currying）」和「偏函数（Partial Application）」？",
+      "focus": "柯里化是把多参数函数转成一连串单参数函数（f(a,b,c) → f(a)(b)(c)），参数够了才执行；偏函数是预先固定部分参数返回新函数（f(a,b,c) → f(a)→新函数等b,c）；手写 curry 核心是递归收集参数，长度够了调原函数；应用：参数复用、延迟执行、函数组合；柯里化是偏函数的极端形式（每次只传一个参数）。",
+      "answer": [
+        "**柯里化（Currying）**：",
+        "把接受多个参数的函数，变换成接受单一参数的函数链。每次传一个参数，返回新函数接收下一个，直到参数够了才执行。",
+        "```javascript",
+        "// 普通函数",
+        "function add(a, b, c) { return a + b + c; }",
+        "add(1, 2, 3); // 6",
+        "// 柯里化后",
+        "function curriedAdd(a) {",
+        "  return function(b) {",
+        "    return function(c) {",
+        "      return a + b + c;",
+        "    };",
+        "  };",
+        "}",
+        "curriedAdd(1)(2)(3); // 6",
+        "```"
+      ],
+      "followups": [
+        "curry 函数里的 fn.length 是什么？为什么能靠它判断参数够不够？",
+        "柯里化和 async/await 的链式调用有什么本质不同？",
+        "函数式编程里的 compose/pipe 和柯里化怎么配合？",
+        "lodash 的 _.curry 和手写的有什么增强？(placeholder)"
+      ]
+    },
+    {
+      "id": "fe.08.76",
+      "category": "fe",
+      "module": 8,
+      "moduleName": "JS 原理",
+      "index": 76,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "JavaScript 的「内存泄漏」和「内存溢出」有什么区别？",
+      "focus": "内存泄漏是「该回收的没回收」（变量被意外引用导致 GC 无法回收，长期累积）；内存溢出是「分配时内存不够」（运行时申请超可用内存直接报错崩溃）。内存泄漏长期累积，最终可能导致内存溢出。",
+      "answer": [
+        "**内存泄漏（Memory Leak）**：程序中已不用的内存（变量/对象）因为仍被引用，垃圾回收无法回收，长期占用。累积导致可用内存越来越少。",
+        "**内存溢出（Out of Memory, OOM）**：程序运行时申请的内存超过了可用内存，直接报错崩溃。",
+        "**关系**：内存泄漏长期累积，最终可能导致内存溢出。"
+      ],
+      "followups": [
+        "WeakMap/WeakSet 为什么能避免泄漏？和 Map/Set 的区别？",
+        "Vue/React 组件销毁时常见的泄漏有哪些？",
+        "标记-清除算法具体怎么工作？相比引用计数有什么优势？"
+      ]
+    },
+    {
+      "id": "fe.09.77",
+      "category": "fe",
+      "module": 9,
+      "moduleName": "方法论",
+      "index": 77,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "概念"
+      ],
+      "title": "你是怎么管理一个前端项目的？从需求到上线的完整流程是怎样的？",
+      "focus": "八步走：需求分析 → 任务分解 → 技术方案设计 → 开发 → 提测 → 风险抛出 → 线上观测 → 复盘。核心是「前期把需求和方案想清楚，过程中持续暴露风险，上线后有监控，做完要复盘」。",
+      "answer": [
+        "**完整项目管理流程**：",
+        "1. **需求分析**：和产品对齐需求，明确做什么、为什么做、验收标准。主动质疑不合理需求，挖掘真实诉求。",
+        "2. **任务分解**：把大需求拆成可执行的小任务（WBS），估工时，排优先级。识别依赖关系。",
+        "3. **技术方案设计**：选型、架构、接口约定、风险评估。复杂方案要评审。产出文档。",
+        "4. **开发**：按方案实现，写代码 + 自测。遵循规范，及时 commit。",
+        "5. **提测**：自测通过后提给 QA，配合修 bug。",
+        "6. **风险抛出**：发现延期/技术难点/需求变更，**及时**抛出，不藏。给方案（A/B 选项），不只报问题。",
+        "7. **线上观测**：上线后盯监控、错误日志、用户反馈，确认没问题。",
+        "8. **复盘**：做完总结——做对了什么、踩了什么坑、下次怎么改进。"
+      ],
+      "followups": [
+        "需求中途变更怎么处理？",
+        "怎么估算工时比较准？",
+        "项目要延期了，怎么和上级沟通？"
+      ]
+    },
+    {
+      "id": "fe.09.78",
+      "category": "fe",
+      "module": 9,
+      "moduleName": "方法论",
+      "index": 78,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "概念"
+      ],
+      "title": "你是怎么带团队/做技术管理的？",
+      "focus": "四个抓手：目标对齐（让大家劲往一处使）、模块拆分分配（明确责任）、规范约定（工程化保障质量）、进度跟踪+沟通分享（对齐+成长）。核心是「目标清晰、分工明确、规范兜底、持续沟通」。",
+      "answer": [
+        "**团队管理四件事**：",
+        "1. **目标对齐**：把团队目标拆解到每个人，让大家知道「整体目标是什么、我负责什么、我怎么贡献」。避免各干各的。",
+        "2. **模块拆分与分配**：按能力和成长需求分配模块，明确 owner（谁对这块负责）。边界清晰，避免重叠或真空。",
+        "3. **工程化规范与约定**：制定代码规范、code review 流程、CI/CD、提交规范。用工具和流程兜底质量，不靠人盯人。",
+        "4. **进度跟踪与沟通**：定期对齐进度（站会/周会），及时发现阻塞。code review 既是质量保障也是知识共享。"
+      ],
+      "followups": [
+        "团队成员能力参差怎么带？",
+        "code review 怎么做才不流于形式？",
+        "技术管理和个人贡献（写代码）怎么平衡？"
+      ]
+    },
+    {
+      "id": "fe.09.79",
+      "category": "fe",
+      "module": 9,
+      "moduleName": "方法论",
+      "index": 79,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频"
+      ],
+      "title": "对于一个复杂的大型前端项目，你是怎么做架构设计的？出于哪些考虑选择某种架构？",
+      "focus": "架构设计从「理解业务复杂度」出发：业务复杂度（功能多）、协作复杂度（人多）、技术复杂度（多端/多技术栈）。根据复杂度类型选方案：单体 SPA、Monorepo、微前端、SSR 等。选型要权衡团队能力、维护成本、演进路径，不盲目追新。",
+      "answer": [
+        "**复杂项目的架构设计思路**："
+      ],
+      "followups": [
+        "微前端是不是 over-engineering？什么规模才需要？",
+        "架构选型怎么避免「为了用而用」？",
+        "你做过最有挑战的架构决策是什么？为什么这么选？"
+      ]
+    },
+    {
+      "id": "fe.10.80",
+      "category": "fe",
+      "module": 10,
+      "moduleName": "微前端",
+      "index": 80,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "什么是微前端？它解决什么问题？",
+      "focus": "微前端是把一个大型前端应用拆成多个独立的小应用（可独立开发/部署/技术栈），再整合成一个整体。解决巨石应用的「协作难、部署耦合、技术栈锁定」问题。",
+      "answer": [
+        "**微前端解决的核心问题**：",
+        "随着项目变大变老，出现「巨石应用」：",
+        "1. **构建慢**：代码越堆越多，构建几分钟。",
+        "2. **协作冲突**：多团队改同一仓库，互相阻塞。",
+        "3. **部署耦合**：改一处要整体重新部署，风险大。",
+        "4. **技术栈锁定**：老项目想升级 React/Vue，但牵一发动全身。"
+      ],
+      "followups": [
+        "微前端和后端微服务有什么对应关系？",
+        "微前端的「独立部署」具体怎么实现的？"
+      ]
+    },
+    {
+      "id": "fe.10.81",
+      "category": "fe",
+      "module": 10,
+      "moduleName": "微前端",
+      "index": 81,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "qiankun 微前端框架的优缺点和核心机制是什么？",
+      "focus": "qiankun 基于 single-spa，核心是「HTML Entry」——通过加载子应用的 HTML，解析出 JS/CSS 并在沙箱里执行。优点：接入简单（几行代码）、JS 沙箱隔离、生态成熟。缺点：JS 沙箱有性能开销、CSS 隔离不彻底（默认没做）、子应用要改造、多实例复杂。",
+      "answer": [
+        "**qiankun 核心机制**：",
+        "1. **HTML Entry**：主应用配置子应用的入口 HTML 地址。qiankun fetch 这个 HTML，解析出里面的 `<script>`、`<style>`、`<link>`。",
+        "2. **资源加载执行**：把解析出的 JS 在一个**沙箱环境**里执行，CSS 注入页面。",
+        "3. **生命周期**：子应用导出 bootstrap/mount/unmount，qiankun 在对应时机调用，实现挂载/卸载。",
+        "4. **JS 沙箱**：隔离子应用的 window，防止互相污染（Proxy 拦截 window 操作）。"
+      ],
+      "followups": [
+        "qiankun 的 JS 沙箱（Proxy）具体怎么实现隔离？",
+        "qiankun 的 CSS 隔离为什么默认不做？shadowDOM 方案有什么坑？",
+        "qiankun 和 wujie/micro-app 相比有什么优劣？"
+      ]
+    },
+    {
+      "id": "fe.10.82",
+      "category": "fe",
+      "module": 10,
+      "moduleName": "微前端",
+      "index": 82,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "概念"
+      ],
+      "title": "微前端项目中，主应用加载子应用资源时的跨域问题怎么解决？",
+      "focus": "主应用要动态 fetch 子应用的 JS/CSS，跨域会触发 CORS：子应用服务端配 Access-Control-Allow-Origin 放行主应用域名，或主应用用反向代理把子应用资源代理到同域。qiankun 用 fetch 加载资源，所以 CORS 必须配。",
+      "answer": [
+        "**原因**：主应用域名和子应用资源域名不同，浏览器拦截跨域请求。",
+        "**解决**：",
+        "子应用服务端配 CORS：`Access-Control-Allow-Origin: 主应用域名`（或 *）。",
+        "或主应用用反向代理，把子应用资源代理到同域。",
+        "qiankun 加载资源用的是 fetch，所以 CORS 必须配。"
+      ],
+      "followups": [
+        "qiankun 加载子应用用 fetch，为什么不用 script 标签？",
+        "子应用资源配了 CORS=* 有什么风险？怎么收紧？"
+      ]
+    },
+    {
+      "id": "fe.10.83",
+      "category": "fe",
+      "module": 10,
+      "moduleName": "微前端",
+      "index": 83,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "微前端的沙盒（隔离）方案有哪些？JS 沙箱和 CSS 隔离分别怎么实现？",
+      "focus": "JS 沙箱：Proxy 代理 window（快照沙箱/代理沙箱），拦截子应用对 window 的读写，实现隔离。CSS 隔离：Shadow DOM（彻底但样式难穿透）、scoped CSS（加前缀，有局限）、CSS Modules。没有完美方案，各有取舍。",
+      "answer": [
+        "子应用挂载前，快照当前 window。",
+        "子应用卸载时，恢复 window 到快照。",
+        "缺点：要遍历整个 window，性能差；不支持多实例。",
+        "给子应用一个 Proxy 代理的 fake window。",
+        "子应用所有 window 读写都被 Proxy 拦截，写到 fake window 里，不碰真实 window。",
+        "优点：性能好（不遍历）、支持多实例（每个子应用一个 fake window）。",
+        "这是现代主流方案。"
+      ],
+      "followups": [
+        "Proxy 沙箱能拦住所有对 window 的操作吗？有逃逸的情况吗？",
+        "Shadow DOM 的弹窗逃逸问题（portal 到 body）怎么解决？",
+        "wujie 用 iframe 做隔离，和 Proxy 沙箱比有什么优劣？"
+      ]
+    },
+    {
+      "id": "fe.11.84",
+      "category": "fe",
+      "module": 11,
+      "moduleName": "小程序",
+      "index": 84,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "微信小程序为什么采用「双线程架构」（视图层和逻辑层分离）？这种架构有什么优缺点？",
+      "focus": "双线程：视图层（WebView 渲染）和逻辑层（JSCore 跑 JS）分离，通过 Native 桥通信。目的是安全和可控——逻辑层拿不到 DOM，防止开发者操作 DOM 跳转/改 UI，便于微信管控；同时多页面复用 WebView。代价是通信有延迟、不能用 DOM API。",
+      "answer": [
+        "**视图层（WebView）**：每个页面一个 WebView，负责渲染 WXML/WXSS。可以有多个（多页面）。",
+        "**逻辑层（JSCore/V8）**：只有一个，跑所有 JS 逻辑（数据、事件处理）。**没有 DOM/BOM API**。",
+        "**Native 层（微信客户端）**：作为中间人，在两个线程间转发数据和事件。"
+      ],
+      "followups": [
+        "setData 为什么慢？怎么优化？（提示：只传变化的数据、合并调用）",
+        "小程序为什么不能用 jQuery/直接操作 DOM？",
+        "双线程架构和浏览器的单线程模型比，开发上有什么不便？"
+      ]
+    },
+    {
+      "id": "fe.11.85",
+      "category": "fe",
+      "module": 11,
+      "moduleName": "小程序",
+      "index": 85,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "小程序的 WXML/WXSS 最终编译成什么？为什么不能直接用 HTML/CSS？",
+      "focus": "WXML 编译成 JS（通过 WCC 编译器转成 render 函数生成虚拟 DOM），不是直接转 HTML；WXSS 编译成 JS 注入的样式。因为双线程架构下视图层要动态生成、要适配多端、要做安全管控（不能让开发者写任意 HTML/JS 操作 DOM），所以用自定义标签再编译。",
+      "answer": [
+        "WXML 不是直接转成 HTML。它经过 **WCC 编译器**，编译成一个 JS 函数（$gwx）。",
+        "运行时，逻辑层把数据传给这个函数，函数生成**虚拟 DOM 树（JS 对象）**。",
+        "虚拟 DOM 树再通过 setData 传到视图层，渲染成实际的渲染层节点（基于 WebView 但做了封装）。"
+      ],
+      "followups": [
+        "WCC 编译器具体做了哪些事？",
+        "rpx 单位是怎么工作的？和 px/rem 有什么区别？",
+        "小程序的虚拟 DOM 和 Vue/React 的虚拟 DOM 一样吗？"
+      ]
+    },
+    {
+      "id": "fe.11.86",
+      "category": "fe",
+      "module": 11,
+      "moduleName": "小程序",
+      "index": 86,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "概念"
+      ],
+      "title": "小程序有哪些性能优化手段？",
+      "focus": "核心优化：减少 setData 的数据量和频率（只传变化的、合并调用）、分包加载（按需加载子包）、长列表虚拟化、图片懒加载、减少节点嵌套层级。",
+      "answer": [
+        "**小程序性能优化手段**："
+      ],
+      "followups": [
+        "小程序启动慢怎么排查？有哪些指标？",
+        "分包和独立分包有什么区别？",
+        "recycle-view 虚拟列表原理是什么？"
+      ]
+    },
+    {
+      "id": "fe.12.87",
+      "category": "fe",
+      "module": 12,
+      "moduleName": "Node.js",
+      "index": 87,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "Node.js 的事件循环和浏览器的事件循环有什么区别？",
+      "focus": "Node.js 用 6 个阶段（timers、pending、poll、check、close + 微任务队列），浏览器只有宏任务+微任务两类；Node 11 以前 timers 阶段会一次性清空所有到期回调，11 之后对齐浏览器「每个宏任务后清空微任务」。",
+      "answer": [
+        "浏览器的循环模型很简单：执行一个宏任务 → 清空所有微任务 → 渲染 → 取下一个宏任务，循环往复。",
+        "Node.js 把宏任务分成 6 个阶段（phase），按固定顺序轮转：",
+        "| 阶段 | 处理什么 |",
+        "|---|---|",
+        "| timers | 到期的 setTimeout/setInterval 回调 |",
+        "| pending callbacks | 系统级回调（如 TCP 错误） |",
+        "| idle, prepare | 内部使用 |",
+        "| poll | 取新的 I/O 回调，会阻塞等待定时器 |",
+        "| check | setImmediate 回调 |",
+        "| close callbacks | close 事件（如 socket.close） |",
+        "两个微任务队列穿插在阶段之间：**Promise.then / queueMicrotask** 和 **process.nextTick**（nextTick 优先级更高，会在每个阶段切换前清空）。"
+      ],
+      "followups": [
+        "`process.nextTick` 和 `queueMicrotask` 哪个先执行？为什么 nextTick 不建议滥用？",
+        "在 I/O 回调里，`setTimeout(fn,0)` 和 `setImmediate(fn)` 谁先？（提示：I/O 回调后 check 阶段在前）",
+        "Node 11 之后为什么对齐浏览器？解决了什么问题？"
+      ]
+    },
+    {
+      "id": "fe.12.88",
+      "category": "fe",
+      "module": 12,
+      "moduleName": "Node.js",
+      "index": 88,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "概念"
+      ],
+      "title": "pm2 在 Node.js 部署中起什么作用？它的核心能力有哪些？",
+      "focus": "pm2 是 Node.js 的进程管理器，核心能力：守护进程（崩溃自动重启）、多进程集群（cluster 模式利用多核）、日志管理、零停机重载、状态监控。",
+      "answer": [
+        "Node.js 单线程跑业务逻辑，一个未捕获异常就整个进程挂掉；单进程也只能用一个 CPU 核。pm2 解决的就是这两类生产问题：",
+        "| 能力 | 说明 |",
+        "|---|---|",
+        "| 守护进程 | 后台运行，主进程崩了 pm2 自动拉起，不用 nohup |",
+        "| 集群模式 | `pm2 start app.js -i max` 用 cluster 起多个 worker，榨干多核 |",
+        "| 零停机重载 | `pm2 reload` 一个个重启 worker，请求不中断（graceful reload） |",
+        "| 日志管理 | 自动收集 stdout/stderr 到日志文件，支持日志切割 |",
+        "| 监控 | `pm2 monit` 看内存/CPU/事件，`pm2 list` 看进程状态 |",
+        "| 启动项 | `pm2 startup` + `pm2 save` 让服务开机自启 |"
+      ],
+      "followups": [
+        "`cluster` 模式下多个 worker 共享一个端口，连接是如何分配给各 worker 的？（提示：master round-robin）",
+        "pm2 reload 是如何做到「零停机」的？（提示：逐个 worker 重启）",
+        "多 worker 之间如何共享 session/缓存？（提示：用 Redis 等外部存储，进程内存不共享）"
+      ]
+    },
+    {
+      "id": "fe.12.89",
+      "category": "fe",
+      "module": 12,
+      "moduleName": "Node.js",
+      "index": 89,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "Node.js 的 Buffer 是什么？",
+      "focus": "Buffer 是 Node 用来存二进制数据的「定长字节序列」，类似 `Uint8Array` 的子类，用于在网络/文件读写时高效处理原始字节，不像字符串需要编码转换。",
+      "answer": [
+        "JavaScript 原生没有处理二进制的方便手段（早期），Node 设计 Buffer 来处理 TCP 流、文件 I/O 这类字节流数据。"
+      ],
+      "followups": [
+        "`Buffer.alloc` 和 `Buffer.allocUnsafe` 有什么区别？为什么不推荐 `new Buffer()`？",
+        "Buffer 和 `Uint8Array` / `ArrayBuffer` 是什么关系？（提示：Buffer 是 Uint8Array 子类，buf.buffer 是底层 ArrayBuffer）"
+      ]
+    },
+    {
+      "id": "fe.12.90",
+      "category": "fe",
+      "module": 12,
+      "moduleName": "Node.js",
+      "index": 90,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "什么是服务端渲染（SSR）？它的基本原理是什么？",
+      "focus": "SSR 是在服务器上把组件渲染成 HTML 字符串发给浏览器，用户拿到的是「带内容的完整页面」，而不是 CSR 那种「空 HTML + JS 再渲染」。原理：服务端执行组件代码生成 HTML → 客户端 hydrate（注水）接管交互。",
+      "answer": [
+        "对比两种渲染方式：",
+        "| 方式 | HTML 返回内容 | 首屏 | SEO | 流程 |",
+        "|---|---|---|---|---|",
+        "| CSR（客户端渲染） | 空的 `<div id=root></div>` + JS bundle | 慢（要下 JS 再渲染） | 差（爬虫看不到内容） | 服务器给空壳，浏览器跑 JS 渲染 |",
+        "| SSR（服务端渲染） | 完整带内容的 HTML | 快（直接看到内容） | 好（HTML 里有内容） | 服务器跑组件出 HTML，浏览器拿到后 hydrate |"
+      ],
+      "followups": [
+        "什么是 hydration mismatch（注水不匹配）？什么情况下会发生？",
+        "服务端没有 window/document，组件里用到浏览器 API 怎么办？（提示：用 onMounted/useEffect 或 typeof window 判断）",
+        "SSR 一定要全做吗？有没有折中方案？（提示：部分预渲染、 Islands 架构）"
+      ]
+    },
+    {
+      "id": "fe.12.91",
+      "category": "fe",
+      "module": 12,
+      "moduleName": "Node.js",
+      "index": 91,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "SSR 相比 CSR（客户端渲染）有哪些优势？又有什么代价？",
+      "focus": "优势：首屏快、SEO 好、利于弱网/低端机；代价：服务器压力增大、开发复杂（要写同构代码）、TTFB 变慢（要等数据请求）、部署需要 Node 环境。",
+      "answer": [
+        "**优势**：",
+        "| 优势 | 原因 |",
+        "|---|---|",
+        "| 首屏快（FCP/LCP 优） | 浏览器拿到 HTML 立刻就能显示内容，不用等 JS 下载执行 |",
+        "| SEO 友好 | 爬虫直接从 HTML 读到完整内容，CSR 的空 div 爬虫抓不到 |",
+        "| 弱网/低端机体验好 | 不依赖客户端 JS 执行能力，老机器也能快速看到内容 |",
+        "| 社交分享预览好 | 链接卡片能抓到 og 标签和内容（CSR 抓不到） |"
+      ],
+      "followups": [
+        "SSR 的 TTFB 为什么比 CSR 慢？怎么优化？（提示：数据预取并行化、缓存、流式渲染）",
+        "什么场景下 SSR 反而比 CSR 更慢？（提示：服务器渲染慢 + 数据请求多，没缓存）",
+        "纯静态内容（公司官网）该用 SSR 还是 SSG？（提示：SSG 构建时生成，更省服务器）"
+      ]
+    },
+    {
+      "id": "fe.12.92",
+      "category": "fe",
+      "module": 12,
+      "moduleName": "Node.js",
+      "index": 92,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "什么是洋葱圈模型？Koa 中间件如何实现请求进、响应出的嵌套执行？",
+      "focus": "洋葱圈是中间件「先进后出」的执行模型：请求从外向内穿过每一层中间件到核心，响应再从内向外穿回去，每层中间件用 `await next()` 把控制权交给下一层，next 之后的代码在响应阶段执行。",
+      "answer": [
+        "`next()` 之前的代码：请求阶段执行（从外向内）",
+        "`await next()`：暂停当前中间件，进入下一层",
+        "`next()` 之后的代码：等内层全部执行完，响应阶段执行（从内向外）"
+      ],
+      "followups": [
+        "如果某个中间件忘了写 `await next()`，会有什么后果？（提示：响应阶段提前执行、时序错乱）",
+        "Koa 的洋葱圈和 Express 的中间件执行顺序有什么本质区别？",
+        "如何在洋葱圈里实现统一错误处理？（提示：最外层 try/catch + app.on('error')）"
+      ]
+    },
+    {
+      "id": "fe.12.93",
+      "category": "fe",
+      "module": 12,
+      "moduleName": "Node.js",
+      "index": 93,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "Node.js 中 CommonJS 和 ESM 两种模块加载方式有什么区别？",
+      "focus": "CommonJS 用 `require/module.exports`，同步加载、运行时求值、可动态 require、值是拷贝；ESM 用 `import/export`，静态分析（编译期确定依赖）、异步加载、值是实时绑定（live binding），`this` 在顶层是 undefined。",
+      "answer": [
+        "两者从语法到运行机制都不同：",
+        "| 维度 | CommonJS (CJS) | ES Modules (ESM) |",
+        "|---|---|---|",
+        "| 语法 | `require()` / `module.exports` | `import` / `export` |",
+        "| 加载时机 | 运行时（同步阻塞） | 编译期静态分析 + 运行时异步 |",
+        "| 输出值 | 值的拷贝（导出后改了不影响外面） | 值的引用（live binding，源变了同步更新） |",
+        "| 是否能动态 | 能 `require(变量)` | 静态 `import` 路径必须是字符串字面量，动态用 `import()` |",
+        "| 顶层 this | `module.exports`（对象） | `undefined` |",
+        "| 是否提升 | 否，按顺序执行 | `import` 声明会被提升到顶部 |",
+        "| 循环引用 | 返回已执行部分的快照，可能拿到空对象 | 用引用避免部分问题，但仍有 TDZ 风险 |"
+      ],
+      "followups": [
+        "CJS 中循环引用（A require B、B require A）会怎样？（提示：B 拿到 A 未完成的部分导出）",
+        "ESM 的 tree-shaking 为什么对 CJS 不起作用？（提示：CJS 导出是运行时求值，静态分析不出未用）",
+        "`import()` 动态导入和 `require()` 有什么区别？（提示：异步 vs 同步、返回 Promise）"
+      ]
+    },
+    {
+      "id": "fe.12.94",
+      "category": "fe",
+      "module": 12,
+      "moduleName": "Node.js",
+      "index": 94,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "Node.js 的 EventEmitter 是同步还是异步？请手写一个简易 EventEmitter（含 on/emit/off/once）。",
+      "focus": "EventEmitter 的 `emit` 是**同步**的——它按注册顺序逐个同步调用回调，不是放进事件循环队列。回调本身可以是异步函数，但触发机制是同步遍历。手写核心就是一个 `{ 事件名: [回调数组] }` 的 Map。",
+      "answer": [
+        "常见误区：以为「事件」就是异步。其实 EventEmitter 的本质是**发布订阅模式**，`emit` 触发时直接同步 for 循环调用所有 listener，跟 `setTimeout` 那种异步队列没关系。",
+        "```js",
+        "ee.on(\"x\", () => console.log(\"a\"));",
+        "ee.on(\"x\", () => console.log(\"b\"));",
+        "console.log(\"before\");",
+        "ee.emit(\"x\");        // a, b 同步执行",
+        "console.log(\"after\"); // 输出: before a b after",
+        "```",
+        "如果回调里写了异步代码（如 setTimeout），那部分异步，但「调用 listener 这个动作」是同步的。"
+      ],
+      "followups": [
+        "如果一个 listener 里抛错，后续 listener 还会执行吗？（提示：Node 默认会抛出，用 `ee.emit('error')` 走 error 事件）",
+        "如何在 `emit` 遍历时安全移除监听器而不跳过元素？（提示：遍历副本）",
+        "EventEmitter 和 Promise/async 在处理异步流程时各有什么取舍？"
+      ]
+    },
+    {
+      "id": "fe.12.95",
+      "category": "fe",
+      "module": 12,
+      "moduleName": "Node.js",
+      "index": 95,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "Node.js 的 Stream（流）是什么？",
+      "focus": "Stream 是「分块处理数据」的抽象，数据像水流一样一段段过来，边到边处理，不必把整个数据加载进内存。分 4 种：Readable（可读）、Writable（可写）、Duplex（双工）、Transform（转换）。",
+      "answer": [
+        "**4 种流**：",
+        "| 类型 | 含义 | 例子 |",
+        "|---|---|---|",
+        "| Readable | 只能读（产生数据） | fs.createReadStream、HTTP 请求体 |",
+        "| Writable | 只能写（消费数据） | fs.createWriteStream、HTTP 响应 |",
+        "| Duplex | 可读可写，两端独立 | TCP socket（收发独立） |",
+        "| Transform | 可读可写，写进去经变换再读出 | zlib（压缩）、加密 |"
+      ],
+      "followups": [
+        "`pipe` 是如何处理背压的？手动 `on('data')` 会有什么问题？（提示：不背压，要用 pause/resume 或 pipeline）",
+        "Duplex 和 Transform 流的区别是什么？各自典型场景？",
+        "为什么推荐用 `stream.pipeline` 替代 `pipe`？（提示：错误处理 + 资源清理）"
+      ]
+    },
+    {
+      "id": "fe.12.96",
+      "category": "fe",
+      "module": 12,
+      "moduleName": "Node.js",
+      "index": 96,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "现代框架（Next.js/Nuxt）有哪几种渲染模式？它们各是什么？",
+      "focus": "主要有 4 种：CSR（客户端渲染）、SSR（请求时服务端渲染）、SSG（构建时生成静态 HTML）、ISR（增量静态再生成，定时更新静态页）。Next.js/Nuxt 都支持按页面混用。",
+      "answer": [
+        "| 模式 | 何时生成 HTML | 特点 | 适用 |",
+        "|---|---|---|---|",
+        "| **CSR** | 浏览器（运行时） | 首屏慢、SEO 差、服务器零压力 | 后台系统、强交互应用 |",
+        "| **SSR** | 每次请求时（服务器实时） | 首屏快、SEO 好、服务器压力大、内容实时 | 电商详情页、个性化内容、动态数据 |",
+        "| **SSG** | 构建时一次性生成 | 首屏最快、SEO 好、可全 CDN、内容固定 | 博客、文档、官网、营销页 |",
+        "| **ISR** | 构建+按需定时重新生成 | 兼具 SSG 的快和内容的更新 | 大量页面、内容偶尔变化的站点（如博客、商品列表） |"
+      ],
+      "followups": [
+        "ISR 的 `revalidate` 是如何做到「先返回旧的、后台生成新的」？（提示：stale-while-revalidate 策略）",
+        "Next.js 的 React Server Component（RSC）和传统 SSR 有什么区别？（提示：RSC 是组件级、零 JS 下发）"
+      ]
+    },
+    {
+      "id": "fe.13.97",
+      "category": "fe",
+      "module": 13,
+      "moduleName": "React",
+      "index": 97,
+      "type": "qa",
+      "difficulty": "初",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "项目中常用的 React Hook 有哪些？各自的使用场景和注意事项是什么？",
+      "focus": "常用 Hook：`useState`(状态)、`useEffect`(副作用)、`useRef`(可变值/DOM引用)、`useMemo`(缓存计算结果)、`useCallback`(缓存函数引用)、`useContext`(跨层传值)、`useReducer`(复杂状态)。核心原则：按需用，别过度 memo。",
+      "answer": [
+        "| Hook | 用途 | 关键注意 |",
+        "|---|---|---|",
+        "| useState | 基础状态 | setState 是异步批处理；函数式更新 `setX(prev => prev+1)` 避免闭包旧值 |",
+        "| useEffect | 副作用（请求、订阅、定时器） | 依赖数组必须写全；清理函数 return；空数组只跑一次 |",
+        "| useRef | 存可变值不触发重渲染 / 获取 DOM | 改 `.current` 不重渲染；不要在渲染中读写 |",
+        "| useMemo | 缓存昂贵计算结果 | 别滥用，缓存本身有开销；依赖变化才重算 |",
+        "| useCallback | 缓存函数引用（传给子组件防重渲染） | 配合 React.memo 才有意义 |",
+        "| useContext | 消费 Context，跨层共享 | Context 值变化会让所有消费者重渲染 |",
+        "| useReducer | 复杂状态（多字段联动） | 替代多个 useState，逻辑集中 |"
+      ],
+      "followups": [
+        "useMemo 和 useCallback 的关系？（提示：useCallback(fn, dep) === useMemo(() => fn, dep)）",
+        "useEffect 的依赖数组写错会有什么后果？",
+        "什么时候该用 useReducer 而不是 useState？（提示：状态多、转换逻辑复杂、下一个状态依赖前一个）"
+      ]
+    },
+    {
+      "id": "fe.13.98",
+      "category": "fe",
+      "module": 13,
+      "moduleName": "React",
+      "index": 98,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "`useEffect` 和 `useLayoutEffect` 有什么区别？分别在什么场景下使用？",
+      "focus": "`useEffect` 在浏览器**绘制之后**异步执行（不阻塞页面）；`useLayoutEffect` 在 DOM 变更后、绘制前**同步**执行（阻塞绘制）。绝大多数副作用用 useEffect，只有会引起「视觉闪烁」的 DOM 测量/布局操作才用 useLayoutEffect。",
+      "answer": [
+        "**执行时机对比**（一次渲染的生命周期）：",
+        "```",
+        "state 变化 → React 计算 VDOM → 提交到真实 DOM",
+        "         → useLayoutEffect 同步执行（此时还没绘制，可读 DOM 尺寸）",
+        "         → 浏览器绘制画面",
+        "         → useEffect 异步执行（用户已经看到画面了）",
+        "```"
+      ],
+      "followups": [
+        "useEffect 的清除函数（return）在什么时机执行？（提示：下次 effect 执行前 + 组件卸载时）",
+        "useLayoutEffect 里调用 setState 会怎样？（提示：会在浏览器绘制前再触发一次同步渲染）",
+        "如何在 SSR 中安全使用 useLayoutEffect而不报警告？"
+      ]
+    },
+    {
+      "id": "fe.13.99",
+      "category": "fe",
+      "module": 13,
+      "moduleName": "React",
+      "index": 99,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "React Hook 相比 Class 组件有哪些优势？为什么 React 团队要推 Hook？",
+      "focus": "Hook 解决了 Class 的三大痛点：①**逻辑复用难**（HOC/渲染 props 嵌套地狱）→ 自定义 Hook 直接复用；②**生命周期拆散相关逻辑**（同一逻辑分散在 didMount/didUpdate/willUnmount）→ useEffect 聚合；③**this 指向和绑定心智负担重**。Hook 让函数组件也能有 state 和副作用，代码更简洁。",
+      "answer": [
+        "**Class 组件的三大痛点**：",
+        "1. **逻辑复用难**：早期复用状态逻辑只能靠 HOC（高阶组件）或 render props，结果是组件树层层嵌套（「wrapper hell」），调试时 React DevTools 里一长串匿名组件。",
+        "2. **生命周期割裂相关逻辑**：比如「订阅 + 取消订阅」要拆到 `componentDidMount` 和 `componentWillUnmount`，而「订阅依赖 id 变化时重新订阅」又要加 `componentDidUpdate` 比较 props——一个完整逻辑被切到三个地方，难维护。",
+        "3. **this 麻烦**：事件处理函数要手动 `bind(this)` 或用箭头函数，初学者经常踩 `this is undefined` 的坑。"
+      ],
+      "followups": [
+        "为什么自定义 Hook 能复用，但 state 不会互相干扰？（提示：每个组件独立 fiber，独立 hook 链表）",
+        "Hook 能完全替代 Class 吗？哪些场景还必须用 Class？（提示：React 19 前 error boundary）",
+        "为什么 Hook 不能在 if 里调用？"
+      ]
+    },
+    {
+      "id": "fe.13.100",
+      "category": "fe",
+      "module": 13,
+      "moduleName": "React",
+      "index": 100,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "`useRef` 有哪些使用场景？",
+      "focus": "`useRef` 两大用途：①**获取 DOM 元素引用**（focus、测量尺寸、播放媒体）；②**存放不触发重渲染的可变值**（定时器 id、上次值、缓存）。它返回一个 `{ current: 初始值 }` 对象，整个组件生命周期里引用稳定，改 `.current` 不触发重渲染。",
+      "answer": [
+        "**useRef 返回什么**：一个 `{ current: 初始值 }` 对象，整个组件生命周期里**始终是同一个对象**（引用稳定），改 `.current` 不会触发重渲染。"
+      ],
+      "followups": [
+        "为什么 useRef 改了不重渲染？底层 ref 对象存在哪？（提示：存在 fiber 的 hook 链表，不触发 scheduleUpdate）",
+        "useEffect 里读写 ref 安全吗？useLayoutEffect 呢？",
+        "React 19 里 ref 作为 prop 传递，forwardRef 还需要吗？"
+      ]
+    },
+    {
+      "id": "fe.13.101",
+      "category": "fe",
+      "module": 13,
+      "moduleName": "React",
+      "index": 101,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "React Router 的原理是什么？`history` 模式和 `hash` 模式有什么区别？",
+      "focus": "React Router 监听 URL 变化→匹配路由→渲染组件，全程不刷新页面。hash 模式靠 `hashchange` 事件、URL 带 # 但无需后端配置；history 模式靠 `pushState/popstate`、URL 干净但刷新需后端回退到 index.html。",
+      "answer": [
+        "**前端路由的本质**：监听 URL 变化 → 改变视图，不向服务器发请求。"
+      ],
+      "followups": [
+        "history 模式刷新 404 怎么解决？后端怎么配？",
+        "React Router v6 相比 v5 有哪些变化？",
+        "如何实现路由懒加载？"
+      ]
+    },
+    {
+      "id": "fe.13.102",
+      "category": "fe",
+      "module": 13,
+      "moduleName": "React",
+      "index": 102,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "React Context 的使用场景是什么？",
+      "focus": "Context 用于**跨多层组件共享数据**（主题、用户信息、国际化、路由），免去逐层 prop 透传（prop drilling）。",
+      "answer": [
+        "全局/半全局数据：主题（dark/light）、当前用户、i18n 语言包、路由状态、UI 配置。",
+        "数据变化频率不高、消费组件不多。"
+      ],
+      "followups": [
+        "Context 和 Redux/Zustand 的本质区别？（提示：Context 是依赖注入机制，不是状态管理库）"
+      ]
+    },
+    {
+      "id": "fe.13.103",
+      "category": "fe",
+      "module": 13,
+      "moduleName": "React",
+      "index": 103,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "React 列表渲染时 `key` 的作用是什么？默认行为是什么？",
+      "focus": "`key` 是 React diff 列表时识别元素身份的标识——帮助 React 判断「这个节点是移动了还是新建了」，从而复用 DOM、减少重渲染。没写 key 默认用数组 index 匹配，遇到列表增删会导致后续元素错位重渲染。key 必须稳定、唯一。",
+      "answer": [
+        "**key 的作用**：在 reconcile 阶段，React 对比新旧 children 列表时，靠 key 把新列表的元素和旧列表的元素对应起来。有 key 才能判断「A 元素从位置 3 移到了位置 0」，于是只移动 DOM 节点而不是销毁重建。"
+      ],
+      "followups": [
+        "用 Math.random() 做 key 会怎样？为什么？（提示：每次渲染 key 变 → 全部重建）",
+        "key 必须全局唯一吗？（提示：不需要，只需兄弟节点间唯一）",
+        "删除列表中间一项，有 key 和无 key 分别发生什么？（提示：有 key 只删一个 DOM，无 key 全部重渲染）"
+      ]
+    },
+    {
+      "id": "fe.13.104",
+      "category": "fe",
+      "module": 13,
+      "moduleName": "React",
+      "index": 104,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "React 19 有哪些重要新特性？项目中如何使用？",
+      "focus": "React 19 三大类特性：①**Actions**（`useTransition` + 异步表单，自动处理 pending/error）；②新 hooks（`use`、`useActionState`、`useFormStatus`、`useOptimistic`、`use`）；③编译器（React Compiler 自动 memo，不用手写 useMemo/useCallback）；外加 ref 作为 prop、Document Metadata、Server Components 稳定。",
+      "answer": [
+        "**1. Actions（异步动作）**：把异步操作（提交表单、请求接口）用 `useTransition` 包裹，自动给 pending 状态、错误处理、乐观更新。"
+      ],
+      "followups": [
+        "React Compiler 开启后，是不是就完全不用写 useMemo/useCallback 了？（提示：少数复杂计算仍需）",
+        "useOptimistic 失败后状态如何回滚？（提示：重新渲染用真实 state 覆盖）",
+        "Server Components 在 React 19 是 stable 了吗？和 Client Component 怎么区分？"
+      ]
+    },
+    {
+      "id": "fe.13.105",
+      "category": "fe",
+      "module": 13,
+      "moduleName": "React",
+      "index": 105,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "React 的 diff 算法是怎么工作的？",
+      "focus": "React diff 基于**三个假设**把树对比从 O(n³) 降到 O(n)：①同层 diff（跨层级移动直接丢弃重建）；②同类型才 diff（不同类型直接替换整棵子树）；③靠 `key` 标识同层列表元素。",
+      "answer": [
+        "**为什么需要 diff**：状态变化后 React 拿到新 VDOM，要和旧 VDOM 对比，找出最小变更再去更新真实 DOM。朴素对比两棵树是 O(n³)，工程不可用。"
+      ],
+      "followups": [
+        "用 index 做 key 会出什么问题？什么时候用 index 做 key 反而 OK？（提示：纯展示、无增删、无受控 state）",
+        "为什么跨层级移动不复用？（提示：复用成本高于重建，且场景罕见）",
+        "Vue 的 diff 和 React 的 diff 有何区别？（提示：Vue3 双端 diff + 最长递增子序列优化移动）"
+      ]
+    },
+    {
+      "id": "fe.13.106",
+      "category": "fe",
+      "module": 13,
+      "moduleName": "React",
+      "index": 106,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "什么是 React 的合成事件（SyntheticEvent）？为什么不直接用原生事件？",
+      "focus": "合成事件是 React 对浏览器原生事件的**跨浏览器封装**，提供统一 API 和属性。React 不在 DOM 节点上直接绑定事件，而是在根容器上挂一个**统一的事件委托监听器**，事件冒泡到根时再按映射找到对应组件的回调执行——省内存、性能好、能统一兼容处理。",
+      "answer": [
+        "**为什么不直接用原生事件**：",
+        "1. **浏览器兼容性**：IE 和 Chrome 事件对象差异大（`e.target` vs `e.srcElement`、阻止默认行为 API 不同），合成事件抹平这些差异。",
+        "2. **性能（事件委托）**：原生事件每个元素每个事件都要 addEventListener 一个监听器，列表 1000 项就有 1000 个监听器，内存大。React 只在根上挂一个，通过事件委托统一处理。",
+        "3. **统一的事件流控制**：React 能在合成事件层实现自己的「事件优先级」（discrete/continuous）、与 fiber 调度整合、批处理 setState。",
+        "4. **更安全**：合成事件对象是池化的（React 16 及以前），避免每次创建对象的开销（React 17 移除了事件池）。"
+      ],
+      "followups": [
+        "React 16 的合成事件对象池（event pooling）是什么？为什么 17 移除了？（提示：异步访问 e.target 为 null 的坑）",
+        "原生事件里的 setState 和合成事件里的 setState 有什么区别？（提示：React 18 后都是批处理）",
+        "如果想阻止合成事件冒泡到原生 document，怎么做？"
+      ]
+    },
+    {
+      "id": "fe.13.107",
+      "category": "fe",
+      "module": 13,
+      "moduleName": "React",
+      "index": 107,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "概念"
+      ],
+      "title": "在 React Router 中如何实现页面切换动画？",
+      "focus": "用 `react-transition-group` 的 `<CSSTransition>` 或 framer-motion 的 `<AnimatePresence>`，关键是把路由的 `location.key`/`location.pathname` 作为列表项 key，让旧组件退场、新组件进场。",
+      "answer": [
+        "**核心难点**：路由切换时，旧组件直接卸载、新组件直接挂载，默认没有过渡。要做动画，必须让「旧组件还能存活一小段时间执行退场动画」。"
+      ],
+      "followups": [
+        "为什么要把 location 传给 Routes？不传会怎样？",
+        "mode=\"wait\" 和默认模式有什么区别？",
+        "不用第三方库，纯 CSS transition 怎么做路由动画？"
+      ]
+    },
+    {
+      "id": "fe.13.108",
+      "category": "fe",
+      "module": 13,
+      "moduleName": "React",
+      "index": 108,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "React 中异步请求的竞态条件（Race Condition）是什么？",
+      "focus": "竞态条件：先发的慢请求后返回，覆盖了后发的快请求结果，UI 显示「过时」数据。",
+      "answer": [
+        "**什么是竞态**：用户快速切换 id（1→2→3），三次请求发出。若请求 1 最慢，最后返回，它的结果会覆盖最新的请求 3 的结果，UI 显示了 id=1 的数据，但当前页是 id=3——数据错乱。"
+      ],
+      "followups": [
+        "useEffect 的 cleanup 执行时机是什么？（提示：下次 effect 执行前 + 卸载时）"
+      ]
+    },
+    {
+      "id": "fe.13.109",
+      "category": "fe",
+      "module": 13,
+      "moduleName": "React",
+      "index": 109,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "请手写一个简化版的 `useState`。",
+      "focus": "简化版 useState 用「**模块级变量 + hook 链表索引**」模拟：把 state 存在 fiber 的链表节点上，setState 把更新 push 到队列，下次渲染时按队列算新值。",
+      "answer": [
+        "**简化版实现要点**：",
+        "1. 用一个模块级变量 `state`（或链表节点）+ `index` 指针。",
+        "2. useState 首次调用初始化 state，后续调用读已有值，然后 index++。",
+        "3. setState 把新值/更新函数记下来，标记组件需要重渲染。",
+        "4. 重渲染时 index 归零，重新按顺序读。"
+      ],
+      "followups": [
+        "useState 的初始值传函数 `useState(() => init())` 有什么好处？（提示：惰性初始化，避免每次渲染都跑）"
+      ]
+    },
+    {
+      "id": "fe.13.110",
+      "category": "fe",
+      "module": 13,
+      "moduleName": "React",
+      "index": 110,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "对比 Redux、Zustand、MobX 三种状态管理方案，它们的核心思想和适用场景有什么不同？",
+      "focus": "Redux=不可变+纯函数reducer+单一store，强约束可回溯，适合大型项目；Zustand=极简，基于 useSyncExternalStore 精准订阅，灵活轻量；MobX=可变数据+Proxy自动追踪依赖，写法像普通对象全自动响应。",
+      "answer": [
+        "单一全局 store，state 不可变（每次返回新对象）。",
+        "`reducer(state, action) => newState` 纯函数。",
+        "通过 `dispatch(action)` 触发，所有变化可追溯（时间旅行）。",
+        "缺点：样板代码多（action/reducer/types）、异步要 middleware。",
+        "性能：需手写 selector（reselect）避免不必要渲染。"
+      ],
+      "followups": [
+        "为什么 Zustand 不像 Redux 强调不可变？（见 fe-react-018）",
+        "MobX 的响应式和 Vue 有什么关系？（见 fe-react-019）",
+        "什么时候该用 Context 而不是状态管理库？"
+      ]
+    },
+    {
+      "id": "fe.13.111",
+      "category": "fe",
+      "module": 13,
+      "moduleName": "React",
+      "index": 111,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "Zustand 是如何工作的？",
+      "focus": "Zustand 的 store 本质是个带 `subscribe/getSnapshot` 的普通对象，用 React 18 的 `useSyncExternalStore` 让组件订阅；setState 时遍历所有订阅者，逐个跑 selector 比对，决定谁要更新。",
+      "answer": [
+        "`create((set,get)=>({...}))` 返回一个 hook，内部维护 state + 订阅者列表。",
+        "组件调 `useStore(s => s.count)` 时，底层走 `useSyncExternalStore(subscribe, getSnapshot)`。",
+        "`setState` 时遍历所有订阅者，逐个跑 selector 比对，决定谁要更新。"
+      ],
+      "followups": [
+        "Object.is 比 === 有什么区别？为什么用它做比较？（提示：区分 +0/-0、NaN）",
+        "多个 selector 组合怎么避免重复渲染？（提示：shallow 比较）"
+      ]
+    },
+    {
+      "id": "fe.13.112",
+      "category": "fe",
+      "module": 13,
+      "moduleName": "React",
+      "index": 112,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "React 做了哪些性能优化？开发者层面有哪些常用优化手段？",
+      "focus": "React 性能优化分两层：框架层（Fiber 可中断渲染、并发渲染、自动批处理、diff 算法）和开发者层（React.memo 避免子组件重渲染、useMemo/useCallback 缓存值和函数、虚拟化长列表、路由/组件懒加载、合理用 key、状态下沉/拆分）；核心思想是「减少不必要的渲染」和「减少渲染的成本」。",
+      "answer": [
+        "React 性能优化可分**框架内置**和**开发者手段**两层："
+      ],
+      "followups": [
+        "React.memo 的浅比较有什么局限？怎么自定义比较？",
+        "useMemo/useCallback 滥用会有什么问题？（记忆本身有成本）",
+        "useTransition 和 useDeferredValue 有什么区别？",
+        "React Profiler 怎么看哪个组件渲染慢？"
+      ]
+    },
+    {
+      "id": "fe.13.113",
+      "category": "fe",
+      "module": 13,
+      "moduleName": "React",
+      "index": 113,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "React Hook 的实现原理是什么？",
+      "focus": "Hook 的实现核心是**函数组件 fiber 上的单向链表**：每次渲染时按调用顺序把每个 Hook 串成链表节点挂在 fiber 上。React 靠「调用顺序」定位每个 Hook 对应的 state。",
+      "answer": [
+        "**数据结构**：每个函数组件对应的 fiber 节点上有个 `memoizedState` 字段，指向一条**单向链表**。链表每个节点对应一次 Hook 调用：",
+        "```",
+        "fiber.memoizedState → Hook0(useState) → Hook1(useEffect) → Hook2(useMemo) → null",
+        "                       {memoizedState, next} ...",
+        "```"
+      ],
+      "followups": [
+        "useEffect 和 useState 在链表节点里存的数据结构有何不同？（提示：useState 存 state+queue，useEffect 存 effect 对象+依赖）",
+        "为什么自定义 Hook 不会产生新的链表节点？（提示：自定义 Hook 内部的 Hook 仍归属宿主组件）",
+        "useMemo 的依赖数组是怎么和链表节点关联的？（提示：存在 hook 节点上，下次渲染比较决定是否重算）"
+      ]
+    },
+    {
+      "id": "fe.13.114",
+      "category": "fe",
+      "module": 13,
+      "moduleName": "React",
+      "index": 114,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "什么是 React Fiber 架构？为什么需要它？",
+      "focus": "Fiber 是 React 16 引入的**新协调架构**：把组件树重写成可中断、可恢复的链表结构（每个组件一个 fiber 节点），渲染过程被拆成无数小任务（fiber unit of work），可以被浏览器事件（用户输入）打断，让高优先级更新插队，从而保证动画和交互流畅。",
+      "answer": [
+        "**为什么需要 Fiber（要解决的问题）**：",
+        "React 15（Stack Reconciler）的渲染是**同步递归**的——一旦开始 reconcile 一棵大树，必须一口气跑完才能让出主线程。大树更新可能占用主线程几百毫秒，期间动画掉帧、用户点击无响应（卡顿）。"
+      ],
+      "followups": [
+        "为什么 commit 阶段不能中断？（提示：DOM 操作必须一致，否则 UI 闪烁）",
+        "双缓冲（current/workInProgress）解决了什么问题？"
+      ]
+    },
+    {
+      "id": "fe.13.115",
+      "category": "fe",
+      "module": 13,
+      "moduleName": "React",
+      "index": 115,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "概念"
+      ],
+      "title": "React 的更新调度策略（Lane Model）是怎样的？不同更新的优先级如何区分？",
+      "focus": "Lane Model 是 React 18 引入的**优先级模型**：用 32 位二进制表示一组「车道（lane）」，每个 lane 代表一种优先级。更新被挂到对应优先级的 lane 上，Scheduler 按优先级调度——高优先级（用户输入、离散事件）插队，低优先级（数据加载、transition）延后，让交互流畅。",
+      "answer": [
+        "**优先级演进**：React 15 无优先级（同步）；React 16 expirationTime（单一数值，粒度粗）；React 18 改成 **Lane Model**（位运算，可批量、可重叠）。"
+      ],
+      "followups": [
+        "React 18 的 Automatic Batching 和 lane 有什么关系？",
+        "startTransition 标记的更新被打断后，之前的计算结果会丢吗？（提示：会，需要重跑，但 React 会尽量复用）",
+        "lane 用 31 位有什么限制？为什么不直接用数组存优先级？（提示：位运算 O(1)，数组开销大）"
+      ]
+    },
+    {
+      "id": "fe.13.116",
+      "category": "fe",
+      "module": 13,
+      "moduleName": "React",
+      "index": 116,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "MobX 的响应式原理是什么？",
+      "focus": "MobX 用 Proxy（或旧版 defineProperty）把数据变成可观察值；组件 render 时访问这些属性会自动注册依赖；属性变化时 MobX 通知所有依赖它的组件重渲染——全自动追踪，无需手动订阅。",
+      "answer": [
+        "**三步响应式机制**：",
+        "1. **可观察化（Observable）**：`makeAutoObservable(this)` 用 Proxy 拦截对象属性的 get/set。读属性时收集「谁在读」，写属性时通知「读过的那些人」。",
+        "2. **依赖收集（组件 render 时）**：`observer(Component)` 包裹的组件，每次 render 时 MobX 在全局维护一个「当前正在执行的 reaction」。组件访问 `store.count` 时，Proxy 的 get 拦截器把这个属性记到当前 reaction 的依赖列表里。",
+        "3. **触发更新（数据变化时）**：当 `store.count` 被 set，Proxy 拦截到变化，查找依赖该属性的 reaction 列表，逐个标记为 dirty → 触发组件重渲染。"
+      ],
+      "followups": [
+        "makeAutoObservable 和 makeObservable 有什么区别？装饰器怎么用？"
+      ]
+    },
+    {
+      "id": "fe.14.117",
+      "category": "fe",
+      "module": 14,
+      "moduleName": "场景题",
+      "index": 117,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "手写"
+      ],
+      "title": "实现一个并发请求控制器（limitConcurrency）：给定一组异步任务和最大并发数，控制同时最多只有 N 个在执行。",
+      "focus": "核心思路：维护一个「正在执行的 Set」和「等待队列」。有任务要执行时，若正在执行数 < 上限就放进去跑，否则入队等待；每个任务完成后从 Set 移除，并从队列取下一个执行。",
+      "answer": [
+        "**并发控制要解决的问题**：一次性发起几百个请求会把浏览器/服务器打垮（浏览器同域并发限制、服务器限流）。需要限制同时只跑 N 个，跑完一个再放下一个。"
+      ],
+      "followups": [
+        "如果要支持任务优先级怎么做？",
+        "任务失败后要不要重试？怎么实现重试？",
+        "Promise 池（如 p-limit 库）还做了哪些优化？"
+      ]
+    },
+    {
+      "id": "fe.14.118",
+      "category": "fe",
+      "module": 14,
+      "moduleName": "场景题",
+      "index": 118,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "手写"
+      ],
+      "title": "实现一个模板字符串编译器：把模板里的插值（如 user.name）替换成真实数据。例如 Hello, {{user.name}}! 和 {user:{name:'Alice'}} → Hello, Alice!",
+      "focus": "核心思路：用正则匹配出所有 {{...}} 占位符，对每个占位符，按点号分割路径（user.name → [user, name]），从数据对象里逐层取值，最后替换占位符。",
+      "answer": [
+        "按 . 分割成路径数组（user.name → ['user', 'name']）。",
+        "从 data 对象逐层取值：data['user']['name']。"
+      ],
+      "followups": [
+        "怎么支持 {{#each list}} 循环语法？",
+        "取值时遇到函数要不要执行？（mustache 会执行）",
+        "Vue 的模板编译比这个复杂在哪？（指令、事件、双向绑定）"
+      ]
+    },
+    {
+      "id": "fe.14.119",
+      "category": "fe",
+      "module": 14,
+      "moduleName": "场景题",
+      "index": 119,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "手写"
+      ],
+      "title": "实现一个 sum 函数，支持链式调用：sum(1,2).sumOf() 返回 3；sum(1,2)(3).sumOf() 返回 6；sum(1)(2,3,4).sumOf() 返回 10。",
+      "focus": "核心：sum 返回一个函数（支持继续调用），这个函数内部累加所有参数，并挂一个 sumOf 方法返回总和。关键点：函数也是对象，可以挂属性；用闭包保存累加值；函数 toString/valueOf 可让隐式转换时也能返回值。",
+      "answer": [
+        "**解题关键**：",
+        "1. sum 要返回一个**函数**（这样才能 sum(1,2)(3) 链式调用）。",
+        "2. 这个函数每次被调用，把新参数累加进闭包变量 total。",
+        "3. 这个函数要挂一个 sumOf 方法，调用时返回 total。",
+        "4. 闭包：用一个外部变量（或函数属性）累加所有调用传入的值。"
+      ],
+      "followups": [
+        "怎么让 sum(1,2) + 0 也能等于 3？（提示：重写 valueOf）",
+        "这种链式调用和 Promise 的链式有什么本质区别？",
+        "怎么限制最多调用 N 次？"
+      ]
+    },
+    {
+      "id": "fe.14.120",
+      "category": "fe",
+      "module": 14,
+      "moduleName": "场景题",
+      "index": 120,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "如何实现 token 的无感刷新（过期时自动续期，用户无感知）？token 怎么安全存储？",
+      "focus": "双 token 方案：短期的 access token（用于请求）+ 长期的 refresh token（用于续期）。请求遇 401（过期）时，用 refresh token 换新 access token，重发失败的请求，用户全程无感。存储：access token 放内存（短期），refresh token 放 HttpOnly cookie（安全），不要放 localStorage（XSS 能偷）。",
+      "answer": [
+        "拦截这个 401，暂停后续请求。",
+        "用 refresh token 调刷新接口，拿新的 access token。",
+        "用新 token 重发刚才失败的请求。",
+        "用户全程无感知。"
+      ],
+      "followups": [
+        "多个请求同时 401 怎么保证只刷新一次？（提示：isRefreshing + 请求队列）",
+        "refresh token 放 cookie，怎么防 CSRF？",
+        "token 续期失败（refresh 也过期）怎么处理？"
+      ]
+    },
+    {
+      "id": "fe.14.121",
+      "category": "fe",
+      "module": 14,
+      "moduleName": "场景题",
+      "index": 121,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频"
+      ],
+      "title": "移动端弱网环境下，如何保证首屏渲染速度在 1 秒内？",
+      "focus": "弱网核心瓶颈是资源传输慢，策略：①减少首屏要传的数据量（代码分割、按需加载、SSR/骨架屏）②提前加载关键资源（preload/preconnect）③缓存最大化（强缓存/Service Worker）④传输优化（gzip/brotli、HTTP2、图片优化）。目标是首屏只加载最少必要内容。",
+      "answer": [
+        "**弱网首屏优化策略（按优先级）**："
+      ],
+      "followups": [
+        "SSR 在弱网下一定比 CSR 快吗？什么情况反而慢？",
+        "Service Worker 缓存更新策略怎么设计？",
+        "骨架屏和首屏内容不一致会闪，怎么处理？"
+      ]
+    },
+    {
+      "id": "fe.14.122",
+      "category": "fe",
+      "module": 14,
+      "moduleName": "场景题",
+      "index": 122,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "一个大型列表（上千条），如何避免某一项数据变化导致整个列表重新渲染？",
+      "focus": "核心是「精确更新」：①每项用稳定唯一 key 让框架只更新变化的项 ②把每项拆成独立子组件 + memo，props 没变就不重渲染 ③用 selector/响应式精准订阅，只有变化那一项的组件订阅对应数据 ④虚拟列表只渲染可视区。目标是「数据变 A，只有 A 对应的组件更新」。",
+      "answer": [
+        "**问题本质**：React/Vue 默认父组件重渲染会带着所有子组件重渲染。一个大列表，改一项，整个列表重渲染，卡。"
+      ],
+      "followups": [
+        "memo 的浅比较（shallow compare）在嵌套对象时会失效，怎么办？",
+        "Redux 的 useSelector 怎么实现精准订阅？",
+        "虚拟列表 + memo，性能还能再优化吗？"
+      ]
+    },
+    {
+      "id": "fe.15.123",
+      "category": "fe",
+      "module": 15,
+      "moduleName": "安全",
+      "index": 123,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "什么是 CSRF（跨站请求伪造）攻击？它是怎么发生的？",
+      "focus": "CSRF 是攻击者诱导已登录用户在不知情下，用其登录凭证（cookie 自动携带）向目标网站发起恶意请求。",
+      "answer": [
+        "**CSRF 攻击原理**：",
+        "1. 用户登录银行网站 A，浏览器存了 A 的 cookie。",
+        "2. 用户没退出 A，又访问了恶意网站 B。",
+        "3. B 页面里藏了一个向 A 发请求的表单/图片（如转账请求）。",
+        "4. 浏览器发起对 A 的请求时**自动带上 A 的 cookie**（这是关键——cookie 会自动随请求发送）。",
+        "5. A 收到带合法 cookie 的请求，以为是用户本人操作，执行了转账。"
+      ],
+      "followups": [
+        "CSRF 和 XSS 有什么区别？（XSS 是偷数据，CSRF 是借身份）",
+        "用了 JWT（不放 cookie）还会受 CSRF 攻击吗？"
+      ]
+    },
+    {
+      "id": "fe.15.124",
+      "category": "fe",
+      "module": 15,
+      "moduleName": "安全",
+      "index": 124,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "什么是 XSS（跨站脚本）攻击？有哪些类型？",
+      "focus": "XSS 是攻击者把恶意脚本注入到网页里，在其他用户浏览器执行，从而偷 cookie、篡改页面、盗号。分存储型/反射型/DOM 型。",
+      "answer": [
+        "**XSS 攻击原理**：攻击者把恶意 JS 代码注入到页面，受害者浏览器执行了这段代码，导致 cookie 被偷、会话被劫持、页面被篡改。"
+      ],
+      "followups": [
+        "存储型 XSS 和反射型 XSS 哪个危害大？为什么？"
+      ]
+    },
+    {
+      "id": "fe.15.125",
+      "category": "fe",
+      "module": 15,
+      "moduleName": "安全",
+      "index": 125,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "cookie 有哪些重要的安全属性？分别防止什么？",
+      "focus": "核心安全属性：HttpOnly（防 JS 读取，挡 XSS 偷 cookie）、Secure（只走 HTTPS，防中间人窃听）、SameSite（防 CSRF）、Domain/Path（缩小作用域）。",
+      "answer": [
+        "Strict：完全不带（即使从别的站点点链接过来也不带）。最安全但影响体验。",
+        "Lax：大部分跨站不带，但顶层导航的 GET 请求带。现代浏览器默认值，平衡安全和体验。",
+        "None：都带（需配合 Secure）。**容易受 CSRF**，尽量别用。"
+      ],
+      "followups": [
+        "为什么 HttpOnly 只能服务端设？这样设计有什么好处？",
+        "SameSite=Lax 为什么是默认值而不是 Strict？",
+        "token 放 cookie 和放 localStorage 各有什么优劣（XSS/CSRF 角度）？"
+      ]
+    },
+    {
+      "id": "fe.15.126",
+      "category": "fe",
+      "module": 15,
+      "moduleName": "安全",
+      "index": 126,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "概念"
+      ],
+      "title": "除了 XSS 和 CSRF，前端还有哪些常见安全威胁？点击劫持怎么防？",
+      "focus": "常见还有：点击劫持（用透明 iframe 诱骗点击）、中间人攻击、依赖供应链攻击、开放重定向。点击劫持靠 X-Frame-Options 或 CSP frame-ancestors 禁止页面被嵌套来防御。CSP 是缓解多种威胁的万能基石。",
+      "answer": [
+        "攻击者用透明 iframe 把目标网站盖在自己页面上，诱导用户点击看似正常的按钮，实际点的是目标网站的敏感按钮（如点赞、授权）。",
+        "防御：X-Frame-Options: DENY/SAMEORIGIN 禁止被嵌套；或 CSP 的 frame-ancestors 指令。",
+        "攻击者截获/篡改通信内容。",
+        "防御：全站 HTTPS、HSTS（强制 HTTPS）、证书钉扎。",
+        "npm 包被植入恶意代码，装了就中招。",
+        "防御：锁定依赖版本（lock 文件）、审查依赖、用 SRI（子资源完整性）校验 CDN 资源。",
+        "跳转参数可控，攻击者构造恶意跳转链接钓鱼。",
+        "防御：校验重定向地址白名单。",
+        "报错信息、注释、源码、sourcemap 暴露敏感信息。",
+        "防御：生产环境关 sourcemap、脱敏日志。"
+      ],
+      "followups": [
+        "CSP 能完全替代 HttpOnly 吗？",
+        "SRI（子资源完整性）怎么工作？",
+        "生产环境前端的 sourcemap 怎么处理才安全？"
+      ]
+    },
+    {
+      "id": "fe.16.127",
+      "category": "fe",
+      "module": 16,
+      "moduleName": "软件设计",
+      "index": 127,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频"
+      ],
+      "title": "如何从零设计一个前端监控系统？需要采集哪些数据？错误怎么采集上报？整体架构是怎样的？",
+      "focus": "前端监控系统采集三类数据：①错误监控（JS异常 try/catch + window.onerror + unhandledrejection + 资源加载错误）②性能监控（Performance API 拿 FP/FCP/LCP/CLS/TTFB）③用户行为（PV/UV/点击/路由跳转埋点）；架构：SDK 嵌入采集 → 上报（sendBeacon/img/批量合并）→ 服务端收集存储 → 数据清洗分析 → 可视化看板 + 告警；核心难点是采集的全面性+上报不影响性能+海量数据处理。",
+      "answer": [
+        "前端监控系统从零设计，分**采集什么、怎么采集、怎么上报、整体架构**四块："
+      ],
+      "followups": [
+        "SourceMap 怎么反解压缩代码的错误栈？安全吗？",
+        "sendBeacon 和 fetch keepalive 有什么区别？什么时候用哪个？",
+        "白屏检测有哪些方案？怎么准确判断？",
+        "SDK 怎么保证自身报错不影响业务代码？"
+      ]
+    },
+    {
+      "id": "fe.17.128",
+      "category": "fe",
+      "module": 17,
+      "moduleName": "SSR",
+      "index": 128,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "前端渲染有哪几种模式？各自的工作原理是什么？",
+      "focus": "三种主流渲染模式：①CSR 客户端渲染（浏览器拉 JS 后渲染，首屏慢但交互流畅，SPA 典型）②SSR 服务端渲染（服务器拼好 HTML 返回，首屏快利于 SEO，但服务器压力大）③SSG 静态站点生成（构建时预生成 HTML，最快最省，适合内容不变页面）。",
+      "answer": [
+        "**一、CSR（Client-Side Rendering，客户端渲染）**"
+      ],
+      "followups": []
+    },
+    {
+      "id": "fe.18.129",
+      "category": "fe",
+      "module": 18,
+      "moduleName": "TypeScript",
+      "index": 129,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "TypeScript 是怎么编译成 JavaScript 的？用 babel 处理 TS 和用 tsc 有什么区别？",
+      "focus": "TS 编译本质是「类型擦除」——把类型注解去掉，剩下的就是 JS。tsc（TS 编译器）既做类型检查又做转译；babel 只做转译（@babel/preset-typescript 擦除类型），不做类型检查，要靠编辑器或单独跑 tsc --noEmit 检查。现代项目多 babel/swc 转译 + tsc 类型检查。",
+      "answer": [
+        "TS = JS + 类型注解。",
+        "编译时，类型注解（如 `: string`、`interface`、`type`）被全部移除，剩下的就是合法 JS。",
+        "运行时没有任何类型信息（这正是 TS 是「编译时类型」的原因）。"
+      ],
+      "followups": [
+        "为什么 babel 不做类型检查？这样设计有什么好处？",
+        "TS 的 enum 编译后是什么？（不是简单擦除）",
+        "怎么在运行时保留类型信息（如校验 API 返回的数据结构）？（提示：zod/io-ts 运行时校验库）"
+      ]
+    },
+    {
+      "id": "fe.18.130",
+      "category": "fe",
+      "module": 18,
+      "moduleName": "TypeScript",
+      "index": 130,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "TypeScript 的 `Record<K, T>` 是怎么实现的？",
+      "focus": "Record<K,T> 本质是 `type Record<K extends keyof any, T> = { [P in K]: T }`，用映射类型把 K 的每个键映射成 T 类型值。用于快速构造「键是 K、值是 T」的对象类型。",
+      "answer": [
+        "`K extends keyof any`：K 必须是合法的键类型（string | number | symbol）。",
+        "`{ [P in K]: T }`：映射类型，遍历 K 的每个键 P，定义为 T 类型。",
+        "例子：`Record<'a'|'b', number>` = `{ a: number; b: number }`。"
+      ],
+      "followups": [
+        "Pick/Omit/Partial/Required 这些工具类型分别怎么实现？",
+        "映射类型 `[P in K]` 和索引签名 `[key: string]` 有什么区别？"
+      ]
+    },
+    {
+      "id": "fe.18.131",
+      "category": "fe",
+      "module": 18,
+      "moduleName": "TypeScript",
+      "index": 131,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "概念"
+      ],
+      "title": "TypeScript 的泛型和条件类型（Conditional Types）怎么用？举几个实际场景。",
+      "focus": "泛型是「类型的参数」——让类型可复用、可推导（function identity<T>(x:T):T）。条件类型是「类型层面的 if-else」——`T extends U ? X : Y`，根据类型关系选不同类型。两者结合能写出强大的工具类型（Awaited/ReturnType/Exclude/Extract）。",
+      "answer": [
+        "类型的参数，让函数/接口/类能适用于多种类型，且保持类型关联。",
+        "例子：`function identity<T>(x: T): T` —— 传什么类型返回什么类型，T 关联输入输出。",
+        "常见场景：数组 `Array<T>`、Promise `Promise<T>`、API 请求返回值 `request<T>(): Promise<T>`。"
+      ],
+      "followups": [
+        "infer 关键字具体怎么用？什么场景？",
+        "映射类型 + 条件类型能实现什么（如 keyof + in）？",
+        "泛型约束（extends）怎么限制泛型范围？"
+      ]
+    },
+    {
+      "id": "fe.19.132",
+      "category": "fe",
+      "module": 19,
+      "moduleName": "Vue",
+      "index": 132,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "Vue 的响应式原理是什么？Vue 2（defineProperty）和 Vue 3（Proxy）有什么区别？",
+      "focus": "Vue 响应式靠「数据劫持 + 依赖收集 + 派发更新」：读数据时收集谁依赖它，改数据时通知这些依赖更新。Vue2 用 defineProperty 逐属性劫持（需递归、监听不了数组/新增属性）；Vue3 用 Proxy 代理整个对象（一次性、能监听增删、数组、性能更好）。",
+      "answer": [
+        "**响应式三步走**：",
+        "1. **数据劫持**：拦截对数据的读写。",
+        "2. **依赖收集（读时）**：组件 render 时访问了哪些数据，把这些数据→组件的依赖关系记下来。",
+        "3. **派发更新（写时）**：数据被修改时，通知所有依赖它的组件重新渲染。"
+      ],
+      "followups": [
+        "Vue3 的 ref 和 reactive 有什么区别？为什么要两个？",
+        "Proxy 能监听不了什么？（提示：原始值要用 ref 包装）",
+        "Vue 的依赖收集和 MobX 的有什么异同？"
+      ]
+    },
+    {
+      "id": "fe.19.133",
+      "category": "fe",
+      "module": 19,
+      "moduleName": "Vue",
+      "index": 133,
+      "type": "qa",
+      "difficulty": "中",
+      "tags": [
+        "概念"
+      ],
+      "title": "Vue 的虚拟 DOM 和编译优化是什么？Vue 3 的编译时优化比 Vue 2 强在哪？",
+      "focus": "Vue 用虚拟 DOM 描述 UI，数据变→生成新 vnode→diff 出最小变更→更新真实 DOM。Vue3 的突破是「编译时优化」：编译器分析模板，给静态节点打标记、给动态节点加 patchFlag，diff 时跳过静态部分，比 Vue2 的全量 diff 快很多。",
+      "answer": [
+        "**虚拟 DOM 流程**：",
+        "1. 数据变 → 重新渲染生成新的虚拟 DOM 树（vnode）。",
+        "2. 新旧 vnode 对比（diff）→ 找出差异。",
+        "3. 只把差异部分更新到真实 DOM。"
+      ],
+      "followups": [
+        "Vue3 的 Block tree 是怎么收集动态节点的？",
+        "为什么 React 不做编译时优化？（提示：JSX 运行时才知道结构）",
+        "虚拟 DOM 一定比直接操作 DOM 快吗？什么情况反而慢？"
+      ]
+    },
+    {
+      "id": "fe.19.134",
+      "category": "fe",
+      "module": 19,
+      "moduleName": "Vue",
+      "index": 134,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "Vue 和 React 的核心区别是什么？从响应式机制、数据流、设计理念对比。",
+      "focus": "Vue 是「响应式驱动」（数据变自动更新，mutable）+ 编译优化模板；React 是「状态驱动重新渲染」（setState 触发全组件重渲染，immutable）+ JSX 运行时 diff。Vue 更自动化、上手快；React 更灵活、可控、生态大。",
+      "answer": [
+        "**核心区别对比**：",
+        "| 维度 | Vue | React |",
+        "|---|---|---|",
+        "| 响应式 | 数据变→自动精确更新（Proxy 追踪） | setState→组件重渲染（不可变） |",
+        "| 数据修改 | 可变（直接赋值，响应式系统追踪） | 不可变（必须新对象触发更新） |",
+        "| 视图描述 | 模板（编译时优化） | JSX（运行时，更灵活） |",
+        "| 组件更新 | 精确到属性（响应式追踪） | 整组件重渲染（靠 memo/selector 优化） |",
+        "| 数据流 | 双向绑定（v-model，语法糖） | 单向（onChange + setState） |",
+        "| 学习曲线 | 低（约定优于配置） | 中（更底层、概念少但灵活） |"
+      ],
+      "followups": [
+        "Vue 的双向绑定（v-model）和 React 受控组件本质上一样吗？",
+        "为什么 Vue 用模板而 React 用 JSX？各有什么取舍？",
+        "Composition API 是不是在学 React Hooks？有什么不同？"
+      ]
+    },
+    {
+      "id": "fe.19.135",
+      "category": "fe",
+      "module": 19,
+      "moduleName": "Vue",
+      "index": 135,
+      "type": "qa",
+      "difficulty": "高",
+      "tags": [
+        "高频",
+        "概念"
+      ],
+      "title": "Vue 3 的 Composition API 相比 Options API 解决了什么问题？",
+      "focus": "Composition API 解决 Options API「相关逻辑分散在不同选项（data/methods/computed）」的碎片化问题，让同一功能的逻辑聚合到一个函数，便于复用和维护。",
+      "answer": [
+        "**Options API 的痛点**：",
+        "同一个功能（如「搜索」）的逻辑被拆散：状态在 data、方法在 methods、计算在 computed、监听在 watch。功能一多，代码在不同选项间跳来跳去，难维护、难复用。"
+      ],
+      "followups": [
+        "Vue 的 ref 为什么需要 .value？有没有不用写 .value 的方案？",
+        "Composition API 完全替代 Options API 了吗？老项目要迁移吗？"
+      ]
     }
   ],
-  "total": 147
+  "total": 282
 }
