@@ -9,7 +9,7 @@ export function useQuestions() {
 
   useEffect(() => {
     if (cache) return;
-    fetch('./questions.json')
+    fetch(import.meta.env.BASE_URL + 'questions.json')
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
