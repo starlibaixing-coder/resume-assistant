@@ -146,6 +146,10 @@ button {
   padding: 28px 24px;
   margin-bottom: 24px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 .queue-summary .big-num {
   font-family: var(--font-mono);
@@ -153,14 +157,14 @@ button {
   font-weight: 600;
   color: var(--accent);
   line-height: 1;
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 .queue-summary .label {
   color: var(--text-dim);
   font-size: 14px;
 }
 .queue-summary .start-btn {
-  margin-top: 22px;
+  margin-top: 14px;
   display: inline-block;
   background: var(--accent);
   color: #1a1208;
@@ -175,6 +179,35 @@ button {
   background: var(--border);
   color: var(--text-mute);
   cursor: not-allowed;
+}
+
+/* 每次题量选择器 */
+.limit-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+.limit-picker .limit-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-mute);
+}
+.limit-picker .limit-btn {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: var(--bg-elev);
+  color: var(--text-dim);
+  border: 1px solid var(--border-soft);
+  transition: all 0.15s;
+}
+.limit-picker .limit-btn:hover { color: var(--text); }
+.limit-picker .limit-btn.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .progress-bar {
@@ -310,23 +343,110 @@ button {
   letter-spacing: 0.05em;
   margin-bottom: 10px;
 }
-.answer-panel ul {
-  list-style: none;
-  margin-bottom: 18px;
-}
-.answer-panel ul li {
-  padding: 6px 0 6px 18px;
-  position: relative;
+
+/* markdown 正文渲染 */
+.md-body {
+  font-size: 14px;
+  line-height: 1.7;
   color: var(--text);
 }
-.answer-panel ul li::before {
+.md-body p {
+  margin: 0 0 10px;
+  padding-left: 16px;
+  position: relative;
+}
+.md-body p::before {
   content: "›";
   position: absolute;
   left: 0;
   color: var(--accent);
   font-family: var(--font-mono);
 }
-.answer-panel .followups li::before { content: "?"; }
+.md-body p:last-child { margin-bottom: 0; }
+.md-body strong { color: var(--text); font-weight: 600; }
+.md-body em { color: var(--text-dim); }
+
+/* 行内代码 */
+.md-body code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  background: var(--bg-elev);
+  color: var(--accent);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* 代码块 */
+.md-body pre {
+  background: var(--bg-elev);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  overflow-x: auto;
+  margin: 10px 0 12px;
+}
+.md-body pre code {
+  background: none;
+  color: var(--text);
+  padding: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* 列表(markdown 生成的) */
+.md-body ul, .md-body ol {
+  list-style: none;
+  margin: 0 0 12px;
+  padding-left: 16px;
+}
+.md-body ul li, .md-body ol li {
+  padding: 4px 0 4px 16px;
+  position: relative;
+}
+.md-body ul li::before {
+  content: "·";
+  position: absolute;
+  left: 2px;
+  color: var(--accent);
+}
+
+/* 表格 */
+.md-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0 12px;
+  font-size: 13px;
+}
+.md-body th, .md-body td {
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  text-align: left;
+}
+.md-body th {
+  background: var(--bg-elev);
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.md-body tr:nth-child(even) td {
+  background: var(--bg-elev);
+}
+
+.answer-panel .followups {
+  list-style: none;
+  margin-bottom: 18px;
+}
+.answer-panel .followups li {
+  padding: 6px 0 6px 18px;
+  position: relative;
+  color: var(--text);
+}
+.answer-panel .followups li::before {
+  content: "?";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
 
 /* 评分按钮 */
 .rating-row {
@@ -374,22 +494,85 @@ button {
 
 /* 模块内题列表(浏览用) */
 .q-list-item {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  padding: 10px 14px;
   border-bottom: 1px solid var(--border-soft);
   font-size: 14px;
 }
 .q-list-item:last-child { border-bottom: none; }
+.q-list-item.expanded {
+  background: var(--bg-elev);
+}
+.q-list-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.q-list-head:hover { background: var(--bg-elev); }
 .q-list-item .qid {
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--text-mute);
   flex-shrink: 0;
-  width: 64px;
+  width: 88px;
 }
 .q-list-item .qtitle { color: var(--text); }
+
+/* 筛选条 */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.filter-btn {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 4px;
+  background: var(--bg-card);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  transition: all 0.15s;
+}
+.filter-btn:hover { color: var(--text); border-color: var(--text-mute); }
+.filter-btn.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* 模块标题行 + 统计 */
+.mod-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.mod-stats {
+  display: flex;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.ms-item { color: var(--text-mute); }
+.ms-good { color: var(--good); }
+.ms-warn { color: var(--warn); }
+
+.mini-progress {
+  height: 3px;
+  background: var(--border-soft);
+  border-radius: 2px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+.mini-progress > div {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s;
+}
 
 .empty-hint {
   text-align: center;
@@ -401,5 +584,17 @@ button {
   .app { padding: 20px 16px 60px; }
   .card-view { padding: 22px 18px; }
   .q-title { font-size: 17px; }
-  .rating-row { flex-direction: column; }
+  .rating-row {
+    flex-direction: row;
+    position: sticky;
+    bottom: 0;
+    background: var(--bg-card);
+    padding: 12px 16px;
+    margin: 16px -18px -22px;
+    z-index: 10;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
+    border-top: 1px solid var(--border);
+  }
+  .rating-btn { padding: 12px 0; font-size: 14px; }
+  .qid { width: 72px !important; }
 }

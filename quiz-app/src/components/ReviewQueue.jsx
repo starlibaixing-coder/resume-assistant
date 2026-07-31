@@ -1,9 +1,12 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuestions } from '../lib/useQuestions.js';
 import { getReviewQueue, getStats } from '../lib/schedule.js';
 
+const LIMIT_OPTIONS = [20, 50, 100, 0]; // 0 = 全部
+
 export default function ReviewQueue({ category }) {
   const { data, error } = useQuestions();
+  const [limit, setLimit] = useState(50); // 每次刷题量,0=全部
 
   const { ids, stats, queue } = useMemo(() => {
     if (!data) return { ids: [], stats: null, queue: null };
@@ -13,9 +16,9 @@ export default function ReviewQueue({ category }) {
     return {
       ids,
       stats: getStats(category, ids),
-      queue: getReviewQueue(category, ids),
+      queue: getReviewQueue(category, ids, limit),
     };
-  }, [data, category]);
+  }, [data, category, limit]);
 
   if (error) return <div className="empty-hint">加载失败: {error}</div>;
   if (!data || !stats) return <div className="empty-hint">加载中…</div>;
@@ -40,27 +43,39 @@ export default function ReviewQueue({ category }) {
           <>
             <div className="big-num">{dueCount}</div>
             <div className="label">题待复习</div>
-            <a className="start-btn" href={`#/${category}/quiz`}>
-              开始复习 {'->'}
-            </a>
           </>
         ) : stats.remaining > 0 ? (
           <>
             <div className="big-num">{stats.remaining}</div>
             <div className="label">题未学习</div>
-            <a className="start-btn" href={`#/${category}/quiz`}>
-              开始学习 {'->'}
-            </a>
           </>
         ) : (
           <>
             <div className="big-num">✓</div>
             <div className="label">今日已清空，全部学过</div>
-            <a className="start-btn" href={`#/${category}/quiz`}>
-              再过一遍 {'->'}
-            </a>
           </>
         )}
+
+        <div className="limit-picker">
+          <span className="limit-label">每次</span>
+          {LIMIT_OPTIONS.map((opt) => (
+            <button
+              key={opt}
+              className={`limit-btn${limit === opt ? ' active' : ''}`}
+              onClick={() => setLimit(opt)}
+            >
+              {opt === 0 ? '全部' : opt}
+            </button>
+          ))}
+          <span className="limit-label">题</span>
+        </div>
+
+        <a
+          className="start-btn"
+          href={`#/${category}/quiz${limit !== 50 ? `?limit=${limit}` : ''}`}
+        >
+          开始{dueCount > 0 ? '复习' : stats.remaining > 0 ? '学习' : '再过一遍'} {'->'}
+        </a>
 
         <div className="progress-bar">
           <div style={{ width: `${learnPct}%` }} />
