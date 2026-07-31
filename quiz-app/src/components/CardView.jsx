@@ -3,20 +3,26 @@ import { useQuestions } from '../lib/useQuestions.js';
 import { getReviewQueue } from '../lib/schedule.js';
 import { newCard, review } from '../lib/sm2.js';
 import { saveCard, loadProgress } from '../lib/storage.js';
+import AnswerPanel from './AnswerPanel.jsx';
 
 export default function CardView({ category }) {
   const { data, error } = useQuestions();
   const [queueIdx, setQueueIdx] = useState(0);
   const [revealed, setRevealed] = useState(false);
-  const [tick, setTick] = useState(0); // 强制刷新 stats
+  const [roundDone, setRoundDone] = useState(false); // 本轮 N 题是否刷完
+  const [round, setRound] = useState(0); // 轮次,变化时重算队列
 
-  // 计算队列，tick 变化时重算
+  // 计算队列,round 变化时重算(续刷下一轮时)
   const { queue, catQuestions } = useMemo(() => {
     if (!data) return { queue: [], catQuestions: [] };
     const catQuestions = data.questions.filter((q) => q.category === category);
     const ids = catQuestions.map((q) => q.id);
-    return { queue: getReviewQueue(category, ids).queue, catQuestions };
-  }, [data, category, tick]);
+    // 从 URL 读取每次题量,默认 50,0=全部
+    const params = new URLSearchParams(window.location.hash.split('?')[1] || '');
+    const limitParam = params.get('limit');
+    const limit = limitParam != null ? parseInt(limitParam, 10) || 0 : 50;
+    return { queue: getReviewQueue(category, ids, limit).queue, catQuestions };
+  }, [data, category, round]);
 
   const currentId = queue[queueIdx];
   const current = catQuestions.find((q) => q.id === currentId);
@@ -25,10 +31,6 @@ export default function CardView({ category }) {
   useEffect(() => {
     setRevealed(false);
   }, [queueIdx, currentId]);
-
-  if (error) return <div className="empty-hint">加载失败: {error}</div>;
-  if (!data) return <div className="empty-hint">加载中…</div>;
-  if (!queue.length) return <DoneState category={category} />;
 
   const handleRate = (rating) => {
     const existing = loadProgress(category)[currentId];
@@ -39,11 +41,22 @@ export default function CardView({ category }) {
     if (queueIdx < queue.length - 1) {
       setQueueIdx(queueIdx + 1);
     } else {
-      // 队列走完，刷新队列
-      setTick((t) => t + 1);
-      setQueueIdx(0);
+      // 本轮刷完,显示完成态,不自动补位
+      setRoundDone(true);
     }
   };
+
+  const handleNextRound = () => {
+    setRound((r) => r + 1); // 触发队列重算
+    setQueueIdx(0);
+    setRoundDone(false);
+    setRevealed(false);
+  };
+
+  if (error) return <div className="empty-hint">加载失败: {error}</div>;
+  if (!data) return <div className="empty-hint">加载中…</div>;
+  if (!queue.length) return <DoneState category={category} />;
+  if (roundDone) return <RoundDoneState category={category} done={queue.length} onNextRound={handleNextRound} />;
 
   return (
     <div>
@@ -108,29 +121,6 @@ export default function CardView({ category }) {
   );
 }
 
-function AnswerPanel({ answer, followups }) {
-  return (
-    <div className="answer-panel">
-      <div className="panel-label">参考答案要点</div>
-      <ul>
-        {answer.map((a, i) => (
-          <li key={i}>{a}</li>
-        ))}
-      </ul>
-      {followups.length > 0 && (
-        <>
-          <div className="panel-label">追问方向</div>
-          <ul className="followups">
-            {followups.map((f, i) => (
-              <li key={i}>{f}</li>
-            ))}
-          </ul>
-        </>
-      )}
-    </div>
-  );
-}
-
 function DoneState({ category }) {
   return (
     <div>
@@ -141,7 +131,27 @@ function DoneState({ category }) {
         <div className="done-icon">✓</div>
         <div>今日队列已清空</div>
         <a className="done-link" href={`#/${category}/browse`}>
-          去浏览全部题目 {'→'}
+          去浏览全部题目 {'->'}
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function RoundDoneState({ category, done, onNextRound }) {
+  return (
+    <div>
+      <a className="back-link" href={'#/' + category}>
+        ← 返回
+      </a>
+      <div className="done-state">
+        <div className="done-icon">✓</div>
+        <div>本轮完成,刷了 {done} 题</div>
+        <button className="done-link" onClick={onNextRound}>
+          继续刷下一轮
+        </button>
+        <a className="done-link" href={'#/' + category + '/browse'}>
+          去浏览全部题目
         </a>
       </div>
     </div>
