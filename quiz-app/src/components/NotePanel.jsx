@@ -1,53 +1,63 @@
 import { useState, useEffect, useRef } from 'react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
 import { getNote, saveNote } from '../lib/storage.js';
-import { renderMarkdown } from '../lib/markdown.js';
 
-// 笔记区:输入 markdown + 实时预览 + 防抖自动保存
-// props: category, questionId
-// 内部自洽,切题时自动加载对应笔记并保存残留输入
+// 笔记区:Tiptap WYSIWYG 所见即所得 + 防抖自动保存
+// 外层用 questionId 作 key 强制切题重建,editor 用新 content 初始化
 export default function NotePanel({ category, questionId }) {
-  const [text, setText] = useState('');
+  return (
+    <NotePanelEditor key={questionId} category={category} questionId={questionId} />
+  );
+}
+
+function NotePanelEditor({ category, questionId }) {
   const [expanded, setExpanded] = useState(false);
-  const [saved, setSaved] = useState(true);
   const debounceRef = useRef(null);
   const latestRef = useRef('');
+  const initialContent = useRef('');
 
-  // 切题时:加载笔记,决定展开/收起
+  // 挂载时读已有笔记,决定展开/收起
   useEffect(() => {
     const existing = getNote(category, questionId);
-    setText(existing);
+    initialContent.current = existing;
     setExpanded(!!existing);
-    setSaved(true);
     latestRef.current = existing;
 
-    // 清理函数:切题/卸载前 flush 残留输入,不丢字
+    // 卸载(切题)前 flush 残留输入
     return () => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
         debounceRef.current = null;
       }
-      if (latestRef.current !== existing) {
+      if (latestRef.current && latestRef.current !== initialContent.current) {
         saveNote(category, questionId, latestRef.current);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, questionId]);
+  }, []);
 
-  const handleChange = (e) => {
-    const val = e.target.value;
-    setText(val);
-    latestRef.current = val;
-    setSaved(false);
-
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      saveNote(category, questionId, val);
-      setSaved(true);
-    }, 500);
-  };
+  const editor = useEditor({
+    extensions: [StarterKit],
+    content: initialContent.current || '',
+    onUpdate: ({ editor }) => {
+      const html = editor.getHTML();
+      latestRef.current = html;
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        saveNote(category, questionId, html);
+      }, 500);
+    },
+    editorProps: {
+      attributes: {
+        class: 'note-prose',
+        'aria-label': '笔记编辑区',
+      },
+    },
+  });
 
   // 空且未展开:收起态,显示入口按钮
-  if (!expanded && !text) {
+  if (!expanded) {
     return (
       <div className="note-panel note-collapsed">
         <button className="note-entry-btn" onClick={() => setExpanded(true)}>
@@ -61,26 +71,9 @@ export default function NotePanel({ category, questionId }) {
     <div className="note-panel">
       <div className="note-header">
         <span className="note-label">📝 我的笔记</span>
-        <span className={`note-save-status${saved ? ' saved' : ''}`}>
-          {saved ? '已保存 ✓' : '编辑中…'}
-        </span>
+        <span className="note-save-status">自动保存</span>
       </div>
-      <div className="note-editor">
-        <textarea
-          className="note-textarea"
-          value={text}
-          onChange={handleChange}
-          placeholder="用自己的话写答案,支持 markdown (**加粗** `代码` 列表等)"
-          rows={6}
-        />
-        <div className="note-preview md-body">
-          {text.trim() ? (
-            <div dangerouslySetInnerHTML={{ __html: renderMarkdown(text) }} />
-          ) : (
-            <span className="note-preview-empty">预览区(在左边写下你的答案)</span>
-          )}
-        </div>
-      </div>
+      <EditorContent editor={editor} className="note-editor-wrap" />
     </div>
   );
 }
