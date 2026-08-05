@@ -12,34 +12,16 @@ export default function NotePanel({ category, questionId }) {
 }
 
 function NotePanelEditor({ category, questionId }) {
-  const [expanded, setExpanded] = useState(false);
+  // 首次渲染同步读已有笔记(不靠 useEffect,否则 useEditor 拿不到初始 content)
+  const [initialContent] = useState(() => getNote(category, questionId));
+  const [expanded, setExpanded] = useState(() => !!initialContent);
   const debounceRef = useRef(null);
-  const latestRef = useRef('');
-  const initialContent = useRef('');
-
-  // 挂载时读已有笔记,决定展开/收起
-  useEffect(() => {
-    const existing = getNote(category, questionId);
-    initialContent.current = existing;
-    setExpanded(!!existing);
-    latestRef.current = existing;
-
-    // 卸载(切题)前 flush 残留输入
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-        debounceRef.current = null;
-      }
-      if (latestRef.current && latestRef.current !== initialContent.current) {
-        saveNote(category, questionId, latestRef.current);
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const latestRef = useRef(initialContent);
 
   const editor = useEditor({
     extensions: [StarterKit],
-    content: initialContent.current || '',
+    content: initialContent || '',
+    immediatelyRender: false, // 避免 SSR/挂载时序问题(Tiptap 官方推荐)
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
       latestRef.current = html;
@@ -55,6 +37,20 @@ function NotePanelEditor({ category, questionId }) {
       },
     },
   });
+
+  // 卸载(切题)前 flush 残留输入
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
+      if (latestRef.current && latestRef.current !== initialContent) {
+        saveNote(category, questionId, latestRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 空且未展开:收起态,显示入口按钮
   if (!expanded) {
