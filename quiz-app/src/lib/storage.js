@@ -29,11 +29,12 @@ export function clearProgress(category) {
 }
 
 // ===== 笔记存储 =====
-// key: quiz-notes:{category} -> { "{id}": "markdown字符串" }
+// key: quiz-notes-v2:{category} -> { "{id}": "HTML字符串" }
+// v2:内容从 markdown 改为 HTML(Tiptap WYSIWYG)。旧 quiz-notes: key 废弃不读。
 // 与 SM-2 进度数据隔离,清进度不影响笔记
 
 export function loadNotes(category) {
-  const key = `quiz-notes:${category}`;
+  const key = `quiz-notes-v2:${category}`;
   try {
     return JSON.parse(localStorage.getItem(key) || '{}');
   } catch {
@@ -41,12 +42,12 @@ export function loadNotes(category) {
   }
 }
 
-export function saveNote(category, id, markdown) {
-  const key = `quiz-notes:${category}`;
+export function saveNote(category, id, html) {
+  const key = `quiz-notes-v2:${category}`;
   try {
     const all = loadNotes(category);
-    if (markdown && markdown.trim()) {
-      all[id] = markdown;
+    if (html && html.trim()) {
+      all[id] = html;
     } else {
       delete all[id]; // 空内容不留 key
     }
@@ -61,7 +62,7 @@ export function getNote(category, id) {
 }
 
 export function clearNotes(category) {
-  const key = `quiz-notes:${category}`;
+  const key = `quiz-notes-v2:${category}`;
   try {
     localStorage.removeItem(key);
   } catch {
