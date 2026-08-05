@@ -27,3 +27,44 @@ export function clearProgress(category) {
   const key = `quiz-progress:${category}`;
   localStorage.removeItem(key);
 }
+
+// ===== 笔记存储 =====
+// key: quiz-notes:{category} -> { "{id}": "markdown字符串" }
+// 与 SM-2 进度数据隔离,清进度不影响笔记
+
+export function loadNotes(category) {
+  const key = `quiz-notes:${category}`;
+  try {
+    return JSON.parse(localStorage.getItem(key) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+export function saveNote(category, id, markdown) {
+  const key = `quiz-notes:${category}`;
+  try {
+    const all = loadNotes(category);
+    if (markdown && markdown.trim()) {
+      all[id] = markdown;
+    } else {
+      delete all[id]; // 空内容不留 key
+    }
+    localStorage.setItem(key, JSON.stringify(all));
+  } catch {
+    // 隐私模式/配额满,静默降级
+  }
+}
+
+export function getNote(category, id) {
+  return loadNotes(category)[id] || '';
+}
+
+export function clearNotes(category) {
+  const key = `quiz-notes:${category}`;
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // 静默
+  }
+}
