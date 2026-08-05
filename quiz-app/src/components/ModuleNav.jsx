@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuestions } from '../lib/useQuestions.js';
 import { getModuleStats, getQuestionStatus } from '../lib/schedule.js';
 import AnswerPanel from './AnswerPanel.jsx';
+import NotePanel from './NotePanel.jsx';
 
 const FILTERS = [
   { key: 'all', label: '全部' },
@@ -147,6 +148,7 @@ export default function ModuleNav({ category }) {
                             {q.focus}
                           </div>
                           <AnswerPanel answer={q.answer} followups={q.followups} />
+                          <NotePanel category={category} questionId={q.id} />
                         </div>
                       )}
                     </div>
