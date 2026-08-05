@@ -598,3 +598,100 @@ button {
   .rating-btn { padding: 12px 0; font-size: 14px; }
   .qid { width: 72px !important; }
 }
+
+/* ===== 笔记区 NotePanel ===== */
+.note-panel {
+  margin-top: 16px;
+  padding: 14px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.note-collapsed {
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+.note-entry-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-mute);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.note-entry-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.note-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.note-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.note-save-status {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-mute);
+}
+.note-save-status.saved {
+  color: var(--good);
+}
+.note-editor {
+  display: flex;
+  gap: 12px;
+}
+.note-textarea {
+  flex: 1;
+  min-height: 120px;
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.note-textarea:focus {
+  border-color: var(--accent);
+}
+.note-textarea::placeholder {
+  color: var(--text-mute);
+}
+.note-preview {
+  flex: 1;
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-wrap: break-word;
+}
+.note-preview-empty {
+  color: var(--text-mute);
+  font-size: 12px;
+}
+
+/* 窄屏:编辑器和预览上下排列 */
+@media (max-width: 640px) {
+  .note-editor {
+    flex-direction: column;
+  }
+}
