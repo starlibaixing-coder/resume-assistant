@@ -117,10 +117,7 @@ export function HomePage() {
         </ul>
       </section>
 
-      {/* ── Footer ───────────────────────────────────── */}
-      <footer className="mt-14 border-t border-border pt-6 text-sm text-muted-foreground">
-        <p>纯前端,开源。数据只存你的浏览器。</p>
-      </footer>
+      {/* ── 价值列表的「本地」条已经说了数据存储,无需 footer 重复 */}
     </div>
   );
 }
