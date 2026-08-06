@@ -1,19 +1,20 @@
 import { useEffect, useState } from 'react';
-import CategoryList from './components/CategoryList.jsx';
-import ReviewQueue from './components/ReviewQueue.jsx';
-import CardView from './components/CardView.jsx';
-import ModuleNav from './components/ModuleNav.jsx';
+import { HomePage } from '@/components/home-page';
+import { ReviewQueue } from '@/components/review-queue';
+import { CardView } from '@/components/card-view';
+import { ModuleNav } from '@/components/module-nav';
+import { ModeToggle } from '@/components/mode-toggle';
+import { GithubLink } from '@/components/github-link';
 
 // 极简 hash 路由：#/ / #/:category / #/:category/quiz / #/:category/browse
-function parseHash() {
+function parseHash(): string[] {
   const raw = window.location.hash.replace(/^#\/?/, '');
   const [path] = raw.split('?');
-  const parts = path.split('/').filter(Boolean);
-  return parts;
+  return path.split('/').filter(Boolean);
 }
 
 export default function App() {
-  const [parts, setParts] = useState(parseHash());
+  const [parts, setParts] = useState<string[]>(parseHash());
 
   useEffect(() => {
     const onChange = () => setParts(parseHash());
@@ -28,7 +29,7 @@ export default function App() {
 
   let page;
   if (parts.length === 0) {
-    page = <CategoryList />;
+    page = <HomePage />;
   } else if (parts.length === 1) {
     page = <ReviewQueue category={parts[0]} />;
   } else if (parts[1] === 'quiz') {
@@ -39,5 +40,13 @@ export default function App() {
     page = <ReviewQueue category={parts[0]} />;
   }
 
-  return <div className="app">{page}</div>;
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        <GithubLink />
+        <ModeToggle />
+      </div>
+      <div className="mx-auto max-w-3xl px-4 py-6">{page}</div>
+    </div>
+  );
 }

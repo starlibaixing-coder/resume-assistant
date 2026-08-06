@@ -8,11 +8,11 @@ marked.setOptions({
 });
 
 // 缓存:相同文本不重复解析(答案内容静态)
-const cache = new Map();
+const cache = new Map<string, string>();
 
-export function renderMarkdown(text) {
-  if (cache.has(text)) return cache.get(text);
-  const html = marked.parse(text);
+export function renderMarkdown(text: string): string {
+  if (cache.has(text)) return cache.get(text) as string;
+  const html = marked.parse(text) as string;
   cache.set(text, html);
   return html;
 }
