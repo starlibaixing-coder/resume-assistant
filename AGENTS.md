@@ -4,17 +4,17 @@ Workspace instructions for ZCode agents working in this repo.
 
 ## What this repo is
 
-求职准备资源库,三个核心交付物:
+求职准备资源库,目标:刷题 + 弄简历。题库为源,刷题站和简历 skill 各管一头。
 
-1. **`banks/`** - 主体。多分类面试题库,YAML 为源。当前两个分类:
+1. **`quiz-app/`** - 刷题站。React + Vite 纯前端,SM-2 间隔重复 + markdown 笔记,部署到 GitHub Pages。在线:https://starlibaixing-coder.github.io/resume-assistant/
+2. **`banks/`** - 面试题库(刷题站数据源)。YAML 为源。当前两个分类:
    - `banks/ai-agent/` - AI Agent 工程师题库(15 模块 / 147 题)
    - `banks/fe/` - 前端工程师题库(19 模块 / 135 题)
    - `banks/clean/` - 清洗管线(任意格式原料 -> AI -> 标准 YAML)
    - `banks/audit/` - 质量审计(audit.mjs 格式+设计检查,fix.mjs 自动修正)
-2. **`quiz-app/`** - 刷题站。React + Vite 纯前端,SM-2 间隔重复,部署到 GitHub Pages。
 3. **`skill/`** - 简历生成 skill。ZCode agent skill,六阶段工作流生成 JD 定向 PDF 简历。
 
-题库是主线,刷题站和简历 skill 是配套工具。
+刷题站和简历 skill 是面向用户的两大交付物,题库是它们的数据源。
 
 ## 目录结构
 

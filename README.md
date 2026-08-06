@@ -1,10 +1,14 @@
 # 求职准备资源库
 
-面向技术岗位的求职准备资源库。三个核心部分:
+技术岗求职的两件套:**刷题 + 弄简历**。题库为源,刷题站和简历 skill 各管一头。
 
-- **面试题库**(`banks/`)- 主体。多分类结构化题库,YAML 为源,覆盖 AI Agent(147题)和前端(135题)两个方向。
-- **刷题站**(`quiz-app/`)- 配套工具。React + Vite 纯前端应用,Anki 式间隔重复刷题,自动部署到 GitHub Pages。
-- **简历生成 skill**(`skill/`)- 配套工具。ZCode agent skill,从项目材料 + JD 生成 JD 定向、可面试的 PDF 简历。
+> 🚀 **在线刷题**:https://starlibaixing-coder.github.io/resume-assistant/
+
+三个核心交付物:
+
+- **刷题站**([`quiz-app/`](./quiz-app))- React + Vite 纯前端,Anki 式间隔重复 + markdown 笔记,自动部署到 GitHub Pages。↑ 上面就是在线地址。
+- **面试题库**([`banks/`](./banks))- 刷题站的数据源。多分类结构化题库,YAML 为源,覆盖 AI Agent(147题)和前端(135题)。
+- **简历生成 skill**([`skill/`](./skill))- ZCode agent skill,六阶段工作流从项目材料 + JD 生成 JD 定向、扛得住面试的 PDF 简历。
 
 ## 目录结构
 
@@ -83,7 +87,7 @@ Anki 式间隔重复刷题,纯前端,无后端。
 - **SM-2 算法**:三档评分(不会/模糊/掌握),自动安排复习间隔
 - **强制思考**:答案默认折叠,点"我想好了,看答案"才解锁
 - **进度存储**:localStorage,按分类隔离
-- **在线访问**:部署到 GitHub Pages
+- **在线访问**:https://starlibaixing-coder.github.io/resume-assistant/
 
 ```bash
 cd quiz-app
