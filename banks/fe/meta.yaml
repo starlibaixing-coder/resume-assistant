@@ -2,41 +2,41 @@ slug: fe
 name: 前端工程师
 description: 前端工程师面试题库，按知识板块分组，覆盖 JS 原理、框架、浏览器、工程化等。
 modules:
-  - id: 01
-    name: AI
-  - id: 02
-    name: 算法
-  - id: 03
-    name: 浏览器原理
-  - id: 04
-    name: 跨端
+  - id: 08
+    name: JS 原理
   - id: 05
     name: CSS
+  - id: 03
+    name: 浏览器原理
+  - id: 18
+    name: TypeScript
+  - id: 13
+    name: React
+  - id: 19
+    name: Vue
+  - id: 16
+    name: 软件设计
   - id: 06
     name: 设计模式
   - id: 07
     name: 工程化
-  - id: 08
-    name: JS 原理
-  - id: 09
-    name: 方法论
-  - id: 10
-    name: 微前端
-  - id: 11
-    name: 小程序
-  - id: 12
-    name: Node.js
-  - id: 13
-    name: React
-  - id: 14
-    name: 场景题
   - id: 15
     name: 安全
-  - id: 16
-    name: 软件设计
+  - id: 12
+    name: Node.js
   - id: 17
     name: SSR
-  - id: 18
-    name: TypeScript
-  - id: 19
-    name: Vue
+  - id: 10
+    name: 微前端
+  - id: 04
+    name: 跨端
+  - id: 11
+    name: 小程序
+  - id: 02
+    name: 算法
+  - id: 14
+    name: 场景题
+  - id: 09
+    name: 方法论
+  - id: 01
+    name: AI

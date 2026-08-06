@@ -4,6 +4,7 @@ import { getReviewQueue } from '../lib/schedule.js';
 import { newCard, review } from '../lib/sm2.js';
 import { saveCard, loadProgress } from '../lib/storage.js';
 import AnswerPanel from './AnswerPanel.jsx';
+import NotePanel from './NotePanel.jsx';
 
 export default function CardView({ category }) {
   const { data, error } = useQuestions();
@@ -86,6 +87,8 @@ export default function CardView({ category }) {
         <div className="q-title">{current.title}</div>
         <div className="q-focus">{current.focus}</div>
 
+        <NotePanel category={category} questionId={current.id} />
+
         {!revealed ? (
           <div className="answer-locked">
             <button
@@ -97,10 +100,15 @@ export default function CardView({ category }) {
             <div className="hint">先在脑中想清楚，再对答案</div>
           </div>
         ) : (
-          <AnswerPanel
-            answer={current.answer}
-            followups={current.followups}
-          />
+          <>
+            <AnswerPanel
+              answer={current.answer}
+              followups={current.followups}
+            />
+            <button className="collapse-btn" onClick={() => setRevealed(false)}>
+              ↑ 收起答案
+            </button>
+          </>
         )}
       </div>
 

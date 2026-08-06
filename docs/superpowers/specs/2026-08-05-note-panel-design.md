@@ -13,7 +13,7 @@
 ## 需求(已与用户确认)
 
 1. **出现时机**:看参考答案之前就能写(与强制思考流程契合)
-2. **富文本程度**:纯 markdown 输入,复用现有 `marked`,零新依赖
+2. **富文本程度**:**[已修订 v2]** ~~纯 markdown 输入,复用现有 `marked`,零新依赖~~ → 见文末「修订 v2:改为 WYSIWYG」
 3. **存储**:只存本地 localStorage,无后端,不跨设备
 4. **覆盖范围**:CardView(复习流)和 ModuleNav(浏览模式)两处都要
 
@@ -154,3 +154,50 @@ src/components/
    - 空笔记收起、有内容展开
    - 窄屏布局正常
 3. localStorage 检查:`quiz-notes:{category}` key 存在,值结构正确
+
+---
+
+## 修订 v2:改为 WYSIWYG(2026-08-05,实现后用户反馈)
+
+### 变更起因
+
+v1 实现并验证通过后,用户反馈两点:
+1. **右侧预览栏没必要** —— 占空间,双栏割裂
+2. **textarea 不合适** —— 应是一块固定可编辑区域,不能拖拽大小
+
+进一步澄清后,用户确认要的是**真正的所见即所得**(输入 `**加粗**` 立即显示加粗效果),而非纯 markdown 源码。这推翻了 v1 的两个核心决策(零新依赖 + 纯 markdown)。
+
+### 新需求(v2,已与用户确认)
+
+1. **去掉右侧预览栏** —— 编辑区占满(WYSIWYG 本身即所见即所得,不需要独立预览)
+2. **编辑区固定高度,不可拖拽** —— 去掉 textarea 的 `resize`
+3. **真 WYSIWYG** —— 输入 markdown 语法立即渲染为格式化效果
+4. **引入 Tiptap** —— headless 富文本框架,React 绑定成熟,按需加扩展
+5. **存储格式改为 HTML** —— Tiptap 原生输出 HTML,渲染直接 `dangerouslySetInnerHTML`
+
+### 选型理由(Tiptap vs Lexical vs MDXEditor)
+
+- **MDXEditor**:~851KB gzip,体积离谱,笔记字段杀鸡用牛刀 → 排除
+- **Lexical**:核心 ~22KB,但简单场景需自己组合插件 + 写 markdown 序列化,投入过大
+- **Tiptap**:真 WYSIWYG,headless 可完全自定义深色样式,扩展即插即用(只要 bold/italic/code/list/heading),笔记场景常用 → **选定**
+
+### 数据迁移
+
+localStorage 里的 `quiz-notes:*` 旧数据是 markdown 字符串(测试残留),格式不兼容 HTML。**迁移策略:清空旧笔记数据**(均是测试内容,无生产数据损失)。具体做法:读取时若内容不以 `<` 开头(非 HTML),视为旧数据忽略(返回空),让用户重写;或更直接——升级 storage key 版本(`quiz-notes-v2:{category}`),旧 key 自然废弃。
+
+### 不变的部分
+
+- **出现时机**:看答案前就能写(v1 §1 不变)
+- **存储位置**:localStorage,无后端(v1 §2 不变)
+- **覆盖范围**:CardView + ModuleNav 两处(v1 §3 不变)
+- **独立 key 隔离**:与 SM-2 进度分开(v1 §2 不变)
+- **storage.js 的 4 个函数签名**:不变(只是存的内容从 markdown 字符串变成 HTML 字符串)
+- **接入点**:CardView/ModuleNav 各一行 `<NotePanel>`,不变
+
+### v2 涉及改动
+
+- **重写 `NotePanel.jsx`**:textarea+预览 → Tiptap WYSIWYG 编辑器
+- **`package.json`**:新增 `@tiptap/react`、`@tiptap/starter-kit`、`@tiptap/extension-*`(按需)
+- **`index.css`**:去掉双栏布局(`.note-editor` flex),改单栏;加 Tiptap ProseMirror 内容区样式(`.ProseMirror`);去掉 `resize`
+- **storage.js**:升级 key 到 v2(或加版本判断),不兼容旧 markdown 数据
+- **CardView/ModuleNav**:无需改动(仍是 `<NotePanel category questionId />`)
