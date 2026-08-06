@@ -2,10 +2,14 @@ slug: agent
 name: AI Agent 工程师
 description: 面向生产级 AI Agent 开发岗位的结构化面试题库，覆盖从底层模型原理到上层认知定位的完整能力栈。
 modules:
-  - id: 01
-    name: Agent 核心机制
+  - id: 12
+    name: 大模型原理与架构
+  - id: 11
+    name: 计算机基础落地
   - id: 02
     name: LLM 三大范式
+  - id: 01
+    name: Agent 核心机制
   - id: 03
     name: RAG & 知识库
   - id: 04
@@ -14,21 +18,17 @@ modules:
     name: 模型训练微调
   - id: 06
     name: 评测 & 可观测性
-  - id: 07
-    name: 程序分析
-  - id: 08
-    name: AI 工具 & 工程基础
-  - id: 09
-    name: 实战踩坑
-  - id: 10
-    name: 生产级工程化
-  - id: 11
-    name: 计算机基础落地
-  - id: 12
-    name: 大模型原理与架构
   - id: 13
     name: Coding Agent 与产品架构
   - id: 14
     name: AI 工作流与方法论
+  - id: 08
+    name: AI 工具 & 工程基础
+  - id: 10
+    name: 生产级工程化
+  - id: 07
+    name: 程序分析
+  - id: 09
+    name: 实战踩坑
   - id: 15
     name: AI 时代认知与行为面
