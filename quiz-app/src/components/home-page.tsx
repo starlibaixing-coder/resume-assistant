@@ -28,8 +28,6 @@ const VALUES: { tag: string; hook: string; desc: string }[] = [
 export function HomePage() {
   const { data } = useQuestions();
   const cats = data?.categories ?? [];
-  const total = data?.total ?? 282;
-  const moduleCount = cats.reduce((sum, c) => sum + (c.modules?.length ?? 0), 0) || 34;
 
   return (
     <div className="mx-auto max-w-3xl px-1 py-6 sm:py-8">
@@ -43,14 +41,6 @@ export function HomePage() {
           面向前端工程师,以及前端背景想转 AI Agent 的人。
         </p>
 
-        {/* 规模统计 -- 紧凑内联,一眼看到量级 */}
-        <p className="font-mono text-sm text-muted-foreground">
-          <span className="text-foreground font-semibold">{total}</span> 题
-          <span className="mx-2 text-border">·</span>
-          <span className="text-foreground font-semibold">{cats.length || 2}</span> 方向
-          <span className="mx-2 text-border">·</span>
-          <span className="text-foreground font-semibold">{moduleCount}</span> 模块
-        </p>
 
         {/* 两个方向入口 -- 唯一的入口,带说明 */}
         <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2">
