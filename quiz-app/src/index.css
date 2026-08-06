@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 /* 让 dark: 变体跟随 .dark 类(ThemeProvider 切换),而非 prefers-color-scheme。
    否则 ModeToggle 的 sun/moon 图标动画会跟随 OS 偏好而非用户选择的主题。 */
