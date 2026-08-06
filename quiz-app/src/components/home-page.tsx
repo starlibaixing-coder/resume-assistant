@@ -43,7 +43,16 @@ export function HomePage() {
           面向前端工程师,以及前端背景想转 AI Agent 的人。
         </p>
 
-        {/* 两个方向入口 —— 唯一的入口,带说明 */}
+        {/* 规模统计 -- 紧凑内联,一眼看到量级 */}
+        <p className="font-mono text-sm text-muted-foreground">
+          <span className="text-foreground font-semibold">{total}</span> 题
+          <span className="mx-2 text-border">·</span>
+          <span className="text-foreground font-semibold">{cats.length || 2}</span> 方向
+          <span className="mx-2 text-border">·</span>
+          <span className="text-foreground font-semibold">{moduleCount}</span> 模块
+        </p>
+
+        {/* 两个方向入口 -- 唯一的入口,带说明 */}
         <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2">
           {cats.map((c) => (
             <a
@@ -70,25 +79,6 @@ export function HomePage() {
         </div>
       </header>
 
-      {/* ── Stats ────────────────────────────────────── */}
-      <section className="mt-8 border-y border-border py-3">
-        <dl className="flex flex-wrap items-baseline gap-x-6 gap-y-2 font-mono text-sm">
-          <div className="flex items-baseline gap-1.5">
-            <dt className="text-xl font-semibold text-foreground">{total}</dt>
-            <dd className="text-muted-foreground">题</dd>
-          </div>
-          <span className="text-border">·</span>
-          <div className="flex items-baseline gap-1.5">
-            <dt className="text-xl font-semibold text-foreground">{cats.length || 2}</dt>
-            <dd className="text-muted-foreground">个方向</dd>
-          </div>
-          <span className="text-border">·</span>
-          <div className="flex items-baseline gap-1.5">
-            <dt className="text-xl font-semibold text-foreground">{moduleCount}</dt>
-            <dd className="text-muted-foreground">个知识模块</dd>
-          </div>
-        </dl>
-      </section>
 
       {/* ── 价值 —— 说人话 ─────────────────────────── */}
       <section className="mt-8 space-y-3">
