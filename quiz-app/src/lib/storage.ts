@@ -1,7 +1,8 @@
 // localStorage 进度存储（按分类隔离）
 // key: quiz-progress:{category} -> { "{id}": cardState, ... }
+import type { CardState } from './sm2';
 
-export function loadProgress(category) {
+export function loadProgress(category: string): Record<string, CardState> {
   const key = `quiz-progress:${category}`;
   try {
     return JSON.parse(localStorage.getItem(key) || '{}');
@@ -10,20 +11,20 @@ export function loadProgress(category) {
   }
 }
 
-export function saveCard(category, id, card) {
+export function saveCard(category: string, id: string, card: CardState): void {
   const key = `quiz-progress:${category}`;
   const all = loadProgress(category);
   all[id] = card;
   localStorage.setItem(key, JSON.stringify(all));
 }
 
-export function getCard(category, id) {
+export function getCard(category: string, id: string): CardState | null {
   const all = loadProgress(category);
   return all[id] || null;
 }
 
 // 清空某分类的全部进度
-export function clearProgress(category) {
+export function clearProgress(category: string): void {
   const key = `quiz-progress:${category}`;
   localStorage.removeItem(key);
 }
@@ -33,7 +34,7 @@ export function clearProgress(category) {
 // v2:内容从 markdown 改为 HTML(Tiptap WYSIWYG)。旧 quiz-notes: key 废弃不读。
 // 与 SM-2 进度数据隔离,清进度不影响笔记
 
-export function loadNotes(category) {
+export function loadNotes(category: string): Record<string, string> {
   const key = `quiz-notes-v2:${category}`;
   try {
     return JSON.parse(localStorage.getItem(key) || '{}');
@@ -42,7 +43,7 @@ export function loadNotes(category) {
   }
 }
 
-export function saveNote(category, id, html) {
+export function saveNote(category: string, id: string, html: string): void {
   const key = `quiz-notes-v2:${category}`;
   try {
     const all = loadNotes(category);
@@ -57,11 +58,11 @@ export function saveNote(category, id, html) {
   }
 }
 
-export function getNote(category, id) {
+export function getNote(category: string, id: string): string {
   return loadNotes(category)[id] || '';
 }
 
-export function clearNotes(category) {
+export function clearNotes(category: string): void {
   const key = `quiz-notes-v2:${category}`;
   try {
     localStorage.removeItem(key);

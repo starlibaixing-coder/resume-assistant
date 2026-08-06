@@ -1,10 +1,19 @@
 // SM-2 间隔重复算法（三档简化版）
 // 评分映射：不会=0(失败) / 模糊=3(勉强) / 掌握=5(轻松)
+import type { Rating } from '@/types/question';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+export interface CardState {
+  due: number;
+  interval: number;
+  ease: number;
+  reps: number;
+  lastReview: number | null;
+}
+
 // 新题的初始卡片状态
-export function newCard() {
+export function newCard(): CardState {
   return {
     reps: 0,
     interval: 0,
@@ -15,8 +24,8 @@ export function newCard() {
 }
 
 // 根据评分更新卡片，返回新卡片状态
-export function review(card, rating) {
-  const qMap = { 不会: 0, 模糊: 3, 掌握: 5 };
+export function review(card: CardState, rating: Rating): CardState {
+  const qMap: Record<Rating, number> = { 不会: 0, 模糊: 3, 掌握: 5 };
   const q = qMap[rating];
   let { reps, interval, ease } = card;
   const now = Date.now();
@@ -46,6 +55,11 @@ export function review(card, rating) {
 }
 
 // 判断卡片是否到期（今日该复习）
-export function isDue(card, now = Date.now()) {
+export function isDue(card: CardState, now: number = Date.now()): boolean {
   return card.due <= now;
+}
+
+// 判定一道题是否已掌握:学过且间隔已拉到 >=3 天(SM-2 间隔 1->3->9,>=3 表示至少连续通过 2 次)
+export function isMastered(card: CardState | null): boolean {
+  return !!card && card.interval >= 3;
 }

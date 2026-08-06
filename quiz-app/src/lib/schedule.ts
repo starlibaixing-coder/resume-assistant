@@ -1,18 +1,31 @@
 // 调度：算今日待复习队列、统计进度
-import { newCard, isDue } from './sm2.js';
-import { loadProgress } from './storage.js';
+import type { Question } from '@/types/question';
+import { isDue, isMastered, type CardState } from './sm2';
+import { loadProgress } from './storage';
 
-// 判定一道题是否已掌握:学过且间隔已拉到 >=3 天(SM-2 间隔 1->3->9,>=3 表示至少连续通过 2 次)
-export function isMastered(card) {
-  return !!card && card.interval >= 3;
+// 重新导出 isMastered,保持「从 schedule 引入 isMastered」的旧调用方可用
+export { isMastered };
+
+export type QuestionStatus = 'unseen' | 'due' | 'learning' | 'mastered';
+
+export interface ModuleStats {
+  total: number;
+  learned: number;
+  mastered: number;
+  dueToday: number;
+  byDifficulty: Record<string, { total: number; learned: number }>;
 }
 
 // 返回该分类下今日待复习 + 从未学过的题 id 列表
 // 待复习优先（按 due 升序），新题在后
-export function getReviewQueue(category, allQuestionIds, limit = 50) {
+export function getReviewQueue(
+  category: string,
+  allQuestionIds: string[],
+  limit: number = 50,
+): { dueIds: string[]; unseen: string[]; queue: string[] } {
   const progress = loadProgress(category);
-  const due = [];
-  const unseen = [];
+  const due: Array<{ id: string; due: number }> = [];
+  const unseen: string[] = [];
 
   for (const id of allQuestionIds) {
     const card = progress[id];
@@ -32,7 +45,10 @@ export function getReviewQueue(category, allQuestionIds, limit = 50) {
 }
 
 // 统计某分类的进度概览
-export function getStats(category, allQuestionIds) {
+export function getStats(
+  category: string,
+  allQuestionIds: string[],
+): { total: number; learned: number; dueToday: number; remaining: number } {
   const progress = loadProgress(category);
   let learned = 0;
   let dueToday = 0;
@@ -51,9 +67,9 @@ export function getStats(category, allQuestionIds) {
 
 // 模块级 + 难度级统计:按 module 分组,每组返回 total/learned/mastered/dueToday + 按难度的掌握分布
 // 入参 questions 为对象数组(含 id/module/difficulty 字段),内部只读一次 localStorage
-export function getModuleStats(category, questions) {
+export function getModuleStats(category: string, questions: Question[]): Record<number, ModuleStats> {
   const progress = loadProgress(category);
-  const byModule = {};
+  const byModule: Record<number, ModuleStats> = {};
 
   for (const q of questions) {
     const mod = q.module;
@@ -67,7 +83,7 @@ export function getModuleStats(category, questions) {
     m.total++;
     const d = m.byDifficulty[q.difficulty];
     if (d) d.total++;
-    const card = progress[q.id];
+    const card: CardState | undefined = progress[q.id];
     if (card) {
       m.learned++;
       if (d) d.learned++;
@@ -80,7 +96,7 @@ export function getModuleStats(category, questions) {
 }
 
 // 单题掌握状态:用于浏览页筛选
-export function getQuestionStatus(category, id) {
+export function getQuestionStatus(category: string, id: string): QuestionStatus {
   const progress = loadProgress(category);
   const card = progress[id];
   if (!card) return 'unseen';
