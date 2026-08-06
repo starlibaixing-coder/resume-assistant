@@ -1,42 +1,34 @@
 # 求职准备资源库
 
-技术岗求职的两件套:**刷题 + 弄简历**。题库为源,刷题站和简历 skill 各管一头。
+**前端工程师求职,或前端背景想转 AI Agent 方向。** 两件套:**刷题 + 弄简历**。
 
 > 🚀 **在线刷题**:https://starlibaixing-coder.github.io/resume-assistant/
 
 三个核心交付物:
 
 - **刷题站**([`quiz-app/`](./quiz-app))- React + Vite 纯前端,Anki 式间隔重复 + markdown 笔记,自动部署到 GitHub Pages。↑ 上面就是在线地址。
-- **面试题库**([`banks/`](./banks))- 刷题站的数据源。多分类结构化题库,YAML 为源,覆盖 AI Agent(147题)和前端(135题)。
+- **面试题库**([`banks/`](./banks))- 刷题站的数据源。两个分类:**前端工程师**(135题)和 **AI Agent 工程师**(147题,适合前端转方向)。
 - **简历生成 skill**([`skill/`](./skill))- ZCode agent skill,六阶段工作流从项目材料 + JD 生成 JD 定向、扛得住面试的 PDF 简历。
 
 ## 目录结构
 
 ```
-├── banks/                       # 题库(YAML 源)
-│   ├── ai-agent/                # AI Agent 题库(15模块/147题)
-│   │   ├── meta.yaml            # 分类元信息(slug/name/modules)
-│   │   └── 01-*.yaml … 15-*.yaml
-│   ├── fe/                      # 前端题库(19模块/135题)
-│   │   ├── meta.yaml
-│   │   └── 01-*.yaml … 19-*.yaml
-│   ├── clean/                   # 清洗管线(AI prompt + clean.mjs)
-│   ├── audit/                   # 质量审计(audit.mjs + fix.mjs + QUALITY.md)
-│   │   └── reports/             # 审查报告
-│   └── PLAN-v2.md               # 题库架构设计文档
 ├── quiz-app/                    # 刷题站(React + Vite)
 │   ├── src/                     # 前端源码
 │   ├── scripts/build.mjs        # YAML -> questions.json(校验+合并)
-│   ├── public/questions.json    # 构建产物(前端数据源)
-│   └── PLAN.md                  # 刷题站设计文档
-├── skill/                       # 简历生成 skill(配套工具)
+│   └── public/questions.json    # 构建产物(前端数据源)
+├── banks/                       # 题库(YAML 源)
+│   ├── fe/                      # 前端题库(19模块/135题)
+│   ├── ai-agent/                # AI Agent 题库(15模块/147题)
+│   └── audit/                   # 质量审计(audit.mjs + fix.mjs + QUALITY.md)
+├── skill/                       # 简历生成 skill
 │   ├── SKILL.md                 # Skill 指令:三道红线 + 六阶段工作流
 │   ├── scripts/render-pdf.mjs   # Markdown -> HTML -> PDF 渲染器
 │   └── assets/print.css         # 打印样式
-├── docs/                        # 题库清洗原料(fe.md 等)
-├── .github/workflows/deploy.yml # GitHub Pages 自动部署
-└── AGENTS.md                    # 给 ZCode agent 的工作区说明
+└── .github/workflows/deploy.yml # GitHub Pages 自动部署
 ```
+
+> 题库维护者相关(clean 清洗管线、audit 报告、docs 原料)不在上表,详见 `AGENTS.md`。
 
 ## 面试题库
 
@@ -46,8 +38,8 @@
 
 | 分类 | slug | 模块数 | 题数 | 覆盖范围 |
 |---|---|---|---|---|
-| AI Agent 工程师 | `agent` | 15 | 147 | 模型原理 / Agent 机制 / RAG / 工程化 / 产品架构 / 认知行为面 |
 | 前端工程师 | `fe` | 19 | 135 | JS 原理 / React / Vue / 浏览器 / CSS / 工程化 / 安全 / Node.js |
+| AI Agent 工程师 | `agent` | 15 | 147 | 模型原理 / Agent 机制 / RAG / 工程化 / 产品架构 / 认知行为面(适合前端转方向) |
 
 AI Agent 题库按能力层级分为 5 大层,详见 [`banks/ai-agent/README.md`](./banks/ai-agent/README.md)。
 
@@ -74,7 +66,6 @@ questions:
 - **build.mjs** 严格校验:字段完整 / difficulty 初中高 / answer ≥ 50 字 / id 全局唯一
 - **audit.mjs** 设计质量检查(5 条原则,见 `banks/audit/QUALITY.md`):
   - 答案泄漏进题干 / 追问隐含答案 / 多问一题 / 概念混乱 / focus 泄漏答案
-- **clean.mjs** 清洗管线:任意格式原料 -> AI 清洗 -> 标准 YAML
 
 ### 添加新分类
 
