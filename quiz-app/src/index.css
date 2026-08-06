@@ -330,6 +330,25 @@ button {
   margin-top: 10px;
 }
 
+/* 收起答案按钮(参考答案展开后) */
+.collapse-btn {
+  display: block;
+  margin: 16px auto 0;
+  padding: 6px 16px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-mute);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.collapse-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .answer-panel {
   border-top: 1px solid var(--border);
   padding-top: 20px;

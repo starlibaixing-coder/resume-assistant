@@ -100,10 +100,15 @@ export default function CardView({ category }) {
             <div className="hint">先在脑中想清楚，再对答案</div>
           </div>
         ) : (
-          <AnswerPanel
-            answer={current.answer}
-            followups={current.followups}
-          />
+          <>
+            <AnswerPanel
+              answer={current.answer}
+              followups={current.followups}
+            />
+            <button className="collapse-btn" onClick={() => setRevealed(false)}>
+              ↑ 收起答案
+            </button>
+          </>
         )}
       </div>
 
