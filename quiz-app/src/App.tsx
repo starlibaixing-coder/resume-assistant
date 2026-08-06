@@ -4,6 +4,7 @@ import { ReviewQueue } from '@/components/review-queue';
 import { CardView } from '@/components/card-view';
 import { ModuleNav } from '@/components/module-nav';
 import { ModeToggle } from '@/components/mode-toggle';
+import { GithubLink } from '@/components/github-link';
 
 // 极简 hash 路由：#/ / #/:category / #/:category/quiz / #/:category/browse
 function parseHash(): string[] {
@@ -41,7 +42,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="fixed top-4 right-4 z-50">
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        <GithubLink />
         <ModeToggle />
       </div>
       <div className="mx-auto max-w-3xl px-4 py-8">{page}</div>
