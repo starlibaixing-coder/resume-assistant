@@ -46,7 +46,7 @@ export default function App() {
         <GithubLink />
         <ModeToggle />
       </div>
-      <div className="mx-auto max-w-3xl px-4 py-8">{page}</div>
+      <div className="mx-auto max-w-3xl px-4 py-6">{page}</div>
     </div>
   );
 }

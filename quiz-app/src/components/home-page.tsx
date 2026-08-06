@@ -32,9 +32,9 @@ export function HomePage() {
   const moduleCount = cats.reduce((sum, c) => sum + (c.modules?.length ?? 0), 0) || 34;
 
   return (
-    <div className="mx-auto max-w-3xl px-1 py-12 sm:py-16">
+    <div className="mx-auto max-w-3xl px-1 py-6 sm:py-8">
       {/* ── Hero ─────────────────────────────────────── */}
-      <header className="space-y-5">
+      <header className="space-y-4">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           面试题,刷到<span className="text-primary">真的记住</span>
         </h1>
@@ -71,7 +71,7 @@ export function HomePage() {
       </header>
 
       {/* ── Stats ────────────────────────────────────── */}
-      <section className="mt-12 border-y border-border py-4">
+      <section className="mt-8 border-y border-border py-3">
         <dl className="flex flex-wrap items-baseline gap-x-6 gap-y-2 font-mono text-sm">
           <div className="flex items-baseline gap-1.5">
             <dt className="text-xl font-semibold text-foreground">{total}</dt>
@@ -91,14 +91,14 @@ export function HomePage() {
       </section>
 
       {/* ── 价值 —— 说人话 ─────────────────────────── */}
-      <section className="mt-12 space-y-5">
+      <section className="mt-8 space-y-3">
         <h2 className="text-sm font-medium text-muted-foreground">特点</h2>
 
         <ul className="divide-y divide-border border-y border-border">
           {VALUES.map((v, i) => (
             <li
               key={v.tag}
-              className="grid grid-cols-[3rem_1fr] gap-x-4 gap-y-1 py-4"
+              className="grid grid-cols-[3rem_1fr] gap-x-4 gap-y-1 py-3"
             >
               <div className="flex items-center gap-2">
                 <span className="font-mono text-xs text-muted-foreground/60">
