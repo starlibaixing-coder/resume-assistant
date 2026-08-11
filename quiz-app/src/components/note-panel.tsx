@@ -33,7 +33,10 @@ function NotePanelEditor({ category, questionId }: { category: string; questionI
     },
     editorProps: {
       attributes: {
-        class: 'note-prose',
+        // prose 类(Tailwind Typography)给 ul/h1/blockquote/code 等节点提供默认样式。
+        // 之前误写成不存在的 note-prose,Tailwind v4 preflight 会把列表圆点、标题字号
+        // 全部 reset 掉,导致 input rule 虽然生成了 <ul><li> / <h3>,却显示成"消失了"。
+        class: 'prose prose-sm dark:prose-invert max-w-none',
         'aria-label': '笔记编辑区',
       },
     },
@@ -77,7 +80,7 @@ function NotePanelEditor({ category, questionId }: { category: string; questionI
       </div>
       <EditorContent
         editor={editor}
-        className="bg-popover border border-border rounded-md overflow-hidden focus-within:border-primary transition-colors [&_.ProseMirror]:min-h-[120px] [&_.ProseMirror]:max-h-[320px] [&_.ProseMirror]:overflow-y-auto [&_.ProseMirror]:p-3 [&_.ProseMirror]:outline-none [&_.ProseMirror]:text-[13px] [&_.ProseMirror]:leading-relaxed [&_.ProseMirror]:text-foreground"
+        className="bg-popover border border-border rounded-md overflow-hidden focus-within:border-primary transition-colors [&_.ProseMirror]:min-h-[120px] [&_.ProseMirror]:max-h-[320px] [&_.ProseMirror]:overflow-y-auto [&_.ProseMirror]:p-3 [&_.ProseMirror]:outline-none [&_.ProseMirror]:text-[13px] [&_.ProseMirror]:leading-relaxed [&_.ProseMirror]:text-foreground [&_.ProseMirror_ul]:my-1 [&_.ProseMirror_ol]:my-1 [&_.ProseMirror_li]:my-0 [&_.ProseMirror_p]:my-1 [&_.ProseMirror_h1]:text-[1.25rem] [&_.ProseMirror_h2]:text-[1.1rem] [&_.ProseMirror_h3]:text-[1rem] [&_.ProseMirror_h1]:my-2 [&_.ProseMirror_h2]:my-2 [&_.ProseMirror_h3]:my-2 [&_.ProseMirror_blockquote]:my-1 [&_.ProseMirror_pre]:my-2"
       />
     </div>
   );
