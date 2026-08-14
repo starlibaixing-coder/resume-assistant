@@ -1,5 +1,7 @@
 # 桌面端阶段 1(MVP)Implementation Plan
 
+> **状态:✅ 已完工**(2026-08-14,WP1-WP7 全部落地,合入 main)。验证:134 单测 + 7 e2e 全绿,typecheck/build 通过;真实 LLM(智谱)联调留 `npm run tauri dev` 手测。
+
 **Goal:** 打通功能①(知识点生题)+ 功能⑥(改删我的库),验证"LLM → 我的库 → 刷题 → SM-2"整条管线在桌面端真实跑通。
 
 **设计依据:** `docs/superpowers/specs/2026-08-13-quiz-app-agent-design.md`(§6 路线图 / §7 硬约束 / ADR-3/7/8/9/10)
@@ -47,7 +49,7 @@ ADR-3 说"双库并列聚合"。实现取"并列"最直白解:**我的库合成�
 
 ---
 
-## Task 1: mylib 数据层(`src/lib/mylib.ts` + `storage.ts` 接线)
+## Task 1: mylib 数据层 ✅(7cabe17)(`src/lib/mylib.ts` + `storage.ts` 接线)
 
 **Files:** 新增 `src/lib/mylib.ts`、`src/lib/mylib.test.ts`;改 `src/lib/storage.ts`(initStorage 加载我的题)、`src/types/question.ts`(MyQuestion 类型)
 
@@ -58,7 +60,7 @@ ADR-3 说"双库并列聚合"。实现取"并列"最直白解:**我的库合成�
 - pub-sub:`subscribeMyLib(fn)`,mutate 后 notify
 - initStorage 里 `db.select` 灌 mylib 缓存(经 `initMyLibDb(db)` 注入句柄,避免循环依赖)
 
-## Task 2: 聚合层(`src/lib/questions.ts`)
+## Task 2: 聚合层 ✅(7575daa)(`src/lib/questions.ts`)
 
 **Files:** 改 `src/lib/questions.ts`(merge 纯函数导出可测)
 
@@ -66,7 +68,7 @@ ADR-3 说"双库并列聚合"。实现取"并列"最直白解:**我的库合成�
 - `useQuestions` 订阅 mylib 版本事件,变更即重算 setData
 - pending 永不进聚合(ADR-10)
 
-## Task 3: 生题管线(`src/lib/generate.ts`)
+## Task 3: 生题管线 ✅(c775c3f)(`src/lib/generate.ts`)
 
 **Files:** 新增 `src/lib/generate.ts`、`src/lib/generate.test.ts`
 
@@ -75,21 +77,21 @@ ADR-3 说"双库并列聚合"。实现取"并列"最直白解:**我的库合成�
 - `generateQuestions(topic, opts, chat = provider.chat)`:生成 → 预检(validateQuestion)→ 失败喂错误重试(≤2)→ 返回 `{ questions, retries }` 或抛错
 - 每题校验通过后由调用方分配 id(addDrafts 时)
 
-## Task 4: LLM 配置(`src/lib/llm-config.ts` + 设置页)
+## Task 4: LLM 配置 ✅(cfbcc83)(`src/lib/llm-config.ts` + 设置页)
 
 **Files:** 新增 `src/lib/llm-config.ts`、`src/components/settings-page.tsx`;改 `src/App.tsx`(路由 `#/settings`)
 
 - 预设表 + `loadConfig()/saveConfig()`(localStorage)+ `loadKey()/saveKey()`(keyring invoke;非 Tauri 内存降级)
 - `resolveChatOptions()`:拼 provider.chat 所需 ChatOptions
 
-## Task 5: 生题页 + 草稿区页
+## Task 5: 生题页 + 草稿区页 ✅(6b880f2)
 
 **Files:** 新增 `src/components/generate-page.tsx`、`src/components/drafts-page.tsx`;改 `src/App.tsx`、`src/components/home-page.tsx`(我的题库卡片 + 生题/草稿/设置入口)
 
 - 生题页:知识点 + 数量(3/5/8)+ 难度(不限/初/中/高)→ 生成 → 预览(含重试次数)→ 入草稿区
 - 草稿区:按批次(模块)分组,逐题预览 + 通过/拒绝,批量通过;approve 后引导去刷题
 
-## Task 6: 改删 UI(浏览页就地编辑)
+## Task 6: 改删 UI ✅(1826631)(浏览页就地编辑)
 
 **Files:** 新增 `src/components/question-edit-dialog.tsx`;改 `src/components/module-nav.tsx`
 
@@ -97,7 +99,7 @@ ADR-3 说"双库并列聚合"。实现取"并列"最直白解:**我的库合成�
 - 官方分类展开题:「复制到我的库」按钮(ADR-3 官方题改 = 复制后改)
 - 编辑保存跑同一份 validateQuestion
 
-## Task 7: e2e + 收尾
+## Task 7: e2e + 收尾 ✅(01e6a6d)
 
 **Files:** 改 `desktop/tests/e2e/smoke.spec.ts`(或新增 `generate.spec.ts`)
 

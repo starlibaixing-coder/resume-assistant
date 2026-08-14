@@ -122,6 +122,8 @@ Requirements: Node.js 18+,系统 Chrome(简历渲染用),Node 20+(CI 用)。
 设计稿:`docs/superpowers/specs/2026-08-13-quiz-app-agent-design.md`(10 个 ADR,施工前重读 §7 硬约束)。
 
 - **双库模型**(ADR-3):官方 YAML 库只读(`public/questions.json`),我的库存本地 SQLite,刷题界面聚合两者。官方题不可原地改删,只能"复制成副本再改"。
+- **我的库**(阶段 1):独立分类 `my`,生题批次即模块(模块名=知识点),官方副本统一进模块 0。id 三段式 `my.<module>.<idx>`。数据层 `src/lib/mylib.ts`(内存缓存 + await 持久化 + pub-sub),聚合在 `src/lib/questions.ts`(`mergeQuestionData`,pending 永不进刷题)。
+- **生题管线**(阶段 1):`src/lib/generate.ts` —— system prompt 内嵌 QUALITY.md 设计红线,输出 JSON,预检共享 `validateQuestion`,不过则喂错误自修正重试 ≤2 次;产物只进草稿区,approve 后才进 SM-2 队列。LLM 配置 `src/lib/llm-config.ts`(预设:智谱/DeepSeek/Ollama/自定义;key 只进 keyring,非 Tauri 环境内存降级)。页面路由:`#/generate`(生题)、`#/drafts`(草稿区)、`#/settings`(LLM 设置)、`#/my`(我的题库)。
 - **JS 大脑 + Rust 工具**(ADR-5):agent 编排/LLM 调用在前端 JS(Vercel AI SDK,`src/lib/agent.ts` + `provider.ts`);Rust 只暴露系统能力(keyring 的 `get_api_key`/`set_api_key`)。
 - **SQLite 四表**(ADR-7):questions / review_state / notes / profile,migration 在 `src-tauri/src/lib.rs`,经 `@tauri-apps/plugin-sql` 访问。存储层抽象在 `src/lib/storage.ts`(B 方案:内存缓存 + 持久化)。
 - **key 安全**(ADR-8):API key 存 OS 钥匙串,provider 走 OpenAI 兼容抽象(智谱优先)。
