@@ -6,6 +6,8 @@ import { ModuleNav } from '@/components/module-nav';
 import { ModeToggle } from '@/components/mode-toggle';
 import { GithubLink } from '@/components/github-link';
 import { SettingsPage } from '@/components/settings-page';
+import { GeneratePage } from '@/components/generate-page';
+import { DraftsPage } from '@/components/drafts-page';
 
 // 极简 hash 路由：#/ / #/:category / #/:category/quiz / #/:category/browse
 function parseHash(): string[] {
@@ -33,6 +35,10 @@ export default function App() {
     page = <HomePage />;
   } else if (parts[0] === 'settings') {
     page = <SettingsPage />;
+  } else if (parts[0] === 'generate') {
+    page = <GeneratePage />;
+  } else if (parts[0] === 'drafts') {
+    page = <DraftsPage />;
   } else if (parts.length === 1) {
     page = <ReviewQueue category={parts[0]} />;
   } else if (parts[1] === 'quiz') {
