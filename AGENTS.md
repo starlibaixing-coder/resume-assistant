@@ -43,18 +43,21 @@ Workspace instructions for ZCode agents working in this repo.
 ## Commands
 
 ```bash
-# 题库构建(YAML -> questions.json,严格校验)
-node quiz-app/scripts/build.mjs
+# 题库构建(YAML -> questions.json,严格校验,含 id 不可变校验)
+cd quiz-app && npm run build:bank    # = tsx scripts/build.mjs
 
 # 质量审计(格式 + 设计检查)
-node banks/audit/audit.mjs --format-only
+cd quiz-app && npm run audit         # = tsx ../banks/audit/audit.mjs --format-only
 
 # 刷题站
 cd quiz-app
 npm install
-npm run build:bank    # = node scripts/build.mjs
 npm run dev           # 本地开发
-npm run build         # 构建生产版本
+npm run build         # 构建生产版本(vite build,CI 用)
+
+# 测试
+npm run test:run      # vitest 单测
+npm run test:coverage # 带覆盖率
 
 # 简历渲染
 cd skill
@@ -67,8 +70,8 @@ Requirements: Node.js 18+,系统 Chrome(简历渲染用),Node 20+(CI 用)。
 ## 题库架构(YAML 为源)
 
 - **YAML 是源,questions.json 是 build 产物。** 改题改 YAML,不要手改 questions.json。
-- **build.mjs** 只做校验+合并,无文本切分。严格校验:字段完整 / difficulty 初中高 / answer ≥ 50 字 / id 全局唯一。
-- **id 三段式**:`{分类slug}.{模块号}.{题号}`,如 `agent.01.1`、`fe.03.21`。全局唯一,分类间不冲突。
+- **build.mjs** 只做校验+合并,无文本切分。严格校验:字段完整 / difficulty 初中高 / answer ≥ 50 字 / id 全局唯一 / id 段与文件模块号一致。校验规则抽到 `quiz-app/src/lib/validate.ts`(build/audit/运行时共用,详见 `docs/superpowers/specs/2026-08-13-quiz-app-agent-design.md` ADR-9/10)。
+- **id 三段式**:`{分类slug}.{模块号}.{题号}`,如 `agent.01.1`、`fe.03.21`。全局唯一,分类间不冲突。**id 一旦发布不可变**(不可删除/改名):build.mjs 对比历史 questions.json,发现 id 消失即报错。
 - **meta.yaml** 每个分类一个,声明 slug/name/modules 清单。build.mjs 校验 modules 与实际 YAML 文件严格匹配。
 - **加新分类** = 新建 `banks/<slug>/` + meta.yaml + 模块 YAML,跑 build.mjs 校验,前端自动出现新卡片,零代码改动。
 
