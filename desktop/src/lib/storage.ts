@@ -11,6 +11,7 @@
 
 import type { CardState } from './sm2';
 import type { Database } from '@tauri-apps/plugin-sql';
+import { initMyLibDb, loadMyQuestionsFromDb } from './mylib';
 
 // ===== SQLite 行 ↔ CardState 映射(纯函数,独立单测) =====
 export interface ReviewRow {
@@ -72,6 +73,10 @@ export async function initStorage(): Promise<void> {
     for (const n of notes) {
       notesOf(n.category)[n.id] = n.content;
     }
+
+    // 我的库(questions 表)同批灌入(阶段 1)
+    initMyLibDb(db);
+    await loadMyQuestionsFromDb();
   })();
   return initPromise;
 }

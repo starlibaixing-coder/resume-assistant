@@ -1,10 +1,12 @@
 import { useMemo, useState, lazy, Suspense } from 'react';
 import { useQuestions } from '@/lib/questions';
 import { getModuleStats, getQuestionStatus } from '@/lib/schedule';
+import { MY_CATEGORY_SLUG, copyOfficial, getMyQuestion } from '@/lib/mylib';
 import { AnswerPanel } from '@/components/answer-panel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { QuestionEditDialog, DeleteQuestionDialog } from '@/components/question-edit-dialog';
 
 const NotePanel = lazy(() => import('./note-panel'));
 
@@ -21,6 +23,16 @@ export function ModuleNav({ category }: { category: string }) {
   const { data, error } = useQuestions();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterKey>('all');
+  // 改删/复制(阶段 1 功能⑥):my 分类可编辑删除;官方分类只能复制副本再改(ADR-3)
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const isMy = category === MY_CATEGORY_SLUG;
+
+  const handleCopy = async (q: typeof data.questions[number]) => {
+    await copyOfficial(q);
+    setCopiedId(q.id);
+  };
 
   const { cat, byModule, moduleStats } = useMemo(() => {
     if (!data) return { cat: null, byModule: {} as Record<number, typeof data.questions>, moduleStats: {} };
@@ -38,7 +50,20 @@ export function ModuleNav({ category }: { category: string }) {
   }, [data, category]);
 
   if (error) return <div className="text-muted-foreground p-8 text-center">加载失败: {error}</div>;
-  if (!data || !cat) return <div className="text-muted-foreground p-8 text-center">加载中…</div>;
+  if (!data) return <div className="text-muted-foreground p-8 text-center">加载中…</div>;
+  // my 分类无 approved 题时聚合里没有它(避免卡"加载中"),给空态引导
+  if (!cat) {
+    return (
+      <div className="space-y-4">
+        <a href="#/" className="text-sm text-muted-foreground hover:text-primary font-mono">← 返回</a>
+        <div className="text-center py-16 space-y-3">
+          <div className="text-foreground">我的题库还没有题</div>
+          <div className="text-sm text-muted-foreground">AI 生题进草稿区,通过后就会出现在这里。</div>
+          <a href="#/generate" className="inline-block text-primary hover:underline text-sm">去生题 →</a>
+        </div>
+      </div>
+    );
+  }
 
   const params = new URLSearchParams(window.location.hash.split('?')[1] || '');
   const focusMod = params.get('m');
@@ -124,6 +149,26 @@ export function ModuleNav({ category }: { category: string }) {
                           <Suspense fallback={<div className="text-sm text-muted-foreground">加载笔记…</div>}>
                             <NotePanel category={category} questionId={q.id} />
                           </Suspense>
+                          <div className="flex items-center gap-2 pt-1">
+                            {isMy ? (
+                              <>
+                                <Button size="sm" variant="outline" onClick={() => setEditingId(q.id)}>编辑</Button>
+                                <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeletingId(q.id)}>
+                                  删除
+                                </Button>
+                                <span className="text-xs text-muted-foreground font-mono">我的库 · 可改可删</span>
+                              </>
+                            ) : copiedId === q.id ? (
+                              <a href={`#/${MY_CATEGORY_SLUG}/browse`} className="text-sm text-primary hover:underline">
+                                已复制 ✓ 到我的题库改 →
+                              </a>
+                            ) : (
+                              <>
+                                <Button size="sm" variant="outline" onClick={() => handleCopy(q)}>复制到我的库</Button>
+                                <span className="text-xs text-muted-foreground font-mono">官方题只读,复制副本后可改(ADR-3)</span>
+                              </>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -134,6 +179,16 @@ export function ModuleNav({ category }: { category: string }) {
           </div>
         );
       })}
+      <QuestionEditDialog
+        question={editingId ? getMyQuestion(editingId) : null}
+        open={!!editingId}
+        onOpenChange={(o) => !o && setEditingId(null)}
+      />
+      <DeleteQuestionDialog
+        question={deletingId ? getMyQuestion(deletingId) : null}
+        open={!!deletingId}
+        onOpenChange={(o) => !o && setDeletingId(null)}
+      />
     </div>
   );
 }

@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { useQuestions } from '@/lib/questions';
+import { getMyCategory, getPendingCount, subscribeMyLib } from '@/lib/mylib';
 import { Button } from '@/components/ui/button';
 
 // 用户价值,不是术语。每条 = 一个加粗的钩子 + 一句具体的解释。
@@ -20,14 +22,20 @@ const VALUES: { tag: string; hook: string; desc: string }[] = [
   },
   {
     tag: '本地',
-    hook: '进度和笔记只存你浏览器',
-    desc: '不上传,不联网,不追踪。清缓存才没——你的数据真的是你的。',
+    hook: '进度、笔记、我的题,全存本地',
+    desc: '官方题库只读共享;你刷的进度和 AI 生成的题存本地 SQLite,不上传、不追踪。',
   },
 ];
 
 export function HomePage() {
   const { data } = useQuestions();
-  const cats = data?.categories ?? [];
+  // my 分类走下方专属卡片(带空态引导),聚合数据里的不重复渲染
+  const cats = (data?.categories ?? []).filter((c) => c.slug !== 'my');
+  // 我的库状态(草稿数/我的题库卡片)独立订阅,官方聚合未变时也要随 mylib 刷新
+  const [, bump] = useState(0);
+  useEffect(() => subscribeMyLib(() => bump((v) => v + 1)), []);
+  const myCategory = getMyCategory();
+  const pendingCount = getPendingCount();
 
   return (
     <div className="mx-auto max-w-3xl px-1 py-6 sm:py-8">
@@ -41,6 +49,17 @@ export function HomePage() {
           面向前端工程师,以及前端背景想转 AI Agent 的人。
         </p>
 
+        {/* 工具入口:生题 / 草稿区 / 设置 */}
+        <div className="flex flex-wrap items-center gap-3 pt-1 text-sm">
+          <a href="#/generate" className="text-primary hover:underline font-medium">✦ AI 生题</a>
+          <a
+            href="#/drafts"
+            className={pendingCount > 0 ? 'text-warning hover:underline font-medium' : 'text-muted-foreground hover:text-primary'}
+          >
+            草稿区{pendingCount > 0 ? `(${pendingCount})` : ''}
+          </a>
+          <a href="#/settings" className="text-muted-foreground hover:text-primary">设置</a>
+        </div>
 
         {/* 两个方向入口 -- 唯一的入口,带说明 */}
         <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2">
@@ -66,6 +85,31 @@ export function HomePage() {
               </span>
             </a>
           ))}
+
+          {/* 我的题库(双库并列,ADR-3):AI 生成 + 官方副本 */}
+          <a
+            href={myCategory.count > 0 ? '#/my' : '#/generate'}
+            className="group flex flex-col gap-2 rounded-lg border border-dashed border-border bg-card/50 p-4 transition-colors hover:border-primary"
+          >
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-base font-semibold text-foreground">我的题库</span>
+              <span className="font-mono text-sm text-primary">
+                {myCategory.count}
+                <span className="ml-0.5 text-xs text-muted-foreground">题</span>
+              </span>
+            </div>
+            <p className="text-xs leading-relaxed text-muted-foreground line-clamp-2">
+              {myCategory.count > 0
+                ? `AI 生成 + 官方副本 · ${myCategory.modules.length} 个批次`
+                : '还是空的——去 AI 生题,或把官方题复制过来改'}
+            </p>
+            <span className="font-mono text-xs text-muted-foreground">
+              本地 SQLite,与官方库并列
+              <span className="ml-2 text-primary opacity-0 transition-opacity group-hover:opacity-100">
+                {myCategory.count > 0 ? '开始 →' : '去生题 →'}
+              </span>
+            </span>
+          </a>
         </div>
       </header>
 
