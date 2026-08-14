@@ -6,10 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:bank": "node scripts/build.mjs",
-    "audit": "node ../banks/audit/audit.mjs --format-only",
+    "build:bank": "tsx scripts/build.mjs",
+    "audit": "tsx ../banks/audit/audit.mjs --format-only",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.23",
@@ -35,7 +38,11 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^5.2.0",
+    "@vitest/coverage-v8": "^4.1.10",
+    "jsdom": "^29.1.1",
+    "tsx": "^4.23.12",
     "typescript": "5.9",
-    "vite": "^7.3.6"
+    "vite": "^7.3.6",
+    "vitest": "^4.1.10"
   }
 }

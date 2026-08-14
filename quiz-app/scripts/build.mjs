@@ -1,5 +1,5 @@
 /*
- * build.mjs
+ * build.mjs  (用 tsx 跑,以 import TS 共享校验模块)
  *
  * 扫描 banks 下各分类 meta.yaml，读模块 YAML 题库，
  * 校验 + 合并输出 quiz-app/public/questions.json。
@@ -7,21 +7,25 @@
  *
  * 严格模式：任何校验失败直接 process.exit(1)。
  *
- * Usage: node build.mjs
+ * 校验规则抽到 src/lib/validate.ts(ADR-9 id 不可变 / ADR-10 质量闸 共享一份)。
+ *
+ * Usage: tsx build.mjs   (package.json: build:bank)
  */
 
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { load as yamlLoad } from 'js-yaml';
+import {
+  validateQuestion,
+  checkIdImmutability,
+  checkIdSegmentConsistency,
+} from '../src/lib/validate.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..', '..');
 const BANKS_DIR = join(REPO_ROOT, 'banks');
 const OUT_PATH = join(__dirname, '..', 'public', 'questions.json');
-
-const VALID_DIFFICULTIES = ['初', '中', '高'];
-const MIN_ANSWER_CHARS = 50;
 
 function die(msg) {
   console.error(`✗ ${msg}`);
@@ -140,20 +144,10 @@ function main() {
         const loc = `${fullFile} Q${q.id}`;
         const fullId = `${slug}.${q.id}`;
 
-        // 字段完整性校验
-        if (!q.id) allErrors.push(`${loc}: 缺 id`);
-        if (!q.difficulty) allErrors.push(`${loc}: 缺 difficulty`);
-        else if (!VALID_DIFFICULTIES.includes(q.difficulty))
-          allErrors.push(`${loc}: difficulty "${q.difficulty}" 不合法(只能 初/中/高)`);
-        if (!q.title) allErrors.push(`${loc}: 缺 title`);
-        if (q.focus == null) allErrors.push(`${loc}: 缺 focus`);
-        if (!Array.isArray(q.answer)) allErrors.push(`${loc}: answer 必须是数组`);
-        else {
-          const answerLen = q.answer.join('').length;
-          if (answerLen < MIN_ANSWER_CHARS)
-            allErrors.push(`${loc}: 答案过短(${answerLen}字 < ${MIN_ANSWER_CHARS})`);
-        }
-        if (!Array.isArray(q.followups)) allErrors.push(`${loc}: followups 必须是数组`);
+        // 格式校验(抽到 validate.ts,与 audit/运行时共用)
+        allErrors.push(...validateQuestion(q, loc));
+        // 三段一致性: q.id 段须 == 文件模块号(补原先零校验的隐患)
+        allErrors.push(...checkIdSegmentConsistency(q.id, mod.id, loc));
 
         if (seenIds.has(fullId)) allErrors.push(`id 重复: ${fullId}`);
         seenIds.add(fullId);
@@ -188,6 +182,20 @@ function main() {
       modules: moduleCounts,
       count: catQuestionCount,
     });
+  }
+
+  // id 不可变校验(ADR-9): 写入前对比历史 questions.json 的 id 集合。
+  // 历史 baseline 有、而新集合没有的 id = 被删除/改名,直接报错(保护用户复习进度)。
+  // 允许新增,只拦消失。首次构建(无历史文件)跳过。
+  if (existsSync(OUT_PATH)) {
+    try {
+      const prev = JSON.parse(readFileSync(OUT_PATH, 'utf-8'));
+      const baselineIds = (prev.questions || []).map((qq) => qq.id);
+      const newIds = allQuestions.map((qq) => qq.id);
+      allErrors.push(...checkIdImmutability(newIds, baselineIds));
+    } catch {
+      // 历史 questions.json 损坏:不阻断,跳过不可变校验(视为无 baseline)
+    }
   }
 
   if (allErrors.length) {

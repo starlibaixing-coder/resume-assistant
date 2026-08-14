@@ -14,13 +14,12 @@
 import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { validateQuestion } from '../../quiz-app/src/lib/validate.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..', '..');
 const BANKS_DIR = join(REPO_ROOT, 'banks');
 const REPORTS_DIR = join(__dirname, 'reports');
-const MIN_ANSWER_CHARS = 50;
-const VALID_DIFFICULTIES = ['初', '中', '高'];
 
 import { createRequire } from 'node:module';
 const require = createRequire(join(REPO_ROOT, 'quiz-app', 'package.json'));
@@ -65,20 +64,10 @@ function main() {
         const fullId = `${slug}.${q.id}`;
         const loc = `${yf} Q${q.id}`;
 
-        // 格式检查
-        if (!q.difficulty || !VALID_DIFFICULTIES.includes(q.difficulty)) {
-          issues.push({ type: 'format', severity: '高', id: fullId, loc, msg: `difficulty 非法: "${q.difficulty}"` });
+        // 格式检查(抽到 validate.ts,与 build/运行时共用一份规则)
+        for (const msg of validateQuestion(q, loc)) {
+          issues.push({ type: 'format', severity: '高', id: fullId, loc, msg: msg.replace(`${loc}: `, '') });
         }
-        if (!Array.isArray(q.answer)) {
-          issues.push({ type: 'format', severity: '高', id: fullId, loc, msg: 'answer 非数组' });
-        } else {
-          const len = q.answer.join('').length;
-          if (len < MIN_ANSWER_CHARS) {
-            issues.push({ type: 'format', severity: '高', id: fullId, loc, msg: `答案过短(${len}字 < ${MIN_ANSWER_CHARS})` });
-          }
-        }
-        if (!q.title) issues.push({ type: 'format', severity: '高', id: fullId, loc, msg: '缺 title' });
-        if (q.focus == null) issues.push({ type: 'format', severity: '高', id: fullId, loc, msg: '缺 focus' });
 
         // --- 题目设计质量检查（启发式，见 QUALITY.md）---
 
