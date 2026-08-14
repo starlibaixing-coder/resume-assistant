@@ -35,3 +35,14 @@ export interface QuestionData {
   questions: Question[];
   total: number;
 }
+
+// ===== 我的库(SQLite questions 表,ADR-3 双库) =====
+
+// ADR-10 草稿区:AI 生成先进 pending,用户 approve 后才进刷题/SM-2
+export type MyQuestionStatus = 'pending' | 'approved';
+
+export interface MyQuestion extends Question {
+  status: MyQuestionStatus;
+  createdAt: number;
+  updatedAt: number;
+}
