@@ -4,17 +4,18 @@ Workspace instructions for ZCode agents working in this repo.
 
 ## What this repo is
 
-求职准备资源库,目标:刷题 + 弄简历。题库为源,刷题站和简历 skill 各管一头。
+求职准备资源库,目标:刷题 + 弄简历。题库为源,桌面端和 web 站各管一头。
 
-1. **`quiz-app/`** - 刷题站。React + Vite 纯前端,SM-2 间隔重复 + markdown 笔记,部署到 GitHub Pages。在线:https://starlibaixing-coder.github.io/resume-assistant/
-2. **`banks/`** - 面试题库(刷题站数据源)。YAML 为源。当前两个分类:
+1. **`desktop/`** - Tauri 桌面端(**主开发线**)。React 前端复用刷题核心 + JS agent 编排(Vercel AI SDK),Rust 侧提供系统能力(SQLite、keyring、文件)。LLM 生题、我的库、求职档案等 AI 能力都在这里。
+2. **`quiz-app/`** - web 刷题站。React + Vite 纯前端,SM-2 间隔重复 + markdown 笔记,部署到 GitHub Pages。在线:https://starlibaixing-coder.github.io/resume-assistant/ **已冻结为只读刷题快照**(负责传播,不再演进,见设计稿 ADR-6)。
+3. **`banks/`** - 面试题库(两端共享数据源)。YAML 为源。当前两个分类:
    - `banks/ai-agent/` - AI Agent 工程师题库(15 模块 / 147 题)
    - `banks/fe/` - 前端工程师题库(19 模块 / 135 题)
    - `banks/clean/` - 清洗管线(任意格式原料 -> AI -> 标准 YAML)
    - `banks/audit/` - 质量审计(audit.mjs 格式+设计检查,fix.mjs 自动修正)
-3. **`skill/`** - 简历生成 skill。ZCode agent skill,六阶段工作流生成 JD 定向 PDF 简历。
+4. **`skill/`** - 简历生成 skill。ZCode agent skill,六阶段工作流生成 JD 定向 PDF 简历。
 
-刷题站和简历 skill 是面向用户的两大交付物,题库是它们的数据源。
+桌面端是主交付物,web 站是传播入口,题库是它们的数据源。
 
 ## 目录结构
 
@@ -28,7 +29,13 @@ Workspace instructions for ZCode agents working in this repo.
 │   │   └── 01-*.yaml … 19-*.yaml
 │   ├── clean/                   # 清洗管线(PROMPT.md + clean.mjs)
 │   └── audit/                   # 质量审计(audit.mjs + fix.mjs + QUALITY.md)
-├── quiz-app/                    # 刷题站
+├── desktop/                     # Tauri 桌面端(主开发线)
+│   ├── src/                     # React + TS 前端(lib/ 含存储/SM-2/agent/provider)
+│   ├── src-tauri/               # Rust 壳(SQLite migration + keyring command)
+│   ├── scripts/build.mjs        # YAML -> questions.json(同 quiz-app)
+│   ├── tests/                   # Playwright e2e
+│   └── public/questions.json    # 官方库只读快照(不要手改)
+├── quiz-app/                    # web 刷题站(已冻结,只读快照)
 │   ├── src/                     # React 前端源码
 │   ├── scripts/build.mjs        # YAML -> questions.json(校验+合并)
 │   └── public/questions.json    # 构建产物(前端数据源,不要手改)
@@ -36,28 +43,37 @@ Workspace instructions for ZCode agents working in this repo.
 │   ├── SKILL.md
 │   ├── scripts/render-pdf.mjs
 │   └── assets/print.css
-├── docs/                        # 题库清洗原料(fe.md 等)
-└── .github/workflows/deploy.yml # GitHub Pages 自动部署
+├── docs/                        # 原料 + specs/plans 设计文档
+└── .github/workflows/deploy.yml # GitHub Pages 自动部署(quiz-app)
 ```
 
 ## Commands
 
 ```bash
-# 题库构建(YAML -> questions.json,严格校验,含 id 不可变校验)
+# 题库构建(YAML -> questions.json,严格校验,含 id 不可变校验;quiz-app 与 desktop 各有一份)
 cd quiz-app && npm run build:bank    # = tsx scripts/build.mjs
+cd desktop && npm run build:bank     # 同上(desktop 用同一套校验)
 
 # 质量审计(格式 + 设计检查)
 cd quiz-app && npm run audit         # = tsx ../banks/audit/audit.mjs --format-only
 
-# 刷题站
+# 刷题站(web,已冻结)
 cd quiz-app
 npm install
 npm run dev           # 本地开发
 npm run build         # 构建生产版本(vite build,CI 用)
 
+# 桌面端(主开发线)
+cd desktop
+npm install
+npm run dev           # vite 前端开发(浏览器,无 Tauri 壳)
+npm run tauri dev     # 完整 Tauri 桌面壳(Rust 编译,首次较慢)
+npm run typecheck     # tsc --noEmit
+
 # 测试
-npm run test:run      # vitest 单测
+npm run test:run      # vitest 单测(desktop: 78+ 测)
 npm run test:coverage # 带覆盖率
+npx playwright test   # desktop e2e 冒烟(需先 npm run dev 或按 config 起服务)
 
 # 简历渲染
 cd skill
@@ -91,7 +107,7 @@ Requirements: Node.js 18+,系统 Chrome(简历渲染用),Node 20+(CI 用)。
 - **clean.mjs** - 读原料拼 prompt,供 LLM 清洗后落盘
 - 新题库流程:原料丢 `clean/sources/` -> clean.mjs -> AI 输出 YAML -> build.mjs 校验落盘
 
-## 刷题站架构(quiz-app/)
+## 刷题站架构(quiz-app/,已冻结)
 
 - **React + Vite**,hash 路由(纯前端,无需服务器配置)
 - **SM-2 间隔重复**:三档评分(不会/模糊/掌握),`src/lib/sm2.js`
@@ -99,6 +115,19 @@ Requirements: Node.js 18+,系统 Chrome(简历渲染用),Node 20+(CI 用)。
 - **强制思考**:答案默认折叠,点"我想好了"才解锁
 - **base 路径**:`/resume-assistant/`(GitHub Pages 子路径部署),fetch 用 `import.meta.env.BASE_URL` 联动
 - **CI**:`.github/workflows/deploy.yml`,push main 时自动 build + 部署 Pages
+- **冻结纪律**(ADR-6):只修 bug 不加功能;官方库更新时重建 questions.json 重新部署;新功能一律进 `desktop/`
+
+## 桌面端架构(desktop/,主开发线)
+
+设计稿:`docs/superpowers/specs/2026-08-13-quiz-app-agent-design.md`(10 个 ADR,施工前重读 §7 硬约束)。
+
+- **双库模型**(ADR-3):官方 YAML 库只读(`public/questions.json`),我的库存本地 SQLite,刷题界面聚合两者。官方题不可原地改删,只能"复制成副本再改"。
+- **JS 大脑 + Rust 工具**(ADR-5):agent 编排/LLM 调用在前端 JS(Vercel AI SDK,`src/lib/agent.ts` + `provider.ts`);Rust 只暴露系统能力(keyring 的 `get_api_key`/`set_api_key`)。
+- **SQLite 四表**(ADR-7):questions / review_state / notes / profile,migration 在 `src-tauri/src/lib.rs`,经 `@tauri-apps/plugin-sql` 访问。存储层抽象在 `src/lib/storage.ts`(B 方案:内存缓存 + 持久化)。
+- **key 安全**(ADR-8):API key 存 OS 钥匙串,provider 走 OpenAI 兼容抽象(智谱优先)。
+- **id 跨库唯一**(ADR-9):进度统一进 `review_state` 表;我的库 id 用 `my-` 前缀避开官方 slug;官方 id 一旦发布不可变。
+- **质量闸**(ADR-10):AI 生成题一律先进草稿区,用户 approve 后才入正式库 + SM-2 队列;prompt 内嵌 QUALITY.md 规则,预检用共享校验(`src/lib/validate.ts`)。
+- **备份**(ADR-7/§5 教训):运行时数据走 app 导出/导入,不走 git。
 
 ## 简历 skill 架构(skill/)
 

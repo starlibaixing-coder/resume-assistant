@@ -3,7 +3,7 @@
 - **日期**:2026-08-13
 - **范围**:`quiz-app/` 从纯前端静态站演进为 Tauri 桌面 LLM Agent
 - **目标**:在不破坏现有刷题核心的前提下,把 LLM 能力(生题/改删/简历/JD 定向/模拟面试)以 agent 形态集成进桌面应用,并保留 web 版作为只读传播入口。
-- **状态**:✅ 设计已锁定(经 grill-me 8 轮访谈磨砺),待施工
+- **状态**:🚧 施工中——阶段 0(地基)已完工(见 §8),阶段 1(MVP)施工中
 - **产出方式**:grill-me 访谈(一问一答式磨砺,含一次设计反转,见 §5)
 
 ---
@@ -183,18 +183,18 @@
 
 ---
 
-## §8 阶段 0 待施工清单(下一步)
+## §8 阶段 0 待施工清单(✅ 已全部完工,2026-08-14 合入 main,commit 3129e33)
 
-进入阶段 0 时,按此清单开工(届时另出 plan 文档细化):
+进入阶段 0 时,按此清单开工(届时另出 plan 文档细化)。
 
-- [ ] Tauri 项目初始化(复用现有 React 前端,去 `BASE_URL`/hash 路由适配)
-- [ ] 从 `quiz-app/` 复制刷题核心,接入 Tauri 文件系统
-- [ ] SQLite schema 设计(`questions` / `review_state` / `notes` / `profile` 四表)
-- [ ] 存储层抽象接口 + Tauri SQLite 实现
-- [ ] secure store 接线(key 录入页 + 运行时注入)
-- [ ] provider 抽象层(OpenAI 兼容,先通智谱)
-- [ ] JS agent 编排骨架(Vercel AI SDK 或 LangChain.js 选型)
-- [ ] `build.mjs` 加 id 不可变校验(对历史 questions.json)
+- [x] Tauri 项目初始化(复用现有 React 前端,去 `BASE_URL`/hash 路由适配)— WP2(11a69fe)
+- [x] 从 `quiz-app/` 复制刷题核心,接入 Tauri 文件系统 — WP2(WP4 接 SQLite)
+- [x] SQLite schema 设计(`questions` / `review_state` / `notes` / `profile` 四表)— WP3(ba7ecbf)
+- [x] 存储层抽象接口 + Tauri SQLite 实现 — WP4(fae995f,B 方案:内存缓存 + 持久化)
+- [x] secure store 接线(key 录入页 + 运行时注入)— WP5(685b28f)
+- [x] provider 抽象层(OpenAI 兼容,先通智谱)— WP5(685b28f)
+- [x] JS agent 编排骨架(Vercel AI SDK 或 LangChain.js 选型)— WP6(dbdf327,选 Vercel AI SDK)
+- [x] `build.mjs` 加 id 不可变校验(对历史 questions.json)— 61bbb56(quiz-app + desktop 两份)
 
 ---
 
