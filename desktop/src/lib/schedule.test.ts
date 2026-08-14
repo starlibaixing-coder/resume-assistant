@@ -1,7 +1,7 @@
 // 队列调度 + 进度统计 —— 用真实 localStorage(jsdom)间接覆盖 storage 集成
 import { describe, it, expect, beforeEach } from 'vitest';
 import { getReviewQueue, getStats, getModuleStats, getQuestionStatus } from './schedule';
-import { saveCard } from './storage';
+import { saveCard, _resetStorageForTest } from './storage';
 import type { CardState } from './sm2';
 import type { Question } from '@/types/question';
 
@@ -21,7 +21,7 @@ function q(partial: Partial<Question> & { id: string }): Question {
 }
 
 beforeEach(() => {
-  localStorage.clear();
+  _resetStorageForTest();
 });
 
 describe('getReviewQueue', () => {
