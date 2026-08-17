@@ -1,15 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { HomePage } from '@/components/home-page';
 import { ReviewQueue } from '@/components/review-queue';
 import { CardView } from '@/components/card-view';
 import { ModuleNav } from '@/components/module-nav';
-import { ModeToggle } from '@/components/mode-toggle';
-import { GithubLink } from '@/components/github-link';
+import { AppShell } from '@/components/app-shell';
 import { SettingsPage } from '@/components/settings-page';
 import { GeneratePage } from '@/components/generate-page';
 import { DraftsPage } from '@/components/drafts-page';
 
-// 极简 hash 路由：#/ / #/:category / #/:category/quiz / #/:category/browse
+// 极简 hash 路由：#/ / #/:category / #/:category/quiz / #/:category/browse / #/generate|drafts|settings
 function parseHash(): string[] {
   const raw = window.location.hash.replace(/^#\/?/, '');
   const [path] = raw.split('?');
@@ -24,11 +23,6 @@ export default function App() {
     window.addEventListener('hashchange', onChange);
     return () => window.removeEventListener('hashchange', onChange);
   }, []);
-
-  // 滚动到顶部（切页时）
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [parts.join('/')]);
 
   let page;
   if (parts.length === 0) {
@@ -49,13 +43,5 @@ export default function App() {
     page = <ReviewQueue category={parts[0]} />;
   }
 
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
-        <GithubLink />
-        <ModeToggle />
-      </div>
-      <div className="mx-auto max-w-3xl px-4 py-6">{page}</div>
-    </div>
-  );
+  return <AppShell>{page}</AppShell>;
 }

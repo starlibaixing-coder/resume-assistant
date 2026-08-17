@@ -76,8 +76,6 @@ export function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <a href="#/" className="text-sm text-muted-foreground hover:text-primary font-mono">← 返回</a>
-
       <h1 className="text-2xl font-bold">
         <span className="text-primary">●</span> 设置 / LLM
       </h1>
@@ -151,6 +149,17 @@ export function SettingsPage() {
             </span>
           )}
         </div>
+      </div>
+
+      <div className="text-xs text-muted-foreground font-mono">
+        <a
+          href="https://github.com/starlibaixing-coder/resume-assistant"
+          target="_blank"
+          rel="noreferrer"
+          className="hover:text-primary"
+        >
+          GitHub ↗ 源码与官方题库
+        </a>
       </div>
     </div>
   );

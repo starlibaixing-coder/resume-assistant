@@ -55,7 +55,6 @@ export function ModuleNav({ category }: { category: string }) {
   if (!cat) {
     return (
       <div className="space-y-4">
-        <a href="#/" className="text-sm text-muted-foreground hover:text-primary font-mono">← 返回</a>
         <div className="text-center py-16 space-y-3">
           <div className="text-foreground">我的题库还没有题</div>
           <div className="text-sm text-muted-foreground">AI 生题进草稿区,通过后就会出现在这里。</div>
@@ -79,8 +78,6 @@ export function ModuleNav({ category }: { category: string }) {
 
   return (
     <div className="space-y-5">
-      <a href={`#/${category}`} className="text-sm text-muted-foreground hover:text-primary font-mono">← 返回</a>
-
       <h1 className="text-2xl font-bold">
         <span className="text-primary">●</span> {cat.name} / 题目浏览
       </h1>
