@@ -48,9 +48,16 @@ export function ReviewQueue({ category }: { category: string }) {
   const learnPct = stats.total ? Math.round((stats.learned / stats.total) * 100) : 0;
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="text-2xl font-bold">
-        <span className="text-primary">●</span> {cat?.name || category}
-      </h1>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h1 className="text-2xl font-bold">
+          <span className="text-primary">●</span> {cat?.name || category}
+        </h1>
+        {category === MY_CATEGORY_SLUG && (
+          <Button asChild size="sm">
+            <a href="#/generate">＋ AI 生题</a>
+          </Button>
+        )}
+      </div>
 
       <Card className="p-6 space-y-4">
         <div className="text-center space-y-1">

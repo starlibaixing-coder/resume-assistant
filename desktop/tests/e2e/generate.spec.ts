@@ -86,12 +86,18 @@ test('生题 → 存草稿 → approve → 我的题库可见 → 可开始刷�
   await page.goto('/#/');
   const myCard = page.locator('main').getByRole('link', { name: /我的题库/ }).first();
   await expect(myCard).toBeVisible();
-  await expect(myCard.getByText('2')).toBeVisible();
+  await expect(myCard.getByText('0/2')).toBeVisible();
 
   // 6) 进我的题库复习页:可开始刷题
   await myCard.click();
   await expect(page.getByRole('heading', { name: /我的题库/ })).toBeVisible();
   await expect(page.getByRole('link', { name: /开始/ })).toBeVisible();
+
+  // 7) 我的题库浏览:我的题可展开出 编辑/删除(功能⑥)
+  await page.goto('/#/my/browse');
+  await page.locator('main .bg-card > div > div').first().click();
+  await expect(page.getByRole('button', { name: '编辑' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '删除' })).toBeVisible();
 });
 
 test('草稿区:逐题拒绝不进我的题库', async ({ page }) => {
@@ -124,19 +130,21 @@ test('设置页渲染:预设与 key 表单', async ({ page }) => {
   await expect(page.getByPlaceholder(/保持不变|sk-/)).toBeVisible();
 });
 
-test('官方题浏览页:两栏+行内展开,答案普通折叠,有「复制到我的库」入口(ADR-3)', async ({ page }) => {
+test('官方题浏览页:双模式(按模块/全部题目)+分维度筛选+focus 平铺', async ({ page }) => {
   await page.goto('/#/agent/browse');
-  // 两栏:左模块列表,右题目列表(默认第一个模块);题目行点击原地展开
-  const rows = page.locator('main div.cursor-pointer');
-  await rows.first().click();
-  await expect(page.getByRole('button', { name: '复制到我的库' })).toBeVisible();
-  // 答案默认折叠,点「展开答案」打开
-  await expect(page.getByText('参考答案要点')).toBeHidden();
-  await page.getByRole('button', { name: '展开答案' }).click();
-  await expect(page.getByText('参考答案要点')).toBeVisible();
-  // 点第二题,第一题收起(答案随之隐藏)
-  if (await rows.count() > 1) {
-    await rows.nth(1).click();
-    await expect(page.getByText('参考答案要点')).toBeHidden();
-  }
+  // 默认按模块:模块快切条 + 模块区块(编号/名称/统计),行内 focus 直接可见
+  await expect(page.getByRole('button', { name: '按模块' })).toBeVisible();
+  const chips = page.locator('main button').filter({ hasText: /^\d{2} / });
+  await expect(chips.first()).toBeVisible();
+  // 点一个模块 chip → 只剩该模块区块
+  const firstChip = await chips.first().innerText();
+  await chips.first().click();
+  await expect(page.getByText(/· /, { exact: false }).first()).toBeVisible();
+  // 切到全部题目:难度/状态两维筛选 + 模块小标签
+  await page.getByRole('button', { name: '全部题目' }).click();
+  await expect(page.getByText('难度', { exact: true })).toBeVisible();
+  await expect(page.getByText('状态', { exact: true })).toBeVisible();
+  await page.locator('main button').filter({ hasText: '高' }).last().click();
+  await expect(page.getByText(/共 \d+ 题/)).toBeVisible();
+  expect(firstChip).toBeTruthy();
 });
