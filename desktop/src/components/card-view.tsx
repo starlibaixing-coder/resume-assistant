@@ -67,7 +67,7 @@ export function CardView({ category }: { category: string }) {
     return <RoundDoneState category={category} done={queue.length} onNextRound={handleNextRound} />;
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-2xl space-y-4">
       <div className="flex justify-between items-center text-sm text-muted-foreground font-mono">
         <span>
           {queueIdx + 1} / {queue.length}
@@ -133,7 +133,7 @@ export function CardView({ category }: { category: string }) {
 
 function DoneState({ category }: { category: string }) {
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-2xl space-y-4">
       <div className="text-center py-16 space-y-3">
         <div className="text-4xl text-success">✓</div>
         <div className="text-foreground">今日队列已清空</div>
@@ -155,7 +155,7 @@ function RoundDoneState({
   onNextRound: () => void;
 }) {
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-2xl space-y-4">
       <div className="text-center py-16 space-y-3">
         <div className="text-4xl text-success">✓</div>
         <div className="text-foreground">本轮完成,刷了 {done} 题</div>

@@ -37,7 +37,7 @@ export function ReviewQueue({ category }: { category: string }) {
   const handleCleared = () => setRefreshKey((k) => k + 1);
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6">
       <h1 className="text-2xl font-bold">
         <span className="text-primary">●</span> {cat?.name || category}
       </h1>
