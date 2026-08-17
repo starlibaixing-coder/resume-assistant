@@ -114,22 +114,28 @@ test('草稿区:逐题拒绝不进我的题库', async ({ page }) => {
 
 test('设置页渲染:预设与 key 表单', async ({ page }) => {
   await page.goto('/#/settings');
-  await expect(page.getByText('设置 / LLM')).toBeVisible();
+  await expect(page.getByRole('heading', { name: '设置' })).toBeVisible();
   await expect(page.getByRole('button', { name: '智谱 GLM' })).toBeVisible();
+  // 外观(主题)与数据管理(清空)也在此页
+  await expect(page.getByText('外观')).toBeVisible();
+  await expect(page.getByText('数据管理')).toBeVisible();
   // mock 返回了 key,label 会显示「API key(已存于系统钥匙串)」
   await expect(page.getByText(/^API key/)).toBeVisible();
   await expect(page.getByPlaceholder(/保持不变|sk-/)).toBeVisible();
 });
 
-test('官方题浏览页:三栏布局,详情有「复制到我的库」入口(ADR-3)', async ({ page }) => {
+test('官方题浏览页:三栏布局,答案默认折叠,详情有「复制到我的库」入口(ADR-3)', async ({ page }) => {
   await page.goto('/#/agent/browse');
-  // 三栏:模块列表在左,默认选中第一个模块,题目详情默认展示第一题
+  // 三栏:模块列表在左,默认选中第一个模块,题目详情默认展示第一题(答案折叠)
   await expect(page.getByRole('button', { name: '复制到我的库' })).toBeVisible();
-  // 点列表第二题,详情切换
+  // 答案默认不可见,点「我想好了」展开
+  await expect(page.getByText('参考答案要点')).toBeHidden();
+  await page.getByRole('button', { name: '我想好了,看答案' }).click();
+  await expect(page.getByText('参考答案要点')).toBeVisible();
+  // 切到列表第二题,答案自动收回
   const rows = page.locator('main button').filter({ hasText: /Q\d/ });
-  await expect(rows.first()).toBeVisible();
   if (await rows.count() > 1) {
     await rows.nth(1).click();
+    await expect(page.getByText('参考答案要点')).toBeHidden();
   }
-  await expect(page.getByText(/答案要点|参考答案/).first()).toBeVisible();
 });

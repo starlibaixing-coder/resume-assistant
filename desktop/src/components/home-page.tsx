@@ -75,7 +75,7 @@ export function HomePage() {
             </div>
           </div>
           <Button asChild size="lg">
-            <a href={`#/${hero.slug}`}>
+            <a href={`#/${hero.slug}/quiz`}>
               {hero.mode === 'due' ? '继续刷题' : '开始学习'} <ChevronRight className="ml-1 h-4 w-4" />
             </a>
           </Button>
@@ -88,7 +88,7 @@ export function HomePage() {
           </div>
           {cats[0] && (
             <Button asChild size="lg" variant="outline">
-              <a href={`#/${cats[0].cat.slug}`}>再过一遍</a>
+              <a href={`#/${cats[0].cat.slug}/quiz`}>再过一遍</a>
             </Button>
           )}
         </div>

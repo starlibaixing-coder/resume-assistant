@@ -1,12 +1,30 @@
 import { useEffect, useState } from 'react';
+import { Sun, Moon, Monitor, type LucideIcon } from 'lucide-react';
 import { PRESETS, loadConfig, loadKey, saveConfig, saveKey, isTauri } from '@/lib/llm-config';
+import { useTheme, type Theme } from '@/lib/theme';
+import { useQuestions } from '@/lib/questions';
+import { clearProgress, clearNotes, loadProgress, loadNotes } from '@/lib/storage';
+import { getMyCategory } from '@/lib/mylib';
 import { chat } from '@/lib/provider';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,
+} from '@/components/ui/dialog';
 
 const inputCls =
   'w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring';
 
+const THEME_OPTIONS: Array<{ value: Theme; label: string; icon: LucideIcon }> = [
+  { value: 'light', label: '浅色', icon: Sun },
+  { value: 'dark', label: '深色', icon: Moon },
+  { value: 'system', label: '跟随系统', icon: Monitor },
+];
+
 export function SettingsPage() {
+  const { data } = useQuestions();
+  const myCategory = getMyCategory();
+
+  // ── LLM ──
   const [preset, setPreset] = useState(loadConfig().preset);
   const [baseURL, setBaseURL] = useState(loadConfig().baseURL);
   const [model, setModel] = useState(loadConfig().model);
@@ -14,6 +32,13 @@ export function SettingsPage() {
   const [keyLoaded, setKeyLoaded] = useState(false);
   const [status, setStatus] = useState<{ kind: 'ok' | 'err' | 'info'; text: string } | null>(null);
   const [testing, setTesting] = useState(false);
+
+  // ── 外观 ──
+  const { theme, setTheme } = useTheme();
+
+  // ── 数据管理 ──
+  const [refresh, setRefresh] = useState(0);
+  const [confirm, setConfirm] = useState<{ kind: 'progress' | 'notes'; category: string; name: string } | null>(null);
 
   // 启动时从 keyring 读 key(只判断有无,不回显明文)
   useEffect(() => {
@@ -72,18 +97,31 @@ export function SettingsPage() {
     }
   };
 
-  const activePreset = PRESETS.find((p) => p.id === preset);
+  // 分类清单:官方 + 我的库(即使为空也列,进度/笔记可能残留)
+  const categories = [
+    ...(data?.categories ?? []).filter((c) => c.slug !== 'my').map((c) => ({ slug: c.slug, name: c.name })),
+    { slug: 'my', name: myCategory.name },
+  ];
+
+  const handleClear = () => {
+    if (!confirm) return;
+    if (confirm.kind === 'progress') clearProgress(confirm.category);
+    else clearNotes(confirm.category);
+    setConfirm(null);
+    setRefresh((v) => v + 1);
+  };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold">
-        <span className="text-primary">●</span> 设置 / LLM
-      </h1>
+    <div className="mx-auto max-w-2xl space-y-6" data-refresh={refresh}>
+      <h1 className="text-2xl font-bold">设置</h1>
 
-      <div className="space-y-5 rounded-lg border border-border bg-card p-5">
+      {/* ── LLM ─────────────────────────────────────── */}
+      <section className="space-y-5 rounded-lg border border-border bg-card p-5">
+        <div className="text-sm font-medium">LLM(生题用)</div>
+
         {/* 预设 */}
         <div className="space-y-2">
-          <div className="text-sm font-medium">服务商(OpenAI 兼容)</div>
+          <div className="text-xs text-muted-foreground">服务商(OpenAI 兼容)</div>
           <div className="flex flex-wrap gap-2">
             {PRESETS.map((p) => (
               <Button
@@ -96,8 +134,10 @@ export function SettingsPage() {
               </Button>
             ))}
           </div>
-          {activePreset?.hint && (
-            <div className="text-xs text-muted-foreground font-mono">{activePreset.hint}</div>
+          {PRESETS.find((p) => p.id === preset)?.hint && (
+            <div className="text-xs text-muted-foreground font-mono">
+              {PRESETS.find((p) => p.id === preset)?.hint}
+            </div>
           )}
         </div>
 
@@ -149,7 +189,68 @@ export function SettingsPage() {
             </span>
           )}
         </div>
-      </div>
+      </section>
+
+      {/* ── 外观 ────────────────────────────────────── */}
+      <section className="space-y-3 rounded-lg border border-border bg-card p-5">
+        <div className="text-sm font-medium">外观</div>
+        <div className="flex flex-wrap gap-2">
+          {THEME_OPTIONS.map((o) => (
+            <Button
+              key={o.value}
+              size="sm"
+              variant={theme === o.value ? 'default' : 'outline'}
+              onClick={() => setTheme(o.value)}
+            >
+              <o.icon className="mr-1.5 h-3.5 w-3.5" />
+              {o.label}
+            </Button>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 数据管理 ───────────────────────────────── */}
+      <section className="space-y-3 rounded-lg border border-border bg-card p-5">
+        <div className="text-sm font-medium">数据管理</div>
+        <div className="text-xs text-muted-foreground">
+          清空操作按分类执行:清空进度删 SM-2 记录(题目和笔记保留);清空笔记只删笔记(进度保留)。均不可恢复。
+        </div>
+        {categories.map((c) => {
+          const progressCount = Object.keys(loadProgress(c.slug)).length;
+          const noteCount = Object.keys(loadNotes(c.slug)).length;
+          return (
+            <div
+              key={c.slug}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border px-3.5 py-2.5"
+            >
+              <div className="min-w-0">
+                <div className="text-sm">{c.name}</div>
+                <div className="mt-0.5 font-mono text-xs text-muted-foreground">
+                  进度 {progressCount} 条 · 笔记 {noteCount} 条
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={progressCount === 0}
+                  onClick={() => setConfirm({ kind: 'progress', category: c.slug, name: c.name })}
+                >
+                  清空进度
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={noteCount === 0}
+                  onClick={() => setConfirm({ kind: 'notes', category: c.slug, name: c.name })}
+                >
+                  清空笔记
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+      </section>
 
       <div className="text-xs text-muted-foreground font-mono">
         <a
@@ -161,6 +262,27 @@ export function SettingsPage() {
           GitHub ↗ 源码与官方题库
         </a>
       </div>
+
+      {/* 清空确认 */}
+      <Dialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{confirm?.kind === 'progress' ? '清空复习进度?' : '清空笔记?'}</DialogTitle>
+            <DialogDescription>
+              将删除「{confirm?.name}」的{confirm?.kind === 'progress' ? '全部刷题进度(SM-2 记录)' : '全部笔记'}
+              ,{confirm?.kind === 'progress' ? '笔记会保留' : '复习进度会保留'}。此操作不可恢复。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">取消</Button>
+            </DialogClose>
+            <DialogClose asChild>
+              <Button variant="destructive" onClick={handleClear}>确认清空</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

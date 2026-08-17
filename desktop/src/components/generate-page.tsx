@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { generateQuestions, type GeneratedQuestion } from '@/lib/generate';
 import { resolveChatOptions } from '@/lib/llm-config';
 import { addDrafts } from '@/lib/mylib';
@@ -28,6 +28,19 @@ export function GeneratePage() {
   const [result, setResult] = useState<{ questions: GeneratedQuestion[]; retries: number; topic: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState<number | null>(null);
+  // 进入页面就检查 LLM 配置(不等点生成才提示);从设置页回来也刷新
+  const [llmReady, setLlmReady] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const check = () => {
+      resolveChatOptions()
+        .then((opts) => setLlmReady(!!opts))
+        .catch(() => setLlmReady(false));
+    };
+    check();
+    window.addEventListener('hashchange', check);
+    return () => window.removeEventListener('hashchange', check);
+  }, []);
 
   const handleGenerate = async () => {
     setError(null);
@@ -84,6 +97,15 @@ export function GeneratePage() {
         <span className="text-primary">●</span> AI 生题
       </h1>
 
+      {llmReady === false && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-warning/50 bg-warning/10 p-4 text-sm">
+          <span>还没配置 LLM(服务商 / API key),生成前需要先设置。</span>
+          <Button asChild size="sm">
+            <a href="#/settings">去设置 →</a>
+          </Button>
+        </div>
+      )}
+
       <div className="space-y-4 rounded-lg border border-border bg-card p-5">
         <div className="space-y-1.5">
           <label className="text-xs text-muted-foreground font-mono">知识点</label>
@@ -94,6 +116,9 @@ export function GeneratePage() {
             placeholder="如:React Hooks 深入 / 浏览器事件循环 / RAG 检索优化"
             autoFocus
           />
+          <div className="text-xs leading-relaxed text-muted-foreground">
+            一个知识点会从不同角度出多道题(数量可选),整批作为一个「批次」进草稿区;你审核通过的批次会成为一个模块,出现在我的题库里。
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-6">

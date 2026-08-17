@@ -1,21 +1,15 @@
 import { useMemo, useState } from 'react';
 import { useQuestions } from '@/lib/questions';
 import { getReviewQueue, getStats } from '@/lib/schedule';
-import { clearProgress, clearNotes } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose,
-} from '@/components/ui/dialog';
 
 const LIMIT_OPTIONS = [20, 50, 100, 0] as const;
 
 export function ReviewQueue({ category }: { category: string }) {
   const { data, error } = useQuestions();
   const [limit, setLimit] = useState<number>(50);
-  // 用于清除后强制刷新统计
-  const [refreshKey, setRefreshKey] = useState(0);
 
   const { ids, stats, queue } = useMemo(() => {
     if (!data) return { ids: [] as string[], stats: null, queue: null };
@@ -25,8 +19,7 @@ export function ReviewQueue({ category }: { category: string }) {
       stats: getStats(category, ids),
       queue: getReviewQueue(category, ids, limit),
     };
-    // refreshKey in deps so clearing progress re-reads stats
-  }, [data, category, limit, refreshKey]);
+  }, [data, category, limit]);
 
   if (error) return <div className="text-muted-foreground p-8 text-center">加载失败: {error}</div>;
   if (!data || !stats || !queue) return <div className="text-muted-foreground p-8 text-center">加载中…</div>;
@@ -34,8 +27,6 @@ export function ReviewQueue({ category }: { category: string }) {
   const cat = data.categories.find((c) => c.slug === category);
   const dueCount = queue.dueIds.length;
   const learnPct = stats.total ? Math.round((stats.learned / stats.total) * 100) : 0;
-  const handleCleared = () => setRefreshKey((k) => k + 1);
-
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <h1 className="text-2xl font-bold">
@@ -112,52 +103,7 @@ export function ReviewQueue({ category }: { category: string }) {
           ))}
         </div>
       </div>
-
-      {/* 清除进度区(新功能) */}
-      <div className="flex gap-2 pt-4 border-t border-border justify-center">
-        <ClearButton
-          label="清空复习进度"
-          title="清空复习进度?"
-          description={`将删除「${cat?.name || category}」分类的全部刷题进度(SM-2 记录)。笔记会保留。此操作不可恢复。`}
-          confirmLabel="确认清空"
-          onConfirm={() => { clearProgress(category); handleCleared(); }}
-        />
-        <ClearButton
-          label="清空笔记"
-          title="清空笔记?"
-          description={`将删除「${cat?.name || category}」分类的全部笔记。复习进度会保留。此操作不可恢复。`}
-          confirmLabel="确认清空"
-          onConfirm={() => { clearNotes(category); handleCleared(); }}
-        />
-      </div>
     </div>
   );
 }
 
-function ClearButton({
-  label, title, description, confirmLabel, onConfirm,
-}: {
-  label: string; title: string; description: string; confirmLabel: string; onConfirm: () => void;
-}) {
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-muted-foreground">{label}</Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">取消</Button>
-          </DialogClose>
-          <DialogClose asChild>
-            <Button variant="destructive" onClick={onConfirm}>{confirmLabel}</Button>
-          </DialogClose>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
