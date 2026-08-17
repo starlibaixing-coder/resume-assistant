@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getMyCategory, getPendingCount, subscribeMyLib } from '@/lib/mylib';
-import { ModeToggle } from '@/components/mode-toggle';
+import { ThemeControl } from '@/components/mode-toggle';
 
 // 桌面壳:常驻侧栏导航 + 独立滚动内容区。
 // 桌面端与 web 站已分家(ADR-6),不再用"网页式"窄栏 + 返回链接;
@@ -118,16 +118,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
 
         {/* 底部:设置 + 主题 */}
-        <div className="space-y-1 border-t border-border p-2">
+        <div className="space-y-2 border-t border-border p-2 pb-3">
           <NavItem href="#/settings" icon={Settings} label="设置" active={root === 'settings'} />
-          <div className="flex justify-center pt-1 lg:justify-end">
-            <ModeToggle />
-          </div>
+          <ThemeControl />
         </div>
       </aside>
 
       <main ref={mainRef} className="h-full min-w-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-4xl px-6 py-8">{children}</div>
+        <div className="px-6 py-8">{children}</div>
       </main>
     </div>
   );

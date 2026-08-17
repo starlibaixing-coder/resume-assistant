@@ -6,7 +6,7 @@ import { getMyCategory, getPendingCount, subscribeMyLib } from '@/lib/mylib';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 
-// 总览(桌面):今日数字 + 分类进度卡片 + 快捷入口。
+// 总览(桌面):左栏今日数字 + 快捷操作,右栏分类进度。
 // web 版的营销文案留在冻结的 quiz-app;桌面首页回答"我现在该干嘛"。
 
 export function HomePage() {
@@ -29,7 +29,7 @@ export function HomePage() {
   }, [data]);
 
   return (
-    <div className="space-y-8">
+    <div className="mx-auto max-w-5xl space-y-8">
       <header className="space-y-1">
         <h1 className="text-2xl font-bold tracking-tight">总览</h1>
         <p className="text-sm text-muted-foreground">
@@ -37,43 +37,46 @@ export function HomePage() {
         </p>
       </header>
 
-      {/* 今日数字 */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-lg border border-border bg-card p-4">
-          <div className={`font-mono text-2xl font-bold ${totalDue > 0 ? 'text-warning' : 'text-success'}`}>
-            {totalDue}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* ── 左栏:今日状态 + 快捷操作 ─────────────────── */}
+        <div className="space-y-4">
+          <div className="space-y-4 rounded-lg border border-border bg-card p-5">
+            <div>
+              <div className="text-xs text-muted-foreground">今日待复习</div>
+              <div className={`mt-1 font-mono text-4xl font-bold leading-none ${totalDue > 0 ? 'text-warning' : 'text-success'}`}>
+                {totalDue}
+              </div>
+            </div>
+            <div className="border-t border-border pt-3 text-xs leading-relaxed text-muted-foreground">
+              共 {totalCount} 题 · 未学 {totalRemaining}
+            </div>
           </div>
-          <div className="mt-0.5 text-xs text-muted-foreground">题待复习</div>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-4">
-          <div className="font-mono text-2xl font-bold text-primary">{totalRemaining}</div>
-          <div className="mt-0.5 text-xs text-muted-foreground">题未学习 / 共 {totalCount}</div>
-        </div>
-        <a
-          href="#/drafts"
-          className="rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary cursor-pointer"
-        >
-          <div className={`font-mono text-2xl font-bold ${pendingCount > 0 ? 'text-warning' : 'text-muted-foreground'}`}>
-            {pendingCount}
+
+          <a
+            href="#/drafts"
+            className="flex items-center justify-between rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary cursor-pointer"
+          >
+            <div>
+              <div className="text-xs text-muted-foreground">草稿待审</div>
+              <div className={`mt-1 font-mono text-2xl font-bold leading-none ${pendingCount > 0 ? 'text-warning' : 'text-muted-foreground'}`}>
+                {pendingCount}
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </a>
+
+          <div className="space-y-2">
+            <Button asChild className="w-full">
+              <a href="#/generate"><Sparkles className="mr-1.5 h-4 w-4" />AI 生题</a>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <a href="#/drafts"><Inbox className="mr-1.5 h-4 w-4" />草稿区</a>
+            </Button>
           </div>
-          <div className="mt-0.5 text-xs text-muted-foreground">份草稿待审</div>
-        </a>
-      </div>
+        </div>
 
-      {/* 快捷入口 */}
-      <div className="flex flex-wrap gap-2">
-        <Button asChild>
-          <a href="#/generate"><Sparkles className="mr-1.5 h-4 w-4" />AI 生题</a>
-        </Button>
-        <Button asChild variant="outline">
-          <a href="#/drafts"><Inbox className="mr-1.5 h-4 w-4" />草稿区{pendingCount > 0 ? `(${pendingCount})` : ''}</a>
-        </Button>
-      </div>
-
-      {/* 分类进度 */}
-      <section className="space-y-3">
-        <h2 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">题库分类</h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {/* ── 右栏:分类进度 ────────────────────────────── */}
+        <div className="grid content-start gap-3 sm:grid-cols-2 lg:col-span-2">
           {cats.map(({ cat, stats }) => {
             const pct = stats.total ? Math.round((stats.learned / stats.total) * 100) : 0;
             return (
@@ -137,7 +140,7 @@ export function HomePage() {
             )}
           </a>
         </div>
-      </section>
+      </div>
     </div>
   );
 }

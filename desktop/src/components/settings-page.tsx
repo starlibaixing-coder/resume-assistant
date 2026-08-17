@@ -75,7 +75,7 @@ export function SettingsPage() {
   const activePreset = PRESETS.find((p) => p.id === preset);
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <h1 className="text-2xl font-bold">
         <span className="text-primary">●</span> 设置 / LLM
       </h1>
