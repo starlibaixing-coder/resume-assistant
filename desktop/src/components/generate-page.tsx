@@ -7,7 +7,6 @@ import { AnswerPanel } from '@/components/answer-panel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
-const COUNTS = [3, 5, 8] as const;
 const DIFFICULTIES: Array<Difficulty | '不限'> = ['不限', '初', '中', '高'];
 
 const inputCls =
@@ -20,7 +19,6 @@ const pill = (active: boolean) =>
 
 export function GeneratePage() {
   const [topic, setTopic] = useState('');
-  const [count, setCount] = useState<number>(5);
   const [difficulty, setDifficulty] = useState<Difficulty | '不限'>('不限');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +56,7 @@ export function GeneratePage() {
     setLoading(true);
     try {
       const r = await generateQuestions(
-        { topic: topic.trim(), count, difficulty: difficulty === '不限' ? undefined : difficulty },
+        { topic: topic.trim(), difficulty: difficulty === '不限' ? undefined : difficulty },
         chatOpts,
       );
       setResult({ questions: r.questions, retries: r.retries, topic: topic.trim() });
@@ -117,23 +115,16 @@ export function GeneratePage() {
             autoFocus
           />
           <div className="text-xs leading-relaxed text-muted-foreground">
-            一个知识点会从不同角度出多道题(数量可选),整批作为一个「批次」进草稿区;你审核通过的批次会成为一个模块,出现在我的题库里。
+            出多少道题由 LLM 按知识点广度判断(简单概念 2~4 道,宽领域可达 10 道,宁缺毋滥);整批作为一个「批次」进草稿区,审核通过后成为一个模块进我的题库。
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-6">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground font-mono">数量</span>
-            {COUNTS.map((c) => (
-              <button key={c} className={pill(count === c)} onClick={() => setCount(c)}>{c}</button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground font-mono">难度</span>
-            {DIFFICULTIES.map((d) => (
-              <button key={d} className={pill(difficulty === d)} onClick={() => setDifficulty(d)}>{d}</button>
-            ))}
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-muted-foreground font-mono">难度</span>
+          {DIFFICULTIES.map((d) => (
+            <button key={d} className={pill(difficulty === d)} onClick={() => setDifficulty(d)}>{d}</button>
+          ))}
+          <span className="text-xs text-muted-foreground">(出题数量由 LLM 按知识点广度判断)</span>
         </div>
 
         <Button onClick={handleGenerate} disabled={loading} className="w-full">
@@ -158,7 +149,7 @@ export function GeneratePage() {
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="text-sm text-muted-foreground font-mono">
-              生成 {result.questions.length} 题 · {result.retries === 0 ? '一次通过' : `自修正 ${result.retries} 次`}
+              LLM 判断出 {result.questions.length} 道 · {result.retries === 0 ? '一次通过' : `自修正 ${result.retries} 次}`}
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={handleGenerate} disabled={loading || saving}>重新生成</Button>
