@@ -19,14 +19,14 @@ const FILTERS = [
 
 type FilterKey = (typeof FILTERS)[number]['key'];
 
-// 题目浏览(桌面 master-detail):左栏模块列表(带进度),右栏该模块题目。
-// 窄窗(<md)左栏退化为横向模块条,功能不丢。
+// 题目浏览(桌面,邮件客户端式三栏):模块列表 | 题目列表 | 详情面板。
+// 点题目右栏立即看完整答案/笔记/操作,不打断列表。
+// <lg:模块退化为横向条,题目列表与详情上下堆叠(仅浏览器窄窗会遇到,Tauri 最小宽度 820 > lg 生效界附近,可正常用)。
 
 export function ModuleNav({ category }: { category: string }) {
   const { data, error } = useQuestions();
-  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterKey>('all');
-  // 改删/复制(阶段 1 功能⑥):my 分类可编辑删除;官方分类只能复制副本再改(ADR-3)
+  // 改删/复制(功能⑥):my 分类可编辑删除;官方分类只能复制副本再改(ADR-3)
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -37,6 +37,7 @@ export function ModuleNav({ category }: { category: string }) {
     const m = params.get('m');
     return m ? parseInt(m, 10) : null;
   });
+  const [pickedId, setPickedId] = useState<string | null>(null);
 
   const { cat, byModule, moduleStats } = useMemo(() => {
     if (!data) return { cat: null, byModule: {} as Record<number, typeof data.questions>, moduleStats: {} };
@@ -61,7 +62,7 @@ export function ModuleNav({ category }: { category: string }) {
   // 切分类时重置选中
   useEffect(() => {
     setPickedModule(null);
-    setExpandedId(null);
+    setPickedId(null);
   }, [category]);
 
   if (error) return <div className="text-muted-foreground p-8 text-center">加载失败: {error}</div>;
@@ -79,11 +80,6 @@ export function ModuleNav({ category }: { category: string }) {
     );
   }
 
-  const handleCopy = async (q: typeof data.questions[number]) => {
-    await copyOfficial(q);
-    setCopiedId(q.id);
-  };
-
   const filterQuestion = (q: typeof data.questions[number]) => {
     if (filter === 'all') return true;
     const status = getQuestionStatus(category, q.id);
@@ -94,8 +90,15 @@ export function ModuleNav({ category }: { category: string }) {
   };
 
   const selStats = selectedModule != null ? moduleStats[selectedModule] : null;
-  const selQuestions = selectedModule != null ? (byModule[selectedModule] || []).filter(filterQuestion) : [];
   const selModuleMeta = modules.find((m) => m.id === selectedModule);
+  const listQuestions = selectedModule != null ? (byModule[selectedModule] || []).filter(filterQuestion) : [];
+  // 详情选中:优先用户点选,模块/筛选变化后不在列表则回退到第一题
+  const selected = listQuestions.find((q) => q.id === pickedId) ?? listQuestions[0] ?? null;
+
+  const handleCopy = async (q: typeof data.questions[number]) => {
+    await copyOfficial(q);
+    setCopiedId(q.id);
+  };
 
   const moduleButton = (mod: (typeof modules)[number]) => {
     const stats = moduleStats[mod.id];
@@ -135,10 +138,10 @@ export function ModuleNav({ category }: { category: string }) {
         <span className="text-primary">●</span> {cat.name} / 题目浏览
       </h1>
 
-      <div className="flex gap-6">
-        {/* 左栏:模块列表(窄窗退化为横向条) */}
-        <aside className="hidden w-56 shrink-0 flex-col gap-1 md:flex">{modules.map(moduleButton)}</aside>
-        <div className="flex flex-wrap gap-1.5 md:hidden">
+      <div className="flex flex-col gap-5 lg:flex-row">
+        {/* 栏 1:模块列表(<lg 退化为横向条) */}
+        <aside className="hidden w-44 shrink-0 flex-col gap-1 lg:flex">{modules.map(moduleButton)}</aside>
+        <div className="flex flex-wrap gap-1.5 lg:hidden">
           {modules.map((mod) => (
             <button
               key={mod.id}
@@ -152,83 +155,96 @@ export function ModuleNav({ category }: { category: string }) {
           ))}
         </div>
 
-        {/* 右栏:选中模块的题目 */}
-        <section className="min-w-0 flex-1 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <div className="text-sm font-semibold">{selModuleMeta?.name ?? '—'}</div>
-              <div className="mt-0.5 font-mono text-xs text-muted-foreground">
-                模块 {selectedModule != null ? String(selectedModule).padStart(2, '0') : '--'}
-                {selStats && ` · 已学 ${selStats.learned}/${selStats.total}`}
-                {selStats && selStats.dueToday > 0 && ` · 待复习 ${selStats.dueToday}`}
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {FILTERS.map((f) => (
-                <Button
-                  key={f.key}
-                  variant={filter === f.key ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setFilter(f.key)}
-                >
-                  {f.label}
-                </Button>
-              ))}
+        {/* 栏 2:题目列表 */}
+        <section className="w-full shrink-0 space-y-3 lg:w-72">
+          <div>
+            <div className="text-sm font-semibold">{selModuleMeta?.name ?? '—'}</div>
+            <div className="mt-0.5 font-mono text-xs text-muted-foreground">
+              模块 {selectedModule != null ? String(selectedModule).padStart(2, '0') : '--'}
+              {selStats && ` · 已学 ${selStats.learned}/${selStats.total}`}
+              {selStats && selStats.dueToday > 0 && ` · 待复习 ${selStats.dueToday}`}
             </div>
           </div>
-
-          <div className="bg-card border border-border rounded-md overflow-hidden">
-            {selQuestions.length === 0 ? (
+          <div className="flex flex-wrap gap-1.5">
+            {FILTERS.map((f) => (
+              <Button
+                key={f.key}
+                variant={filter === f.key ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFilter(f.key)}
+              >
+                {f.label}
+              </Button>
+            ))}
+          </div>
+          <div className="overflow-hidden rounded-md border border-border bg-card">
+            {listQuestions.length === 0 ? (
               <div className="p-4 text-center text-sm text-muted-foreground">本筛选下无题</div>
             ) : (
-              selQuestions.map((q) => {
-                const isOpen = expandedId === q.id;
+              listQuestions.map((q) => {
+                const active = selected?.id === q.id;
                 return (
-                  <div key={q.id} className="border-b border-border last:border-b-0">
-                    <div
-                      className="flex items-center gap-3 p-3 cursor-pointer hover:bg-accent transition-colors"
-                      onClick={() => setExpandedId(isOpen ? null : q.id)}
-                    >
-                      <span className="font-mono text-xs text-muted-foreground shrink-0">
-                        {isOpen ? '▼' : '▶'} Q{q.id.split('.').slice(1).join('.')}
-                      </span>
-                      <span className="text-sm text-foreground flex-1">{q.title}</span>
-                      <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
-                    </div>
-                    {isOpen && (
-                      <div className="px-3.5 pb-4 space-y-2">
-                        <div className="text-sm text-muted-foreground pt-2">{q.focus}</div>
-                        <AnswerPanel answer={q.answer} followups={q.followups} />
-                        <Suspense fallback={<div className="text-sm text-muted-foreground">加载笔记…</div>}>
-                          <NotePanel category={category} questionId={q.id} />
-                        </Suspense>
-                        <div className="flex items-center gap-2 pt-1">
-                          {isMy ? (
-                            <>
-                              <Button size="sm" variant="outline" onClick={() => setEditingId(q.id)}>编辑</Button>
-                              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeletingId(q.id)}>
-                                删除
-                              </Button>
-                              <span className="text-xs text-muted-foreground font-mono">我的库 · 可改可删</span>
-                            </>
-                          ) : copiedId === q.id ? (
-                            <a href={`#/${MY_CATEGORY_SLUG}/browse`} className="text-sm text-primary hover:underline">
-                              已复制 ✓ 到我的题库改 →
-                            </a>
-                          ) : (
-                            <>
-                              <Button size="sm" variant="outline" onClick={() => handleCopy(q)}>复制到我的库</Button>
-                              <span className="text-xs text-muted-foreground font-mono">官方题只读,复制副本后可改</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    key={q.id}
+                    onClick={() => setPickedId(q.id)}
+                    className={`flex w-full items-start gap-2.5 border-b border-border p-3 text-left last:border-b-0 cursor-pointer transition-colors ${
+                      active ? 'bg-accent' : 'hover:bg-accent/60'
+                    }`}
+                  >
+                    <span className="mt-0.5 shrink-0 font-mono text-[10px] text-muted-foreground/70">
+                      Q{q.id.split('.').slice(1).join('.')}
+                    </span>
+                    <span className="flex-1 text-sm leading-snug text-foreground">{q.title}</span>
+                    <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
+                  </button>
                 );
               })
             )}
           </div>
+        </section>
+
+        {/* 栏 3:详情面板 */}
+        <section className="min-w-0 flex-1">
+          {selected ? (
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline">{selected.difficulty}</Badge>
+                {selected.tags.map((t) => (
+                  <Badge key={t} variant="secondary">{t}</Badge>
+                ))}
+              </div>
+              <div className="text-lg font-semibold leading-snug text-foreground">{selected.title}</div>
+              <div className="text-sm text-muted-foreground">{selected.focus}</div>
+              <AnswerPanel answer={selected.answer} followups={selected.followups} />
+              <Suspense fallback={<div className="text-sm text-muted-foreground">加载笔记…</div>}>
+                <NotePanel key={selected.id} category={category} questionId={selected.id} />
+              </Suspense>
+              <div className="flex items-center gap-2 pt-1">
+                {isMy ? (
+                  <>
+                    <Button size="sm" variant="outline" onClick={() => setEditingId(selected.id)}>编辑</Button>
+                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeletingId(selected.id)}>
+                      删除
+                    </Button>
+                    <span className="text-xs text-muted-foreground font-mono">我的库 · 可改可删</span>
+                  </>
+                ) : copiedId === selected.id ? (
+                  <a href={`#/${MY_CATEGORY_SLUG}/browse`} className="text-sm text-primary hover:underline">
+                    已复制 ✓ 到我的题库改 →
+                  </a>
+                ) : (
+                  <>
+                    <Button size="sm" variant="outline" onClick={() => handleCopy(selected)}>复制到我的库</Button>
+                    <span className="text-xs text-muted-foreground font-mono">官方题只读,复制副本后可改</span>
+                  </>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex h-40 items-center justify-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
+              左侧选择题目查看详情
+            </div>
+          )}
         </section>
       </div>
 

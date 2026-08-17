@@ -121,9 +121,15 @@ test('设置页渲染:预设与 key 表单', async ({ page }) => {
   await expect(page.getByPlaceholder(/保持不变|sk-/)).toBeVisible();
 });
 
-test('官方题浏览页:有「复制到我的库」入口(ADR-3)', async ({ page }) => {
+test('官方题浏览页:三栏布局,详情有「复制到我的库」入口(ADR-3)', async ({ page }) => {
   await page.goto('/#/agent/browse');
-  // 展开第一题,出现复制按钮
-  await page.locator('div.cursor-pointer').first().click();
-  await expect(page.getByRole('button', { name: '复制到我的库' }).first()).toBeVisible();
+  // 三栏:模块列表在左,默认选中第一个模块,题目详情默认展示第一题
+  await expect(page.getByRole('button', { name: '复制到我的库' })).toBeVisible();
+  // 点列表第二题,详情切换
+  const rows = page.locator('main button').filter({ hasText: /Q\d/ });
+  await expect(rows.first()).toBeVisible();
+  if (await rows.count() > 1) {
+    await rows.nth(1).click();
+  }
+  await expect(page.getByText(/答案要点|参考答案/).first()).toBeVisible();
 });
