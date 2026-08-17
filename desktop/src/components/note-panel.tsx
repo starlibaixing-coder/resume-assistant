@@ -3,13 +3,19 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { getNote, saveNote } from '@/lib/storage';
 
-// 笔记区:Tiptap WYSIWYG 所见即所得 + 防抖自动保存
-// 外层用 questionId 作 key 强制切题重建,editor 用新 content 初始化
+// 笔记区:Tiptap WYSIWYG 所见即所得 + 防抖自动保存。
+// 切题不重建编辑器(单实例 + setContent 原地换内容)——重建会闪一下空态。
 // default export(React.lazy 需要)
+
 export default function NotePanel({ category, questionId }: { category: string; questionId: string }) {
-  return (
-    <NotePanelEditor key={questionId} category={category} questionId={questionId} />
-  );
+  return <NotePanelEditor category={category} questionId={questionId} />;
+}
+
+// 当前题的上下文(onUpdate/清理闭包里读 ref,避免切题后闭包过期)
+interface NoteCtx {
+  category: string;
+  questionId: string;
+  initialContent: string;
 }
 
 function NotePanelEditor({ category, questionId }: { category: string; questionId: string }) {
@@ -18,6 +24,7 @@ function NotePanelEditor({ category, questionId }: { category: string; questionI
   const [expanded, setExpanded] = useState(() => !!initialContent);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestRef = useRef(initialContent);
+  const ctxRef = useRef<NoteCtx>({ category, questionId, initialContent });
 
   const editor = useEditor({
     extensions: [StarterKit],
@@ -26,34 +33,53 @@ function NotePanelEditor({ category, questionId }: { category: string; questionI
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
       latestRef.current = html;
+      const { category: c, questionId: id } = ctxRef.current;
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
-        saveNote(category, questionId, html);
+        saveNote(c, id, html);
       }, 500);
     },
     editorProps: {
       attributes: {
         // prose 类(Tailwind Typography)给 ul/h1/blockquote/code 等节点提供默认样式。
-        // 之前误写成不存在的 note-prose,Tailwind v4 preflight 会把列表圆点、标题字号
-        // 全部 reset 掉,导致 input rule 虽然生成了 <ul><li> / <h3>,却显示成"消失了"。
         class: 'prose prose-sm dark:prose-invert max-w-none',
         'aria-label': '笔记编辑区',
       },
     },
   });
 
-  // 卸载(切题)前 flush 残留输入
+  // 切题:flush 旧题未落盘输入 → 原地换内容,不重建编辑器(消闪烁)
+  useEffect(() => {
+    const prev = ctxRef.current;
+    if (prev.questionId === questionId && prev.category === category) return;
+
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    if (latestRef.current && latestRef.current !== prev.initialContent) {
+      saveNote(prev.category, prev.questionId, latestRef.current);
+    }
+
+    const next = getNote(category, questionId);
+    latestRef.current = next;
+    ctxRef.current = { category, questionId, initialContent: next };
+    editor?.commands.setContent(next || '<p></p>', false); // false: 不触发 onUpdate
+    setExpanded(!!next);
+  }, [category, questionId, editor]);
+
+  // 卸载前 flush 残留输入
   useEffect(() => {
     return () => {
+      const cur = ctxRef.current;
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
         debounceRef.current = null;
       }
-      if (latestRef.current && latestRef.current !== initialContent) {
-        saveNote(category, questionId, latestRef.current);
+      if (latestRef.current && latestRef.current !== cur.initialContent) {
+        saveNote(cur.category, cur.questionId, latestRef.current);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 空且未展开:收起态,显示入口按钮
@@ -61,7 +87,7 @@ function NotePanelEditor({ category, questionId }: { category: string; questionI
     return (
       <div className="mt-4">
         <button
-          className="w-full px-3 py-2 bg-transparent border border-dashed border-border rounded-md text-muted-foreground hover:border-primary hover:text-primary transition-colors text-[13px]"
+          className="w-full px-3 py-2 bg-transparent border border-dashed border-border rounded-md text-muted-foreground hover:border-primary hover:text-primary transition-colors text-[13px] cursor-pointer"
           onClick={() => setExpanded(true)}
         >
           ➕ 写笔记

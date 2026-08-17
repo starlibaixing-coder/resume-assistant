@@ -68,6 +68,10 @@ export function CardView({ category }: { category: string }) {
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
+      <a href={`#/${category}`} className="text-sm text-muted-foreground hover:text-primary font-mono">
+        ← 返回队列
+      </a>
+
       <div className="flex justify-between items-center text-sm text-muted-foreground font-mono">
         <span>
           {queueIdx + 1} / {queue.length}

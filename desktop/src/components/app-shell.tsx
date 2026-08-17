@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
-  LayoutDashboard, Sparkles, Inbox, Settings, Bot, Code2, LibraryBig, BookOpen, Zap,
+  LayoutDashboard, Sparkles, Inbox, Settings, Bot, Code2, LibraryBig, BookOpen, Zap, ArrowLeft,
   type LucideIcon,
 } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getMyCategory, getPendingCount, subscribeMyLib } from '@/lib/mylib';
-import { ThemeControl } from '@/components/mode-toggle';
+import { loadKey } from '@/lib/llm-config';
 
 // 桌面壳:常驻侧栏导航 + 独立滚动内容区。
-// 桌面端与 web 站已分家(ADR-6),不再用"网页式"窄栏 + 返回链接;
-// 窄窗口(<lg)侧栏收成图标栏,功能不丢。
+// 主题切换在设置页;内容区左上角提供全局后退(侧栏常驻后补回"操作连贯性"),
+// Cmd/Ctrl+← 等价(编辑器内除外);窄窗口(<lg)侧栏收成图标栏。
 
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   agent: Bot,
@@ -29,9 +29,10 @@ interface NavItemProps {
   active: boolean;
   count?: number; // 右侧灰字计数(分类题数)
   badge?: number; // 警示角标(草稿待审)
+  warn?: boolean; // 警示点(如未配置 LLM key)
 }
 
-function NavItem({ href, icon: Icon, label, active, count, badge }: NavItemProps) {
+function NavItem({ href, icon: Icon, label, active, count, badge, warn }: NavItemProps) {
   return (
     <a
       href={href}
@@ -43,6 +44,7 @@ function NavItem({ href, icon: Icon, label, active, count, badge }: NavItemProps
       }`}
     >
       <Icon className="h-4 w-4 shrink-0" />
+      {warn && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />}
       <span className="hidden min-w-0 flex-1 truncate lg:inline">{label}</span>
       {badge != null && badge > 0 && (
         <span className="hidden rounded-full bg-warning px-1.5 py-0.5 text-[10px] font-mono leading-none text-warning-foreground lg:inline">
@@ -57,8 +59,10 @@ function NavItem({ href, icon: Icon, label, active, count, badge }: NavItemProps
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const mainRef = useRef<HTMLElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
   const [root, setRoot] = useState(parseHashRoot());
+  const [canBack, setCanBack] = useState(false);
+  const [noKey, setNoKey] = useState(false);
   const { data } = useQuestions();
 
   // 草稿角标/我的题库计数跟随 mylib 变化
@@ -67,15 +71,55 @@ export function AppShell({ children }: { children: ReactNode }) {
   const myCategory = getMyCategory();
   const pendingCount = getPendingCount();
 
-  // 路由切换:高亮对应侧栏项 + 内容区滚回顶部
+  // 导航栈:链接点击压栈;Cmd+← 原生后退弹栈(回来的 hash 等于栈顶下一个)
+  const stackRef = useRef<string[]>([window.location.hash]);
+
   useEffect(() => {
     const onChange = () => {
+      const cur = window.location.hash;
+      const stack = stackRef.current;
+      if (stack[stack.length - 2] === cur) {
+        stack.pop(); // 原生后退(hashchange 由 history.back 触发)
+      } else {
+        stack.push(cur);
+      }
+      setCanBack(stack.length > 1);
       setRoot(parseHashRoot());
       mainRef.current?.scrollTo({ top: 0 });
+      checkKey();
     };
+
+    // Cmd/Ctrl+← 或 Alt+← 全局后退;编辑场景(输入框/编辑器)不抢快捷键
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.altKey) && e.key === 'ArrowLeft' && stackRef.current.length > 1) {
+        const t = e.target as HTMLElement | null;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+        window.history.back();
+      }
+    };
+
+    let alive = true;
+    const checkKey = () => {
+      loadKey()
+        .then((k) => {
+          if (alive) setNoKey(!k);
+        })
+        .catch(() => {});
+    };
+    checkKey();
+
     window.addEventListener('hashchange', onChange);
-    return () => window.removeEventListener('hashchange', onChange);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      alive = false;
+      window.removeEventListener('hashchange', onChange);
+      window.removeEventListener('keydown', onKey);
+    };
   }, []);
+
+  const goBack = () => {
+    if (stackRef.current.length > 1) window.history.back();
+  };
 
   const cats = (data?.categories ?? []).filter((c) => c.slug !== 'my');
 
@@ -117,15 +161,27 @@ export function AppShell({ children }: { children: ReactNode }) {
           />
         </nav>
 
-        {/* 底部:设置 + 主题 */}
-        <div className="space-y-2 border-t border-border p-2 pb-3">
-          <NavItem href="#/settings" icon={Settings} label="设置" active={root === 'settings'} />
-          <ThemeControl />
+        {/* 底部:设置(未配 key 亮警示点) */}
+        <div className="border-t border-border p-2">
+          <NavItem href="#/settings" icon={Settings} label="设置" active={root === 'settings'} warn={noKey} />
         </div>
       </aside>
 
-      <main ref={mainRef} className="h-full min-w-0 flex-1 overflow-y-auto">
-        <div className="px-6 py-8">{children}</div>
+      <main className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+        {canBack && (
+          <div className="shrink-0 px-6 pt-4">
+            <button
+              onClick={goBack}
+              title="后退(Cmd+←)"
+              className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-mono text-muted-foreground cursor-pointer transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> 后退
+            </button>
+          </div>
+        )}
+        <div ref={mainRef} className="min-h-0 flex-1 overflow-y-auto px-6 py-8">
+          {children}
+        </div>
       </main>
     </div>
   );

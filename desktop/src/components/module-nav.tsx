@@ -20,8 +20,9 @@ const FILTERS = [
 type FilterKey = (typeof FILTERS)[number]['key'];
 
 // 题目浏览(桌面,邮件客户端式三栏):模块列表 | 题目列表 | 详情面板。
-// 点题目右栏立即看完整答案/笔记/操作,不打断列表。
-// <lg:模块退化为横向条,题目列表与详情上下堆叠(仅浏览器窄窗会遇到,Tauri 最小宽度 820 > lg 生效界附近,可正常用)。
+// 三栏各自独立滚动(≥lg 满高布局);答案默认折叠,点「我想好了」才展示(对齐刷题的强制思考)。
+// 点题目右栏立即看题干/考察点/笔记/管理操作,不打断列表。
+// <lg:模块退化为横向条,题目列表与详情上下堆叠(页面整体滚动)。
 
 export function ModuleNav({ category }: { category: string }) {
   const { data, error } = useQuestions();
@@ -30,6 +31,8 @@ export function ModuleNav({ category }: { category: string }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  // 答案展开:记"哪道题已展开",切题自动收回
+  const [revealedId, setRevealedId] = useState<string | null>(null);
   const isMy = category === MY_CATEGORY_SLUG;
   // 选中的模块:初始取 ?m= 深链,否则第一个
   const [pickedModule, setPickedModule] = useState<number | null>(() => {
@@ -133,14 +136,16 @@ export function ModuleNav({ category }: { category: string }) {
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <h1 className="text-2xl font-bold">
+    <div className="mx-auto flex max-w-5xl flex-col gap-6 lg:h-full">
+      <h1 className="shrink-0 text-2xl font-bold">
         <span className="text-primary">●</span> {cat.name} / 题目浏览
       </h1>
 
-      <div className="flex flex-col gap-5 lg:flex-row">
-        {/* 栏 1:模块列表(<lg 退化为横向条) */}
-        <aside className="hidden w-44 shrink-0 flex-col gap-1 lg:flex">{modules.map(moduleButton)}</aside>
+      <div className="flex min-h-0 flex-col gap-5 lg:flex-1 lg:flex-row">
+        {/* 栏 1:模块列表,独立滚动(<lg 退化为横向条) */}
+        <aside className="hidden w-44 shrink-0 flex-col gap-1 lg:flex lg:min-h-0 lg:overflow-y-auto lg:pr-1 lg:pb-2">
+          {modules.map(moduleButton)}
+        </aside>
         <div className="flex flex-wrap gap-1.5 lg:hidden">
           {modules.map((mod) => (
             <button
@@ -155,8 +160,8 @@ export function ModuleNav({ category }: { category: string }) {
           ))}
         </div>
 
-        {/* 栏 2:题目列表 */}
-        <section className="w-full shrink-0 space-y-3 lg:w-72">
+        {/* 栏 2:题目列表,独立滚动 */}
+        <section className="w-full shrink-0 space-y-3 lg:min-h-0 lg:w-72 lg:overflow-y-auto lg:pr-1 lg:pb-2">
           <div>
             <div className="text-sm font-semibold">{selModuleMeta?.name ?? '—'}</div>
             <div className="mt-0.5 font-mono text-xs text-muted-foreground">
@@ -203,8 +208,8 @@ export function ModuleNav({ category }: { category: string }) {
           </div>
         </section>
 
-        {/* 栏 3:详情面板 */}
-        <section className="min-w-0 flex-1">
+        {/* 栏 3:详情面板,独立滚动;答案默认折叠(强制思考) */}
+        <section className="min-w-0 flex-1 lg:min-h-0 lg:overflow-y-auto lg:pr-2 lg:pb-2">
           {selected ? (
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
@@ -215,11 +220,9 @@ export function ModuleNav({ category }: { category: string }) {
               </div>
               <div className="text-lg font-semibold leading-snug text-foreground">{selected.title}</div>
               <div className="text-sm text-muted-foreground">{selected.focus}</div>
-              <AnswerPanel answer={selected.answer} followups={selected.followups} />
-              <Suspense fallback={<div className="text-sm text-muted-foreground">加载笔记…</div>}>
-                <NotePanel key={selected.id} category={category} questionId={selected.id} />
-              </Suspense>
-              <div className="flex items-center gap-2 pt-1">
+
+              {/* 管理操作:不依赖答案,置顶 */}
+              <div className="flex items-center gap-2">
                 {isMy ? (
                   <>
                     <Button size="sm" variant="outline" onClick={() => setEditingId(selected.id)}>编辑</Button>
@@ -239,6 +242,32 @@ export function ModuleNav({ category }: { category: string }) {
                   </>
                 )}
               </div>
+
+              <Suspense fallback={<div className="text-sm text-muted-foreground">加载笔记…</div>}>
+                <NotePanel category={category} questionId={selected.id} />
+              </Suspense>
+
+              {/* 答案:先想后看(与刷题一致的强制思考) */}
+              {revealedId === selected.id ? (
+                <>
+                  <AnswerPanel answer={selected.answer} followups={selected.followups} />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setRevealedId(null)}
+                    className="text-muted-foreground"
+                  >
+                    ↑ 收起答案
+                  </Button>
+                </>
+              ) : (
+                <div className="space-y-2 pt-1">
+                  <Button onClick={() => setRevealedId(selected.id)} className="w-full">
+                    我想好了,看答案
+                  </Button>
+                  <div className="text-xs text-muted-foreground text-center">先在脑中过一遍,再对答案</div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex h-40 items-center justify-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
