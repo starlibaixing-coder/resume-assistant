@@ -80,8 +80,6 @@ export function GeneratePage() {
 
   return (
     <div className="space-y-6">
-      <a href="#/" className="text-sm text-muted-foreground hover:text-primary font-mono">← 返回</a>
-
       <h1 className="text-2xl font-bold">
         <span className="text-primary">●</span> AI 生题
       </h1>

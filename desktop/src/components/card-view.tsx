@@ -68,10 +68,6 @@ export function CardView({ category }: { category: string }) {
 
   return (
     <div className="space-y-4">
-      <a href={`#/${category}`} className="text-sm text-muted-foreground hover:text-primary font-mono">
-        ← 返回
-      </a>
-
       <div className="flex justify-between items-center text-sm text-muted-foreground font-mono">
         <span>
           {queueIdx + 1} / {queue.length}
@@ -138,9 +134,6 @@ export function CardView({ category }: { category: string }) {
 function DoneState({ category }: { category: string }) {
   return (
     <div className="space-y-4">
-      <a href={`#/${category}`} className="text-sm text-muted-foreground hover:text-primary font-mono">
-        ← 返回
-      </a>
       <div className="text-center py-16 space-y-3">
         <div className="text-4xl text-success">✓</div>
         <div className="text-foreground">今日队列已清空</div>
@@ -163,9 +156,6 @@ function RoundDoneState({
 }) {
   return (
     <div className="space-y-4">
-      <a href={`#/${category}`} className="text-sm text-muted-foreground hover:text-primary font-mono">
-        ← 返回
-      </a>
       <div className="text-center py-16 space-y-3">
         <div className="text-4xl text-success">✓</div>
         <div className="text-foreground">本轮完成,刷了 {done} 题</div>

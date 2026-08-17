@@ -38,8 +38,6 @@ export function ReviewQueue({ category }: { category: string }) {
 
   return (
     <div className="space-y-6">
-      <a href="#/" className="text-sm text-muted-foreground hover:text-primary font-mono">← 全部分类</a>
-
       <h1 className="text-2xl font-bold">
         <span className="text-primary">●</span> {cat?.name || category}
       </h1>

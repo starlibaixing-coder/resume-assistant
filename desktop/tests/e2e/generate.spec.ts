@@ -82,15 +82,15 @@ test('生题 → 存草稿 → approve → 我的题库可见 → 可开始刷�
   await page.getByRole('button', { name: '本批全部通过' }).click();
   await expect(page.getByText('草稿区是空的')).toBeVisible({ timeout: 10_000 });
 
-  // 5) 首页:我的题库卡片出现 2 题
+  // 5) 首页:我的题库卡片出现 2 题(限主内容区,侧栏也有同名入口)
   await page.goto('/#/');
-  const myCard = page.getByRole('link', { name: /我的题库/ }).first();
+  const myCard = page.locator('main').getByRole('link', { name: /我的题库/ }).first();
   await expect(myCard).toBeVisible();
   await expect(myCard.getByText('2')).toBeVisible();
 
   // 6) 进我的题库复习页:可开始刷题
   await myCard.click();
-  await expect(page.getByText('我的题库')).toBeVisible();
+  await expect(page.getByRole('heading', { name: /我的题库/ })).toBeVisible();
   await expect(page.getByRole('link', { name: /开始/ })).toBeVisible();
 });
 

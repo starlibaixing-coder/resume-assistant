@@ -42,8 +42,6 @@ export function DraftsPage() {
 
   return (
     <div className="space-y-6" data-version={version}>
-      <a href="#/" className="text-sm text-muted-foreground hover:text-primary font-mono">← 返回</a>
-
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-2xl font-bold">
           <span className="text-primary">●</span> 草稿区
