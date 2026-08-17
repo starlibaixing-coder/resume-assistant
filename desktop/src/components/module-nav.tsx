@@ -8,9 +8,10 @@ import { Progress } from '@/components/ui/progress';
 import { QuestionEditDialog, DeleteQuestionDialog } from '@/components/question-edit-dialog';
 
 // 题目浏览,两种模式:
-// - 按模块:手风琴(模块纵向堆叠带统计/进度条),顶部模块快切条,点选只看该模块
-// - 全部题目:平铺列表(模块只是行上的小标签),难度/状态两个维度筛选可组合
-// 行内简化:考察点(focus)平铺在题干下;官方题不可展开;我的题展开仅剩 编辑/删除。
+// - 按模块:一次只展示一个模块(头:编号/名称/统计/进度条),底部「上一个/下一个模块」翻页;?m= 定初始模块
+// - 全部题目:平铺列表,行 = 全局序号 + 模块名小标签 + 题干 + 题目标签 + 难度;
+//   难度/状态两个维度筛选可组合(仅此模式显示)
+// 行内:考察点(focus)平铺在题干下;官方题不可展开;我的题展开仅剩 编辑/删除。
 // 定位 = 题库后台:扫读 + 管理我的题;答题/评分/写笔记在刷题页。
 
 type ViewMode = 'module' | 'all';
@@ -40,8 +41,8 @@ export function ModuleNav({ category }: { category: string }) {
   const [view, setView] = useState<ViewMode>(() =>
     localStorage.getItem('browse-view') === 'all' ? 'all' : 'module',
   );
-  // 按模块模式的快切(null = 全部);初始取 ?m= 深链
-  const [moduleFilter, setModuleFilter] = useState<number | null>(() => {
+  // 按模块模式:当前模块(初始取 ?m= 深链,否则第一个)
+  const [pickedModule, setPickedModule] = useState<number | null>(() => {
     const params = new URLSearchParams(window.location.hash.split('?')[1] || '');
     const m = params.get('m');
     return m ? parseInt(m, 10) : null;
@@ -62,21 +63,31 @@ export function ModuleNav({ category }: { category: string }) {
     if (!data) return { cat: null, byModule: {} as Record<number, typeof data.questions>, moduleStats: {}, allQuestions: [] as typeof data.questions };
     const catObj = data.categories.find((c) => c.slug === category);
     const catQuestions = data.questions.filter((q) => q.category === category);
+    // 题号取 id 第三段(agent.12.10 → 10)。注意 index 字段是"模块.题号"小数
+    // (agent.12.10 的 index=12.10≡12.1,与 12.1 撞),拿它排序 >9 题的模块会乱序
+    const qnum = (q: typeof catQuestions[number]) => parseInt(q.id.split('.')[2] ?? '0', 10);
     const bm: Record<number, typeof catQuestions> = {};
     for (const q of catQuestions) {
       if (!bm[q.module]) bm[q.module] = [];
       bm[q.module].push(q);
     }
     for (const m of Object.keys(bm)) {
-      bm[Number(m)].sort((a, b) => a.index - b.index);
+      bm[Number(m)].sort((a, b) => qnum(a) - qnum(b));
     }
-    const all = [...catQuestions].sort((a, b) => a.module - b.module || a.index - b.index);
+    const all = [...catQuestions].sort((a, b) => a.module - b.module || qnum(a) - qnum(b));
     return { cat: catObj, byModule: bm, moduleStats: getModuleStats(category, catQuestions), allQuestions: all };
   }, [data, category]);
 
+  const modules = cat?.modules ?? [];
+  // 当前模块可能因数据变化消失(如删光),回退到第一个
+  const selectedModule = modules.some((m) => m.id === pickedModule) ? pickedModule : (modules[0]?.id ?? null);
+  const moduleIdx = modules.findIndex((m) => m.id === selectedModule);
+  const prevModule = moduleIdx > 0 ? modules[moduleIdx - 1] : null;
+  const nextModule = moduleIdx >= 0 && moduleIdx < modules.length - 1 ? modules[moduleIdx + 1] : null;
+
   // 切分类时重置
   useEffect(() => {
-    setModuleFilter(null);
+    setPickedModule(null);
     setExpandedId(null);
   }, [category]);
 
@@ -108,9 +119,9 @@ export function ModuleNav({ category }: { category: string }) {
         })
       : [];
 
-  // 题目行:标记(模块模式=Q号 / 全部模式=模块标签)+ 题干 + focus 平铺 + 难度
-  // 我的题整行可点,展开出 编辑/删除;官方题静态
-  const renderRow = (q: typeof data.questions[number], marker: ReactNode) => {
+  // 题目行:标记(模块模式=Q号 / 全部模式=全局序号+模块名标签)+ 题干 + focus 平铺 + 难度
+  // 全部模式额外显示题目标签(tags);我的题整行可点展开 编辑/删除;官方题静态
+  const renderRow = (q: typeof data.questions[number], marker: ReactNode, showTags = false) => {
     const isOpen = expandedId === q.id;
     return (
       <div key={q.id} className="border-b border-border last:border-b-0">
@@ -118,13 +129,22 @@ export function ModuleNav({ category }: { category: string }) {
           className={`p-3 ${isMy ? 'cursor-pointer hover:bg-accent transition-colors' : ''}`}
           onClick={isMy ? () => setExpandedId(isOpen ? null : q.id) : undefined}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             {marker}
             <span className="text-sm text-foreground flex-1">{q.title}</span>
             {isMy && <span className="font-mono text-[10px] text-muted-foreground/70 shrink-0">{isOpen ? '▼' : '▶'}</span>}
             <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
           </div>
           <div className="mt-1 pl-1 text-xs leading-relaxed text-muted-foreground">{q.focus}</div>
+          {showTags && q.tags.length > 0 && (
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {q.tags.map((t) => (
+                <span key={t} className="rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                  {t}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         {isMy && isOpen && (
           <div className="flex items-center gap-2 px-3.5 pb-3">
@@ -138,6 +158,10 @@ export function ModuleNav({ category }: { category: string }) {
       </div>
     );
   };
+
+  const selStats = selectedModule != null ? moduleStats[selectedModule] : null;
+  const selModuleMeta = modules.find((m) => m.id === selectedModule);
+  const selQuestions = selectedModule != null ? byModule[selectedModule] || [] : [];
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
@@ -165,68 +189,63 @@ export function ModuleNav({ category }: { category: string }) {
       </div>
 
       {view === 'module' ? (
-        <div className="space-y-5">
-          {/* 模块快切条:全部 + 各模块;点选只看该模块 */}
-          <div className="flex flex-wrap gap-1.5">
-            <button
-              className={moduleFilter === null ? 'bg-primary/10 text-primary font-medium rounded-md px-2.5 py-1.5 text-xs cursor-pointer transition-colors' : 'bg-secondary text-secondary-foreground hover:bg-accent rounded-md px-2.5 py-1.5 text-xs cursor-pointer transition-colors'}
-              onClick={() => setModuleFilter(null)}
-            >
-              全部
-            </button>
-            {cat.modules.map((mod) => (
-              <button
-                key={mod.id}
-                onClick={() => setModuleFilter(moduleFilter === mod.id ? null : mod.id)}
-                title={mod.name}
-                className={`rounded-md px-2.5 py-1.5 text-xs cursor-pointer transition-colors ${
-                  moduleFilter === mod.id ? 'bg-primary/10 text-primary font-medium' : 'bg-secondary text-secondary-foreground hover:bg-accent'
-                }`}
-              >
-                {String(mod.id).padStart(2, '0')} {mod.name}
-              </button>
-            ))}
+        <div className="space-y-2">
+          <div className="flex justify-between items-center flex-wrap gap-2">
+            <div className="font-mono text-sm text-muted-foreground">
+              {selectedModule != null ? String(selectedModule).padStart(2, '0') : '--'} · {selModuleMeta?.name ?? '—'}
+            </div>
+            {selStats && (
+              <div className="flex gap-3 text-xs">
+                <span className="text-muted-foreground">已学 {selStats.learned}/{selStats.total}</span>
+                {selStats.mastered > 0 && <span className="text-success">掌握 {selStats.mastered}</span>}
+                {selStats.dueToday > 0 && <span className="text-warning">待复习 {selStats.dueToday}</span>}
+              </div>
+            )}
+          </div>
+          {selStats && selStats.total > 0 && (
+            <Progress
+              value={selStats.total ? Math.round((selStats.learned / selStats.total) * 100) : 0}
+              className="h-1.5"
+            />
+          )}
+
+          <div className="overflow-hidden rounded-md border border-border bg-card">
+            {selQuestions.length === 0 ? (
+              <div className="p-4 text-center text-sm text-muted-foreground">本模块无题</div>
+            ) : (
+              selQuestions.map((q) =>
+                renderRow(
+                  q,
+                  <span className="font-mono text-xs text-muted-foreground shrink-0">
+                    Q{q.id.split('.').slice(1).join('.')}
+                  </span>,
+                ),
+              )
+            )}
           </div>
 
-          {cat.modules
-            .filter((mod) => moduleFilter == null || mod.id === moduleFilter)
-            .map((mod) => {
-              const qs = byModule[mod.id] || [];
-              const stats = moduleStats[mod.id];
-              const learnedPct = stats && stats.total ? Math.round((stats.learned / stats.total) * 100) : 0;
-              return (
-                <div key={mod.id} className="space-y-2">
-                  <div className="flex justify-between items-center flex-wrap gap-2">
-                    <div className="font-mono text-sm text-muted-foreground">
-                      {String(mod.id).padStart(2, '0')} · {mod.name}({qs.length}/{stats?.total || 0})
-                    </div>
-                    {stats && (
-                      <div className="flex gap-3 text-xs">
-                        <span className="text-muted-foreground">已学 {stats.learned}/{stats.total}</span>
-                        {stats.mastered > 0 && <span className="text-success">掌握 {stats.mastered}</span>}
-                        {stats.dueToday > 0 && <span className="text-warning">待复习 {stats.dueToday}</span>}
-                      </div>
-                    )}
-                  </div>
-                  {stats && stats.total > 0 && <Progress value={learnedPct} className="h-1.5" />}
-
-                  <div className="overflow-hidden rounded-md border border-border bg-card">
-                    {qs.length === 0 ? (
-                      <div className="p-4 text-center text-sm text-muted-foreground">本模块无题</div>
-                    ) : (
-                      qs.map((q) =>
-                        renderRow(
-                          q,
-                          <span className="font-mono text-xs text-muted-foreground shrink-0">
-                            Q{q.id.split('.').slice(1).join('.')}
-                          </span>,
-                        ),
-                      )
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+          {/* 模块翻页:上一个 / 下一个 */}
+          <div className="flex items-center justify-between gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!prevModule}
+              onClick={() => prevModule && setPickedModule(prevModule.id)}
+            >
+              <span className="max-w-40 truncate">← {prevModule ? `上一个 · ${prevModule.name}` : '已是第一个'}</span>
+            </Button>
+            <span className="shrink-0 font-mono text-xs text-muted-foreground">
+              {moduleIdx >= 0 ? moduleIdx + 1 : '--'} / {modules.length}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!nextModule}
+              onClick={() => nextModule && setPickedModule(nextModule.id)}
+            >
+              <span className="max-w-40 truncate">{nextModule ? `下一个 · ${nextModule.name} →` : '已是最后一个'}</span>
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
@@ -254,14 +273,19 @@ export function ModuleNav({ category }: { category: string }) {
             {flatQuestions.length === 0 ? (
               <div className="p-4 text-center text-sm text-muted-foreground">无符合条件的题</div>
             ) : (
-              flatQuestions.map((q) =>
-                renderRow(
+              flatQuestions.map((q, i) => {
+                const modName = modules.find((m) => m.id === q.module)?.name ?? String(q.module);
+                return renderRow(
                   q,
-                  <span className="shrink-0 rounded bg-secondary px-1 py-0.5 font-mono text-[10px] text-muted-foreground">
-                    {String(q.module).padStart(2, '0')}
+                  <span className="flex shrink-0 items-center gap-1.5">
+                    <span className="font-mono text-xs text-muted-foreground">{i + 1}</span>
+                    <span className="max-w-24 truncate rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                      {modName}
+                    </span>
                   </span>,
-                ),
-              )
+                  true,
+                );
+              })
             )}
           </div>
           <div className="text-xs text-muted-foreground font-mono text-right">共 {flatQuestions.length} 题</div>

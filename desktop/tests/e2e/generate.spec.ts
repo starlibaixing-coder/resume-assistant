@@ -130,21 +130,20 @@ test('设置页渲染:预设与 key 表单', async ({ page }) => {
   await expect(page.getByPlaceholder(/保持不变|sk-/)).toBeVisible();
 });
 
-test('官方题浏览页:双模式(按模块/全部题目)+分维度筛选+focus 平铺', async ({ page }) => {
+test('官方题浏览页:按模块单模块翻页 + 全部题目分维度筛选', async ({ page }) => {
   await page.goto('/#/agent/browse');
-  // 默认按模块:模块快切条 + 模块区块(编号/名称/统计),行内 focus 直接可见
-  await expect(page.getByRole('button', { name: '按模块' })).toBeVisible();
-  const chips = page.locator('main button').filter({ hasText: /^\d{2} / });
-  await expect(chips.first()).toBeVisible();
-  // 点一个模块 chip → 只剩该模块区块
-  const firstChip = await chips.first().innerText();
-  await chips.first().click();
-  await expect(page.getByText(/· /, { exact: false }).first()).toBeVisible();
-  // 切到全部题目:难度/状态两维筛选 + 模块小标签
+  // 默认按模块:一次只显示一个模块,底部上/下模块翻页(题库 meta 模块顺序即翻页顺序)
+  await expect(page.getByText(/1 \/ \d+/)).toBeVisible();
+  await expect(page.getByRole('button', { name: /^← 已是第一个/ })).toBeDisabled();
+  await page.getByRole('button', { name: /下一个 · / }).click();
+  await expect(page.getByText(/2 \/ \d+/)).toBeVisible();
+  // 切全部题目:全局序号 + 模块名标签 + 题目标签 + 难度/状态两维筛选
   await page.getByRole('button', { name: '全部题目' }).click();
   await expect(page.getByText('难度', { exact: true })).toBeVisible();
   await expect(page.getByText('状态', { exact: true })).toBeVisible();
-  await page.locator('main button').filter({ hasText: '高' }).last().click();
   await expect(page.getByText(/共 \d+ 题/)).toBeVisible();
-  expect(firstChip).toBeTruthy();
+  // 难度筛"高"后列表变化
+  const totalText = await page.getByText(/共 \d+ 题/).innerText();
+  await page.locator('main button').filter({ hasText: /^高$/ }).click();
+  await expect(page.getByText(/共 \d+ 题/)).not.toHaveText(totalText);
 });

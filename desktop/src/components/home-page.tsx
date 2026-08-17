@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { Sparkles, Inbox, ChevronRight } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getStats } from '@/lib/schedule';
 import { loadProgress } from '@/lib/storage';
@@ -124,6 +124,16 @@ export function HomePage() {
         >
           草稿待审 {pendingCount}
         </a>
+      </div>
+
+      {/* 快捷操作:生题是核心功能,一级入口 */}
+      <div className="flex flex-wrap gap-2">
+        <Button asChild>
+          <a href="#/generate"><Sparkles className="mr-1.5 h-4 w-4" />AI 生题</a>
+        </Button>
+        <Button asChild variant="outline">
+          <a href="#/drafts"><Inbox className="mr-1.5 h-4 w-4" />草稿区{pendingCount > 0 ? `(${pendingCount})` : ''}</a>
+        </Button>
       </div>
 
       {/* 分类进度网格:按最近学习排序 */}

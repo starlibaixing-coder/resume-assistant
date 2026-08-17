@@ -121,10 +121,11 @@ Requirements: Node.js 18+,系统 Chrome(简历渲染用),Node 20+(CI 用)。
 
 设计稿:`docs/superpowers/specs/2026-08-13-quiz-app-agent-design.md`(10 个 ADR,施工前重读 §7 硬约束)。
 
-- **桌面壳**(`src/components/app-shell.tsx`):常驻侧栏导航 + 内容区,窄窗(<lg)侧栏收成图标栏。主题切换在设置页「外观」;清空进度/笔记在设置页「数据管理」(按分类);后退只用于下钻子页(刷题/浏览页左上角"← 回到{分类名}题库",固定回队列,不依赖历史;侧栏同级切换不显示后退;Cmd+← 为系统级 history.back);浏览页 = 管理查阅视图,双模式:按模块(手风琴+顶部模块快切条)/全部题目(平铺,模块为行上小标签,难度+状态两维筛选);focus 平铺在题干下,我的题展开仅编辑/删除,无答案查看、无笔记面板(答题/评分/笔记都在刷题页);生题数量由 LLM 按知识点广度自定(prompt 有上限约束),不设数量选择。窗口默认 1200×800(`src-tauri/tauri.conf.json`)。
+- **桌面壳**(`src/components/app-shell.tsx`):常驻侧栏导航 + 内容区,窄窗(<lg)侧栏收成图标栏。主题切换在设置页「外观」;清空进度/笔记在设置页「数据管理」(按分类);后退只用于下钻子页(刷题/浏览页左上角"← 回到{分类名}题库",固定回队列,不依赖历史;侧栏同级切换不显示后退;Cmd+← 为系统级 history.back);浏览页 = 管理查阅视图,双模式:按模块(单模块展示+底部上一个/下一个模块翻页,题库 meta 顺序即翻页顺序)/全部题目(平铺,全局序号+模块名小标签+题目标签,难度+状态两维可组合筛选);focus 平铺在题干下,我的题展开仅编辑/删除,无答案查看、无笔记面板(答题/评分/笔记都在刷题页);生题数量由 LLM 按知识点广度自定(prompt 有上限约束),不设数量选择。窗口默认 1200×800(`src-tauri/tauri.conf.json`)。
 
 - **双库模型**(ADR-3):官方 YAML 库只读(`public/questions.json`),我的库存本地 SQLite,刷题界面聚合两者。官方题不可原地改删,只能"复制成副本再改"。
-- **AI 生题入口随我的题库**(不在侧栏):我的题库队列页/浏览页的「＋ AI 生题」按钮 + 草稿区页链接;总览分类卡片按最近学习降序(lastReview 最大值,未学的原序靠后)。
+- **AI 生题为核心功能**:侧栏一级项(总览后)+ 总览按钮行 + 我的题库语境入口(队列页/浏览页「＋ AI 生题」);总览分类卡片按最近学习降序(lastReview 最大值,未学的原序靠后)。
+- **排序注意**:questions.json 的 `index` 字段是"模块.题号"小数(agent.12.10 的 index=12.1,与 agent.12.1 撞值),模块内排序必须按 id 第三段数字,不能按 index(>9 题的模块会乱序)。
 - **我的库**(阶段 1):独立分类 `my`,生题批次即模块(模块名=知识点),官方副本统一进模块 0。id 三段式 `my.<module>.<idx>`。数据层 `src/lib/mylib.ts`(内存缓存 + await 持久化 + pub-sub),聚合在 `src/lib/questions.ts`(`mergeQuestionData`,pending 永不进刷题)。
 - **生题管线**(阶段 1):`src/lib/generate.ts` —— system prompt 内嵌 QUALITY.md 设计红线,输出 JSON,预检共享 `validateQuestion`,不过则喂错误自修正重试 ≤2 次;产物只进草稿区,approve 后才进 SM-2 队列。LLM 配置 `src/lib/llm-config.ts`(预设:智谱/DeepSeek/Ollama/自定义;key 只进 keyring,非 Tauri 环境内存降级)。页面路由:`#/generate`(生题)、`#/drafts`(草稿区)、`#/settings`(LLM 设置)、`#/my`(我的题库)。
 - **JS 大脑 + Rust 工具**(ADR-5):agent 编排/LLM 调用在前端 JS(Vercel AI SDK,`src/lib/agent.ts` + `provider.ts`);Rust 只暴露系统能力(keyring 的 `get_api_key`/`set_api_key`)。
