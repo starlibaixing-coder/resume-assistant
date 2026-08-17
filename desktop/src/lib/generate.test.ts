@@ -42,7 +42,7 @@ function good(): GeneratedQuestion[] {
 
 describe('buildSystemPrompt', () => {
   it('内嵌 QUALITY 四条设计红线 + focus 规则 + 硬规则', () => {
-    const s = buildSystemPrompt({ topic: 'React', count: 5 });
+    const s = buildSystemPrompt({ topic: 'React' });
     expect(s).toContain('答案不得泄漏进题干');
     expect(s).toContain('追问不得隐含答案');
     expect(s).toContain('一题只考一条主线');
@@ -50,26 +50,29 @@ describe('buildSystemPrompt', () => {
     expect(s).toContain('focus 写"考察什么"');
     expect(s).toContain('不少于 50 字');
     expect(s).toContain('JSON 数组');
-    expect(s).toContain('初');
+    expect(s).toContain('数量由你根据知识点广度判断');
+    expect(s).toContain('宁缺毋滥');
+    expect(s).toContain('不超过 12 道');
   });
 
   it('指定难度时锁死难度分布', () => {
-    const s = buildSystemPrompt({ topic: 'React', count: 3, difficulty: '高' });
+    const s = buildSystemPrompt({ topic: 'React', difficulty: '高' });
     expect(s).toContain('必须是 "高"');
     expect(s).not.toContain('难度分布合理');
   });
 
   it('默认中文,language=en 切英文', () => {
-    expect(buildSystemPrompt({ topic: 'x', count: 1 })).toContain('中文');
-    expect(buildSystemPrompt({ topic: 'x', count: 1, language: 'en' })).toContain('English');
+    expect(buildSystemPrompt({ topic: 'x' })).toContain('中文');
+    expect(buildSystemPrompt({ topic: 'x', language: 'en' })).toContain('English');
   });
 });
 
 describe('buildUserPrompt', () => {
-  it('含知识点与数量', () => {
-    const u = buildUserPrompt({ topic: 'React Hooks 深入', count: 5 });
+  it('含知识点,不含固定数量(数量由 LLM 判断)', () => {
+    const u = buildUserPrompt({ topic: 'React Hooks 深入' });
     expect(u).toContain('React Hooks 深入');
-    expect(u).toContain('5 道');
+    expect(u).toContain('数量判断');
+    expect(u).not.toMatch(/出 \d+ 道/);
   });
 });
 
@@ -136,7 +139,7 @@ describe('validateGenerated', () => {
 describe('generateQuestions', () => {
   it('一次通过:不重试,retries=0', async () => {
     const chat = vi.fn().mockResolvedValue(JSON.stringify(good()));
-    const r = await generateQuestions({ topic: 'React', count: 2 }, CHAT_OPTS, chat);
+    const r = await generateQuestions({ topic: 'React' }, CHAT_OPTS, chat);
     expect(r.retries).toBe(0);
     expect(r.questions).toHaveLength(2);
     expect(chat).toHaveBeenCalledTimes(1);
@@ -153,7 +156,7 @@ describe('generateQuestions', () => {
       .fn()
       .mockResolvedValueOnce(JSON.stringify(bad))
       .mockResolvedValueOnce(JSON.stringify(good()));
-    const r = await generateQuestions({ topic: 'React', count: 2 }, CHAT_OPTS, chat);
+    const r = await generateQuestions({ topic: 'React' }, CHAT_OPTS, chat);
     expect(r.retries).toBe(1);
     expect(r.questions).toHaveLength(2);
     expect(chat).toHaveBeenCalledTimes(2);
@@ -166,13 +169,13 @@ describe('generateQuestions', () => {
 
   it('围栏包裹也能过(解析容错生效)', async () => {
     const chat = vi.fn().mockResolvedValue('```json\n' + JSON.stringify(good()) + '\n```');
-    const r = await generateQuestions({ topic: 'React', count: 2 }, CHAT_OPTS, chat);
+    const r = await generateQuestions({ topic: 'React' }, CHAT_OPTS, chat);
     expect(r.retries).toBe(0);
   });
 
   it('重试耗尽抛错并汇总错误', async () => {
     const chat = vi.fn().mockResolvedValue('not json at all');
-    await expect(generateQuestions({ topic: 'React', count: 2 }, CHAT_OPTS, chat)).rejects.toThrow(
+    await expect(generateQuestions({ topic: 'React' }, CHAT_OPTS, chat)).rejects.toThrow(
       `${MAX_RETRIES + 1} 次仍未通过校验`,
     );
     expect(chat).toHaveBeenCalledTimes(MAX_RETRIES + 1);
@@ -180,7 +183,7 @@ describe('generateQuestions', () => {
 
   it('空知识点直接抛错,不调 LLM', async () => {
     const chat = vi.fn();
-    await expect(generateQuestions({ topic: '  ', count: 2 }, CHAT_OPTS, chat)).rejects.toThrow('知识点不能为空');
+    await expect(generateQuestions({ topic: '  ' }, CHAT_OPTS, chat)).rejects.toThrow('知识点不能为空');
     expect(chat).not.toHaveBeenCalled();
   });
 });

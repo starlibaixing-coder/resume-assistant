@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, lazy, Suspense } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useQuestions } from '@/lib/questions';
 import { getModuleStats, getQuestionStatus } from '@/lib/schedule';
 import { MY_CATEGORY_SLUG, copyOfficial, getMyQuestion } from '@/lib/mylib';
@@ -7,8 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { QuestionEditDialog, DeleteQuestionDialog } from '@/components/question-edit-dialog';
-
-const NotePanel = lazy(() => import('./note-panel'));
 
 const FILTERS = [
   { key: 'all', label: '全部' },
@@ -20,9 +18,9 @@ const FILTERS = [
 type FilterKey = (typeof FILTERS)[number]['key'];
 
 // 题目浏览(桌面,邮件客户端式三栏):模块列表 | 题目列表 | 详情面板。
-// 三栏各自独立滚动(≥lg 满高布局);答案默认折叠,点「我想好了」才展示(对齐刷题的强制思考)。
-// 点题目右栏立即看题干/考察点/笔记/管理操作,不打断列表。
-// <lg:模块退化为横向条,题目列表与详情上下堆叠(页面整体滚动)。
+// 定位 = 题库后台:找题/看题/管题(官方题复制副本、我的题编辑删除)。
+// 答题、评分、写笔记都在刷题页;此处答案为普通折叠(默认收起,一点即开,无仪式)。
+// 三栏各自独立滚动(≥lg 满高布局);<lg 模块退化为横向条,列表与详情上下堆叠。
 
 export function ModuleNav({ category }: { category: string }) {
   const { data, error } = useQuestions();
@@ -137,9 +135,15 @@ export function ModuleNav({ category }: { category: string }) {
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6 lg:h-full">
-      <h1 className="shrink-0 text-2xl font-bold">
-        <span className="text-primary">●</span> {cat.name} / 题目浏览
-      </h1>
+      <div className="shrink-0 space-y-1">
+        <h1 className="text-2xl font-bold">
+          <span className="text-primary">●</span> {cat.name} / 题目浏览
+        </h1>
+        <p className="text-xs text-muted-foreground">
+          管理与查阅:官方题可复制副本,我的题可编辑删除;刷题、评分、写笔记去
+          <a href={`#/${category}/quiz`} className="mx-0.5 text-primary hover:underline">刷题页</a>。
+        </p>
+      </div>
 
       <div className="flex min-h-0 flex-col gap-5 lg:flex-1 lg:flex-row">
         {/* 栏 1:模块列表,独立滚动(<lg 退化为横向条) */}
@@ -243,11 +247,7 @@ export function ModuleNav({ category }: { category: string }) {
                 )}
               </div>
 
-              <Suspense fallback={<div className="text-sm text-muted-foreground">加载笔记…</div>}>
-                <NotePanel category={category} questionId={selected.id} />
-              </Suspense>
-
-              {/* 答案:先想后看(与刷题一致的强制思考) */}
+              {/* 答案:普通折叠,一点即开(管理视图,无强制思考仪式) */}
               {revealedId === selected.id ? (
                 <>
                   <AnswerPanel answer={selected.answer} followups={selected.followups} />
@@ -261,12 +261,9 @@ export function ModuleNav({ category }: { category: string }) {
                   </Button>
                 </>
               ) : (
-                <div className="space-y-2 pt-1">
-                  <Button onClick={() => setRevealedId(selected.id)} className="w-full">
-                    我想好了,看答案
-                  </Button>
-                  <div className="text-xs text-muted-foreground text-center">先在脑中过一遍,再对答案</div>
-                </div>
+                <Button variant="outline" size="sm" onClick={() => setRevealedId(selected.id)}>
+                  展开答案 ▾
+                </Button>
               )}
             </div>
           ) : (

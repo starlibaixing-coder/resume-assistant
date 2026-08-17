@@ -22,6 +22,19 @@ function parseHashRoot(): string {
   return raw.split(/[/?]/)[0] || '';
 }
 
+// hash → 页面名(后退按钮显示"← 回哪")。catName 由调用方注入(slug → 分类名)
+function hashTitle(hash: string, catName: (slug: string) => string | undefined): string {
+  const parts = hash.replace(/^#\/?/, '').split('?')[0].split('/').filter(Boolean);
+  if (!parts.length) return '总览';
+  if (parts[0] === 'settings') return '设置';
+  if (parts[0] === 'generate') return 'AI 生题';
+  if (parts[0] === 'drafts') return '草稿区';
+  const name = catName(parts[0]) ?? parts[0];
+  if (parts[1] === 'quiz') return `${name} · 刷题`;
+  if (parts[1] === 'browse') return `${name} · 浏览`;
+  return name;
+}
+
 interface NavItemProps {
   href: string;
   icon: LucideIcon;
@@ -61,9 +74,13 @@ function NavItem({ href, icon: Icon, label, active, count, badge, warn }: NavIte
 export function AppShell({ children }: { children: ReactNode }) {
   const mainRef = useRef<HTMLDivElement>(null);
   const [root, setRoot] = useState(parseHashRoot());
-  const [canBack, setCanBack] = useState(false);
+  const [backTitle, setBackTitle] = useState<string | null>(null);
   const [noKey, setNoKey] = useState(false);
   const { data } = useQuestions();
+  const catName = (slug: string): string | undefined => {
+    if (slug === 'my') return getMyCategory().name;
+    return data?.categories.find((c) => c.slug === slug)?.name;
+  };
 
   // 草稿角标/我的题库计数跟随 mylib 变化
   const [, bump] = useState(0);
@@ -83,7 +100,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       } else {
         stack.push(cur);
       }
-      setCanBack(stack.length > 1);
+      setBackTitle(stack.length > 1 ? hashTitle(stack[stack.length - 2], catName) : null);
       setRoot(parseHashRoot());
       mainRef.current?.scrollTo({ top: 0 });
       checkKey();
@@ -168,14 +185,14 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <main className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-        {canBack && (
+        {backTitle && (
           <div className="shrink-0 px-6 pt-4">
             <button
               onClick={goBack}
               title="后退(Cmd+←)"
               className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-mono text-muted-foreground cursor-pointer transition-colors hover:bg-accent hover:text-foreground"
             >
-              <ArrowLeft className="h-3.5 w-3.5" /> 后退
+              <ArrowLeft className="h-3.5 w-3.5" /> {backTitle}
             </button>
           </div>
         )}

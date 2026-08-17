@@ -70,7 +70,7 @@ test('生题 → 存草稿 → approve → 我的题库可见 → 可开始刷�
   await page.getByRole('button', { name: '生成', exact: true }).click();
 
   // 2) 预览出现(mock 返回 2 题)
-  await expect(page.getByText('生成 2 题')).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText('LLM 判断出 2 道')).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText('useEffect 的清理函数在哪些时机执行?')).toBeVisible();
 
   // 3) 存入草稿区(自动跳 #/drafts)
@@ -98,7 +98,7 @@ test('草稿区:逐题拒绝不进我的题库', async ({ page }) => {
   await page.goto('/#/generate');
   await page.getByPlaceholder(/React Hooks/).fill('Event Loop');
   await page.getByRole('button', { name: '生成', exact: true }).click();
-  await expect(page.getByText('生成 2 题')).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText('LLM 判断出 2 道')).toBeVisible({ timeout: 10_000 });
   await page.getByRole('button', { name: /存入草稿区/ }).click();
   await expect(page.getByText(/2 待审/)).toBeVisible();
 
@@ -124,13 +124,13 @@ test('设置页渲染:预设与 key 表单', async ({ page }) => {
   await expect(page.getByPlaceholder(/保持不变|sk-/)).toBeVisible();
 });
 
-test('官方题浏览页:三栏布局,答案默认折叠,详情有「复制到我的库」入口(ADR-3)', async ({ page }) => {
+test('官方题浏览页:三栏管理视图,答案普通折叠,详情有「复制到我的库」入口(ADR-3)', async ({ page }) => {
   await page.goto('/#/agent/browse');
   // 三栏:模块列表在左,默认选中第一个模块,题目详情默认展示第一题(答案折叠)
   await expect(page.getByRole('button', { name: '复制到我的库' })).toBeVisible();
-  // 答案默认不可见,点「我想好了」展开
+  // 答案默认不可见,点「展开答案」打开(管理视图普通折叠)
   await expect(page.getByText('参考答案要点')).toBeHidden();
-  await page.getByRole('button', { name: '我想好了,看答案' }).click();
+  await page.getByRole('button', { name: '展开答案' }).click();
   await expect(page.getByText('参考答案要点')).toBeVisible();
   // 切到列表第二题,答案自动收回
   const rows = page.locator('main button').filter({ hasText: /Q\d/ });

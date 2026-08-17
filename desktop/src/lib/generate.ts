@@ -13,8 +13,7 @@ export const MAX_RETRIES = 2;
 
 export interface GenerateOptions {
   topic: string; // 知识点,如 "React Hooks 深入"
-  count: number; // 出题数
-  difficulty?: Difficulty; // 不限 = undefined
+  difficulty?: Difficulty; // 不限 = undefined(用户目标水平,保留)
   language?: 'zh' | 'en'; // 默认中文
 }
 
@@ -32,7 +31,13 @@ export interface GeneratedQuestion {
 
 export function buildSystemPrompt(opts: GenerateOptions): string {
   const lang = opts.language === 'en' ? 'English' : '中文';
-  return `你是一名资深技术面试官,负责为求职者出高质量面试题。请围绕给定知识点出 ${opts.count} 道面试题,使用${lang}。
+  return `你是一名资深技术面试官,负责为求职者出高质量面试题。请围绕给定知识点出面试题,使用${lang}。
+
+出题数量由你根据知识点广度判断:
+- 单一概念/窄知识点:2~4 道
+- 复合知识域/宽知识点:5~10 道
+- 无论如何不超过 12 道
+每道题必须有独立、不可替代的考察点,宁缺毋滥,不要为凑数而出题。
 
 输出格式(硬性要求):
 - 只输出一个 JSON 数组,不要 markdown 代码围栏,不要任何其他文字或解释。
@@ -54,9 +59,9 @@ ${opts.difficulty ? `- 全部题目的 difficulty 必须是 "${opts.difficulty}"
 }
 
 export function buildUserPrompt(opts: GenerateOptions): string {
-  const lines = [`知识点:${opts.topic}`, `出 ${opts.count} 道面试题`];
+  const lines = [`知识点:${opts.topic}`];
   if (opts.difficulty) lines.push(`难度:全部为「${opts.difficulty}」`);
-  lines.push('按 system 中的格式要求,只输出 JSON 数组。');
+  lines.push('按 system 中的要求(含数量判断)出题,只输出 JSON 数组。');
   return lines.join('\n');
 }
 
