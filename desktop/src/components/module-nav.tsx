@@ -17,10 +17,9 @@ const FILTERS = [
 
 type FilterKey = (typeof FILTERS)[number]['key'];
 
-// 题目浏览(桌面,两栏):左模块列表 | 右题目列表。
-// 定位 = 题库后台:找题/看题/管题。点题目行原地展开(同时只开一道):
-// 考察点 + 管理操作(官方题复制副本 / 我的题编辑删除)+ 答案普通折叠。
-// 答题、评分、写笔记都在刷题页。两栏各自独立滚动(≥lg 满高);<lg 模块退化为横向条。
+// 题目浏览(手风琴式):模块纵向堆叠(编号/名称/统计/进度条),题目行内展开。
+// 定位 = 题库后台:找题/看题/管题(官方题复制副本、我的题编辑删除);
+// 答案普通折叠,答题/评分/写笔记都在刷题页。?m= 深链聚焦单模块(其余收起)。
 
 export function ModuleNav({ category }: { category: string }) {
   const { data, error } = useQuestions();
@@ -33,12 +32,6 @@ export function ModuleNav({ category }: { category: string }) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const isMy = category === MY_CATEGORY_SLUG;
-  // 选中的模块:初始取 ?m= 深链,否则第一个
-  const [pickedModule, setPickedModule] = useState<number | null>(() => {
-    const params = new URLSearchParams(window.location.hash.split('?')[1] || '');
-    const m = params.get('m');
-    return m ? parseInt(m, 10) : null;
-  });
 
   const { cat, byModule, moduleStats } = useMemo(() => {
     if (!data) return { cat: null, byModule: {} as Record<number, typeof data.questions>, moduleStats: {} };
@@ -55,14 +48,8 @@ export function ModuleNav({ category }: { category: string }) {
     return { cat: catObj, byModule: bm, moduleStats: getModuleStats(category, catQuestions) };
   }, [data, category]);
 
-  // 选中模块可能因数据变化消失(如删光),回退到第一个
-  const modules = cat?.modules ?? [];
-  const selectedModule =
-    modules.some((m) => m.id === pickedModule) ? pickedModule : (modules[0]?.id ?? null);
-
-  // 切分类时重置选中
+  // 切分类时重置展开状态
   useEffect(() => {
-    setPickedModule(null);
     setExpandedId(null);
     setRevealedId(null);
   }, [category]);
@@ -72,7 +59,7 @@ export function ModuleNav({ category }: { category: string }) {
   // my 分类无 approved 题时聚合里没有它(避免卡"加载中"),给空态引导
   if (!cat) {
     return (
-      <div className="mx-auto max-w-5xl space-y-4">
+      <div className="mx-auto max-w-4xl space-y-4">
         <div className="text-center py-16 space-y-3">
           <div className="text-foreground">我的题库还没有题</div>
           <div className="text-sm text-muted-foreground">AI 生题进草稿区,通过后就会出现在这里。</div>
@@ -91,50 +78,18 @@ export function ModuleNav({ category }: { category: string }) {
     return true;
   };
 
-  const selStats = selectedModule != null ? moduleStats[selectedModule] : null;
-  const selModuleMeta = modules.find((m) => m.id === selectedModule);
-  const listQuestions = selectedModule != null ? (byModule[selectedModule] || []).filter(filterQuestion) : [];
-
   const handleCopy = async (q: typeof data.questions[number]) => {
     await copyOfficial(q);
     setCopiedId(q.id);
   };
 
-  const moduleButton = (mod: (typeof modules)[number]) => {
-    const stats = moduleStats[mod.id];
-    const pct = stats && stats.total ? Math.round((stats.learned / stats.total) * 100) : 0;
-    const active = mod.id === selectedModule;
-    return (
-      <button
-        key={mod.id}
-        onClick={() => setPickedModule(mod.id)}
-        title={mod.name}
-        className={`w-full rounded-md px-3 py-2.5 text-left cursor-pointer transition-colors ${
-          active ? 'bg-primary/10' : 'hover:bg-accent'
-        }`}
-      >
-        <div className="flex items-baseline justify-between gap-2">
-          <span className={`font-mono text-[10px] ${active ? 'text-primary' : 'text-muted-foreground/60'}`}>
-            {String(mod.id).padStart(2, '0')}
-          </span>
-          <span className="font-mono text-xs text-muted-foreground">
-            {stats ? `${stats.learned}/${stats.total}` : `${mod.count} 题`}
-          </span>
-        </div>
-        <div className={`mt-0.5 truncate text-sm ${active ? 'font-medium text-primary' : 'text-foreground'}`}>
-          {mod.name}
-        </div>
-        <Progress value={pct} className="mt-1.5 h-1" />
-        {stats && stats.dueToday > 0 && (
-          <div className="mt-1 text-[10px] text-warning">待复习 {stats.dueToday}</div>
-        )}
-      </button>
-    );
-  };
+  // ?m= 深链聚焦单模块(从队列页模块卡进来),其余模块隐藏
+  const params = new URLSearchParams(window.location.hash.split('?')[1] || '');
+  const focusMod = params.get('m');
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6 lg:h-full">
-      <div className="shrink-0 space-y-1">
+    <div className="mx-auto max-w-4xl space-y-5">
+      <div className="space-y-1">
         <h1 className="text-2xl font-bold">
           <span className="text-primary">●</span> {cat.name} / 题目浏览
         </h1>
@@ -144,122 +99,119 @@ export function ModuleNav({ category }: { category: string }) {
         </p>
       </div>
 
-      <div className="flex min-h-0 flex-col gap-5 lg:flex-1 lg:flex-row">
-        {/* 栏 1:模块列表,独立滚动(<lg 退化为横向条) */}
-        <aside className="hidden w-44 shrink-0 flex-col gap-1 lg:flex lg:min-h-0 lg:overflow-y-auto lg:pr-1 lg:pb-2">
-          {modules.map(moduleButton)}
-        </aside>
-        <div className="flex flex-wrap gap-1.5 lg:hidden">
-          {modules.map((mod) => (
-            <button
-              key={mod.id}
-              onClick={() => setPickedModule(mod.id)}
-              className={`rounded-md px-2.5 py-1.5 text-xs cursor-pointer transition-colors ${
-                mod.id === selectedModule ? 'bg-primary/10 text-primary font-medium' : 'bg-secondary text-secondary-foreground hover:bg-accent'
-              }`}
-            >
-              {String(mod.id).padStart(2, '0')} {mod.name}
-            </button>
-          ))}
-        </div>
+      <div className="flex flex-wrap gap-2">
+        {FILTERS.map((f) => (
+          <Button
+            key={f.key}
+            variant={filter === f.key ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilter(f.key)}
+          >
+            {f.label}
+          </Button>
+        ))}
+      </div>
 
-        {/* 栏 2:题目列表,行内展开;独立滚动,筛选吸顶 */}
-        <section className="min-h-0 space-y-3 lg:flex-1 lg:overflow-y-auto lg:pr-1 lg:pb-2">
-          <div className="sticky top-0 z-10 space-y-3 bg-background/95 pb-1 pt-0.5 backdrop-blur">
-            <div>
-              <div className="text-sm font-semibold">{selModuleMeta?.name ?? '—'}</div>
-              <div className="mt-0.5 font-mono text-xs text-muted-foreground">
-                模块 {selectedModule != null ? String(selectedModule).padStart(2, '0') : '--'}
-                {selStats && ` · 已学 ${selStats.learned}/${selStats.total}`}
-                {selStats && selStats.dueToday > 0 && ` · 待复习 ${selStats.dueToday}`}
+      {cat.modules.map((mod) => {
+        const qs = (byModule[mod.id] || []).filter(filterQuestion);
+        const collapsed = focusMod && focusMod !== String(mod.id);
+        if (collapsed) return null;
+        const stats = moduleStats[mod.id];
+        const learnedPct = stats && stats.total ? Math.round((stats.learned / stats.total) * 100) : 0;
+
+        return (
+          <div key={mod.id} className="space-y-2">
+            <div className="flex justify-between items-center flex-wrap gap-2">
+              <div className="font-mono text-sm text-muted-foreground">
+                {String(mod.id).padStart(2, '0')} · {mod.name}({qs.length}/{stats?.total || 0})
               </div>
+              {stats && (
+                <div className="flex gap-3 text-xs">
+                  <span className="text-muted-foreground">已学 {stats.learned}/{stats.total}</span>
+                  {stats.mastered > 0 && (
+                    <span className="text-success">掌握 {stats.mastered}</span>
+                  )}
+                  {stats.dueToday > 0 && (
+                    <span className="text-warning">待复习 {stats.dueToday}</span>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="flex flex-wrap gap-1.5">
-              {FILTERS.map((f) => (
-                <Button
-                  key={f.key}
-                  variant={filter === f.key ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setFilter(f.key)}
-                >
-                  {f.label}
-                </Button>
-              ))}
-            </div>
-          </div>
+            {stats && stats.total > 0 && <Progress value={learnedPct} className="h-1.5" />}
 
-          <div className="overflow-hidden rounded-md border border-border bg-card">
-            {listQuestions.length === 0 ? (
-              <div className="p-4 text-center text-sm text-muted-foreground">本筛选下无题</div>
-            ) : (
-              listQuestions.map((q) => {
-                const isOpen = expandedId === q.id;
-                const answerOpen = revealedId === q.id;
-                return (
-                  <div key={q.id} className="border-b border-border last:border-b-0">
-                    <div
-                      className="flex items-center gap-3 p-3 cursor-pointer hover:bg-accent transition-colors"
-                      onClick={() => setExpandedId(isOpen ? null : q.id)}
-                    >
-                      <span className="font-mono text-xs text-muted-foreground shrink-0">
-                        {isOpen ? '▼' : '▶'} Q{q.id.split('.').slice(1).join('.')}
-                      </span>
-                      <span className="text-sm text-foreground flex-1">{q.title}</span>
-                      <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
-                    </div>
-                    {isOpen && (
-                      <div className="space-y-2.5 px-3.5 pb-4">
-                        <div className="text-sm text-muted-foreground">{q.focus}</div>
+            <div className="bg-card border border-border rounded-md overflow-hidden">
+              {qs.length === 0 ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">本筛选下无题</div>
+              ) : (
+                qs.map((q) => {
+                  const isOpen = expandedId === q.id;
+                  const answerOpen = revealedId === q.id;
+                  return (
+                    <div key={q.id} className="border-b border-border last:border-b-0">
+                      <div
+                        className="flex items-center gap-3 p-3 cursor-pointer hover:bg-accent transition-colors"
+                        onClick={() => setExpandedId(isOpen ? null : q.id)}
+                      >
+                        <span className="font-mono text-xs text-muted-foreground shrink-0">
+                          {isOpen ? '▼' : '▶'} Q{q.id.split('.').slice(1).join('.')}
+                        </span>
+                        <span className="text-sm text-foreground flex-1">{q.title}</span>
+                        <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
+                      </div>
+                      {isOpen && (
+                        <div className="space-y-2.5 px-3.5 pb-4">
+                          <div className="text-sm text-muted-foreground">{q.focus}</div>
 
-                        {/* 管理操作 */}
-                        <div className="flex flex-wrap items-center gap-2">
-                          {isMy ? (
+                          {/* 管理操作 */}
+                          <div className="flex flex-wrap items-center gap-2">
+                            {isMy ? (
+                              <>
+                                <Button size="sm" variant="outline" onClick={() => setEditingId(q.id)}>编辑</Button>
+                                <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeletingId(q.id)}>
+                                  删除
+                                </Button>
+                                <span className="text-xs text-muted-foreground font-mono">我的库 · 可改可删</span>
+                              </>
+                            ) : copiedId === q.id ? (
+                              <a href={`#/${MY_CATEGORY_SLUG}/browse`} className="text-sm text-primary hover:underline">
+                                已复制 ✓ 到我的题库改 →
+                              </a>
+                            ) : (
+                              <>
+                                <Button size="sm" variant="outline" onClick={() => handleCopy(q)}>复制到我的库</Button>
+                                <span className="text-xs text-muted-foreground font-mono">官方题只读,复制副本后可改</span>
+                              </>
+                            )}
+                          </div>
+
+                          {/* 答案:普通折叠,一点即开(管理视图,无强制思考仪式) */}
+                          {answerOpen ? (
                             <>
-                              <Button size="sm" variant="outline" onClick={() => setEditingId(q.id)}>编辑</Button>
-                              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeletingId(q.id)}>
-                                删除
+                              <AnswerPanel answer={q.answer} followups={q.followups} />
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setRevealedId(null)}
+                                className="text-muted-foreground"
+                              >
+                                ↑ 收起答案
                               </Button>
-                              <span className="text-xs text-muted-foreground font-mono">我的库 · 可改可删</span>
                             </>
-                          ) : copiedId === q.id ? (
-                            <a href={`#/${MY_CATEGORY_SLUG}/browse`} className="text-sm text-primary hover:underline">
-                              已复制 ✓ 到我的题库改 →
-                            </a>
                           ) : (
-                            <>
-                              <Button size="sm" variant="outline" onClick={() => handleCopy(q)}>复制到我的库</Button>
-                              <span className="text-xs text-muted-foreground font-mono">官方题只读,复制副本后可改</span>
-                            </>
+                            <Button variant="outline" size="sm" onClick={() => setRevealedId(q.id)}>
+                              展开答案 ▾
+                            </Button>
                           )}
                         </div>
-
-                        {/* 答案:普通折叠,一点即开(管理视图,无强制思考仪式) */}
-                        {answerOpen ? (
-                          <>
-                            <AnswerPanel answer={q.answer} followups={q.followups} />
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setRevealedId(null)}
-                              className="text-muted-foreground"
-                            >
-                              ↑ 收起答案
-                            </Button>
-                          </>
-                        ) : (
-                          <Button variant="outline" size="sm" onClick={() => setRevealedId(q.id)}>
-                            展开答案 ▾
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
-        </section>
-      </div>
+        );
+      })}
 
       <QuestionEditDialog
         question={editingId ? getMyQuestion(editingId) : null}

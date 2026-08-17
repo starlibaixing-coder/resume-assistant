@@ -121,7 +121,7 @@ Requirements: Node.js 18+,系统 Chrome(简历渲染用),Node 20+(CI 用)。
 
 设计稿:`docs/superpowers/specs/2026-08-13-quiz-app-agent-design.md`(10 个 ADR,施工前重读 §7 硬约束)。
 
-- **桌面壳**(`src/components/app-shell.tsx`):常驻侧栏导航 + 内容区,窄窗(<lg)侧栏收成图标栏。主题切换在设置页「外观」;清空进度/笔记在设置页「数据管理」(按分类);后退只用于下钻子页(刷题/浏览页左上角"← 返回{分类名}",固定回队列,不依赖历史;侧栏同级切换不显示后退;Cmd+← 为系统级 history.back);浏览页 = 管理查阅视图(两栏:模块列表+题目列表行内展开,各自独立滚动,答案普通折叠,无笔记面板——答题/评分/笔记都在刷题页);生题数量由 LLM 按知识点广度自定(prompt 有上限约束),不设数量选择。窗口默认 1200×800(`src-tauri/tauri.conf.json`)。
+- **桌面壳**(`src/components/app-shell.tsx`):常驻侧栏导航 + 内容区,窄窗(<lg)侧栏收成图标栏。主题切换在设置页「外观」;清空进度/笔记在设置页「数据管理」(按分类);后退只用于下钻子页(刷题/浏览页左上角"← 回到{分类名}题库",固定回队列,不依赖历史;侧栏同级切换不显示后退;Cmd+← 为系统级 history.back);浏览页 = 管理查阅视图(手风琴式:模块纵向堆叠带统计/进度条,题目行内展开;答案普通折叠,无笔记面板——答题/评分/笔记都在刷题页);生题数量由 LLM 按知识点广度自定(prompt 有上限约束),不设数量选择。窗口默认 1200×800(`src-tauri/tauri.conf.json`)。
 
 - **双库模型**(ADR-3):官方 YAML 库只读(`public/questions.json`),我的库存本地 SQLite,刷题界面聚合两者。官方题不可原地改删,只能"复制成副本再改"。
 - **我的库**(阶段 1):独立分类 `my`,生题批次即模块(模块名=知识点),官方副本统一进模块 0。id 三段式 `my.<module>.<idx>`。数据层 `src/lib/mylib.ts`(内存缓存 + await 持久化 + pub-sub),聚合在 `src/lib/questions.ts`(`mergeQuestionData`,pending 永不进刷题)。

@@ -165,10 +165,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="shrink-0 px-6 pt-4">
             <a
               href={`#/${backCatSlug}`}
-              title="返回该分类队列"
+              title="回到该分类题库"
               className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-mono text-muted-foreground cursor-pointer transition-colors hover:bg-accent hover:text-foreground"
             >
-              <ArrowLeft className="h-3.5 w-3.5" /> 返回{backCatName ?? backCatSlug}
+              <ArrowLeft className="h-3.5 w-3.5" /> 回到{backCatName ?? backCatSlug}
+              {(backCatName ?? '').endsWith('题库') ? '' : '题库'}
             </a>
           </div>
         )}
