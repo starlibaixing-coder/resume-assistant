@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuestions } from '@/lib/questions';
 import { getReviewQueue, getStats } from '@/lib/schedule';
+import { MY_CATEGORY_SLUG } from '@/lib/mylib';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
@@ -25,6 +26,24 @@ export function ReviewQueue({ category }: { category: string }) {
   if (!data || !stats || !queue) return <div className="text-muted-foreground p-8 text-center">加载中…</div>;
 
   const cat = data.categories.find((c) => c.slug === category);
+  // 我的库无 approved 题时聚合里没有该分类,给引导空态(而非误导的"今日已清空")
+  if (!cat) {
+    if (category === MY_CATEGORY_SLUG) {
+      return (
+        <div className="mx-auto max-w-3xl space-y-4">
+          <h1 className="text-2xl font-bold">
+            <span className="text-primary">●</span> 我的题库
+          </h1>
+          <div className="text-center py-16 space-y-3 rounded-lg border border-border bg-card">
+            <div className="text-foreground">我的题库还没有题</div>
+            <div className="text-sm text-muted-foreground">AI 生题进草稿区,通过后就会出现在这里。</div>
+            <a href="#/generate" className="inline-block text-primary hover:underline text-sm">去生题 →</a>
+          </div>
+        </div>
+      );
+    }
+    return <div className="text-muted-foreground p-8 text-center">分类不存在: {category}</div>;
+  }
   const dueCount = queue.dueIds.length;
   const learnPct = stats.total ? Math.round((stats.learned / stats.total) * 100) : 0;
   return (

@@ -7,9 +7,10 @@ import { useQuestions } from '@/lib/questions';
 import { getMyCategory, getPendingCount, subscribeMyLib } from '@/lib/mylib';
 import { loadKey } from '@/lib/llm-config';
 
-// 桌面壳:常驻侧栏导航 + 独立滚动内容区。
-// 主题切换在设置页;内容区左上角提供全局后退(侧栏常驻后补回"操作连贯性"),
-// Cmd/Ctrl+← 等价(编辑器内除外);窄窗口(<lg)侧栏收成图标栏。
+// 桌面壳:常驻侧栏导航 + 内容区。
+// 后退语义:侧栏直达页(总览/生题/草稿/设置/分类队列)是同级切换,不需要后退;
+// 只有下钻子页(刷题/浏览)显示「← 返回{分类名}」,固定回该分类队列页(不依赖历史栈)。
+// Cmd/Ctrl/Alt+← 保留为系统级 history.back()(编辑器内不抢键);窄窗(<lg)侧栏收成图标栏。
 
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   agent: Bot,
@@ -17,22 +18,9 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   my: LibraryBig,
 };
 
-function parseHashRoot(): string {
+function parseHashParts(): string[] {
   const raw = window.location.hash.replace(/^#\/?/, '');
-  return raw.split(/[/?]/)[0] || '';
-}
-
-// hash → 页面名(后退按钮显示"← 回哪")。catName 由调用方注入(slug → 分类名)
-function hashTitle(hash: string, catName: (slug: string) => string | undefined): string {
-  const parts = hash.replace(/^#\/?/, '').split('?')[0].split('/').filter(Boolean);
-  if (!parts.length) return '总览';
-  if (parts[0] === 'settings') return '设置';
-  if (parts[0] === 'generate') return 'AI 生题';
-  if (parts[0] === 'drafts') return '草稿区';
-  const name = catName(parts[0]) ?? parts[0];
-  if (parts[1] === 'quiz') return `${name} · 刷题`;
-  if (parts[1] === 'browse') return `${name} · 浏览`;
-  return name;
+  return raw.split('?')[0].split('/').filter(Boolean);
 }
 
 interface NavItemProps {
@@ -73,14 +61,9 @@ function NavItem({ href, icon: Icon, label, active, count, badge, warn }: NavIte
 
 export function AppShell({ children }: { children: ReactNode }) {
   const mainRef = useRef<HTMLDivElement>(null);
-  const [root, setRoot] = useState(parseHashRoot());
-  const [backTitle, setBackTitle] = useState<string | null>(null);
+  const [parts, setParts] = useState<string[]>(parseHashParts());
   const [noKey, setNoKey] = useState(false);
   const { data } = useQuestions();
-  const catName = (slug: string): string | undefined => {
-    if (slug === 'my') return getMyCategory().name;
-    return data?.categories.find((c) => c.slug === slug)?.name;
-  };
 
   // 草稿角标/我的题库计数跟随 mylib 变化
   const [, bump] = useState(0);
@@ -88,27 +71,16 @@ export function AppShell({ children }: { children: ReactNode }) {
   const myCategory = getMyCategory();
   const pendingCount = getPendingCount();
 
-  // 导航栈:链接点击压栈;Cmd+← 原生后退弹栈(回来的 hash 等于栈顶下一个)
-  const stackRef = useRef<string[]>([window.location.hash]);
-
   useEffect(() => {
     const onChange = () => {
-      const cur = window.location.hash;
-      const stack = stackRef.current;
-      if (stack[stack.length - 2] === cur) {
-        stack.pop(); // 原生后退(hashchange 由 history.back 触发)
-      } else {
-        stack.push(cur);
-      }
-      setBackTitle(stack.length > 1 ? hashTitle(stack[stack.length - 2], catName) : null);
-      setRoot(parseHashRoot());
+      setParts(parseHashParts());
       mainRef.current?.scrollTo({ top: 0 });
       checkKey();
     };
 
-    // Cmd/Ctrl+← 或 Alt+← 全局后退;编辑场景(输入框/编辑器)不抢快捷键
+    // Cmd/Ctrl+← 或 Alt+← 系统级后退;编辑场景(输入框/编辑器)不抢快捷键
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.altKey) && e.key === 'ArrowLeft' && stackRef.current.length > 1) {
+      if ((e.metaKey || e.altKey) && e.key === 'ArrowLeft') {
         const t = e.target as HTMLElement | null;
         if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
         window.history.back();
@@ -134,10 +106,14 @@ export function AppShell({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const goBack = () => {
-    if (stackRef.current.length > 1) window.history.back();
-  };
+  // 下钻子页(刷题/浏览):显示固定返回所属分类队列
+  const isSubPage = parts.length >= 2;
+  const backCatSlug = isSubPage ? parts[0] : null;
+  const backCatName = backCatSlug
+    ? (backCatSlug === 'my' ? myCategory.name : data?.categories.find((c) => c.slug === backCatSlug)?.name)
+    : null;
 
+  const root = parts[0] ?? '';
   const cats = (data?.categories ?? []).filter((c) => c.slug !== 'my');
 
   return (
@@ -170,7 +146,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             />
           ))}
           <NavItem
-            href="#/my/browse"
+            href="#/my"
             icon={LibraryBig}
             label="我的题库"
             active={root === 'my'}
@@ -185,15 +161,15 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <main className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-        {backTitle && (
+        {isSubPage && backCatSlug && (
           <div className="shrink-0 px-6 pt-4">
-            <button
-              onClick={goBack}
-              title="后退(Cmd+←)"
+            <a
+              href={`#/${backCatSlug}`}
+              title="返回该分类队列"
               className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-mono text-muted-foreground cursor-pointer transition-colors hover:bg-accent hover:text-foreground"
             >
-              <ArrowLeft className="h-3.5 w-3.5" /> {backTitle}
-            </button>
+              <ArrowLeft className="h-3.5 w-3.5" /> 返回{backCatName ?? backCatSlug}
+            </a>
           </div>
         )}
         <div ref={mainRef} className="min-h-0 flex-1 overflow-y-auto px-6 py-8">
