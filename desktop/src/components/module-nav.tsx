@@ -17,20 +17,21 @@ const FILTERS = [
 
 type FilterKey = (typeof FILTERS)[number]['key'];
 
-// 题目浏览(桌面,邮件客户端式三栏):模块列表 | 题目列表 | 详情面板。
-// 定位 = 题库后台:找题/看题/管题(官方题复制副本、我的题编辑删除)。
-// 答题、评分、写笔记都在刷题页;此处答案为普通折叠(默认收起,一点即开,无仪式)。
-// 三栏各自独立滚动(≥lg 满高布局);<lg 模块退化为横向条,列表与详情上下堆叠。
+// 题目浏览(桌面,两栏):左模块列表 | 右题目列表。
+// 定位 = 题库后台:找题/看题/管题。点题目行原地展开(同时只开一道):
+// 考察点 + 管理操作(官方题复制副本 / 我的题编辑删除)+ 答案普通折叠。
+// 答题、评分、写笔记都在刷题页。两栏各自独立滚动(≥lg 满高);<lg 模块退化为横向条。
 
 export function ModuleNav({ category }: { category: string }) {
   const { data, error } = useQuestions();
   const [filter, setFilter] = useState<FilterKey>('all');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  // 答案展开:记"哪道题已展开",切题自动收回
+  const [revealedId, setRevealedId] = useState<string | null>(null);
   // 改删/复制(功能⑥):my 分类可编辑删除;官方分类只能复制副本再改(ADR-3)
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  // 答案展开:记"哪道题已展开",切题自动收回
-  const [revealedId, setRevealedId] = useState<string | null>(null);
   const isMy = category === MY_CATEGORY_SLUG;
   // 选中的模块:初始取 ?m= 深链,否则第一个
   const [pickedModule, setPickedModule] = useState<number | null>(() => {
@@ -38,7 +39,6 @@ export function ModuleNav({ category }: { category: string }) {
     const m = params.get('m');
     return m ? parseInt(m, 10) : null;
   });
-  const [pickedId, setPickedId] = useState<string | null>(null);
 
   const { cat, byModule, moduleStats } = useMemo(() => {
     if (!data) return { cat: null, byModule: {} as Record<number, typeof data.questions>, moduleStats: {} };
@@ -63,7 +63,8 @@ export function ModuleNav({ category }: { category: string }) {
   // 切分类时重置选中
   useEffect(() => {
     setPickedModule(null);
-    setPickedId(null);
+    setExpandedId(null);
+    setRevealedId(null);
   }, [category]);
 
   if (error) return <div className="text-muted-foreground p-8 text-center">加载失败: {error}</div>;
@@ -93,8 +94,6 @@ export function ModuleNav({ category }: { category: string }) {
   const selStats = selectedModule != null ? moduleStats[selectedModule] : null;
   const selModuleMeta = modules.find((m) => m.id === selectedModule);
   const listQuestions = selectedModule != null ? (byModule[selectedModule] || []).filter(filterQuestion) : [];
-  // 详情选中:优先用户点选,模块/筛选变化后不在列表则回退到第一题
-  const selected = listQuestions.find((q) => q.id === pickedId) ?? listQuestions[0] ?? null;
 
   const handleCopy = async (q: typeof data.questions[number]) => {
     await copyOfficial(q);
@@ -164,113 +163,101 @@ export function ModuleNav({ category }: { category: string }) {
           ))}
         </div>
 
-        {/* 栏 2:题目列表,独立滚动 */}
-        <section className="w-full shrink-0 space-y-3 lg:min-h-0 lg:w-72 lg:overflow-y-auto lg:pr-1 lg:pb-2">
-          <div>
-            <div className="text-sm font-semibold">{selModuleMeta?.name ?? '—'}</div>
-            <div className="mt-0.5 font-mono text-xs text-muted-foreground">
-              模块 {selectedModule != null ? String(selectedModule).padStart(2, '0') : '--'}
-              {selStats && ` · 已学 ${selStats.learned}/${selStats.total}`}
-              {selStats && selStats.dueToday > 0 && ` · 待复习 ${selStats.dueToday}`}
+        {/* 栏 2:题目列表,行内展开;独立滚动,筛选吸顶 */}
+        <section className="min-h-0 space-y-3 lg:flex-1 lg:overflow-y-auto lg:pr-1 lg:pb-2">
+          <div className="sticky top-0 z-10 space-y-3 bg-background/95 pb-1 pt-0.5 backdrop-blur">
+            <div>
+              <div className="text-sm font-semibold">{selModuleMeta?.name ?? '—'}</div>
+              <div className="mt-0.5 font-mono text-xs text-muted-foreground">
+                模块 {selectedModule != null ? String(selectedModule).padStart(2, '0') : '--'}
+                {selStats && ` · 已学 ${selStats.learned}/${selStats.total}`}
+                {selStats && selStats.dueToday > 0 && ` · 待复习 ${selStats.dueToday}`}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {FILTERS.map((f) => (
+                <Button
+                  key={f.key}
+                  variant={filter === f.key ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setFilter(f.key)}
+                >
+                  {f.label}
+                </Button>
+              ))}
             </div>
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            {FILTERS.map((f) => (
-              <Button
-                key={f.key}
-                variant={filter === f.key ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilter(f.key)}
-              >
-                {f.label}
-              </Button>
-            ))}
-          </div>
+
           <div className="overflow-hidden rounded-md border border-border bg-card">
             {listQuestions.length === 0 ? (
               <div className="p-4 text-center text-sm text-muted-foreground">本筛选下无题</div>
             ) : (
               listQuestions.map((q) => {
-                const active = selected?.id === q.id;
+                const isOpen = expandedId === q.id;
+                const answerOpen = revealedId === q.id;
                 return (
-                  <button
-                    key={q.id}
-                    onClick={() => setPickedId(q.id)}
-                    className={`flex w-full items-start gap-2.5 border-b border-border p-3 text-left last:border-b-0 cursor-pointer transition-colors ${
-                      active ? 'bg-accent' : 'hover:bg-accent/60'
-                    }`}
-                  >
-                    <span className="mt-0.5 shrink-0 font-mono text-[10px] text-muted-foreground/70">
-                      Q{q.id.split('.').slice(1).join('.')}
-                    </span>
-                    <span className="flex-1 text-sm leading-snug text-foreground">{q.title}</span>
-                    <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
-                  </button>
+                  <div key={q.id} className="border-b border-border last:border-b-0">
+                    <div
+                      className="flex items-center gap-3 p-3 cursor-pointer hover:bg-accent transition-colors"
+                      onClick={() => setExpandedId(isOpen ? null : q.id)}
+                    >
+                      <span className="font-mono text-xs text-muted-foreground shrink-0">
+                        {isOpen ? '▼' : '▶'} Q{q.id.split('.').slice(1).join('.')}
+                      </span>
+                      <span className="text-sm text-foreground flex-1">{q.title}</span>
+                      <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
+                    </div>
+                    {isOpen && (
+                      <div className="space-y-2.5 px-3.5 pb-4">
+                        <div className="text-sm text-muted-foreground">{q.focus}</div>
+
+                        {/* 管理操作 */}
+                        <div className="flex flex-wrap items-center gap-2">
+                          {isMy ? (
+                            <>
+                              <Button size="sm" variant="outline" onClick={() => setEditingId(q.id)}>编辑</Button>
+                              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeletingId(q.id)}>
+                                删除
+                              </Button>
+                              <span className="text-xs text-muted-foreground font-mono">我的库 · 可改可删</span>
+                            </>
+                          ) : copiedId === q.id ? (
+                            <a href={`#/${MY_CATEGORY_SLUG}/browse`} className="text-sm text-primary hover:underline">
+                              已复制 ✓ 到我的题库改 →
+                            </a>
+                          ) : (
+                            <>
+                              <Button size="sm" variant="outline" onClick={() => handleCopy(q)}>复制到我的库</Button>
+                              <span className="text-xs text-muted-foreground font-mono">官方题只读,复制副本后可改</span>
+                            </>
+                          )}
+                        </div>
+
+                        {/* 答案:普通折叠,一点即开(管理视图,无强制思考仪式) */}
+                        {answerOpen ? (
+                          <>
+                            <AnswerPanel answer={q.answer} followups={q.followups} />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setRevealedId(null)}
+                              className="text-muted-foreground"
+                            >
+                              ↑ 收起答案
+                            </Button>
+                          </>
+                        ) : (
+                          <Button variant="outline" size="sm" onClick={() => setRevealedId(q.id)}>
+                            展开答案 ▾
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 );
               })
             )}
           </div>
-        </section>
-
-        {/* 栏 3:详情面板,独立滚动;答案默认折叠(强制思考) */}
-        <section className="min-w-0 flex-1 lg:min-h-0 lg:overflow-y-auto lg:pr-2 lg:pb-2">
-          {selected ? (
-            <div className="space-y-3">
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="outline">{selected.difficulty}</Badge>
-                {selected.tags.map((t) => (
-                  <Badge key={t} variant="secondary">{t}</Badge>
-                ))}
-              </div>
-              <div className="text-lg font-semibold leading-snug text-foreground">{selected.title}</div>
-              <div className="text-sm text-muted-foreground">{selected.focus}</div>
-
-              {/* 管理操作:不依赖答案,置顶 */}
-              <div className="flex items-center gap-2">
-                {isMy ? (
-                  <>
-                    <Button size="sm" variant="outline" onClick={() => setEditingId(selected.id)}>编辑</Button>
-                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeletingId(selected.id)}>
-                      删除
-                    </Button>
-                    <span className="text-xs text-muted-foreground font-mono">我的库 · 可改可删</span>
-                  </>
-                ) : copiedId === selected.id ? (
-                  <a href={`#/${MY_CATEGORY_SLUG}/browse`} className="text-sm text-primary hover:underline">
-                    已复制 ✓ 到我的题库改 →
-                  </a>
-                ) : (
-                  <>
-                    <Button size="sm" variant="outline" onClick={() => handleCopy(selected)}>复制到我的库</Button>
-                    <span className="text-xs text-muted-foreground font-mono">官方题只读,复制副本后可改</span>
-                  </>
-                )}
-              </div>
-
-              {/* 答案:普通折叠,一点即开(管理视图,无强制思考仪式) */}
-              {revealedId === selected.id ? (
-                <>
-                  <AnswerPanel answer={selected.answer} followups={selected.followups} />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setRevealedId(null)}
-                    className="text-muted-foreground"
-                  >
-                    ↑ 收起答案
-                  </Button>
-                </>
-              ) : (
-                <Button variant="outline" size="sm" onClick={() => setRevealedId(selected.id)}>
-                  展开答案 ▾
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="flex h-40 items-center justify-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
-              左侧选择题目查看详情
-            </div>
-          )}
         </section>
       </div>
 

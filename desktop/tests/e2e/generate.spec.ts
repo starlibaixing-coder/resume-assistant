@@ -124,16 +124,17 @@ test('设置页渲染:预设与 key 表单', async ({ page }) => {
   await expect(page.getByPlaceholder(/保持不变|sk-/)).toBeVisible();
 });
 
-test('官方题浏览页:三栏管理视图,答案普通折叠,详情有「复制到我的库」入口(ADR-3)', async ({ page }) => {
+test('官方题浏览页:两栏+行内展开,答案普通折叠,有「复制到我的库」入口(ADR-3)', async ({ page }) => {
   await page.goto('/#/agent/browse');
-  // 三栏:模块列表在左,默认选中第一个模块,题目详情默认展示第一题(答案折叠)
+  // 两栏:左模块列表,右题目列表(默认第一个模块);题目行点击原地展开
+  const rows = page.locator('main div.cursor-pointer');
+  await rows.first().click();
   await expect(page.getByRole('button', { name: '复制到我的库' })).toBeVisible();
-  // 答案默认不可见,点「展开答案」打开(管理视图普通折叠)
+  // 答案默认折叠,点「展开答案」打开
   await expect(page.getByText('参考答案要点')).toBeHidden();
   await page.getByRole('button', { name: '展开答案' }).click();
   await expect(page.getByText('参考答案要点')).toBeVisible();
-  // 切到列表第二题,答案自动收回
-  const rows = page.locator('main button').filter({ hasText: /Q\d/ });
+  // 点第二题,第一题收起(答案随之隐藏)
   if (await rows.count() > 1) {
     await rows.nth(1).click();
     await expect(page.getByText('参考答案要点')).toBeHidden();
