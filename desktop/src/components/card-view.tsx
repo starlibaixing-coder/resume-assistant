@@ -3,10 +3,12 @@ import { useQuestions } from '@/lib/questions';
 import { getReviewQueue } from '@/lib/schedule';
 import { newCard, review } from '@/lib/sm2';
 import { saveCard, loadProgress } from '@/lib/storage';
+import { loadLimit } from '@/lib/prefs';
 import type { Rating } from '@/types/question';
 import { AnswerPanel } from '@/components/answer-panel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 // Tiptap 体积大,懒加载拆为独立 chunk
 const NotePanel = lazy(() => import('./note-panel'));
@@ -23,10 +25,10 @@ export function CardView({ category }: { category: string }) {
     if (!data) return { queue: [], catQuestions: [] };
     const catQuestions = data.questions.filter((q) => q.category === category);
     const ids = catQuestions.map((q) => q.id);
-    // 从 URL 读取每次题量,默认 50,0=全部
+    // 每次题量:URL ?limit= 深链可覆盖,否则读全局设置(设置页「刷题」分区)
     const params = new URLSearchParams(window.location.hash.split('?')[1] || '');
     const limitParam = params.get('limit');
-    const limit = limitParam != null ? parseInt(limitParam, 10) || 0 : 50;
+    const limit = limitParam != null ? parseInt(limitParam, 10) || 0 : loadLimit();
     return { queue: getReviewQueue(category, ids, limit).queue, catQuestions };
   }, [data, category, round]);
 
@@ -67,7 +69,7 @@ export function CardView({ category }: { category: string }) {
     return <RoundDoneState category={category} done={queue.length} onNextRound={handleNextRound} />;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex justify-between items-center text-sm text-muted-foreground font-mono">
         <span>
           {queueIdx + 1} / {queue.length}
@@ -75,7 +77,7 @@ export function CardView({ category }: { category: string }) {
         <span>{current.moduleName}</span>
       </div>
 
-      <div className="bg-card border border-border rounded-lg p-5 space-y-3">
+      <Card className="space-y-3 p-5">
         <div className="flex flex-wrap gap-2">
           <Badge variant="outline">{current.difficulty}</Badge>
           {current.tags.map((t) => (
@@ -112,7 +114,7 @@ export function CardView({ category }: { category: string }) {
             </Button>
           </>
         )}
-      </div>
+      </Card>
 
       {revealed && (
         <div className="grid grid-cols-3 gap-2">
@@ -133,7 +135,7 @@ export function CardView({ category }: { category: string }) {
 
 function DoneState({ category }: { category: string }) {
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div className="text-center py-16 space-y-3">
         <div className="text-4xl text-success">✓</div>
         <div className="text-foreground">今日队列已清空</div>
@@ -155,7 +157,7 @@ function RoundDoneState({
   onNextRound: () => void;
 }) {
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div className="text-center py-16 space-y-3">
         <div className="text-4xl text-success">✓</div>
         <div className="text-foreground">本轮完成,刷了 {done} 题</div>
