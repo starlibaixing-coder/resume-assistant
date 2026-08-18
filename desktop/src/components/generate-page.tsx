@@ -7,12 +7,10 @@ import { AnswerPanel } from '@/components/answer-panel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/page-header';
 
 const DIFFICULTIES: Array<Difficulty | '不限'> = ['不限', '初', '中', '高'];
-
-const inputCls =
-  'w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring';
 
 const pill = (active: boolean) =>
   `px-2.5 py-1 rounded text-xs font-mono transition-colors ${
@@ -107,8 +105,7 @@ export function GeneratePage() {
       <Card className="space-y-4 p-5">
         <div className="space-y-1.5">
           <label className="text-xs text-muted-foreground font-mono">知识点</label>
-          <input
-            className={inputCls}
+          <Input
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             placeholder="如:React Hooks 深入 / 浏览器事件循环 / RAG 检索优化"
@@ -122,7 +119,9 @@ export function GeneratePage() {
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-muted-foreground font-mono">难度</span>
           {DIFFICULTIES.map((d) => (
-            <button key={d} className={pill(difficulty === d)} onClick={() => setDifficulty(d)}>{d}</button>
+            <Button key={d} size="sm" variant={difficulty === d ? 'default' : 'outline'} onClick={() => setDifficulty(d)}>
+              {d}
+            </Button>
           ))}
           <span className="text-xs text-muted-foreground">(出题数量由 LLM 按知识点广度判断)</span>
         </div>

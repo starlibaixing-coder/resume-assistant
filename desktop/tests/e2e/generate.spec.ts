@@ -134,20 +134,21 @@ test('设置页渲染:预设与 key 表单', async ({ page }) => {
 
 test('官方题浏览页:统一筛选栏(模块/难度/状态)', async ({ page }) => {
   await page.goto('/#/agent/browse');
-  // 统一筛选栏:模块/难度/状态三个下拉,可组合,带结果计数
-  await expect(page.getByLabel('模块')).toBeVisible();
-  await expect(page.getByLabel('难度')).toBeVisible();
-  await expect(page.getByLabel('状态')).toBeVisible();
+  // 统一筛选栏:模块/难度/状态三个 shadcn Select,可组合,带结果计数
+  await expect(page.getByRole('combobox', { name: '模块' })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: '难度' })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: '状态' })).toBeVisible();
   await expect(page.getByText(/共 \d+ 题/)).toBeVisible();
   // 筛单个模块:出现该模块统计 + 进度条
-  const modSelect = page.getByLabel('模块');
-  await modSelect.selectOption({ index: 1 });
+  await page.getByRole('combobox', { name: '模块' }).click();
+  await page.getByRole('option', { name: /· / }).first().click();
   await expect(page.getByText(/已学 \d+\/\d+/).first()).toBeVisible();
   // 叠加难度筛选,计数变化
   const totalText = await page.getByText(/共 \d+ 题/).innerText();
-  await page.getByLabel('难度').selectOption('高');
+  await page.getByRole('combobox', { name: '难度' }).click();
+  await page.getByRole('option', { name: '高', exact: true }).click();
   await expect(page.getByText(/共 \d+ 题/)).not.toHaveText(totalText);
   // 重置回全部
   await page.getByRole('button', { name: '重置' }).click();
-  await expect(page.getByLabel('模块')).toHaveValue('all');
+  await expect(page.getByRole('combobox', { name: '模块' })).toContainText('全部模块');
 });
