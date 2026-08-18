@@ -5,7 +5,7 @@ import { MY_CATEGORY_SLUG } from '@/lib/mylib';
 import { loadLimit } from '@/lib/prefs';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/page-header';
 
 // 分类队列页:今日数字 + 开始按钮 + 模块入口。
@@ -35,10 +35,12 @@ export function ReviewQueue({ category }: { category: string }) {
       return (
         <div className="mx-auto max-w-3xl space-y-6">
           <PageHeader title="我的题库" />
-          <Card className="py-16 text-center space-y-3">
-            <div className="text-foreground">我的题库还没有题</div>
-            <div className="text-sm text-muted-foreground">AI 生题进草稿区,通过后就会出现在这里。</div>
-            <a href="#/generate" className="inline-block text-primary hover:underline text-sm">去生题 →</a>
+          <Card>
+            <CardContent className="space-y-3 py-16 text-center">
+              <div className="text-foreground">我的题库还没有题</div>
+              <div className="text-sm text-muted-foreground">AI 生题进草稿区,通过后就会出现在这里。</div>
+              <a href="#/generate" className="inline-block text-primary hover:underline text-sm">去生题 →</a>
+            </CardContent>
           </Card>
         </div>
       );
@@ -58,7 +60,8 @@ export function ReviewQueue({ category }: { category: string }) {
         )}
       </div>
 
-      <Card className="space-y-4 p-5">
+      <Card>
+        <CardContent className="flex flex-col gap-4 p-6">
         <div className="space-y-1 text-center">
           {dueCount > 0 ? (
             <>
@@ -94,6 +97,7 @@ export function ReviewQueue({ category }: { category: string }) {
             已学 {stats.learned} / {stats.total} · {learnPct}%
           </div>
         </div>
+        </CardContent>
       </Card>
 
       <div>

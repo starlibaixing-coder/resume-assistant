@@ -8,7 +8,7 @@ import { getMyCategory } from '@/lib/mylib';
 import { loadLimit, saveLimit, LIMIT_OPTIONS } from '@/lib/prefs';
 import { chat } from '@/lib/provider';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/page-header';
 import {
@@ -124,8 +124,9 @@ export function SettingsPage() {
       <PageHeader title="设置" />
 
       {/* ── 刷题 ─────────────────────────────────────── */}
-      <Card className="space-y-3 p-5">
-        <div className="text-sm font-medium">刷题</div>
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-base">刷题</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-muted-foreground">每次学习题量</span>
           {LIMIT_OPTIONS.map((opt) => (
@@ -143,12 +144,14 @@ export function SettingsPage() {
             </Button>
           ))}
         </div>
-        <div className="text-xs text-muted-foreground">进入队列即按此数量取题;待复习优先,不足用新题补。</div>
+          <p className="text-xs text-muted-foreground">进入队列即按此数量取题;待复习优先,不足用新题补。</p>
+        </CardContent>
       </Card>
 
       {/* ── 外观 ────────────────────────────────────── */}
-      <Card className="space-y-3 p-5">
-        <div className="text-sm font-medium">外观</div>
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-base">外观</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
         <div className="flex flex-wrap gap-2">
           {THEME_OPTIONS.map((o) => (
             <Button
@@ -162,11 +165,13 @@ export function SettingsPage() {
             </Button>
           ))}
         </div>
+        </CardContent>
       </Card>
 
       {/* ── LLM ─────────────────────────────────────── */}
-      <Card className="space-y-5 p-5">
-        <div className="text-sm font-medium">LLM(AI 生题用)</div>
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-base">LLM(AI 生题用)</CardTitle></CardHeader>
+        <CardContent className="space-y-5">
 
         {/* 预设 */}
         <div className="space-y-2">
@@ -235,11 +240,13 @@ export function SettingsPage() {
             </span>
           )}
         </div>
+        </CardContent>
       </Card>
 
       {/* ── 数据管理 ───────────────────────────────── */}
-      <Card className="space-y-3 p-5">
-        <div className="text-sm font-medium">数据管理</div>
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-base">数据管理</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
         <div className="text-xs text-muted-foreground">
           清空操作按分类执行:清空进度删 SM-2 记录(题目和笔记保留);清空笔记只删笔记(进度保留)。均不可恢复。
         </div>
@@ -278,19 +285,22 @@ export function SettingsPage() {
             </div>
           );
         })}
+        </CardContent>
       </Card>
 
       {/* ── 关于 ───────────────────────────────────── */}
-      <Card className="flex flex-wrap items-center justify-between gap-2 p-5">
-        <div className="text-sm font-medium">关于</div>
-        <a
-          href="https://github.com/starlibaixing-coder/resume-assistant"
-          target="_blank"
-          rel="noreferrer"
-          className="text-xs font-mono text-muted-foreground hover:text-primary"
-        >
-          GitHub ↗ 源码与官方题库
-        </a>
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-base">关于</CardTitle></CardHeader>
+        <CardContent>
+          <a
+            href="https://github.com/starlibaixing-coder/resume-assistant"
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs font-mono text-muted-foreground hover:text-primary"
+          >
+            GitHub ↗ 源码与官方题库
+          </a>
+        </CardContent>
       </Card>
 
       {/* 清空确认 */}

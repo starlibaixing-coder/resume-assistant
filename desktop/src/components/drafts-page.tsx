@@ -4,7 +4,7 @@ import type { MyQuestion } from '@/types/question';
 import { AnswerPanel } from '@/components/answer-panel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/page-header';
 
 // 草稿区(ADR-10):AI 生成的题先进 pending,在这里人工过目,
@@ -50,13 +50,15 @@ export function DraftsPage() {
       </div>
 
       {pending.length === 0 ? (
-        <Card className="py-16 text-center space-y-3">
-          <div className="text-4xl">✓</div>
-          <div className="text-foreground">草稿区是空的</div>
-          <div className="text-sm text-muted-foreground">
-            AI 生成的题会先进这里,你确认后才进刷题队列。
-          </div>
-          <a href="#/generate" className="inline-block text-primary hover:underline text-sm">去生题 →</a>
+        <Card>
+          <CardContent className="space-y-3 py-16 text-center">
+            <div className="text-4xl">✓</div>
+            <div className="text-foreground">草稿区是空的</div>
+            <div className="text-sm text-muted-foreground">
+              AI 生成的题会先进这里,你确认后才进刷题队列。
+            </div>
+            <a href="#/generate" className="inline-block text-primary hover:underline text-sm">去生题 →</a>
+          </CardContent>
         </Card>
       ) : (
         <div className="space-y-6">
