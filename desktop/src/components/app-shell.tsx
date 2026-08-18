@@ -5,7 +5,6 @@ import {
 } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getMyCategory, getPendingCount, subscribeMyLib } from '@/lib/mylib';
-import { loadKey } from '@/lib/llm-config';
 
 // 桌面壳:常驻侧栏导航 + 内容区。
 // 后退语义:侧栏直达页(总览/生题/草稿/设置/分类队列)是同级切换,不需要后退;
@@ -30,10 +29,9 @@ interface NavItemProps {
   active: boolean;
   count?: number; // 右侧灰字计数(分类题数)
   badge?: number; // 警示角标(草稿待审)
-  warn?: boolean; // 警示点(如未配置 LLM key)
 }
 
-function NavItem({ href, icon: Icon, label, active, count, badge, warn }: NavItemProps) {
+function NavItem({ href, icon: Icon, label, active, count, badge }: NavItemProps) {
   return (
     <a
       href={href}
@@ -45,7 +43,6 @@ function NavItem({ href, icon: Icon, label, active, count, badge, warn }: NavIte
       }`}
     >
       <Icon className="h-4 w-4 shrink-0" />
-      {warn && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />}
       <span className="hidden min-w-0 flex-1 truncate lg:inline">{label}</span>
       {badge != null && badge > 0 && (
         <span className="hidden rounded-full bg-warning px-1.5 py-0.5 text-[10px] font-mono leading-none text-warning-foreground lg:inline">
@@ -62,7 +59,6 @@ function NavItem({ href, icon: Icon, label, active, count, badge, warn }: NavIte
 export function AppShell({ children }: { children: ReactNode }) {
   const mainRef = useRef<HTMLDivElement>(null);
   const [parts, setParts] = useState<string[]>(parseHashParts());
-  const [noKey, setNoKey] = useState(false);
   const { data } = useQuestions();
 
   // 草稿角标/我的题库计数跟随 mylib 变化
@@ -75,7 +71,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     const onChange = () => {
       setParts(parseHashParts());
       mainRef.current?.scrollTo({ top: 0 });
-      checkKey();
     };
 
     // Cmd/Ctrl+← 或 Alt+← 系统级后退;编辑场景(输入框/编辑器)不抢快捷键
@@ -87,20 +82,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       }
     };
 
-    let alive = true;
-    const checkKey = () => {
-      loadKey()
-        .then((k) => {
-          if (alive) setNoKey(!k);
-        })
-        .catch(() => {});
-    };
-    checkKey();
-
     window.addEventListener('hashchange', onChange);
     window.addEventListener('keydown', onKey);
     return () => {
-      alive = false;
       window.removeEventListener('hashchange', onChange);
       window.removeEventListener('keydown', onKey);
     };
@@ -154,9 +138,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           />
         </nav>
 
-        {/* 底部:设置(未配 key 亮警示点) */}
+        {/* 底部:设置 */}
         <div className="border-t border-border p-2">
-          <NavItem href="#/settings" icon={Settings} label="设置" active={root === 'settings'} warn={noKey} />
+          <NavItem href="#/settings" icon={Settings} label="设置" active={root === 'settings'} />
         </div>
       </aside>
 

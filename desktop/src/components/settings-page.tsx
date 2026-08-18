@@ -5,11 +5,16 @@ import { useTheme, type Theme } from '@/lib/theme';
 import { useQuestions } from '@/lib/questions';
 import { clearProgress, clearNotes, loadProgress, loadNotes } from '@/lib/storage';
 import { getMyCategory } from '@/lib/mylib';
+import { loadLimit, saveLimit, LIMIT_OPTIONS } from '@/lib/prefs';
 import { chat } from '@/lib/provider';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { PageHeader } from '@/components/page-header';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,
 } from '@/components/ui/dialog';
+
+// 设置页五分区:刷题(全局偏好)→ 外观 → LLM(生题)→ 数据管理 → 关于。
 
 const inputCls =
   'w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring';
@@ -20,9 +25,20 @@ const THEME_OPTIONS: Array<{ value: Theme; label: string; icon: LucideIcon }> = 
   { value: 'system', label: '跟随系统', icon: Monitor },
 ];
 
+const limitPill = (active: boolean) =>
+  `px-3 py-1.5 rounded-md text-xs font-mono transition-colors cursor-pointer ${
+    active ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-accent'
+  }`;
+
 export function SettingsPage() {
   const { data } = useQuestions();
   const myCategory = getMyCategory();
+
+  // ── 刷题 ──
+  const [limit, setLimit] = useState<number>(() => loadLimit());
+
+  // ── 外观 ──
+  const { theme, setTheme } = useTheme();
 
   // ── LLM ──
   const [preset, setPreset] = useState(loadConfig().preset);
@@ -32,9 +48,6 @@ export function SettingsPage() {
   const [keyLoaded, setKeyLoaded] = useState(false);
   const [status, setStatus] = useState<{ kind: 'ok' | 'err' | 'info'; text: string } | null>(null);
   const [testing, setTesting] = useState(false);
-
-  // ── 外观 ──
-  const { theme, setTheme } = useTheme();
 
   // ── 数据管理 ──
   const [refresh, setRefresh] = useState(0);
@@ -111,13 +124,54 @@ export function SettingsPage() {
     setRefresh((v) => v + 1);
   };
 
+  const activePreset = PRESETS.find((p) => p.id === preset);
+
   return (
     <div className="mx-auto max-w-2xl space-y-6" data-refresh={refresh}>
-      <h1 className="text-2xl font-bold">设置</h1>
+      <PageHeader title="设置" />
+
+      {/* ── 刷题 ─────────────────────────────────────── */}
+      <Card className="space-y-3 p-5">
+        <div className="text-sm font-medium">刷题</div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-muted-foreground">每次学习题量</span>
+          {LIMIT_OPTIONS.map((opt) => (
+            <button
+              key={opt}
+              className={limitPill(limit === opt)}
+              onClick={() => {
+                setLimit(opt);
+                saveLimit(opt);
+              }}
+            >
+              {opt === 0 ? '全部' : opt}
+            </button>
+          ))}
+        </div>
+        <div className="text-xs text-muted-foreground">进入队列即按此数量取题;待复习优先,不足用新题补。</div>
+      </Card>
+
+      {/* ── 外观 ────────────────────────────────────── */}
+      <Card className="space-y-3 p-5">
+        <div className="text-sm font-medium">外观</div>
+        <div className="flex flex-wrap gap-2">
+          {THEME_OPTIONS.map((o) => (
+            <Button
+              key={o.value}
+              size="sm"
+              variant={theme === o.value ? 'default' : 'outline'}
+              onClick={() => setTheme(o.value)}
+            >
+              <o.icon className="mr-1.5 h-3.5 w-3.5" />
+              {o.label}
+            </Button>
+          ))}
+        </div>
+      </Card>
 
       {/* ── LLM ─────────────────────────────────────── */}
-      <section className="space-y-5 rounded-lg border border-border bg-card p-5">
-        <div className="text-sm font-medium">LLM(生题用)</div>
+      <Card className="space-y-5 p-5">
+        <div className="text-sm font-medium">LLM(AI 生题用)</div>
 
         {/* 预设 */}
         <div className="space-y-2">
@@ -134,10 +188,8 @@ export function SettingsPage() {
               </Button>
             ))}
           </div>
-          {PRESETS.find((p) => p.id === preset)?.hint && (
-            <div className="text-xs text-muted-foreground font-mono">
-              {PRESETS.find((p) => p.id === preset)?.hint}
-            </div>
+          {activePreset?.hint && (
+            <div className="text-xs text-muted-foreground font-mono">{activePreset.hint}</div>
           )}
         </div>
 
@@ -189,28 +241,10 @@ export function SettingsPage() {
             </span>
           )}
         </div>
-      </section>
-
-      {/* ── 外观 ────────────────────────────────────── */}
-      <section className="space-y-3 rounded-lg border border-border bg-card p-5">
-        <div className="text-sm font-medium">外观</div>
-        <div className="flex flex-wrap gap-2">
-          {THEME_OPTIONS.map((o) => (
-            <Button
-              key={o.value}
-              size="sm"
-              variant={theme === o.value ? 'default' : 'outline'}
-              onClick={() => setTheme(o.value)}
-            >
-              <o.icon className="mr-1.5 h-3.5 w-3.5" />
-              {o.label}
-            </Button>
-          ))}
-        </div>
-      </section>
+      </Card>
 
       {/* ── 数据管理 ───────────────────────────────── */}
-      <section className="space-y-3 rounded-lg border border-border bg-card p-5">
+      <Card className="space-y-3 p-5">
         <div className="text-sm font-medium">数据管理</div>
         <div className="text-xs text-muted-foreground">
           清空操作按分类执行:清空进度删 SM-2 记录(题目和笔记保留);清空笔记只删笔记(进度保留)。均不可恢复。
@@ -250,18 +284,20 @@ export function SettingsPage() {
             </div>
           );
         })}
-      </section>
+      </Card>
 
-      <div className="text-xs text-muted-foreground font-mono">
+      {/* ── 关于 ───────────────────────────────────── */}
+      <Card className="flex flex-wrap items-center justify-between gap-2 p-5">
+        <div className="text-sm font-medium">关于</div>
         <a
           href="https://github.com/starlibaixing-coder/resume-assistant"
           target="_blank"
           rel="noreferrer"
-          className="hover:text-primary"
+          className="text-xs font-mono text-muted-foreground hover:text-primary"
         >
           GitHub ↗ 源码与官方题库
         </a>
-      </div>
+      </Card>
 
       {/* 清空确认 */}
       <Dialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>

@@ -1,16 +1,19 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useQuestions } from '@/lib/questions';
 import { getReviewQueue, getStats } from '@/lib/schedule';
 import { MY_CATEGORY_SLUG } from '@/lib/mylib';
+import { loadLimit } from '@/lib/prefs';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
+import { PageHeader } from '@/components/page-header';
 
-const LIMIT_OPTIONS = [20, 50, 100, 0] as const;
+// 分类队列页:今日数字 + 开始按钮 + 模块入口。
+// 每次学习题量是全局偏好,在设置页「刷题」分区配置(此页不再临时选)。
 
 export function ReviewQueue({ category }: { category: string }) {
   const { data, error } = useQuestions();
-  const [limit, setLimit] = useState<number>(50);
+  const limit = loadLimit();
 
   const { ids, stats, queue } = useMemo(() => {
     if (!data) return { ids: [] as string[], stats: null, queue: null };
@@ -30,15 +33,13 @@ export function ReviewQueue({ category }: { category: string }) {
   if (!cat) {
     if (category === MY_CATEGORY_SLUG) {
       return (
-        <div className="mx-auto max-w-3xl space-y-4">
-          <h1 className="text-2xl font-bold">
-            <span className="text-primary">●</span> 我的题库
-          </h1>
-          <div className="text-center py-16 space-y-3 rounded-lg border border-border bg-card">
+        <div className="mx-auto max-w-3xl space-y-6">
+          <PageHeader title="我的题库" />
+          <Card className="py-16 text-center space-y-3">
             <div className="text-foreground">我的题库还没有题</div>
             <div className="text-sm text-muted-foreground">AI 生题进草稿区,通过后就会出现在这里。</div>
             <a href="#/generate" className="inline-block text-primary hover:underline text-sm">去生题 →</a>
-          </div>
+          </Card>
         </div>
       );
     }
@@ -48,27 +49,25 @@ export function ReviewQueue({ category }: { category: string }) {
   const learnPct = stats.total ? Math.round((stats.learned / stats.total) * 100) : 0;
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <h1 className="text-2xl font-bold">
-          <span className="text-primary">●</span> {cat?.name || category}
-        </h1>
+      <div className="flex items-center justify-between gap-2">
+        <PageHeader title={cat?.name || category} />
         {category === MY_CATEGORY_SLUG && (
-          <Button asChild size="sm">
+          <Button asChild size="sm" className="shrink-0">
             <a href="#/generate">＋ AI 生题</a>
           </Button>
         )}
       </div>
 
-      <Card className="p-6 space-y-4">
-        <div className="text-center space-y-1">
+      <Card className="space-y-4 p-5">
+        <div className="space-y-1 text-center">
           {dueCount > 0 ? (
             <>
-              <div className="text-4xl font-bold text-primary font-mono">{dueCount}</div>
+              <div className="font-mono text-4xl font-bold text-primary">{dueCount}</div>
               <div className="text-sm text-muted-foreground">题待复习</div>
             </>
           ) : stats.remaining > 0 ? (
             <>
-              <div className="text-4xl font-bold text-primary font-mono">{stats.remaining}</div>
+              <div className="font-mono text-4xl font-bold text-primary">{stats.remaining}</div>
               <div className="text-sm text-muted-foreground">题未学习</div>
             </>
           ) : (
@@ -79,26 +78,12 @@ export function ReviewQueue({ category }: { category: string }) {
           )}
         </div>
 
-        <div className="flex items-center justify-center gap-2 text-sm">
-          <span className="text-muted-foreground">每次</span>
-          {LIMIT_OPTIONS.map((opt) => (
-            <button
-              key={opt}
-              className={`px-2.5 py-1 rounded text-xs font-mono transition-colors ${
-                limit === opt
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-secondary-foreground hover:bg-accent'
-              }`}
-              onClick={() => setLimit(opt)}
-            >
-              {opt === 0 ? '全部' : opt}
-            </button>
-          ))}
-          <span className="text-muted-foreground">题</span>
+        <div className="text-center text-xs text-muted-foreground font-mono">
+          每次学 {limit === 0 ? '全部' : limit} 题(可在设置中调整)
         </div>
 
         <Button asChild size="lg" className="w-full">
-          <a href={`#/${category}/quiz${limit !== 50 ? `?limit=${limit}` : ''}`}>
+          <a href={`#/${category}/quiz`}>
             开始{dueCount > 0 ? '复习' : stats.remaining > 0 ? '学习' : '再过一遍'} →
           </a>
         </Button>
@@ -118,7 +103,7 @@ export function ReviewQueue({ category }: { category: string }) {
             <a
               key={mod.id}
               href={`#/${category}/browse?m=${mod.id}`}
-              className="flex justify-between items-center p-3 bg-card border border-border rounded-md hover:border-primary transition-colors"
+              className="flex justify-between items-center p-3 bg-card border border-border rounded-md hover:border-primary transition-colors cursor-pointer"
             >
               <div>
                 <div className="text-sm text-foreground">{mod.name}</div>
@@ -132,4 +117,3 @@ export function ReviewQueue({ category }: { category: string }) {
     </div>
   );
 }
-

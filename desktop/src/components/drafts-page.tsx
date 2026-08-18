@@ -4,6 +4,8 @@ import type { MyQuestion } from '@/types/question';
 import { AnswerPanel } from '@/components/answer-panel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { PageHeader } from '@/components/page-header';
 
 // 草稿区(ADR-10):AI 生成的题先进 pending,在这里人工过目,
 // 通过(approved)才进「我的题库」聚合刷题;拒绝 = 删除。
@@ -42,23 +44,20 @@ export function DraftsPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6" data-version={version}>
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <h1 className="text-2xl font-bold">
-          <span className="text-primary">●</span> 草稿区
-          {pending.length > 0 && <span className="ml-2 font-mono text-base text-muted-foreground">{pending.length} 待审</span>}
-        </h1>
-        <a href="#/generate" className="text-sm text-primary hover:underline font-mono">+ AI 生题</a>
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <PageHeader title="草稿区" subtitle={pending.length > 0 ? `${pending.length} 题待审` : undefined} />
+        <a href="#/generate" className="pb-0.5 text-sm text-primary hover:underline font-mono">+ AI 生题</a>
       </div>
 
       {pending.length === 0 ? (
-        <div className="text-center py-16 space-y-3 rounded-lg border border-border bg-card">
+        <Card className="py-16 text-center space-y-3">
           <div className="text-4xl">✓</div>
           <div className="text-foreground">草稿区是空的</div>
           <div className="text-sm text-muted-foreground">
             AI 生成的题会先进这里,你确认后才进刷题队列。
           </div>
           <a href="#/generate" className="inline-block text-primary hover:underline text-sm">去生题 →</a>
-        </div>
+        </Card>
       ) : (
         <div className="space-y-6">
           {[...groups.entries()].map(([moduleId, qs]) => (
@@ -72,7 +71,7 @@ export function DraftsPage() {
                 </Button>
               </div>
 
-              <div className="bg-card border border-border rounded-md overflow-hidden">
+              <Card className="overflow-hidden">
                 {qs.map((q) => {
                   const isOpen = expandedId === q.id;
                   return (
@@ -104,7 +103,7 @@ export function DraftsPage() {
                     </div>
                   );
                 })}
-              </div>
+              </Card>
             </div>
           ))}
 

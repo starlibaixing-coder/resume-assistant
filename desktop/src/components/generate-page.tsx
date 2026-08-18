@@ -6,6 +6,8 @@ import type { Difficulty } from '@/types/question';
 import { AnswerPanel } from '@/components/answer-panel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { PageHeader } from '@/components/page-header';
 
 const DIFFICULTIES: Array<Difficulty | '不限'> = ['不限', '初', '中', '高'];
 
@@ -91,9 +93,7 @@ export function GeneratePage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="text-2xl font-bold">
-        <span className="text-primary">●</span> AI 生题
-      </h1>
+      <PageHeader title="AI 生题" />
 
       {llmReady === false && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-warning/50 bg-warning/10 p-4 text-sm">
@@ -104,7 +104,7 @@ export function GeneratePage() {
         </div>
       )}
 
-      <div className="space-y-4 rounded-lg border border-border bg-card p-5">
+      <Card className="space-y-4 p-5">
         <div className="space-y-1.5">
           <label className="text-xs text-muted-foreground font-mono">知识点</label>
           <input
@@ -143,7 +143,7 @@ export function GeneratePage() {
             {error}
           </div>
         )}
-      </div>
+      </Card>
 
       {result && (
         <div className="space-y-3">
@@ -166,7 +166,7 @@ export function GeneratePage() {
           {result.questions.map((q, i) => {
             const isOpen = expanded === i;
             return (
-              <div key={i} className="bg-card border border-border rounded-md">
+              <Card key={i} className="overflow-hidden">
                 <div
                   className="flex items-center gap-3 p-3 cursor-pointer hover:bg-accent transition-colors"
                   onClick={() => setExpanded(isOpen ? null : i)}
@@ -181,7 +181,7 @@ export function GeneratePage() {
                     <AnswerPanel answer={q.answer} followups={q.followups} />
                   </div>
                 )}
-              </div>
+              </Card>
             );
           })}
         </div>

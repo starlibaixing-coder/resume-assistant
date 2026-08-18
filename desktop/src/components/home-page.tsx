@@ -6,6 +6,8 @@ import { loadProgress } from '@/lib/storage';
 import { getMyCategory, getPendingCount, subscribeMyLib } from '@/lib/mylib';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { PageHeader } from '@/components/page-header';
 
 // 总览(桌面,行动优先):第一眼回答"现在刷什么"——
 // 行动卡(待复习最多/新题最多的分类 + 大按钮),数字行,分类进度网格。
@@ -75,16 +77,11 @@ export function HomePage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">总览</h1>
-        <p className="text-sm text-muted-foreground">
-          官方题库只读共享,你刷的进度和 AI 生成的题都存在本机。
-        </p>
-      </header>
+      <PageHeader title="总览" subtitle="官方题库只读共享,你刷的进度和 AI 生成的题都存在本机。" />
 
       {/* 行动卡:现在刷什么 */}
       {hero ? (
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-card p-6">
+        <Card className="flex flex-wrap items-center justify-between gap-4 p-5">
           <div className="min-w-0">
             <div className="font-mono text-xs text-muted-foreground">
               {hero.mode === 'due' ? '现在最该刷' : '开始学新题'}
@@ -99,9 +96,9 @@ export function HomePage() {
               {hero.mode === 'due' ? '继续刷题' : '开始学习'} <ChevronRight className="ml-1 h-4 w-4" />
             </a>
           </Button>
-        </div>
+        </Card>
       ) : (
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-card p-6">
+        <Card className="flex flex-wrap items-center justify-between gap-4 p-5">
           <div>
             <div className="text-xl font-bold text-success">全部学完 ✓</div>
             <div className="mt-1 text-sm text-muted-foreground">没有待复习和新题,再过一遍保持记忆。</div>
@@ -111,7 +108,7 @@ export function HomePage() {
               <a href={`#/${entries.find((e) => !e.isMy)!.slug}/quiz`}>再过一遍</a>
             </Button>
           )}
-        </div>
+        </Card>
       )}
 
       {/* 数字行 */}

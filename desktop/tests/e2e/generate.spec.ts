@@ -76,7 +76,7 @@ test('生题 → 存草稿 → approve → 我的题库可见 → 可开始刷�
   // 3) 存入草稿区(自动跳 #/drafts)
   await page.getByRole('button', { name: /存入草稿区/ }).click();
   await expect(page.getByText(/批次 01 · React Hooks 深入/)).toBeVisible();
-  await expect(page.getByText(/2 待审/)).toBeVisible();
+  await expect(page.getByText(/2 题待审/)).toBeVisible();
 
   // 4) 本批全部通过 → 草稿区清空
   await page.getByRole('button', { name: '本批全部通过' }).click();
@@ -106,12 +106,12 @@ test('草稿区:逐题拒绝不进我的题库', async ({ page }) => {
   await page.getByRole('button', { name: '生成', exact: true }).click();
   await expect(page.getByText('LLM 判断出 2 道')).toBeVisible({ timeout: 10_000 });
   await page.getByRole('button', { name: /存入草稿区/ }).click();
-  await expect(page.getByText(/2 待审/)).toBeVisible();
+  await expect(page.getByText(/2 题待审/)).toBeVisible();
 
   // 展开第一题拒绝
   await page.getByText('useEffect 的清理函数在哪些时机执行?').click();
   await page.getByRole('button', { name: /拒绝/ }).click();
-  await expect(page.getByText(/1 待审/)).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText(/1 题待审/)).toBeVisible({ timeout: 10_000 });
 
   // 首页我的题库仍为空(引导去生题)
   await page.goto('/#/');
@@ -121,29 +121,33 @@ test('草稿区:逐题拒绝不进我的题库', async ({ page }) => {
 test('设置页渲染:预设与 key 表单', async ({ page }) => {
   await page.goto('/#/settings');
   await expect(page.getByRole('heading', { name: '设置' })).toBeVisible();
-  await expect(page.getByRole('button', { name: '智谱 GLM' })).toBeVisible();
-  // 外观(主题)与数据管理(清空)也在此页
+  // 五分区:刷题(题量)/外观/LLM/数据管理/关于
+  await expect(page.getByText('每次学习题量')).toBeVisible();
   await expect(page.getByText('外观')).toBeVisible();
+  await expect(page.getByRole('button', { name: '智谱 GLM' })).toBeVisible();
   await expect(page.getByText('数据管理')).toBeVisible();
+  await expect(page.getByText('关于')).toBeVisible();
   // mock 返回了 key,label 会显示「API key(已存于系统钥匙串)」
   await expect(page.getByText(/^API key/)).toBeVisible();
   await expect(page.getByPlaceholder(/保持不变|sk-/)).toBeVisible();
 });
 
-test('官方题浏览页:按模块单模块翻页 + 全部题目分维度筛选', async ({ page }) => {
+test('官方题浏览页:统一筛选栏(模块/难度/状态)', async ({ page }) => {
   await page.goto('/#/agent/browse');
-  // 默认按模块:一次只显示一个模块,底部上/下模块翻页(题库 meta 模块顺序即翻页顺序)
-  await expect(page.getByText(/1 \/ \d+/)).toBeVisible();
-  await expect(page.getByRole('button', { name: /^← 已是第一个/ })).toBeDisabled();
-  await page.getByRole('button', { name: /下一个 · / }).click();
-  await expect(page.getByText(/2 \/ \d+/)).toBeVisible();
-  // 切全部题目:全局序号 + 模块名标签 + 题目标签 + 难度/状态两维筛选
-  await page.getByRole('button', { name: '全部题目' }).click();
-  await expect(page.getByText('难度', { exact: true })).toBeVisible();
-  await expect(page.getByText('状态', { exact: true })).toBeVisible();
+  // 统一筛选栏:模块/难度/状态三个下拉,可组合,带结果计数
+  await expect(page.getByLabel('模块')).toBeVisible();
+  await expect(page.getByLabel('难度')).toBeVisible();
+  await expect(page.getByLabel('状态')).toBeVisible();
   await expect(page.getByText(/共 \d+ 题/)).toBeVisible();
-  // 难度筛"高"后列表变化
+  // 筛单个模块:出现该模块统计 + 进度条
+  const modSelect = page.getByLabel('模块');
+  await modSelect.selectOption({ index: 1 });
+  await expect(page.getByText(/已学 \d+\/\d+/).first()).toBeVisible();
+  // 叠加难度筛选,计数变化
   const totalText = await page.getByText(/共 \d+ 题/).innerText();
-  await page.locator('main button').filter({ hasText: /^高$/ }).click();
+  await page.getByLabel('难度').selectOption('高');
   await expect(page.getByText(/共 \d+ 题/)).not.toHaveText(totalText);
+  // 重置回全部
+  await page.getByRole('button', { name: '重置' }).click();
+  await expect(page.getByLabel('模块')).toHaveValue('all');
 });
