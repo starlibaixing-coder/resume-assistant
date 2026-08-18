@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Link } from 'react-router';
 import { useQuestions } from '@/lib/questions';
 import { getReviewQueue, getStats } from '@/lib/schedule';
 import { MY_CATEGORY_SLUG } from '@/lib/mylib';
@@ -11,7 +12,7 @@ import { PageHeader } from '@/components/page-header';
 // 分类队列页:今日数字 + 开始按钮 + 模块入口。
 // 每次学习题量是全局偏好,在设置页「刷题」分区配置(此页不再临时选)。
 
-export function ReviewQueue({ category }: { category: string }) {
+export function QueuePage({ category }: { category: string }) {
   const { data, error } = useQuestions();
   const limit = loadLimit();
 
@@ -39,7 +40,7 @@ export function ReviewQueue({ category }: { category: string }) {
             <CardContent className="space-y-3 py-16 text-center">
               <div className="text-foreground">我的题库还没有题</div>
               <div className="text-sm text-muted-foreground">AI 生题进草稿区,通过后就会出现在这里。</div>
-              <a href="#/generate" className="inline-block text-primary hover:underline text-sm">去生题 →</a>
+              <Link to="/generate" className="inline-block text-primary hover:underline text-sm">去生题 →</Link>
             </CardContent>
           </Card>
         </div>
@@ -55,7 +56,7 @@ export function ReviewQueue({ category }: { category: string }) {
         <PageHeader title={cat?.name || category} />
         {category === MY_CATEGORY_SLUG && (
           <Button asChild size="sm" className="shrink-0">
-            <a href="#/generate">＋ AI 生题</a>
+            <Link to="/generate">＋ AI 生题</Link>
           </Button>
         )}
       </div>
@@ -86,9 +87,9 @@ export function ReviewQueue({ category }: { category: string }) {
         </div>
 
         <Button asChild size="lg" className="w-full">
-          <a href={`#/${category}/quiz`}>
+          <Link to={`/${category}/quiz`}>
             开始{dueCount > 0 ? '复习' : stats.remaining > 0 ? '学习' : '再过一遍'} →
-          </a>
+          </Link>
         </Button>
 
         <div className="space-y-1.5">
@@ -104,9 +105,9 @@ export function ReviewQueue({ category }: { category: string }) {
         <div className="text-xs font-mono uppercase tracking-wide text-muted-foreground mb-3">模块浏览</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {cat?.modules.map((mod) => (
-            <a
+            <Link
               key={mod.id}
-              href={`#/${category}/browse?m=${mod.id}`}
+              to={`/${category}/browse?m=${mod.id}`}
               className="flex justify-between items-center p-3 bg-card border border-border rounded-md hover:border-primary transition-colors cursor-pointer"
             >
               <div>
@@ -114,7 +115,7 @@ export function ReviewQueue({ category }: { category: string }) {
                 <div className="text-xs text-muted-foreground font-mono">模块 {String(mod.id).padStart(2, '0')}</div>
               </div>
               <div className="text-xs text-muted-foreground">{mod.count} 题</div>
-            </a>
+            </Link>
           ))}
         </div>
       </div>

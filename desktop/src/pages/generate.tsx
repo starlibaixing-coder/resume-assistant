@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { generateQuestions, type GeneratedQuestion } from '@/lib/generate';
 import { resolveChatOptions } from '@/lib/llm-config';
 import { addDrafts } from '@/lib/mylib';
@@ -18,6 +19,8 @@ const pill = (active: boolean) =>
   }`;
 
 export function GeneratePage() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [topic, setTopic] = useState('');
   const [difficulty, setDifficulty] = useState<Difficulty | '不限'>('不限');
   const [loading, setLoading] = useState(false);
@@ -36,9 +39,7 @@ export function GeneratePage() {
         .catch(() => setLlmReady(false));
     };
     check();
-    window.addEventListener('hashchange', check);
-    return () => window.removeEventListener('hashchange', check);
-  }, []);
+  }, [location.pathname]);
 
   const handleGenerate = async () => {
     setError(null);
@@ -82,7 +83,7 @@ export function GeneratePage() {
         })),
         result.topic,
       );
-      window.location.hash = '#/drafts';
+      navigate('/drafts');
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setSaving(false);
@@ -97,7 +98,7 @@ export function GeneratePage() {
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-warning/50 bg-warning/10 p-4 text-sm">
           <span>还没配置 LLM(baseURL / model / API key),生成前需要先设置。</span>
           <Button asChild size="sm">
-            <a href="#/settings">去设置 →</a>
+            <Link to="/settings">去设置 →</Link>
           </Button>
         </div>
       )}
@@ -134,7 +135,7 @@ export function GeneratePage() {
         {noKey && (
           <div className="text-sm text-muted-foreground">
             还没配置 LLM。先去{' '}
-            <a href="#/settings" className="text-primary hover:underline">设置页</a>
+            <Link to="/settings" className="text-primary hover:underline">设置页</Link>
             {' '}填 API key(智谱/DeepSeek/本地 Ollama 均可)。
           </div>
         )}
