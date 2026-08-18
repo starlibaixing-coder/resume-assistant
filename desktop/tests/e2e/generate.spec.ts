@@ -61,6 +61,10 @@ async function mockChat(page: Page) {
 test.beforeEach(async ({ page }) => {
   await mockTauri(page);
   await mockChat(page);
+  // LLM 配置(自定义形式,无预设默认):种一份 mock 端点,聊天请求由 mockChat 拦截
+  await page.addInitScript(() =>
+    localStorage.setItem('llm-config', JSON.stringify({ baseURL: 'http://mock.local/v1', model: 'mock-model' })),
+  );
 });
 
 test('生题 → 存草稿 → approve → 我的题库可见 → 可开始刷题', async ({ page }) => {
@@ -124,12 +128,15 @@ test('设置页渲染:预设与 key 表单', async ({ page }) => {
   // 五分区:刷题(题量)/外观/LLM/数据管理/关于
   await expect(page.getByText('每次学习题量')).toBeVisible();
   await expect(page.getByText('外观')).toBeVisible();
-  await expect(page.getByRole('button', { name: '智谱 GLM' })).toBeVisible();
+  await expect(page.getByText('LLM(AI 生题用)')).toBeVisible();
   await expect(page.getByText('数据管理')).toBeVisible();
   await expect(page.getByText('关于')).toBeVisible();
-  // mock 返回了 key,label 会显示「API key(已存于系统钥匙串)」
-  await expect(page.getByText(/^API key/)).toBeVisible();
-  await expect(page.getByPlaceholder(/保持不变|sk-/)).toBeVisible();
+  // LLM 区:自定义三字段,无预设按钮;mock 的 key 回显在输入框
+  await expect(page.getByText('baseURL', { exact: true })).toBeVisible();
+  await expect(page.getByText('OpenAI 兼容端点')).toBeVisible();
+  const keyInput = page.getByPlaceholder('sk-…');
+  await expect(keyInput).toBeVisible();
+  await expect(keyInput).toHaveValue('test-key');
 });
 
 test('官方题浏览页:统一筛选栏(模块/难度/状态)', async ({ page }) => {

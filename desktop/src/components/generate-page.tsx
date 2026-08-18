@@ -95,7 +95,7 @@ export function GeneratePage() {
 
       {llmReady === false && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-warning/50 bg-warning/10 p-4 text-sm">
-          <span>还没配置 LLM(服务商 / API key),生成前需要先设置。</span>
+          <span>还没配置 LLM(baseURL / model / API key),生成前需要先设置。</span>
           <Button asChild size="sm">
             <a href="#/settings">去设置 →</a>
           </Button>

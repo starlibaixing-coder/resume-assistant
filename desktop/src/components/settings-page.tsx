@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Sun, Moon, Monitor, type LucideIcon } from 'lucide-react';
-import { PRESETS, loadConfig, loadKey, saveConfig, saveKey, isTauri } from '@/lib/llm-config';
+import { loadConfig, loadKey, saveConfig, saveKey, isTauri } from '@/lib/llm-config';
 import { useTheme, type Theme } from '@/lib/theme';
 import { useQuestions } from '@/lib/questions';
 import { clearProgress, clearNotes, loadProgress, loadNotes } from '@/lib/storage';
@@ -33,47 +33,29 @@ export function SettingsPage() {
   // ── 外观 ──
   const { theme, setTheme } = useTheme();
 
-  // ── LLM ──
-  const [preset, setPreset] = useState(loadConfig().preset);
+  // ── LLM(自定义:任何 OpenAI 兼容端点)──
   const [baseURL, setBaseURL] = useState(loadConfig().baseURL);
   const [model, setModel] = useState(loadConfig().model);
   const [apiKey, setApiKey] = useState('');
-  const [keyLoaded, setKeyLoaded] = useState(false);
-  const [status, setStatus] = useState<{ kind: 'ok' | 'err' | 'info'; text: string } | null>(null);
+  const [status, setStatus] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
   const [testing, setTesting] = useState(false);
 
   // ── 数据管理 ──
   const [refresh, setRefresh] = useState(0);
   const [confirm, setConfirm] = useState<{ kind: 'progress' | 'notes'; category: string; name: string } | null>(null);
 
-  // 启动时从 keyring 读 key(只判断有无,不回显明文)
+  // 启动时读已存 key 回显(password 输入框视觉遮蔽即可,不做 '********' 掩码——
+  // 掩码会制造"已保存"的错觉,浏览器预览刷新后 key 实际为空却看不出来)
   useEffect(() => {
     loadKey()
-      .then((k) => {
-        setApiKey(k ? '********' : '');
-        setKeyLoaded(!!k);
-      })
-      .catch(() => setKeyLoaded(false));
+      .then((k) => setApiKey(k))
+      .catch(() => {});
   }, []);
-
-  const pickPreset = (id: string) => {
-    const p = PRESETS.find((x) => x.id === id);
-    if (!p) return;
-    setPreset(id);
-    setBaseURL(p.baseURL);
-    setModel(p.model);
-    setStatus(null);
-  };
 
   const handleSave = async () => {
     try {
-      saveConfig({ preset, baseURL: baseURL.trim(), model: model.trim() });
-      // 占位符 ******** = 不改 key
-      if (apiKey && apiKey !== '********') {
-        await saveKey(apiKey.trim());
-        setKeyLoaded(true);
-        setApiKey('********');
-      }
+      saveConfig({ baseURL: baseURL.trim(), model: model.trim() });
+      await saveKey(apiKey.trim());
       setStatus({ kind: 'ok', text: '已保存' });
     } catch (e) {
       setStatus({ kind: 'err', text: `保存失败: ${e instanceof Error ? e.message : String(e)}` });
@@ -81,11 +63,9 @@ export function SettingsPage() {
   };
 
   const handleTest = async () => {
-    setTesting(true);
-    setStatus({ kind: 'info', text: '测试中…' });
+    setTesting(true); // 状态只显示最终结果,进行中由按钮自己表达(不重复提示)
     try {
-      // 用当前表单值直接测(不要求先保存)
-      const key = apiKey && apiKey !== '********' ? apiKey.trim() : await loadKey();
+      const key = apiKey.trim(); // 输入框即真相,不另读存储
       if (!key) throw new Error('未填 API key');
       if (!baseURL.trim() || !model.trim()) throw new Error('baseURL / model 未填全');
       const reply = await chat(
@@ -116,8 +96,6 @@ export function SettingsPage() {
     setConfirm(null);
     setRefresh((v) => v + 1);
   };
-
-  const activePreset = PRESETS.find((p) => p.id === preset);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6" data-refresh={refresh}>
@@ -172,26 +150,9 @@ export function SettingsPage() {
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-base">LLM(AI 生题用)</CardTitle></CardHeader>
         <CardContent className="space-y-5">
-
-        {/* 预设 */}
-        <div className="space-y-2">
-          <div className="text-xs text-muted-foreground">服务商(OpenAI 兼容)</div>
-          <div className="flex flex-wrap gap-2">
-            {PRESETS.map((p) => (
-              <Button
-                key={p.id}
-                size="sm"
-                variant={preset === p.id ? 'default' : 'outline'}
-                onClick={() => pickPreset(p.id)}
-              >
-                {p.name}
-              </Button>
-            ))}
+          <div className="text-xs text-muted-foreground">
+            任何 OpenAI 兼容端点(智谱 / DeepSeek / 本地 Ollama 等)。
           </div>
-          {activePreset?.hint && (
-            <div className="text-xs text-muted-foreground font-mono">{activePreset.hint}</div>
-          )}
-        </div>
 
         {/* baseURL / model */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -207,20 +168,18 @@ export function SettingsPage() {
 
         {/* API key */}
         <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground font-mono">
-            API key{keyLoaded ? '(已存于系统钥匙串)' : ''}
-          </label>
+          <label className="text-xs text-muted-foreground font-mono">API key</label>
           <Input
             type="password"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
-            placeholder={keyLoaded ? '留空或 ******** 保持不变' : 'sk-…'}
+            placeholder="sk-…"
             autoComplete="off"
           />
           <div className="text-xs text-muted-foreground">
             {isTauri()
-              ? 'key 只存操作系统钥匙串(macOS Keychain),不落应用数据目录。'
-              : '当前是浏览器预览:key 仅存内存,刷新即失(桌面版才进钥匙串)。'}
+              ? 'key 存操作系统钥匙串(macOS Keychain),不落应用数据目录;保存后回显在此。'
+              : '当前是浏览器预览:key 仅存内存,刷新即失(输入框会变空;桌面版才进钥匙串)。'}
           </div>
         </div>
 
