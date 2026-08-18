@@ -9,6 +9,7 @@ import { loadLimit, saveLimit, LIMIT_OPTIONS } from '@/lib/prefs';
 import { chat } from '@/lib/provider';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/page-header';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,
@@ -16,19 +17,11 @@ import {
 
 // 设置页五分区:刷题(全局偏好)→ 外观 → LLM(生题)→ 数据管理 → 关于。
 
-const inputCls =
-  'w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring';
-
 const THEME_OPTIONS: Array<{ value: Theme; label: string; icon: LucideIcon }> = [
   { value: 'light', label: '浅色', icon: Sun },
   { value: 'dark', label: '深色', icon: Moon },
   { value: 'system', label: '跟随系统', icon: Monitor },
 ];
-
-const limitPill = (active: boolean) =>
-  `px-3 py-1.5 rounded-md text-xs font-mono transition-colors cursor-pointer ${
-    active ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-accent'
-  }`;
 
 export function SettingsPage() {
   const { data } = useQuestions();
@@ -136,16 +129,18 @@ export function SettingsPage() {
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-muted-foreground">每次学习题量</span>
           {LIMIT_OPTIONS.map((opt) => (
-            <button
+            <Button
               key={opt}
-              className={limitPill(limit === opt)}
+              size="sm"
+              variant={limit === opt ? 'default' : 'outline'}
+              className="font-mono"
               onClick={() => {
                 setLimit(opt);
                 saveLimit(opt);
               }}
             >
               {opt === 0 ? '全部' : opt}
-            </button>
+            </Button>
           ))}
         </div>
         <div className="text-xs text-muted-foreground">进入队列即按此数量取题;待复习优先,不足用新题补。</div>
@@ -197,11 +192,11 @@ export function SettingsPage() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
             <label className="text-xs text-muted-foreground font-mono">baseURL</label>
-            <input className={inputCls} value={baseURL} onChange={(e) => setBaseURL(e.target.value)} placeholder="https://…/v1" />
+            <Input value={baseURL} onChange={(e) => setBaseURL(e.target.value)} placeholder="https://…/v1" />
           </div>
           <div className="space-y-1.5">
             <label className="text-xs text-muted-foreground font-mono">model</label>
-            <input className={inputCls} value={model} onChange={(e) => setModel(e.target.value)} placeholder="glm-4-flash" />
+            <Input value={model} onChange={(e) => setModel(e.target.value)} placeholder="glm-4-flash" />
           </div>
         </div>
 
@@ -210,8 +205,7 @@ export function SettingsPage() {
           <label className="text-xs text-muted-foreground font-mono">
             API key{keyLoaded ? '(已存于系统钥匙串)' : ''}
           </label>
-          <input
-            className={inputCls}
+          <Input
             type="password"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}

@@ -5,9 +5,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-
-const inputCls =
-  'w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 // 编辑我的题(改后再过共享校验,不过不让存)。官方题不可原地改(ADR-3),先复制再改。
 export function QuestionEditDialog({
@@ -74,11 +73,11 @@ export function QuestionEditDialog({
         <div className="space-y-3">
           <div className="space-y-1.5">
             <label className="text-xs text-muted-foreground font-mono">题干</label>
-            <input className={inputCls} value={title} onChange={(e) => setTitle(e.target.value)} />
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
           <div className="space-y-1.5">
             <label className="text-xs text-muted-foreground font-mono">考察点(focus)</label>
-            <input className={inputCls} value={focus} onChange={(e) => setFocus(e.target.value)} />
+            <Input value={focus} onChange={(e) => setFocus(e.target.value)} />
           </div>
           <div className="flex items-center gap-2">
             <label className="text-xs text-muted-foreground font-mono">难度</label>
@@ -90,15 +89,15 @@ export function QuestionEditDialog({
           </div>
           <div className="space-y-1.5">
             <label className="text-xs text-muted-foreground font-mono">答案要点(一行一条,合计 ≥50 字)</label>
-            <textarea className={`${inputCls} min-h-32 font-mono text-xs`} value={answer} onChange={(e) => setAnswer(e.target.value)} />
+            <Textarea className="min-h-32 font-mono text-xs" value={answer} onChange={(e) => setAnswer(e.target.value)} />
           </div>
           <div className="space-y-1.5">
             <label className="text-xs text-muted-foreground font-mono">追问(一行一条,可空)</label>
-            <textarea className={`${inputCls} min-h-16 font-mono text-xs`} value={followups} onChange={(e) => setFollowups(e.target.value)} />
+            <Textarea className="min-h-16 font-mono text-xs" value={followups} onChange={(e) => setFollowups(e.target.value)} />
           </div>
           <div className="space-y-1.5">
             <label className="text-xs text-muted-foreground font-mono">标签(逗号分隔)</label>
-            <input className={inputCls} value={tags} onChange={(e) => setTags(e.target.value)} placeholder="react, hooks" />
+            <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="react, hooks" />
           </div>
           {error && (
             <div className="text-xs text-destructive whitespace-pre-wrap rounded-md border border-destructive/40 bg-destructive/10 p-2">

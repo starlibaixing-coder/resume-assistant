@@ -122,7 +122,7 @@ Requirements: Node.js 18+,系统 Chrome(简历渲染用),Node 20+(CI 用)。
 设计稿:`docs/superpowers/specs/2026-08-13-quiz-app-agent-design.md`(10 个 ADR,施工前重读 §7 硬约束)。
 
 - **桌面壳**(`src/components/app-shell.tsx`):常驻侧栏导航 + 内容区,窄窗(<lg)侧栏收成图标栏。设置页五分区:刷题(每次学习题量,localStorage,队列/刷题页读 prefs.ts)/外观/LLM/数据管理/关于;后退只用于下钻子页(刷题/浏览页左上角"← 回到{分类名}题库",固定回队列,不依赖历史;侧栏同级切换不显示后退;Cmd+← 为系统级 history.back);浏览页 = 管理查阅视图,单列表+统一筛选栏(模块/难度/状态三个下拉可组合,筛单模块时显统计+进度条;行=全局序号+模块名小标签+题干+题目标签+难度);focus 平铺在题干下,我的题展开仅编辑/删除,无答案查看、无笔记面板(答题/评分/笔记都在刷题页);生题数量由 LLM 按知识点广度自定(prompt 有上限约束),不设数量选择。窗口默认 1200×800(`src-tauri/tauri.conf.json`)。
-- **UI 规范**:页面头统一用 `PageHeader`(禁止手写 h1 加"●"装饰,已全删);区块卡/列表容器一律 shadcn `Card`(区块卡 p-5,列表容器 overflow-hidden+行 p-3/展开 px-3.5 pb-4);页面外层一律 space-y-6;宽度分层 max-w-2xl(刷题)/3xl(表单)/4xl(浏览)/3xl→队列/5xl(总览);筛选用下拉(FilterSelect),不要按钮平铺。
+- **UI 规范**:页面头统一用 `PageHeader`(禁止手写 h1 加"●"装饰,已全删);区块卡/列表容器一律 shadcn `Card`(区块卡 p-5,列表容器 overflow-hidden+行 p-3/展开 px-3.5 pb-4);页面外层一律 space-y-6;宽度分层 max-w-2xl(刷题)/3xl(表单)/4xl(浏览)/3xl→队列/5xl(总览);筛选用 shadcn Select(FilterSelect),不要按钮平铺;**表单/交互控件一律用 shadcn ui 组件(Button/Input/Textarea/Select/Dialog 等),不手写原生标签**(原生 select 的 option 面板不吃 Tailwind token,深色主题下会突兀)。新增 shadcn 组件 = 复制源码进 `src/components/ui/`(内部用 Radix 行为层),缺依赖装对应 @radix-ui/*。
 
 - **双库模型**(ADR-3):官方 YAML 库只读(`public/questions.json`),我的库存本地 SQLite,刷题界面聚合两者。官方题不可原地改删,只能"复制成副本再改"。
 - **AI 生题为核心功能**:侧栏一级项(总览后)+ 总览按钮行 + 我的题库语境入口(队列页/浏览页「＋ AI 生题」);总览分类卡片按最近学习降序(lastReview 最大值,未学的原序靠后)。

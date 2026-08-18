@@ -5,6 +5,7 @@ import { MY_CATEGORY_SLUG, getMyQuestion } from '@/lib/mylib';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { PageHeader } from '@/components/page-header';
 import { QuestionEditDialog, DeleteQuestionDialog } from '@/components/question-edit-dialog';
@@ -31,9 +32,7 @@ const STATUS_OPTIONS: Array<{ key: StatusFilter; label: string }> = [
   { key: 'mastered', label: '已掌握' },
 ];
 
-const selectCls =
-  'rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring';
-
+// 筛选下拉:shadcn Select(Radix 行为 + token 样式),不写原生 select
 function FilterSelect({
   label,
   value,
@@ -48,11 +47,18 @@ function FilterSelect({
   return (
     <label className="flex items-center gap-1.5">
       <span className="text-xs text-muted-foreground font-mono">{label}</span>
-      <select className={selectCls} value={value} onChange={(e) => onChange(e.target.value)} aria-label={label}>
-        {options.map((o) => (
-          <option key={o.key} value={o.key}>{o.label}</option>
-        ))}
-      </select>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger aria-label={label} className="h-8 w-36 text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="max-h-72">
+          {options.map((o) => (
+            <SelectItem key={o.key} value={o.key} className="text-xs">
+              {o.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </label>
   );
 }
