@@ -24,7 +24,9 @@ log = "0.4"
 tauri = { version = "2.11.3", features = [] }
 tauri-plugin-log = "2"
 tauri-plugin-sql = "2"
-keyring = "3.6.3"
+# keyring v3 平台后端是可选 feature,不开 apple-native 则 Entry::new 报 NoStorageAccess
+# (钥匙串静默失效:保存报错、读取被前端吞掉)
+keyring = { version = "3.6.3", features = ["apple-native"] }
 
 [dev-dependencies]
 # bundled 自带 SQLite,测试时不依赖系统 libsqlite3
