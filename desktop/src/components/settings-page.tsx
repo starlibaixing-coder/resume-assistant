@@ -49,7 +49,10 @@ export function SettingsPage() {
   useEffect(() => {
     loadKey()
       .then((k) => setApiKey(k))
-      .catch(() => {});
+      .catch((e) => {
+        // 钥匙串读取失败必须显式暴露(曾经静默吞掉,掩盖 keyring feature 缺失数月)
+        setStatus({ kind: 'err', text: `读取已存 key 失败:${e instanceof Error ? e.message : String(e)}` });
+      });
   }, []);
 
   const handleSave = async () => {

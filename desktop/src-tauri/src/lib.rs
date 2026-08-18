@@ -68,6 +68,22 @@ mod tests {
     use super::*;
     use rusqlite::Connection;
 
+    // 真·钥匙串读写回归:keyring v3 不开 apple-native feature 时 Entry::new 报
+    // NoStorageAccess,保存/读取全部静默失效(e2e mock invoke 测不出,必须打真后端)。
+    #[test]
+    fn keyring_roundtrip() {
+        let entry = keyring_entry().expect("keyring Entry::new 失败(检查 apple-native feature)");
+        entry.set_password("sk-roundtrip-test").expect("写入钥匙串失败");
+        let got = entry.get_password().expect("读取钥匙串失败");
+        assert_eq!(got, "sk-roundtrip-test");
+        entry.delete_credential().expect("清理测试 key 失败");
+        // 删除后 NoEntry → get_api_key 应返回 None 语义
+        match entry.get_password() {
+            Err(keyring::Error::NoEntry) => {}
+            other => panic!("删除后应 NoEntry,实际:{other:?}"),
+        }
+    }
+
     // 在内存 SQLite 上跑全部 migration(每个测试独立内存库)
     fn migrated_db() -> Connection {
         let conn = Connection::open_in_memory().unwrap();
