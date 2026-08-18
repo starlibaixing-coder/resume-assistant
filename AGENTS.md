@@ -41,12 +41,9 @@ Workspace instructions for ZCode agents working in this repo.
 
 ### 桌面端(desktop/,主开发线)
 
-- **组件一律 shadcn**:表单/交互控件不写原生标签(原生 select 的 option 面板不吃 Tailwind token);缺组件 = 复制源码进 `src/components/ui/`,依赖装对应 `@radix-ui/*`。
-- **Card 用官方结构**(CardHeader/CardTitle/CardDescription/CardContent/CardFooter),禁止在 Card 上堆布局 class;列表容器可 bare Card + overflow-hidden;页面头统一 `PageHeader`。
-- **index.css 必须保留** `@layer base { * { border-color: var(--border) } }`——删了 Card 裸 border 会回落 currentColor(文字色),浅色模式渲染黑框。
-- **模块内排序按 id 第三段数字**(`index` 字段是"模块.题号"小数,>9 题的模块按它排会乱序)。
-- **质量闸**:AI 生成的题必先进草稿区,用户 approve 后才进 SM-2 队列;生题数量由 LLM 按知识点广度判定(prompt 含上限与"宁缺毋滥"约束)。
-- **UI 表面层级**:background / card / accent 三层,浮层一律 card 色;暗色边框是低透明度发丝线,不做深色描边。
+- **UI 组件照 shadcn 官方用法**:不写原生标签,不自创结构变体;缺组件按官方方式补源码进 `src/components/ui/`;有公共组件(PageHeader 等)就复用,不各写各的。
+- **在 token 体系内工作**:颜色、边框、间距只用现有 CSS token 与既有层级,不引入魔法值和新色调。
+- **AI 产物必经人工审核**(ADR-10):生成内容一律先进草稿区,approve 后才入正式库与 SM-2 队列。
 
 ### web 刷题站(quiz-app/)
 
