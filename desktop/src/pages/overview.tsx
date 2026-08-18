@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router';
 import { Sparkles, Inbox, ChevronRight } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getStats } from '@/lib/schedule';
@@ -6,7 +7,7 @@ import { loadProgress } from '@/lib/storage';
 import { getMyCategory, getPendingCount, subscribeMyLib } from '@/lib/mylib';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/page-header';
 
 // 总览(桌面,行动优先):第一眼回答"现在刷什么"——
@@ -31,7 +32,7 @@ function lastActiveOf(slug: string): number {
   return max;
 }
 
-export function HomePage() {
+export function OverviewPage() {
   const { data } = useQuestions();
   const [, bump] = useState(0);
   useEffect(() => subscribeMyLib(() => bump((v) => v + 1)), []);
@@ -82,36 +83,36 @@ export function HomePage() {
       {/* 行动卡:现在刷什么 */}
       {hero ? (
         <Card>
-          <CardHeader className="pb-2">
-            <CardDescription className="font-mono text-xs">
-              {hero.mode === 'due' ? '现在最该刷' : '开始学新题'}
-            </CardDescription>
-            <CardTitle className="truncate text-xl leading-snug">{hero.name}</CardTitle>
-            <CardDescription>
-              {hero.mode === 'due' ? `${hero.dueToday} 题待复习` : `${hero.remaining} 题没学过`}
-            </CardDescription>
-          </CardHeader>
-          <CardFooter>
+          <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
+            <div className="min-w-0">
+              <div className="font-mono text-xs text-muted-foreground">
+                {hero.mode === 'due' ? '现在最该刷' : '开始学新题'}
+              </div>
+              <div className="mt-1 truncate text-xl font-bold leading-snug">{hero.name}</div>
+              <div className="mt-1 text-sm text-muted-foreground">
+                {hero.mode === 'due' ? `${hero.dueToday} 题待复习` : `${hero.remaining} 题没学过`}
+              </div>
+            </div>
             <Button asChild size="lg">
-              <a href={`#/${hero.slug}/quiz`}>
+              <Link to={`/${hero.slug}/quiz`}>
                 {hero.mode === 'due' ? '继续刷题' : '开始学习'} <ChevronRight className="ml-1 h-4 w-4" />
-              </a>
+              </Link>
             </Button>
-          </CardFooter>
+          </CardContent>
         </Card>
       ) : (
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xl text-success">全部学完 ✓</CardTitle>
-            <CardDescription>没有待复习和新题,再过一遍保持记忆。</CardDescription>
-          </CardHeader>
-          <CardFooter>
+          <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
+            <div>
+              <div className="text-xl font-bold text-success">全部学完 ✓</div>
+              <div className="mt-1 text-sm text-muted-foreground">没有待复习和新题,再过一遍保持记忆。</div>
+            </div>
             {entries.find((e) => !e.isMy) && (
               <Button asChild size="lg" variant="outline">
-                <a href={`#/${entries.find((e) => !e.isMy)!.slug}/quiz`}>再过一遍</a>
+                <Link to={`/${entries.find((e) => !e.isMy)!.slug}/quiz`}>再过一遍</Link>
               </Button>
             )}
-          </CardFooter>
+          </CardContent>
         </Card>
       )}
 
@@ -119,21 +120,21 @@ export function HomePage() {
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
         <span className={totalDue > 0 ? 'text-warning' : 'text-muted-foreground'}>待复习 {totalDue}</span>
         <span className="text-muted-foreground">未学 {totalRemaining} / 共 {totalCount}</span>
-        <a
-          href="#/drafts"
+        <Link
+          to="/drafts"
           className={pendingCount > 0 ? 'text-warning hover:underline' : 'text-muted-foreground hover:text-foreground'}
         >
           草稿待审 {pendingCount}
-        </a>
+        </Link>
       </div>
 
       {/* 快捷操作:生题是核心功能,一级入口 */}
       <div className="flex flex-wrap gap-2">
         <Button asChild>
-          <a href="#/generate"><Sparkles className="mr-1.5 h-4 w-4" />AI 生题</a>
+          <Link to="/generate"><Sparkles className="mr-1.5 h-4 w-4" />AI 生题</Link>
         </Button>
         <Button asChild variant="outline">
-          <a href="#/drafts"><Inbox className="mr-1.5 h-4 w-4" />草稿区{pendingCount > 0 ? `(${pendingCount})` : ''}</a>
+          <Link to="/drafts"><Inbox className="mr-1.5 h-4 w-4" />草稿区{pendingCount > 0 ? `(${pendingCount})` : ''}</Link>
         </Button>
       </div>
 
@@ -143,10 +144,11 @@ export function HomePage() {
           const pct = e.total ? Math.round((e.learned / e.total) * 100) : 0;
           const empty = e.isMy && e.total === 0;
           return (
-            <a key={e.slug} href={empty ? '#/generate' : `#/${e.slug}`} className="group cursor-pointer">
-            <Card className={`flex h-full flex-col gap-2.5 p-4 transition-colors ${
+            <Link key={e.slug} to={empty ? '/generate' : `/${e.slug}`} className="group cursor-pointer">
+            <Card className={`h-full transition-colors ${
               empty ? 'border-dashed bg-card/50 hover:border-primary' : 'hover:border-primary'
             }`}>
+              <CardContent className="flex h-full flex-col gap-2.5 p-4">
               <div className="flex items-baseline justify-between gap-2">
                 <span className="text-base font-semibold">{e.name}</span>
                 <span className="font-mono text-xs text-muted-foreground">
@@ -174,8 +176,9 @@ export function HomePage() {
                   </div>
                 </>
               )}
+              </CardContent>
             </Card>
-            </a>
+            </Link>
           );
         })}
       </div>

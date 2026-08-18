@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect, lazy, Suspense } from 'react';
+import { Link, useSearchParams } from 'react-router';
 import { useQuestions } from '@/lib/questions';
 import { getReviewQueue } from '@/lib/schedule';
 import { newCard, review } from '@/lib/sm2';
@@ -11,10 +12,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
 // Tiptap 体积大,懒加载拆为独立 chunk
-const NotePanel = lazy(() => import('./note-panel'));
+const NotePanel = lazy(() => import('@/components/note-panel'));
 
-export function CardView({ category }: { category: string }) {
+export function QuizPage({ category }: { category: string }) {
   const { data, error } = useQuestions();
+  const [searchParams] = useSearchParams();
   const [queueIdx, setQueueIdx] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [roundDone, setRoundDone] = useState(false); // 本轮 N 题是否刷完
@@ -26,11 +28,10 @@ export function CardView({ category }: { category: string }) {
     const catQuestions = data.questions.filter((q) => q.category === category);
     const ids = catQuestions.map((q) => q.id);
     // 每次题量:URL ?limit= 深链可覆盖,否则读全局设置(设置页「刷题」分区)
-    const params = new URLSearchParams(window.location.hash.split('?')[1] || '');
-    const limitParam = params.get('limit');
+    const limitParam = searchParams.get('limit');
     const limit = limitParam != null ? parseInt(limitParam, 10) || 0 : loadLimit();
     return { queue: getReviewQueue(category, ids, limit).queue, catQuestions };
-  }, [data, category, round]);
+  }, [data, category, round, searchParams]);
 
   const currentId = queue[queueIdx];
   const current = catQuestions.find((q) => q.id === currentId);
@@ -141,9 +142,9 @@ function DoneState({ category }: { category: string }) {
       <div className="text-center py-16 space-y-3">
         <div className="text-4xl text-success">✓</div>
         <div className="text-foreground">今日队列已清空</div>
-        <a href={`#/${category}/browse`} className="inline-block text-primary hover:underline">
+        <Link to={`/${category}/browse`} className="inline-block text-primary hover:underline">
           去浏览全部题目 →
-        </a>
+        </Link>
       </div>
     </div>
   );
@@ -165,9 +166,9 @@ function RoundDoneState({
         <div className="text-foreground">本轮完成,刷了 {done} 题</div>
         <div className="flex flex-col gap-2 items-center">
           <Button onClick={onNextRound}>继续刷下一轮</Button>
-          <a href={`#/${category}/browse`} className="text-primary hover:underline text-sm">
+          <Link to={`/${category}/browse`} className="text-primary hover:underline text-sm">
             去浏览全部题目
-          </a>
+          </Link>
         </div>
       </div>
     </div>

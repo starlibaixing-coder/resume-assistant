@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router';
 import { approveQuestion, getMyQuestions, rejectDraft, subscribeMyLib } from '@/lib/mylib';
 import type { MyQuestion } from '@/types/question';
 import { AnswerPanel } from '@/components/answer-panel';
@@ -46,7 +47,7 @@ export function DraftsPage() {
     <div className="mx-auto max-w-3xl space-y-6" data-version={version}>
       <div className="flex flex-wrap items-end justify-between gap-2">
         <PageHeader title="草稿区" subtitle={pending.length > 0 ? `${pending.length} 题待审` : undefined} />
-        <a href="#/generate" className="pb-0.5 text-sm text-primary hover:underline font-mono">+ AI 生题</a>
+        <Link to="/generate" className="pb-0.5 text-sm text-primary hover:underline font-mono">+ AI 生题</Link>
       </div>
 
       {pending.length === 0 ? (
@@ -57,7 +58,7 @@ export function DraftsPage() {
             <div className="text-sm text-muted-foreground">
               AI 生成的题会先进这里,你确认后才进刷题队列。
             </div>
-            <a href="#/generate" className="inline-block text-primary hover:underline text-sm">去生题 →</a>
+            <Link to="/generate" className="inline-block text-primary hover:underline text-sm">去生题 →</Link>
           </CardContent>
         </Card>
       ) : (
@@ -110,7 +111,7 @@ export function DraftsPage() {
           ))}
 
           <div className="text-xs text-muted-foreground text-center pt-2">
-            通过后的题在「我的题库」分类里刷(<a href="#/my" className="text-primary hover:underline">去刷题</a>),进度走同一套 SM-2。
+            通过后的题在「我的题库」分类里刷(<Link to="/my" className="text-primary hover:underline">去刷题</Link>),进度走同一套 SM-2。
           </div>
         </div>
       )}

@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router';
 import { useQuestions } from '@/lib/questions';
 import { getModuleStats, getQuestionStatus } from '@/lib/schedule';
 import { MY_CATEGORY_SLUG, getMyQuestion } from '@/lib/mylib';
@@ -63,13 +64,11 @@ function FilterSelect({
   );
 }
 
-export function ModuleNav({ category }: { category: string }) {
+export function BrowsePage({ category }: { category: string }) {
   const { data, error } = useQuestions();
   // 模块筛选:'all' 或模块号字符串;初始取 ?m= 深链
-  const [moduleFilter, setModuleFilter] = useState<string>(() => {
-    const params = new URLSearchParams(window.location.hash.split('?')[1] || '');
-    return params.get('m') ?? 'all';
-  });
+  const [searchParams] = useSearchParams();
+  const [moduleFilter, setModuleFilter] = useState<string>(() => searchParams.get('m') ?? 'all');
   const [diffFilter, setDiffFilter] = useState<DiffFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   // 我的题展开(编辑/删除)
@@ -105,7 +104,7 @@ export function ModuleNav({ category }: { category: string }) {
           <CardContent className="space-y-3 py-16 text-center">
             <div className="text-foreground">我的题库还没有题</div>
             <div className="text-sm text-muted-foreground">AI 生题进草稿区,通过后就会出现在这里。</div>
-            <a href="#/generate" className="inline-block text-primary hover:underline text-sm">去生题 →</a>
+            <Link to="/generate" className="inline-block text-primary hover:underline text-sm">去生题 →</Link>
           </CardContent>
         </Card>
       </div>
@@ -146,13 +145,13 @@ export function ModuleNav({ category }: { category: string }) {
           subtitle={
             <>
               管理与查阅:我的题可编辑删除;刷题、评分、写笔记去
-              <a href={`#/${category}/quiz`} className="mx-0.5 text-primary hover:underline">刷题页</a>。
+              <Link to={`/${category}/quiz`} className="mx-0.5 text-primary hover:underline">刷题页</Link>。
             </>
           }
         />
         {isMy && (
           <Button asChild size="sm" className="shrink-0">
-            <a href="#/generate">＋ AI 生题</a>
+            <Link to="/generate">＋ AI 生题</Link>
           </Button>
         )}
       </div>
