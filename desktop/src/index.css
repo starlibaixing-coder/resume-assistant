@@ -119,4 +119,10 @@
     color: var(--foreground);
     font-family: var(--font-sans);
   }
+  /* shadcn 基础规则:所有 border 默认用 --border token。
+     没有这条,Card 的裸 border 类会回落到 currentColor(文字色)——
+     浅色模式下就是近黑文字色的"黑框"。 */
+  * {
+    border-color: var(--border);
+  }
 }

@@ -6,7 +6,7 @@ import type { Difficulty } from '@/types/question';
 import { AnswerPanel } from '@/components/answer-panel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/page-header';
 
@@ -102,7 +102,8 @@ export function GeneratePage() {
         </div>
       )}
 
-      <Card className="space-y-4 p-5">
+      <Card>
+        <CardContent className="flex flex-col gap-4 p-6">
         <div className="space-y-1.5">
           <label className="text-xs text-muted-foreground font-mono">知识点</label>
           <Input
@@ -142,6 +143,7 @@ export function GeneratePage() {
             {error}
           </div>
         )}
+        </CardContent>
       </Card>
 
       {result && (

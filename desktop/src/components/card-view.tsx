@@ -8,7 +8,7 @@ import type { Rating } from '@/types/question';
 import { AnswerPanel } from '@/components/answer-panel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 
 // Tiptap 体积大,懒加载拆为独立 chunk
 const NotePanel = lazy(() => import('./note-panel'));
@@ -77,7 +77,8 @@ export function CardView({ category }: { category: string }) {
         <span>{current.moduleName}</span>
       </div>
 
-      <Card className="space-y-3 p-5">
+      <Card>
+        <CardContent className="flex flex-col gap-3 p-6">
         <div className="flex flex-wrap gap-2">
           <Badge variant="outline">{current.difficulty}</Badge>
           {current.tags.map((t) => (
@@ -114,6 +115,7 @@ export function CardView({ category }: { category: string }) {
             </Button>
           </>
         )}
+      </CardContent>
       </Card>
 
       {revealed && (

@@ -4,7 +4,7 @@ import { getModuleStats, getQuestionStatus } from '@/lib/schedule';
 import { MY_CATEGORY_SLUG, getMyQuestion } from '@/lib/mylib';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { PageHeader } from '@/components/page-header';
@@ -101,10 +101,12 @@ export function ModuleNav({ category }: { category: string }) {
     return (
       <div className="mx-auto max-w-4xl space-y-6">
         <PageHeader title="我的题库 / 题目浏览" />
-        <Card className="py-16 text-center space-y-3">
-          <div className="text-foreground">我的题库还没有题</div>
-          <div className="text-sm text-muted-foreground">AI 生题进草稿区,通过后就会出现在这里。</div>
-          <a href="#/generate" className="inline-block text-primary hover:underline text-sm">去生题 →</a>
+        <Card>
+          <CardContent className="space-y-3 py-16 text-center">
+            <div className="text-foreground">我的题库还没有题</div>
+            <div className="text-sm text-muted-foreground">AI 生题进草稿区,通过后就会出现在这里。</div>
+            <a href="#/generate" className="inline-block text-primary hover:underline text-sm">去生题 →</a>
+          </CardContent>
         </Card>
       </div>
     );
