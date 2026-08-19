@@ -97,11 +97,10 @@ test('生题 → 存草稿 → approve → 我的题库可见 → 可开始刷�
   await expect(page.getByRole('heading', { name: /我的题库/ })).toBeVisible();
   await expect(page.getByRole('link', { name: /开始/ })).toBeVisible();
 
-  // 7) 我的题库浏览:我的题可展开出 编辑/删除(功能⑥)
+  // 7) 我的题库浏览:行尾 icon 编辑/删除直接可见(功能⑥),无展开机制
   await page.goto('/#/my/browse');
-  await page.locator('main .bg-card > div > div').first().click();
-  await expect(page.getByRole('button', { name: '编辑' })).toBeVisible();
-  await expect(page.getByRole('button', { name: '删除' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '编辑' }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: '删除' }).first()).toBeVisible();
 });
 
 test('草稿区:逐题拒绝不进我的题库', async ({ page }) => {
@@ -125,12 +124,17 @@ test('草稿区:逐题拒绝不进我的题库', async ({ page }) => {
 test('官方题浏览页:添加到我的题库 → toast + 标识 + 副本进我的库', async ({ page }) => {
   await page.goto('/#/agent/browse');
   const firstRow = page.locator('main .bg-card > div.border-b').first();
-  await firstRow.getByRole('button', { name: '＋ 添加到我的题库' }).click();
+  const addBtn = firstRow.getByRole('button', { name: '添加到我的题库' });
+
+  // icon 按钮:hover 出 tooltip 说明
+  await addBtn.hover();
+  await expect(page.getByText('添加到我的题库')).toBeVisible();
+  await addBtn.click();
 
   // 成功 toast + 行尾标识替换按钮
   await expect(page.getByText('已添加到我的题库')).toBeVisible();
   await expect(firstRow.getByText('✓ 已在我的库')).toBeVisible();
-  await expect(firstRow.getByRole('button', { name: '＋ 添加到我的题库' })).toHaveCount(0);
+  await expect(firstRow.getByRole('button', { name: '添加到我的题库' })).toHaveCount(0);
 
   // 副本落我的库模块 0(官方题副本)
   await page.goto('/#/my/browse');
