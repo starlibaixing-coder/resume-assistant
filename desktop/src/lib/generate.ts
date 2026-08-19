@@ -7,6 +7,7 @@
 
 import { chat as defaultChat, type ChatMessage, type ChatOptions } from './provider';
 import { validateQuestion, type RawQuestion } from './validate';
+import type { JobProfile } from './profile';
 import type { Difficulty } from '@/types/question';
 
 export const MAX_RETRIES = 2;
@@ -112,21 +113,17 @@ export interface GenerateResult {
 
 type ChatFn = (messages: ChatMessage[], opts: ChatOptions) => Promise<string>;
 
-export async function generateQuestions(
-  opts: GenerateOptions,
+// 生成主循环:chat → 解析 → 预检 → 失败喂错误自修正(≤ MAX_RETRIES)。知识点/JD 两种模式共用。
+async function generateWithRetry(
+  messages: ChatMessage[],
   chatOpts: ChatOptions,
-  chat: ChatFn = defaultChat,
+  chat: ChatFn,
 ): Promise<GenerateResult> {
-  if (!opts.topic.trim()) throw new Error('知识点不能为空');
-
-  let messages: ChatMessage[] = [
-    { role: 'system', content: buildSystemPrompt(opts) },
-    { role: 'user', content: buildUserPrompt(opts) },
-  ];
+  let msgs = messages;
   let retries = 0;
 
   for (;;) {
-    const text = await chat(messages, chatOpts);
+    const text = await chat(msgs, chatOpts);
     let errors: string[];
     let questions: GeneratedQuestion[] = [];
     try {
@@ -142,10 +139,92 @@ export async function generateQuestions(
     }
     retries++;
     // 自修正:把错误清单喂回去,要求重出完整 JSON
-    messages = [
-      ...messages,
+    msgs = [
+      ...msgs,
       { role: 'assistant', content: text },
       { role: 'user', content: `你上次的输出未通过校验,问题如下:\n${errors.join('\n')}\n\n请修正所有问题,重新输出完整的 JSON 数组(只输出 JSON,遵守全部格式与设计要求)。` },
     ];
   }
+}
+
+export async function generateQuestions(
+  opts: GenerateOptions,
+  chatOpts: ChatOptions,
+  chat: ChatFn = defaultChat,
+): Promise<GenerateResult> {
+  if (!opts.topic.trim()) throw new Error('知识点不能为空');
+
+  return generateWithRetry(
+    [
+      { role: 'system', content: buildSystemPrompt(opts) },
+      { role: 'user', content: buildUserPrompt(opts) },
+    ],
+    chatOpts,
+    chat,
+  );
+}
+
+// ===== JD 定向生题(阶段 2 功能④,ADR-4:档案作为生成上下文) =====
+
+export interface JdGenerateOptions {
+  difficulty?: Difficulty;
+  includeResume: boolean; // 档案里有简历且开关打开才注入
+}
+
+export function buildJdSystemPrompt(opts: JdGenerateOptions): string {
+  return `你是一名资深技术面试官,正在为候选人准备一场针对目标岗位的定向面试。请基于给定的职位描述(JD)出面试题,使用中文。
+
+出题数量由你根据 JD 的技术要求广度判断:
+- 聚焦单一技术栈/初级岗位:2~5 道
+- 复合技术栈/资深岗位:5~10 道
+- 无论如何不超过 12 道
+每道题必须对应 JD 里的一个真实考点,宁缺毋滥,不出与 JD 无关的泛知识题。
+
+定向规则:
+- 按 JD 技术要求的重要性出题:核心必备项优先,加分项其次
+${opts.includeResume ? '- 候选人简历也会提供:结合简历声称的经历出深挖题(如项目里写到的技术,考察是否真掌握、能否达到 JD 要求),但不针对与 JD 无关的简历内容\n' : ''}
+输出格式(硬性要求):
+- 只输出一个 JSON 数组,不要 markdown 代码围栏,不要任何其他文字或解释。
+- 每个元素是一个对象,字段如下:
+  - "difficulty": 只能是 "初"、"中"、"高" 之一
+  - "title": 题干(一个问句或指令,自包含,不加编号前缀)
+  - "focus": 考察点(一句话说明对应 JD 的哪条要求/考察什么,不超过 40 字)
+  - "answer": 答案数组(字符串数组,每条一个要点,所有条目合计不少于 50 字,技术准确、有深度)
+  - "followups": 追问数组(字符串数组,可为空数组)
+  - "tags": 标签数组(字符串数组,1~4 个)
+${opts.difficulty ? `- 全部题目的 difficulty 必须是 "${opts.difficulty}"\n` : '- 难度分布合理:初/中/高搭配,以中为主\n'}
+题目设计红线(违反任何一条都会被拒):
+1. 答案不得泄漏进题干:题干后半句不得回答前半句,题干本身不得包含答题人该自己想到的要点。
+2. 追问不得隐含答案:不点名题干该考的区分点,括号里不得给提示或答案。
+3. 一题只考一条主线:多个子问题必须有递进关系;无递进关系的独立问题拆开,不硬凑一题。
+4. 概念层次不得混乱:不同层次的概念不得并列或混用。
+5. focus 写"考察什么",不是答案摘要:不得把答案结论写进 focus。
+6. 技术内容必须准确:不出事实性/技术性硬错误,不编造不存在的 API 或特性。`;
+}
+
+export function buildJdUserPrompt(profile: JobProfile): string {
+  const lines = [`目标公司:${profile.company.trim() || '(未填写)'}`, '', '职位描述(JD):', profile.jd.trim()];
+  if (profile.resume.trim()) {
+    lines.push('', '候选人简历:', profile.resume.trim(), '', '结合简历与 JD 出题(简历深挖题应考察 JD 要求与简历声称能力的匹配)。');
+  }
+  lines.push('', '按 system 中的要求(含数量判断)出题,只输出 JSON 数组。');
+  return lines.join('\n');
+}
+
+export async function generateJdQuestions(
+  profile: JobProfile,
+  opts: JdGenerateOptions,
+  chatOpts: ChatOptions,
+  chat: ChatFn = defaultChat,
+): Promise<GenerateResult> {
+  if (!profile.jd.trim()) throw new Error('档案里还没有 JD——先去「求职目标」页填写职位描述');
+
+  return generateWithRetry(
+    [
+      { role: 'system', content: buildJdSystemPrompt(opts) },
+      { role: 'user', content: buildJdUserPrompt(profile) },
+    ],
+    chatOpts,
+    chat,
+  );
 }

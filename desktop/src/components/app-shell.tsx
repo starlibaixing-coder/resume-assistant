@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router';
 import {
-  LayoutDashboard, Sparkles, Inbox, Settings, Bot, Code2, LibraryBig, BookOpen, Zap, ArrowLeft,
+  LayoutDashboard, Sparkles, Inbox, Settings, Bot, Code2, LibraryBig, BookOpen, Zap, ArrowLeft, Target,
   type LucideIcon,
 } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
@@ -105,6 +105,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-1">
           <NavItem to="/" icon={LayoutDashboard} label="总览" active={root === ''} />
+          <NavItem to="/profile" icon={Target} label="求职目标" active={root === 'profile'} />
           <NavItem to="/generate" icon={Sparkles} label="AI 生题" active={root === 'generate'} />
           <NavItem to="/drafts" icon={Inbox} label="草稿区" active={root === 'drafts'} badge={pendingCount} />
 

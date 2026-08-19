@@ -3,15 +3,25 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   buildSystemPrompt,
   buildUserPrompt,
+  buildJdSystemPrompt,
+  buildJdUserPrompt,
   parseQuestions,
   validateGenerated,
   generateQuestions,
+  generateJdQuestions,
   MAX_RETRIES,
   type GeneratedQuestion,
 } from './generate';
 import type { ChatOptions } from './provider';
+import type { JobProfile } from './profile';
 
 const CHAT_OPTS: ChatOptions = { apiKey: 'k', baseURL: 'https://x', model: 'm' };
+
+const PROFILE: JobProfile = {
+  company: '示例公司',
+  jd: '负责 RAG 检索系统的设计与优化,熟悉向量数据库与 embedding 模型调优。',
+  resume: '# 后端工程师\n- 5 年经验,做过搜索与推荐系统',
+};
 
 function good(): GeneratedQuestion[] {
   return [
@@ -185,5 +195,80 @@ describe('generateQuestions', () => {
     const chat = vi.fn();
     await expect(generateQuestions({ topic: '  ' }, CHAT_OPTS, chat)).rejects.toThrow('知识点不能为空');
     expect(chat).not.toHaveBeenCalled();
+  });
+});
+
+// ===== JD 定向生题(阶段 2 功能④) =====
+
+describe('buildJdSystemPrompt', () => {
+  it('内嵌 QUALITY 红线 + JD 定向规则 + 数量判断', () => {
+    const s = buildJdSystemPrompt({ includeResume: true });
+    expect(s).toContain('答案不得泄漏进题干');
+    expect(s).toContain('宁缺毋滥');
+    expect(s).toContain('不超过 12 道');
+    expect(s).toContain('职位描述(JD)');
+    expect(s).toContain('真实考点');
+    expect(s).toContain('结合简历声称的经历出深挖题');
+  });
+
+  it('includeResume=false 时不提简历深挖规则', () => {
+    const s = buildJdSystemPrompt({ includeResume: false });
+    expect(s).not.toContain('结合简历声称的经历出深挖题');
+  });
+
+  it('指定难度锁死难度', () => {
+    const s = buildJdSystemPrompt({ includeResume: false, difficulty: '高' });
+    expect(s).toContain('必须是 "高"');
+  });
+});
+
+describe('buildJdUserPrompt', () => {
+  it('含公司 / JD / 简历,无公司回退(未填写)', () => {
+    const u = buildJdUserPrompt(PROFILE);
+    expect(u).toContain('示例公司');
+    expect(u).toContain('RAG 检索系统');
+    expect(u).toContain('5 年经验');
+    expect(u).toContain('JSON 数组');
+  });
+
+  it('公司为空显示(未填写)', () => {
+    const u = buildJdUserPrompt({ ...PROFILE, company: '' });
+    expect(u).toContain('(未填写)');
+  });
+
+  it('简历为空不出现简历段落', () => {
+    const u = buildJdUserPrompt({ ...PROFILE, resume: '' });
+    expect(u).not.toContain('候选人简历:');
+  });
+});
+
+describe('generateJdQuestions', () => {
+  it('复用管线:一次通过,system 含红线,user 含 JD', async () => {
+    const chat = vi.fn().mockResolvedValue(JSON.stringify(good()));
+    const r = await generateJdQuestions(PROFILE, { includeResume: true }, CHAT_OPTS, chat);
+    expect(r.retries).toBe(0);
+    const [messages] = chat.mock.calls[0];
+    expect(messages[0].content).toContain('答案不得泄漏进题干');
+    expect(messages[1].content).toContain('RAG 检索系统');
+  });
+
+  it('档案缺 JD 直接抛错,不调 LLM', async () => {
+    const chat = vi.fn();
+    await expect(
+      generateJdQuestions({ company: 'c', jd: '  ', resume: 'r' }, { includeResume: false }, CHAT_OPTS, chat),
+    ).rejects.toThrow('还没有 JD');
+    expect(chat).not.toHaveBeenCalled();
+  });
+
+  it('自修正循环同样生效', async () => {
+    const bad = good();
+    bad[0].answer = ['短'];
+    const chat = vi
+      .fn()
+      .mockResolvedValueOnce(JSON.stringify(bad))
+      .mockResolvedValueOnce(JSON.stringify(good()));
+    const r = await generateJdQuestions(PROFILE, { includeResume: false }, CHAT_OPTS, chat);
+    expect(r.retries).toBe(1);
+    expect(chat).toHaveBeenCalledTimes(2);
   });
 });
