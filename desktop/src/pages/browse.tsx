@@ -1,8 +1,10 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router';
+import { toast } from 'sonner';
 import { useQuestions } from '@/lib/questions';
 import { getModuleStats, getQuestionStatus } from '@/lib/schedule';
-import { MY_CATEGORY_SLUG, getMyQuestion } from '@/lib/mylib';
+import { MY_CATEGORY_SLUG, getMyQuestion, copyOfficial, getCopiedSourceIds } from '@/lib/mylib';
+import type { Question } from '@/types/question';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,7 +17,8 @@ import { QuestionEditDialog, DeleteQuestionDialog } from '@/components/question-
 // - 模块:默认全部;筛到单个模块时,列表上方显示该模块统计 + 进度条
 // - 难度:全部/初/中/高;状态:全部/未学/待复习/已掌握
 // 行 = 全局序号 + 模块名小标签 + 题干 + focus 平铺 + 题目标签 + 难度;
-// 我的题整行可点展开 编辑/删除;官方题静态;答题/评分/笔记在刷题页。?m= 深链定初始模块。
+// 我的题整行可点展开 编辑/删除;官方题行尾「添加到我的题库」(ADR-3 复制后改),已复制的显示标识;
+// 答题/评分/笔记在刷题页。?m= 深链定初始模块。
 
 type DiffFilter = 'all' | '初' | '中' | '高';
 type StatusFilter = 'all' | 'unseen' | 'due' | 'mastered';
@@ -71,20 +74,22 @@ export function BrowsePage({ category }: { category: string }) {
   const [moduleFilter, setModuleFilter] = useState<string>(() => searchParams.get('m') ?? 'all');
   const [diffFilter, setDiffFilter] = useState<DiffFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  // 我的题展开(编辑/删除)
+  // 我的题展开(编辑/删除);官方题添加中标记
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [copyingId, setCopyingId] = useState<string | null>(null);
   const isMy = category === MY_CATEGORY_SLUG;
 
-  const { cat, moduleStats, allQuestions } = useMemo(() => {
-    if (!data) return { cat: null, moduleStats: {}, allQuestions: [] as typeof data.questions };
+  // copiedSourceIds 随 data 重算(copyOfficial notify → useQuestions setData)
+  const { cat, moduleStats, allQuestions, copiedSourceIds } = useMemo(() => {
+    if (!data) return { cat: null, moduleStats: {}, allQuestions: [] as typeof data.questions, copiedSourceIds: new Set<string>() };
     const catObj = data.categories.find((c) => c.slug === category);
     const catQuestions = data.questions.filter((q) => q.category === category);
     // 题号取 id 第三段(agent.12.10 → 10)。index 字段是"模块.题号"小数(12.10≡12.1 会撞值),不能拿它排序
     const qnum = (q: typeof catQuestions[number]) => parseInt(q.id.split('.')[2] ?? '0', 10);
     const all = [...catQuestions].sort((a, b) => a.module - b.module || qnum(a) - qnum(b));
-    return { cat: catObj, moduleStats: getModuleStats(category, catQuestions), allQuestions: all };
+    return { cat: catObj, moduleStats: getModuleStats(category, catQuestions), allQuestions: all, copiedSourceIds: getCopiedSourceIds() };
   }, [data, category]);
 
   // 切分类时重置
@@ -136,6 +141,20 @@ export function BrowsePage({ category }: { category: string }) {
     setStatusFilter('all');
   };
   const hasFilter = effectiveModule !== 'all' || diffFilter !== 'all' || statusFilter !== 'all';
+
+  // 官方题 → 我的库副本(ADR-3)。成功 toast;行尾标识由 mylib notify 驱动自动出现。
+  const handleAddToMy = async (q: Question) => {
+    if (copyingId) return;
+    setCopyingId(q.id);
+    try {
+      await copyOfficial(q);
+      toast.success('已添加到我的题库');
+    } catch (e) {
+      toast.error('添加失败', { description: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setCopyingId(null);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -211,6 +230,20 @@ export function BrowsePage({ category }: { category: string }) {
                     <span className="text-sm text-foreground flex-1">{q.title}</span>
                     {isMy && <span className="font-mono text-[10px] text-muted-foreground/70 shrink-0">{isOpen ? '▼' : '▶'}</span>}
                     <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
+                    {!isMy &&
+                      (copiedSourceIds.has(q.id) ? (
+                        <span className="shrink-0 font-mono text-[10px] text-success">✓ 已在我的库</span>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 shrink-0 px-2 text-xs text-muted-foreground"
+                          disabled={copyingId === q.id}
+                          onClick={() => void handleAddToMy(q)}
+                        >
+                          {copyingId === q.id ? '添加中…' : '＋ 添加到我的题库'}
+                        </Button>
+                      ))}
                   </div>
                   <div className="mt-1 pl-1 text-xs leading-relaxed text-muted-foreground">{q.focus}</div>
                   {q.tags.length > 0 && (

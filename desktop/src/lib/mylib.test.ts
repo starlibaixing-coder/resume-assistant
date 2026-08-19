@@ -10,6 +10,7 @@ import {
   getMyCategory,
   getMyQuestion,
   getMyQuestions,
+  getCopiedSourceIds,
   getPendingCount,
   nextModuleId,
   rejectDraft,
@@ -226,6 +227,35 @@ describe('copyOfficial(ADR-3 复制后改)', () => {
     await copyOfficial(official());
     const c2 = await copyOfficial(official({ id: 'fe.01.2' }));
     expect(c2.id).toBe('my.0.2');
+  });
+
+  it('记录来源官方题 id,persist 含 source_id', async () => {
+    const db = mockDb();
+    _setMyLibDbForTest(db);
+    const copy = await copyOfficial(official());
+    expect(copy.sourceId).toBe('fe.01.1');
+    expect(getCopiedSourceIds().has('fe.01.1')).toBe(true);
+    const [sql, params] = (db.execute as ReturnType<typeof vi.fn>).mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain('source_id');
+    expect(params).toContain('fe.01.1');
+  });
+
+  it('删副本后溯源标识消失', async () => {
+    const copy = await copyOfficial(official());
+    expect(getCopiedSourceIds().has('fe.01.1')).toBe(true);
+    await deleteQuestion(copy.id);
+    expect(getCopiedSourceIds().has('fe.01.1')).toBe(false);
+  });
+
+  it('rowToMyQuestion 映射 source_id(null 安全)', () => {
+    const row = {
+      id: 'my.0.1', category: 'my', module: 0, module_name: '官方题副本', index_real: 1,
+      difficulty: '初', title: 't', focus: '', answer: '[]', followups: '[]', tags: '[]',
+      status: 'approved', source_id: 'fe.01.1', created_at: 0, updated_at: 0,
+    } as MyQuestionRow;
+    expect(rowToMyQuestion(row).sourceId).toBe('fe.01.1');
+    const legacy = { ...row, source_id: null };
+    expect(rowToMyQuestion(legacy).sourceId).toBeNull();
   });
 });
 

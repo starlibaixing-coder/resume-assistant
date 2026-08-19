@@ -40,6 +40,7 @@ export interface MyQuestionRow {
   followups: string; // JSON array
   tags: string; // JSON array
   status: 'pending' | 'approved';
+  source_id: string | null;
   created_at: number;
   updated_at: number;
 }
@@ -59,6 +60,7 @@ export function rowToMyQuestion(r: MyQuestionRow): MyQuestion {
     answer: safeJsonArray(r.answer),
     followups: safeJsonArray(r.followups),
     status: r.status,
+    sourceId: r.source_id ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -144,6 +146,13 @@ export function getPendingCount(): number {
   let n = 0;
   for (const q of cache.values()) if (q.status === 'pending') n++;
   return n;
+}
+
+// 已复制进我的库的官方题 id 集合(浏览页"已在我的库"标识)
+export function getCopiedSourceIds(): Set<string> {
+  const ids = new Set<string>();
+  for (const q of cache.values()) if (q.sourceId) ids.add(q.sourceId);
+  return ids;
 }
 
 // 合成「我的题库」分类(只统计 approved;pending 在草稿区页管理,不进浏览)
@@ -232,6 +241,7 @@ export async function copyOfficial(q: Question): Promise<MyQuestion> {
     moduleName: COPY_MODULE_NAME,
     index: parseInt(id.split('.')[2] || '1', 10),
     status: 'approved',
+    sourceId: q.id,
     createdAt: now,
     updatedAt: now,
   };
@@ -301,12 +311,12 @@ export async function deleteQuestion(id: string): Promise<void> {
 
 async function persistInsert(q: MyQuestion): Promise<void> {
   await execute(
-    'INSERT INTO questions(id,category,module,module_name,index_real,difficulty,title,focus,answer,followups,tags,status,created_at,updated_at) ' +
-      'VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)',
+    'INSERT INTO questions(id,category,module,module_name,index_real,difficulty,title,focus,answer,followups,tags,status,source_id,created_at,updated_at) ' +
+      'VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)',
     [
       q.id, q.category, q.module, q.moduleName, q.index, q.difficulty, q.title, q.focus,
       JSON.stringify(q.answer), JSON.stringify(q.followups), JSON.stringify(q.tags),
-      q.status, q.createdAt, q.updatedAt,
+      q.status, q.sourceId ?? null, q.createdAt, q.updatedAt,
     ],
   );
 }
