@@ -131,10 +131,14 @@ test('官方题浏览页:添加到我的题库 → toast + 标识 + 副本进我
   await expect(page.getByText('添加到我的题库')).toBeVisible();
   await addBtn.click();
 
-  // 成功 toast + 行尾标识替换按钮
+  // 成功 toast;按钮转禁用态(aria-label 随之切换),hover 提示已在我的库
   await expect(page.getByText('已添加到我的题库')).toBeVisible();
-  await expect(firstRow.getByText('✓ 已在我的库')).toBeVisible();
-  await expect(firstRow.getByRole('button', { name: '添加到我的题库' })).toHaveCount(0);
+  const addedBtn = firstRow.getByRole('button', { name: '已在我的库' });
+  await expect(addedBtn).toBeDisabled();
+  // click 已关掉本 tooltip,且"已开"标记要 pointerleave 才重置(Radix 行为):先移开再回来
+  await page.mouse.move(5, 5);
+  await addedBtn.locator('..').hover();
+  await expect(page.getByText('已在我的库')).toBeVisible();
 
   // 副本落我的库模块 0(官方题副本)
   await page.goto('/#/my/browse');

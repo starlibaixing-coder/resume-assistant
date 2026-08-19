@@ -20,7 +20,7 @@ import { QuestionEditDialog, DeleteQuestionDialog } from '@/components/question-
 // - 难度:全部/初/中/高;状态:全部/未学/待复习/已掌握
 // 行 = 全局序号 + 模块名小标签 + 题干 + focus 平铺 + 题目标签 + 难度 + 行尾动作区;
 // 行内动作用 ghost icon 按钮 + tooltip(不占行宽、不带文字噪音):
-// 官方题「添加到我的题库」(ADR-3 复制后改,已添加显 ✓ 标识);我的题 编辑/删除。
+// 官方题「添加到我的题库」(ADR-3 复制后改;已添加 = 同一按钮禁用态,hover 提示);我的题 编辑/删除。
 // 答题/评分/笔记在刷题页。?m= 深链定初始模块。
 
 type DiffFilter = 'all' | '初' | '中' | '高';
@@ -257,23 +257,24 @@ export function BrowsePage({ category }: { category: string }) {
                         <TooltipContent>删除</TooltipContent>
                       </Tooltip>
                     </>
-                  ) : copied ? (
-                    <span className="shrink-0 font-mono text-[10px] text-success">✓ 已在我的库</span>
                   ) : (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7 shrink-0 text-muted-foreground"
-                          aria-label="添加到我的题库"
-                          disabled={copyingId === q.id}
-                          onClick={() => void handleAddToMy(q)}
-                        >
-                          <BookmarkPlus />
-                        </Button>
+                        {/* 禁用的 button 不派发指针事件,tooltip 挂外层 span 才 hover 得出来 */}
+                        <span className="inline-flex shrink-0">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 shrink-0 text-muted-foreground"
+                            aria-label={copied ? '已在我的库' : '添加到我的题库'}
+                            disabled={copied || copyingId === q.id}
+                            onClick={() => void handleAddToMy(q)}
+                          >
+                            <BookmarkPlus />
+                          </Button>
+                        </span>
                       </TooltipTrigger>
-                      <TooltipContent>添加到我的题库</TooltipContent>
+                      <TooltipContent>{copied ? '已在我的库' : '添加到我的题库'}</TooltipContent>
                     </Tooltip>
                   )}
                 </div>
