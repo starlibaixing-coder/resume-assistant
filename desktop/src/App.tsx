@@ -6,6 +6,7 @@ import { QueuePage } from '@/pages/queue';
 import { QuizPage } from '@/pages/quiz';
 import { BrowsePage } from '@/pages/browse';
 import { GeneratePage } from '@/pages/generate';
+import { ProfilePage } from '@/pages/profile';
 import { DraftsPage } from '@/pages/drafts';
 import { SettingsPage } from '@/pages/settings';
 
@@ -24,6 +25,7 @@ export default function App() {
       <Routes>
         <Route element={<AppShell><Outlet /></AppShell>}>
           <Route index element={<OverviewPage />} />
+          <Route path="profile" element={<ProfilePage />} />
           <Route path="generate" element={<GeneratePage />} />
           <Route path="drafts" element={<DraftsPage />} />
           <Route path="settings" element={<SettingsPage />} />

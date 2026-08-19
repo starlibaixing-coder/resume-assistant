@@ -145,6 +145,35 @@ test('官方题浏览页:添加到我的题库 → toast + 标识 + 副本进我
   await expect(page.getByText('官方题副本').first()).toBeVisible();
 });
 
+test('档案 + JD 定向生题 → 草稿区(功能④)', async ({ page }) => {
+  // 1) 求职目标页:填公司/JD/简历,保存
+  await page.goto('/#/profile');
+  await page.getByPlaceholder(/示例公司/).fill('示例公司 · AI 应用工程师');
+  await page.getByPlaceholder(/JD 全文/).fill('负责 RAG 检索系统的设计与优化,熟悉向量数据库与 embedding 调优,有 LLM 应用落地经验。');
+  await page.getByPlaceholder(/简历全文/).fill('# 后端工程师\n- 5 年经验,做过搜索与推荐系统');
+  await page.getByRole('button', { name: '保存档案' }).click();
+  await expect(page.getByText('档案已保存')).toBeVisible();
+  await expect(page.getByText('已与档案同步')).toBeVisible();
+
+  // 2) 生题页切 JD 定向:上下文摘要可见,生成(mock)
+  await page.goto('/#/generate');
+  await page.getByRole('button', { name: 'JD 定向', exact: true }).click();
+  await expect(page.getByText(/JD \d+ 字 · 简历 \d+ 字/)).toBeVisible();
+  await page.getByRole('button', { name: '生成', exact: true }).click();
+  await expect(page.getByText('LLM 判断出 2 道')).toBeVisible({ timeout: 10_000 });
+
+  // 3) 存草稿区:批次名带 JD定向 · 公司
+  await page.getByRole('button', { name: /存入草稿区/ }).click();
+  await expect(page.getByText(/批次 01 · JD定向 · 示例公司/)).toBeVisible();
+});
+
+test('JD 定向无档案 → 引导去求职目标页', async ({ page }) => {
+  await page.goto('/#/generate');
+  await page.getByRole('button', { name: 'JD 定向', exact: true }).click();
+  await expect(page.getByText('还没填求职档案')).toBeVisible();
+  await expect(page.getByRole('link', { name: '去填写 →' })).toBeVisible();
+});
+
 test('设置页渲染:预设与 key 表单', async ({ page }) => {
   await page.goto('/#/settings');
   await expect(page.getByRole('heading', { name: '设置' })).toBeVisible();

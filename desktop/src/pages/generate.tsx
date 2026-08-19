@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
-import { generateQuestions, type GeneratedQuestion } from '@/lib/generate';
+import { generateQuestions, generateJdQuestions, type GeneratedQuestion } from '@/lib/generate';
+import { getProfile, subscribeProfile } from '@/lib/profile';
 import { resolveChatOptions } from '@/lib/llm-config';
 import { addDrafts } from '@/lib/mylib';
 import type { Difficulty } from '@/types/question';
@@ -12,6 +13,13 @@ import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/page-header';
 
 const DIFFICULTIES: Array<Difficulty | '不限'> = ['不限', '初', '中', '高'];
+type Mode = 'topic' | 'jd';
+
+// JD 模式批次名:JD定向 · 公司(无公司取 JD 前 12 字);addDrafts 再截 30 字
+function jdBatchName(company: string, jd: string): string {
+  const c = company.trim() || jd.trim().slice(0, 12);
+  return `JD定向 · ${c}`;
+}
 
 const pill = (active: boolean) =>
   `px-2.5 py-1 rounded text-xs font-mono transition-colors ${
@@ -21,8 +29,10 @@ const pill = (active: boolean) =>
 export function GeneratePage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [mode, setMode] = useState<Mode>('topic');
   const [topic, setTopic] = useState('');
   const [difficulty, setDifficulty] = useState<Difficulty | '不限'>('不限');
+  const [includeResume, setIncludeResume] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [noKey, setNoKey] = useState(false);
@@ -31,6 +41,12 @@ export function GeneratePage() {
   const [expanded, setExpanded] = useState<number | null>(null);
   // 进入页面就检查 LLM 配置(不等点生成才提示);从设置页回来也刷新
   const [llmReady, setLlmReady] = useState<boolean | null>(null);
+
+  // 档案跟随 profile 变化(保存/清空后本页摘要同步)
+  const [, bump] = useState(0);
+  useEffect(() => subscribeProfile(() => bump((v) => v + 1)), []);
+  const profile = getProfile();
+  const jdReady = !!profile?.jd.trim();
 
   useEffect(() => {
     const check = () => {
@@ -45,8 +61,12 @@ export function GeneratePage() {
     setError(null);
     setNoKey(false);
     setResult(null);
-    if (!topic.trim()) {
+    if (mode === 'topic' && !topic.trim()) {
       setError('先填一个知识点,比如「React Hooks 深入」「浏览器事件循环」');
+      return;
+    }
+    if (mode === 'jd' && !jdReady) {
+      setError('档案里还没有 JD——先去「求职目标」页填写');
       return;
     }
     const chatOpts = await resolveChatOptions();
@@ -56,11 +76,20 @@ export function GeneratePage() {
     }
     setLoading(true);
     try {
-      const r = await generateQuestions(
-        { topic: topic.trim(), difficulty: difficulty === '不限' ? undefined : difficulty },
-        chatOpts,
-      );
-      setResult({ questions: r.questions, retries: r.retries, topic: topic.trim() });
+      const diff = difficulty === '不限' ? undefined : difficulty;
+      const r =
+        mode === 'topic'
+          ? await generateQuestions({ topic: topic.trim(), difficulty: diff }, chatOpts)
+          : await generateJdQuestions(
+              profile!,
+              { difficulty: diff, includeResume: includeResume && !!profile!.resume.trim() },
+              chatOpts,
+            );
+      setResult({
+        questions: r.questions,
+        retries: r.retries,
+        topic: mode === 'topic' ? topic.trim() : jdBatchName(profile!.company, profile!.jd),
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -105,18 +134,63 @@ export function GeneratePage() {
 
       <Card>
         <CardContent className="flex flex-col gap-4 p-6">
-        <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground font-mono">知识点</label>
-          <Input
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder="如:React Hooks 深入 / 浏览器事件循环 / RAG 检索优化"
-            autoFocus
-          />
-          <div className="text-xs leading-relaxed text-muted-foreground">
-            出多少道题由 LLM 按知识点广度判断(简单概念 2~4 道,宽领域可达 10 道,宁缺毋滥);整批作为一个「批次」进草稿区,审核通过后成为一个模块进我的题库。
-          </div>
+        {/* 模式切换:知识点(通用刷题)/ JD 定向(读求职档案,功能④) */}
+        <div className="flex gap-2">
+          <Button size="sm" variant={mode === 'topic' ? 'default' : 'outline'} onClick={() => setMode('topic')}>
+            知识点生题
+          </Button>
+          <Button size="sm" variant={mode === 'jd' ? 'default' : 'outline'} onClick={() => setMode('jd')}>
+            JD 定向
+          </Button>
         </div>
+
+        {mode === 'topic' ? (
+          <div className="space-y-1.5">
+            <label className="text-xs text-muted-foreground font-mono">知识点</label>
+            <Input
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="如:React Hooks 深入 / 浏览器事件循环 / RAG 检索优化"
+              autoFocus
+            />
+            <div className="text-xs leading-relaxed text-muted-foreground">
+              出多少道题由 LLM 按知识点广度判断(简单概念 2~4 道,宽领域可达 10 道,宁缺毋滥);整批作为一个「批次」进草稿区,审核通过后成为一个模块进我的题库。
+            </div>
+          </div>
+        ) : !jdReady ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-warning/50 bg-warning/10 p-4 text-sm">
+            <span>还没填求职档案——JD 定向生题需要档案里的职位描述(JD)。</span>
+            <Button asChild size="sm">
+              <Link to="/profile">去填写 →</Link>
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground font-mono">档案上下文</label>
+              <div className="text-xs leading-relaxed text-muted-foreground">
+                {profile!.company.trim() || '(未填公司)'} · JD {profile!.jd.trim().length} 字
+                {profile!.resume.trim() ? ` · 简历 ${profile!.resume.trim().length} 字` : ' · 无简历(只用 JD 出题)'}
+              </div>
+            </div>
+            {profile!.resume.trim() && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs text-muted-foreground font-mono">出题范围</span>
+                <Button size="sm" variant={!includeResume ? 'default' : 'outline'} onClick={() => setIncludeResume(false)}>
+                  只用 JD
+                </Button>
+                <Button size="sm" variant={includeResume ? 'default' : 'outline'} onClick={() => setIncludeResume(true)}>
+                  结合简历
+                </Button>
+                <span className="text-xs text-muted-foreground">结合简历 = 出深挖题,考察 JD 要求与简历声称能力的匹配</span>
+              </div>
+            )}
+            <div className="text-xs leading-relaxed text-muted-foreground">
+              按 JD 的技术要求出题(核心必备项优先),数量由 LLM 判断;整批进草稿区,审核通过后成一个模块。改动档案去
+              <Link to="/profile" className="mx-0.5 text-primary hover:underline">求职目标</Link>。
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-muted-foreground font-mono">难度</span>
