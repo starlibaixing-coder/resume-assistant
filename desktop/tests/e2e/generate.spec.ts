@@ -122,6 +122,21 @@ test('草稿区:逐题拒绝不进我的题库', async ({ page }) => {
   await expect(page.getByText('还是空的')).toBeVisible();
 });
 
+test('官方题浏览页:添加到我的题库 → toast + 标识 + 副本进我的库', async ({ page }) => {
+  await page.goto('/#/agent/browse');
+  const firstRow = page.locator('main .bg-card > div.border-b').first();
+  await firstRow.getByRole('button', { name: '＋ 添加到我的题库' }).click();
+
+  // 成功 toast + 行尾标识替换按钮
+  await expect(page.getByText('已添加到我的题库')).toBeVisible();
+  await expect(firstRow.getByText('✓ 已在我的库')).toBeVisible();
+  await expect(firstRow.getByRole('button', { name: '＋ 添加到我的题库' })).toHaveCount(0);
+
+  // 副本落我的库模块 0(官方题副本)
+  await page.goto('/#/my/browse');
+  await expect(page.getByText('官方题副本').first()).toBeVisible();
+});
+
 test('设置页渲染:预设与 key 表单', async ({ page }) => {
   await page.goto('/#/settings');
   await expect(page.getByRole('heading', { name: '设置' })).toBeVisible();

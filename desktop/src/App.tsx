@@ -1,5 +1,6 @@
 import { HashRouter, Routes, Route, Outlet, useParams } from 'react-router';
 import { AppShell } from '@/components/app-shell';
+import { Toaster } from '@/components/ui/sonner';
 import { OverviewPage } from '@/pages/overview';
 import { QueuePage } from '@/pages/queue';
 import { QuizPage } from '@/pages/quiz';
@@ -31,6 +32,7 @@ export default function App() {
           <Route path=":category/browse" element={<CategoryRoute>{(c) => <BrowsePage category={c} />}</CategoryRoute>} />
         </Route>
       </Routes>
+      <Toaster />
     </HashRouter>
   );
 }

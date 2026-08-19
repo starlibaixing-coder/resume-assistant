@@ -6,12 +6,20 @@ use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 // - profile 单行,求职目标档案(ADR-4 中枢)
 // - questions.status 草稿/已审(ADR-10 质量闸)
 fn db_migrations() -> Vec<Migration> {
-    vec![Migration {
-        version: 1,
-        description: "create_initial_tables",
-        sql: include_str!("../migrations/001_init.sql"),
-        kind: MigrationKind::Up,
-    }]
+    vec![
+        Migration {
+            version: 1,
+            description: "create_initial_tables",
+            sql: include_str!("../migrations/001_init.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 2,
+            description: "add_questions_source_id",
+            sql: include_str!("../migrations/002_add_source_id.sql"),
+            kind: MigrationKind::Up,
+        },
+    ]
 }
 
 // ===== LLM API key 安全存储(keyring → OS 钥匙串,ADR-8。不用 Stronghold) =====
@@ -110,12 +118,41 @@ mod tests {
         }
     }
 
+    // 幂等性只适用于 001(全部 IF NOT EXISTS);002 的 ALTER ADD COLUMN 由版本号保证只跑一次
     #[test]
-    fn migration_is_idempotent() {
+    fn migration_001_is_idempotent() {
         let conn = Connection::open_in_memory().unwrap();
         let sql = &db_migrations()[0].sql;
         conn.execute_batch(sql).unwrap();
         conn.execute_batch(sql).unwrap();
+    }
+
+    // 002:source_id 加入后旧行为 NULL,新行可写入读取
+    #[test]
+    fn source_id_column_nullable_and_writable() {
+        let conn = migrated_db();
+        conn.execute(
+            "INSERT INTO questions(id,category,module,module_name,index_real,difficulty,title,answer,followups,tags,status,created_at,updated_at) \
+             VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            rusqlite::params![
+                "my-t.01.1", "t", 0, "官方题副本", 1.0, "中", "标题", "[]", "[]", "[]", "approved", 0, 0
+            ],
+        )
+        .unwrap();
+        let legacy: Option<String> = conn
+            .query_row("SELECT source_id FROM questions WHERE id='my-t.01.1'", [], |r| r.get(0))
+            .unwrap();
+        assert!(legacy.is_none(), "旧行 source_id 应为 NULL");
+
+        conn.execute(
+            "UPDATE questions SET source_id='fe.01.1' WHERE id='my-t.01.1'",
+            [],
+        )
+        .unwrap();
+        let src: Option<String> = conn
+            .query_row("SELECT source_id FROM questions WHERE id='my-t.01.1'", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(src.as_deref(), Some("fe.01.1"));
     }
 
     #[test]

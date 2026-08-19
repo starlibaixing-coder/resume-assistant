@@ -45,4 +45,6 @@ export interface MyQuestion extends Question {
   status: MyQuestionStatus;
   createdAt: number;
   updatedAt: number;
+  // 官方题副本的来源官方题 id(ADR-3 复制后改);生题批次无此字段
+  sourceId?: string | null;
 }
