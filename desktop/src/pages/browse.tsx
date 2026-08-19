@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
+import { BookmarkPlus, Pencil, Trash2 } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getModuleStats, getQuestionStatus } from '@/lib/schedule';
 import { MY_CATEGORY_SLUG, getMyQuestion, copyOfficial, getCopiedSourceIds } from '@/lib/mylib';
@@ -9,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Progress } from '@/components/ui/progress';
 import { PageHeader } from '@/components/page-header';
 import { QuestionEditDialog, DeleteQuestionDialog } from '@/components/question-edit-dialog';
@@ -16,8 +18,9 @@ import { QuestionEditDialog, DeleteQuestionDialog } from '@/components/question-
 // 题目浏览 = 题库后台:一个列表 + 一条筛选栏(三个维度可组合,下拉而非按钮平铺)。
 // - 模块:默认全部;筛到单个模块时,列表上方显示该模块统计 + 进度条
 // - 难度:全部/初/中/高;状态:全部/未学/待复习/已掌握
-// 行 = 全局序号 + 模块名小标签 + 题干 + focus 平铺 + 题目标签 + 难度;
-// 我的题整行可点展开 编辑/删除;官方题行尾「添加到我的题库」(ADR-3 复制后改),已复制的显示标识;
+// 行 = 全局序号 + 模块名小标签 + 题干 + focus 平铺 + 题目标签 + 难度 + 行尾动作区;
+// 行内动作用 ghost icon 按钮 + tooltip(不占行宽、不带文字噪音):
+// 官方题「添加到我的题库」(ADR-3 复制后改,已添加显 ✓ 标识);我的题 编辑/删除。
 // 答题/评分/笔记在刷题页。?m= 深链定初始模块。
 
 type DiffFilter = 'all' | '初' | '中' | '高';
@@ -74,8 +77,7 @@ export function BrowsePage({ category }: { category: string }) {
   const [moduleFilter, setModuleFilter] = useState<string>(() => searchParams.get('m') ?? 'all');
   const [diffFilter, setDiffFilter] = useState<DiffFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  // 我的题展开(编辑/删除);官方题添加中标记
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  // 编辑/删除 dialog 目标;官方题添加中标记
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copyingId, setCopyingId] = useState<string | null>(null);
@@ -95,7 +97,6 @@ export function BrowsePage({ category }: { category: string }) {
   // 切分类时重置
   useEffect(() => {
     setModuleFilter('all');
-    setExpandedId(null);
   }, [category]);
 
   if (error) return <div className="text-muted-foreground p-8 text-center">加载失败: {error}</div>;
@@ -214,55 +215,76 @@ export function BrowsePage({ category }: { category: string }) {
           <div className="p-4 text-center text-sm text-muted-foreground">无符合条件的题</div>
         ) : (
           listQuestions.map((q, i) => {
-            const isOpen = expandedId === q.id;
             const modName = modules.find((m) => m.id === q.module)?.name ?? String(q.module);
+            const copied = !isMy && copiedSourceIds.has(q.id);
             return (
-              <div key={q.id} className="border-b border-border last:border-b-0">
-                <div
-                  className={`p-3 ${isMy ? 'cursor-pointer hover:bg-accent transition-colors' : ''}`}
-                  onClick={isMy ? () => setExpandedId(isOpen ? null : q.id) : undefined}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <span className="font-mono text-xs text-muted-foreground shrink-0">{i + 1}</span>
-                    <span className="max-w-24 truncate shrink-0 rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-                      {modName}
-                    </span>
-                    <span className="text-sm text-foreground flex-1">{q.title}</span>
-                    {isMy && <span className="font-mono text-[10px] text-muted-foreground/70 shrink-0">{isOpen ? '▼' : '▶'}</span>}
-                    <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
-                    {!isMy &&
-                      (copiedSourceIds.has(q.id) ? (
-                        <span className="shrink-0 font-mono text-[10px] text-success">✓ 已在我的库</span>
-                      ) : (
+              <div key={q.id} className="border-b border-border last:border-b-0 p-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="font-mono text-xs text-muted-foreground shrink-0">{i + 1}</span>
+                  <span className="max-w-24 truncate shrink-0 rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                    {modName}
+                  </span>
+                  <span className="text-sm text-foreground flex-1">{q.title}</span>
+                  <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
+                  {isMy ? (
+                    <>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 shrink-0 text-muted-foreground"
+                            aria-label="编辑"
+                            onClick={() => setEditingId(q.id)}
+                          >
+                            <Pencil />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>编辑</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                            aria-label="删除"
+                            onClick={() => setDeletingId(q.id)}
+                          >
+                            <Trash2 />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>删除</TooltipContent>
+                      </Tooltip>
+                    </>
+                  ) : copied ? (
+                    <span className="shrink-0 font-mono text-[10px] text-success">✓ 已在我的库</span>
+                  ) : (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
                         <Button
-                          size="sm"
+                          size="icon"
                           variant="ghost"
-                          className="h-6 shrink-0 px-2 text-xs text-muted-foreground"
+                          className="h-7 w-7 shrink-0 text-muted-foreground"
+                          aria-label="添加到我的题库"
                           disabled={copyingId === q.id}
                           onClick={() => void handleAddToMy(q)}
                         >
-                          {copyingId === q.id ? '添加中…' : '＋ 添加到我的题库'}
+                          <BookmarkPlus />
                         </Button>
-                      ))}
-                  </div>
-                  <div className="mt-1 pl-1 text-xs leading-relaxed text-muted-foreground">{q.focus}</div>
-                  {q.tags.length > 0 && (
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {q.tags.map((t) => (
-                        <span key={t} className="rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-                          {t}
-                        </span>
-                      ))}
-                    </div>
+                      </TooltipTrigger>
+                      <TooltipContent>添加到我的题库</TooltipContent>
+                    </Tooltip>
                   )}
                 </div>
-                {isMy && isOpen && (
-                  <div className="flex items-center gap-2 px-3.5 pb-3">
-                    <Button size="sm" variant="outline" onClick={() => setEditingId(q.id)}>编辑</Button>
-                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeletingId(q.id)}>
-                      删除
-                    </Button>
-                    <span className="text-xs text-muted-foreground font-mono">我的库 · 可改可删</span>
+                <div className="mt-1 pl-1 text-xs leading-relaxed text-muted-foreground">{q.focus}</div>
+                {q.tags.length > 0 && (
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {q.tags.map((t) => (
+                      <span key={t} className="rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                        {t}
+                      </span>
+                    ))}
                   </div>
                 )}
               </div>
