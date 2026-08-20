@@ -10,6 +10,7 @@
 import type { Category, CategoryModule, Difficulty, MyQuestion, Question } from '@/types/question';
 import type { Database } from '@tauri-apps/plugin-sql';
 import { validateQuestion } from './validate';
+import { logger } from './logger';
 
 export const MY_CATEGORY_SLUG = 'my';
 export const MY_CATEGORY_NAME = '我的题库';
@@ -220,6 +221,7 @@ export async function addDrafts(drafts: DraftQuestion[], moduleName: string): Pr
     await persistInsert(q);
   }
   notify();
+  logger.info(`[mylib] addDrafts: ${created.length} 题 → 模块 ${moduleId}「${moduleName.slice(0, 30)}」`);
   return created;
 }
 
@@ -248,6 +250,7 @@ export async function copyOfficial(q: Question): Promise<MyQuestion> {
   cache.set(copy.id, copy);
   await persistInsert(copy);
   notify();
+  logger.info(`[mylib] copyOfficial: ${q.id} → ${copy.id}`);
   return copy;
 }
 
@@ -326,7 +329,7 @@ async function execute(sql: string, params: unknown[]): Promise<void> {
   try {
     await db.execute(sql, params);
   } catch (e) {
-    console.error('[mylib] persist failed', sql, e);
+    logger.error(`[mylib] persist failed: ${sql.slice(0, 60)}… ${e instanceof Error ? e.message : String(e)}`);
   }
 }
 

@@ -14,7 +14,8 @@ import re
 import subprocess
 import sys
 
-SMOKE_LINE = re.compile(r"^\[smoke\] (PASS|FAIL)  (\S+)\s*(.*)$")
+# 日志经 tauri-plugin-log 输出,行首带时间戳,不锚定行首
+SMOKE_LINE = re.compile(r"\[smoke\] (PASS|FAIL)  (\S+)\s*(.*)$")
 TIMEOUT_SECONDS = 900  # 首次 Rust 编译可能数分钟
 
 

@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/lib/theme';
 import { initStorage } from '@/lib/storage';
 import { isTauri } from '@/lib/llm-config';
 import { runSmoke } from '@/lib/smoke';
+import { logger } from '@/lib/logger';
 import './index.css';
 
 // 启动分流:
@@ -26,7 +27,7 @@ async function boot(): Promise<void> {
   initStorage()
     .catch((e) => {
       storageError = e instanceof Error ? e.message : String(e);
-      console.error('[storage] initStorage 失败,当前会话数据不会持久化:', e);
+      logger.error(`[storage] initStorage 失败,当前会话数据不会持久化: ${e instanceof Error ? e.message : String(e)}`);
     })
     .finally(() => {
       const banner =

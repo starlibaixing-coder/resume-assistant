@@ -48,15 +48,12 @@ fn is_smoke_mode() -> bool {
 
 #[tauri::command]
 fn smoke_report(step: String, pass: bool, detail: String) {
-    println!("[smoke] {}  {:<18} {}", if pass { "PASS" } else { "FAIL" }, step, detail);
+    log::info!("[smoke] {}  {:<18} {}", if pass { "PASS" } else { "FAIL" }, step, detail);
 }
 
 #[tauri::command]
 fn smoke_finish(app: tauri::AppHandle, passed: bool) {
-    println!(
-        "[smoke] RESULT {}",
-        if passed { "all-passed" } else { "FAILED" }
-    );
+    log::info!("[smoke] RESULT {}", if passed { "all-passed" } else { "FAILED" });
     app.exit(passed as i32);
 }
 
@@ -79,13 +76,20 @@ pub fn run() {
                     let _ = std::fs::remove_file(dir.join("smoke.db"));
                 }
             }
-            if cfg!(debug_assertions) {
-                app.handle().plugin(
-                    tauri_plugin_log::Builder::default()
-                        .level(log::LevelFilter::Info)
-                        .build(),
-                )?;
-            }
+            // 日志:stdout + 文件(app_log_dir/app.log,用户报障查这里)+ 回显 webview 控制台。
+            // 全构建启用——release 出问题同样要有迹可循。
+            app.handle().plugin(
+                tauri_plugin_log::Builder::default()
+                    .level(log::LevelFilter::Info)
+                    .targets([
+                        tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Stdout),
+                        tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::LogDir {
+                            file_name: Some("app".into()),
+                        }),
+                        tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Webview),
+                    ])
+                    .build(),
+            )?;
             Ok(())
         })
         .run(tauri::generate_context!())
