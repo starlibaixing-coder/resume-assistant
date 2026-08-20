@@ -1,6 +1,6 @@
 // 求职档案数据层 —— 缓存读写 / pub-sub / persist UPSERT 契约
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Database } from '@tauri-apps/plugin-sql';
+import type Database from '@tauri-apps/plugin-sql';
 import {
   getProfile,
   saveProfile,

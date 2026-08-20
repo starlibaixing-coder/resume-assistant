@@ -5,7 +5,7 @@ import { BookmarkPlus, Pencil, Trash2 } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getModuleStats, getQuestionStatus } from '@/lib/schedule';
 import { MY_CATEGORY_SLUG, getMyQuestion, copyOfficial, getCopiedSourceIds } from '@/lib/mylib';
-import type { Question } from '@/types/question';
+import type { Question, QuestionData } from '@/types/question';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -85,7 +85,7 @@ export function BrowsePage({ category }: { category: string }) {
 
   // copiedSourceIds 随 data 重算(copyOfficial notify → useQuestions setData)
   const { cat, moduleStats, allQuestions, copiedSourceIds } = useMemo(() => {
-    if (!data) return { cat: null, moduleStats: {}, allQuestions: [] as typeof data.questions, copiedSourceIds: new Set<string>() };
+    if (!data) return { cat: null, moduleStats: {}, allQuestions: [] as QuestionData['questions'], copiedSourceIds: new Set<string>() };
     const catObj = data.categories.find((c) => c.slug === category);
     const catQuestions = data.questions.filter((q) => q.category === category);
     // 题号取 id 第三段(agent.12.10 → 10)。index 字段是"模块.题号"小数(12.10≡12.1 会撞值),不能拿它排序

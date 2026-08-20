@@ -67,7 +67,7 @@ function NotePanelEditor({ category, questionId }: { category: string; questionI
     const next = getNote(category, questionId);
     latestRef.current = next;
     ctxRef.current = { category, questionId, initialContent: next };
-    editor?.commands.setContent(next || '<p></p>', false); // false: 不触发 onUpdate
+    editor?.commands.setContent(next || '<p></p>', { emitUpdate: false }); // 不触发 onUpdate
     setExpanded(!!next);
   }, [category, questionId, editor]);
 

@@ -5,7 +5,6 @@ import {
   saveCard,
   getCard,
   clearProgress,
-  loadNotes,
   saveNote,
   getNote,
   clearNotes,

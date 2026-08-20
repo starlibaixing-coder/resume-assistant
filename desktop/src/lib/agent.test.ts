@@ -8,7 +8,7 @@ const helloTool: ToolDef = {
   name: 'hello',
   description: '打招呼',
   parameters: z.object({ name: z.string() }),
-  execute: async ({ name }: { name: string }) => `hi ${name}`,
+  execute: async (input) => `hi ${(input as { name: string }).name}`,
 };
 
 describe('defineTool', () => {

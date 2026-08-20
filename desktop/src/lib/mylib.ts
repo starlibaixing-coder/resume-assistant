@@ -8,7 +8,7 @@
 // 删除时级联清理 review_state/notes 孤儿行(无外键,手动删)。
 
 import type { Category, CategoryModule, Difficulty, MyQuestion, Question } from '@/types/question';
-import type { Database } from '@tauri-apps/plugin-sql';
+import type Database from '@tauri-apps/plugin-sql';
 import { validateQuestion } from './validate';
 import { logger } from './logger';
 

@@ -10,8 +10,8 @@
 // 官方题库走 questions.json 只读;此处 review_state/notes 跨官方+我的库(按 id)。
 
 import type { CardState } from './sm2';
-import type { Database } from '@tauri-apps/plugin-sql';
-import { initMyLibDb, loadMyQuestionsFromDb } from './mylib';
+import type Database from '@tauri-apps/plugin-sql';
+import { initMyLibDb, loadMyQuestionsFromDb, getMyQuestions } from './mylib';
 import { initProfileDb, loadProfileFromDb } from './profile';
 import { initSecretsDb, loadSecretsFromDb } from './secrets';
 import { logger } from './logger';

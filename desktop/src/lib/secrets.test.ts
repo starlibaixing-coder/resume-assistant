@@ -1,6 +1,6 @@
 // 密钥数据层 —— 内存缓存 / UPSERT persist 契约 / 清空删除
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Database } from '@tauri-apps/plugin-sql';
+import type Database from '@tauri-apps/plugin-sql';
 import {
   getSecret,
   setSecret,

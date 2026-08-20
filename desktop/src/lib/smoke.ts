@@ -25,7 +25,7 @@ export async function runSmoke(): Promise<boolean> {
     }
   };
 
-  let db: Database | null = null;
+  let db: InstanceType<typeof Database> | null = null;
   const results: boolean[] = [];
 
   results.push(
