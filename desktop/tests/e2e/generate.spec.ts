@@ -37,9 +37,9 @@ async function mockTauri(page: Page) {
     (window as any).__TAURI_INTERNALS__ = {
       invoke: async (cmd: string) => {
         if (cmd.includes('|select')) return [];
-        if (cmd.includes('|execute')) return { rowsAffected: 0 };
+        // plugin-sql 的 execute 把 invoke 结果按 [rowsAffected, lastInsertId] 解构,必须返回数组
+        if (cmd.includes('|execute')) return [0, 0];
         if (cmd.includes('|load')) return ':memory:';
-        if (cmd === 'get_api_key') return 'test-key';
         return null;
       },
       transformCallback: () => 0,
@@ -65,6 +65,11 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() =>
     localStorage.setItem('llm-config', JSON.stringify({ baseURL: 'http://mock.local/v1', model: 'mock-model' })),
   );
+  // key 存内存 secrets(SQLite 降级):走设置页真实保存入口种下,生题链路才配齐
+  await page.goto('/#/settings');
+  await page.getByPlaceholder('sk-…').fill('sk-e2e-test');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('已保存')).toBeVisible();
 });
 
 test('生题 → 存草稿 → approve → 我的题库可见 → 可开始刷题', async ({ page }) => {
@@ -183,12 +188,14 @@ test('设置页渲染:预设与 key 表单', async ({ page }) => {
   await expect(page.getByText('LLM(AI 生题用)')).toBeVisible();
   await expect(page.getByText('数据管理')).toBeVisible();
   await expect(page.getByText('关于')).toBeVisible();
-  // LLM 区:自定义三字段,无预设按钮;mock 的 key 回显在输入框
+  // LLM 区:自定义三字段;key 手填落内存(mock 环境),保存成功
   await expect(page.getByText('baseURL', { exact: true })).toBeVisible();
   await expect(page.getByText('OpenAI 兼容端点')).toBeVisible();
   const keyInput = page.getByPlaceholder('sk-…');
   await expect(keyInput).toBeVisible();
-  await expect(keyInput).toHaveValue('test-key');
+  await keyInput.fill('sk-e2e-test');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('已保存')).toBeVisible();
 });
 
 test('官方题浏览页:统一筛选栏(模块/难度/状态)', async ({ page }) => {

@@ -181,8 +181,8 @@ export function SettingsPage() {
           />
           <div className="text-xs text-muted-foreground">
             {isTauri()
-              ? 'key 存操作系统钥匙串(macOS Keychain),不落应用数据目录;保存后回显在此。'
-              : '当前是浏览器预览:key 仅存内存,刷新即失(输入框会变空;桌面版才进钥匙串)。'}
+              ? 'key 存本地应用数据库(resume.db 的 secrets 表),退出不丢;保存后回显在此。'
+              : '当前是浏览器预览:key 仅存内存,刷新即失(输入框会变空;桌面版才落库)。'}
           </div>
         </div>
 

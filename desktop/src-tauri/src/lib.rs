@@ -1,10 +1,11 @@
 use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 
-// SQLite schema 初始化(四表)。
+// SQLite schema 初始化 + 演进。
 // - 官方题库走 questions.json 只读;questions 表只存"我的库"(ADR-3 双库)
 // - review_state 跨官方+我的库,按 id 全局唯一(ADR-9)
 // - profile 单行,求职目标档案(ADR-4 中枢)
 // - questions.status 草稿/已审(ADR-10 质量闸)
+// - secrets 应用密钥(API key;2026-08-20 起 key 存此,原 keyring 已移除)
 fn db_migrations() -> Vec<Migration> {
     vec![
         Migration {
@@ -19,33 +20,13 @@ fn db_migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/002_add_source_id.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 3,
+            description: "create_secrets_table",
+            sql: include_str!("../migrations/003_secrets.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
-}
-
-// ===== LLM API key 安全存储(keyring → OS 钥匙串,ADR-8。不用 Stronghold) =====
-const KEYRING_SERVICE: &str = "resume-assistant";
-const KEYRING_USER: &str = "llm-api-key";
-
-fn keyring_entry() -> Result<keyring::Entry, keyring::Error> {
-    keyring::Entry::new(KEYRING_SERVICE, KEYRING_USER)
-}
-
-/// 读取 LLM API key。无 key 返回 None(首次使用);其他错误返回 Err。
-#[tauri::command]
-fn get_api_key() -> Result<Option<String>, String> {
-    match keyring_entry().and_then(|e| e.get_password()) {
-        Ok(p) => Ok(Some(p)),
-        Err(keyring::Error::NoEntry) => Ok(None),
-        Err(e) => Err(e.to_string()),
-    }
-}
-
-/// 保存 LLM API key 到 OS 钥匙串。
-#[tauri::command]
-fn set_api_key(key: String) -> Result<(), String> {
-    keyring_entry()
-        .and_then(|e| e.set_password(&key))
-        .map_err(|e| e.to_string())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -56,7 +37,6 @@ pub fn run() {
                 .add_migrations("sqlite:resume.db", db_migrations())
                 .build(),
         )
-        .invoke_handler(tauri::generate_handler![get_api_key, set_api_key])
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -75,22 +55,6 @@ pub fn run() {
 mod tests {
     use super::*;
     use rusqlite::Connection;
-
-    // 真·钥匙串读写回归:keyring v3 不开 apple-native feature 时 Entry::new 报
-    // NoStorageAccess,保存/读取全部静默失效(e2e mock invoke 测不出,必须打真后端)。
-    #[test]
-    fn keyring_roundtrip() {
-        let entry = keyring_entry().expect("keyring Entry::new 失败(检查 apple-native feature)");
-        entry.set_password("sk-roundtrip-test").expect("写入钥匙串失败");
-        let got = entry.get_password().expect("读取钥匙串失败");
-        assert_eq!(got, "sk-roundtrip-test");
-        entry.delete_credential().expect("清理测试 key 失败");
-        // 删除后 NoEntry → get_api_key 应返回 None 语义
-        match entry.get_password() {
-            Err(keyring::Error::NoEntry) => {}
-            other => panic!("删除后应 NoEntry,实际:{other:?}"),
-        }
-    }
 
     // 在内存 SQLite 上跑全部 migration(每个测试独立内存库)
     fn migrated_db() -> Connection {
@@ -184,11 +148,27 @@ mod tests {
         assert!(bad.is_err(), "profile 单行约束未生效");
     }
 
-    // keyring: 实际 OS 钥匙串存取有副作用 + 环境依赖,留运行时验证。
-    // 这里只测纯常量(keyring target 标识),确保改名时测试报红。
+    // 003:secrets 表可 UPSERT(key 存取的落点)
     #[test]
-    fn keyring_target_constants() {
-        assert_eq!(KEYRING_SERVICE, "resume-assistant");
-        assert_eq!(KEYRING_USER, "llm-api-key");
+    fn secrets_upsert() {
+        let conn = migrated_db();
+        conn.execute(
+            "INSERT INTO secrets(name, value) VALUES('llm-api-key','sk-1') ON CONFLICT(name) DO UPDATE SET value='sk-1'",
+            [],
+        )
+        .unwrap();
+        let v: String = conn
+            .query_row("SELECT value FROM secrets WHERE name='llm-api-key'", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(v, "sk-1");
+        conn.execute(
+            "INSERT INTO secrets(name, value) VALUES('llm-api-key','sk-2') ON CONFLICT(name) DO UPDATE SET value='sk-2'",
+            [],
+        )
+        .unwrap();
+        let v2: String = conn
+            .query_row("SELECT value FROM secrets WHERE name='llm-api-key'", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(v2, "sk-2", "UPSERT 未覆盖旧值");
     }
 }
