@@ -25,6 +25,7 @@
     "@radix-ui/react-tooltip": "^1.2.16",
     "@tailwindcss/vite": "^4.3.3",
     "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/plugin-log": "^2.9.0",
     "@tauri-apps/plugin-sql": "^2.4.0",
     "@tiptap/react": "^3.29.2",
     "@tiptap/starter-kit": "^3.29.2",
