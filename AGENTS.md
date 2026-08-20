@@ -21,7 +21,7 @@ Workspace instructions for ZCode agents working in this repo.
 
 1. **方案先行**:设计 / UI / 架构类改动,先出方案(多选项带对比)让用户确认再动手;明确的具体指令直接执行。控件摆放位置、样式、命名也算设计决策,不在"直接执行"豁免范围内。
 2. **UI 决策先查 skill**:做界面设计前调 `ui-ux-pro-max` 查 UX 准则/反模式;**使用/新增 shadcn 组件前调 `tailwind-v4-shadcn`**(组件官方用法、Tailwind v4 主题/CSS 变量/token)。不凭通用惯例或直觉拍板;skill 结论与仓库现有约定冲突时以仓库约定为准并说明。(教训:行内文本按钮、展开抽屉装动作、文字冒充图标,都是没查 skill 直接动手的产物。)
-3. **完成标准**:单测 + typecheck + build 全绿才算完;UI 改动加截图目检;涉及 e2e 的行为变更同步更新用例。
+3. **完成标准**:单测 + typecheck + build 全绿才算完;UI 改动加截图目检;涉及 e2e 的行为变更同步更新用例。**e2e 是 web 层回归**(mock Tauri IPC 与 LLM 端点,测 React 交互逻辑),Tauri 壳/真 SQLite/真 LLM 只有 `npm run tauri dev` 真机能验证——报告"全绿"必须注明覆盖层,不得暗示桌面端已验证(sqlite feature/写权限缺失两案都在 e2e 盲区,却一路全绿)。
 4. **提交**:conventional-commits 前缀 + 中文描述;feature 从 `main` 拉分支,完成后 `--no-ff` 合回;**不 push 远端**,除非用户明确要求。
 5. **文档同步**:行为或约定变了,当轮 commit 里同步更新 AGENTS.md / plan 文档,不让文档欠账。
 
@@ -61,7 +61,8 @@ npm run tauri dev        # 完整桌面壳(Rust 编译,首次较慢;真 LLM/SQLi
 npm run dev              # 仅前端(浏览器,SQLite 降级内存)
 npm run test:run         # vitest 单测
 npm run typecheck        # tsc --noEmit
-npx playwright test      # e2e(web 层)
+npx playwright test      # e2e(web 层,IPC/LLM 均 mock)
+python3 scripts/smoke.py # 真机冒烟(真 SQLite/权限,五步自检出报告;改 Rust 侧/迁移后必跑)
 npm run build:bank       # YAML -> questions.json(desktop 侧)
 
 # web 刷题站(冻结)
