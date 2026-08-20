@@ -1,3 +1,5 @@
+use std::sync::atomic::{AtomicBool, Ordering};
+use tauri::Manager;
 use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 
 // SQLite schema 初始化 + 演进。
@@ -29,15 +31,54 @@ fn db_migrations() -> Vec<Migration> {
     ]
 }
 
+// ===== 真机冒烟模式(SMOKE=1 或 --smoke)=====
+// e2e 是 web 层回归(mock IPC),驱动 feature/ACL/磁盘这类真机故障只有这里能抓:
+// 前端跑五步自检(smoke.ts,走真 SQLite smoke.db),每步经 smoke_report 打到 stdout,
+// 结束 smoke_finish 以 0/1 退出。scripts/smoke.py 负责拉起并汇总报告。
+static SMOKE: AtomicBool = AtomicBool::new(false);
+
+fn is_smoke_launch() -> bool {
+    std::env::args().any(|a| a == "--smoke") || std::env::var("SMOKE").ok().as_deref() == Some("1")
+}
+
+#[tauri::command]
+fn is_smoke_mode() -> bool {
+    SMOKE.load(Ordering::Relaxed)
+}
+
+#[tauri::command]
+fn smoke_report(step: String, pass: bool, detail: String) {
+    println!("[smoke] {}  {:<18} {}", if pass { "PASS" } else { "FAIL" }, step, detail);
+}
+
+#[tauri::command]
+fn smoke_finish(app: tauri::AppHandle, passed: bool) {
+    println!(
+        "[smoke] RESULT {}",
+        if passed { "all-passed" } else { "FAILED" }
+    );
+    app.exit(passed as i32);
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    SMOKE.store(is_smoke_launch(), Ordering::Relaxed);
     tauri::Builder::default()
         .plugin(
             SqlBuilder::default()
                 .add_migrations("sqlite:resume.db", db_migrations())
+                // 冒烟库:同一套迁移,隔离于用户真实数据(resume.db 不被冒烟触碰)
+                .add_migrations("sqlite:smoke.db", db_migrations())
                 .build(),
         )
+        .invoke_handler(tauri::generate_handler![is_smoke_mode, smoke_report, smoke_finish])
         .setup(|app| {
+            // 冒烟每次从干净库跑:删旧 smoke.db,全新迁移(迁移演进也被覆盖)
+            if SMOKE.load(Ordering::Relaxed) {
+                if let Ok(dir) = app.path().app_config_dir() {
+                    let _ = std::fs::remove_file(dir.join("smoke.db"));
+                }
+            }
             if cfg!(debug_assertions) {
                 app.handle().plugin(
                     tauri_plugin_log::Builder::default()
