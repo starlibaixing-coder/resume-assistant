@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
       invoke: async (cmd: string) => {
         // plugin-sql: select 返回空数组(无历史数据),其余返回安全默认
         if (cmd.includes('|select')) return [];
-        if (cmd.includes('|execute')) return { rowsAffected: 0 };
+        if (cmd.includes("|execute")) return [0, 0];
         if (cmd.includes('|load')) return ':memory:';
         // keyring
         if (cmd === 'get_api_key') return null;

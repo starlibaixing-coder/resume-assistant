@@ -1,8 +1,11 @@
-// LLM 运行配置(ADR-8):baseURL/model 非敏感,存 localStorage;
-// API key 只进 OS keyring(Tauri command),浏览器预览降级为内存(刷新即失,不落盘)。
+// LLM 运行配置(ADR-8,2026-08-20 修订):baseURL/model 非敏感,存 localStorage;
+// API key 存本地 SQLite secrets 表(secrets.ts),浏览器预览降级为内存(刷新即失,不落盘)。
 // 自定义形式:任何 OpenAI 兼容端点(智谱/DeepSeek/Ollama/…),不设预设。
 
 import type { ChatOptions } from './provider';
+import { getSecret, setSecret, _resetSecretsForTest, LLM_API_KEY_NAME } from './secrets';
+
+export { isTauri } from './secrets';
 
 export interface LlmConfig {
   baseURL: string;
@@ -27,30 +30,14 @@ export function saveConfig(c: LlmConfig): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(c));
 }
 
-// ===== key:keyring(ADR-8)优先,非 Tauri 内存降级 =====
-
-export function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
-}
-
-let memoryKey = ''; // 非 Tauri 降级(仅测试用,不落盘)
+// ===== key:本地库 secrets 表(原 keyring 已弃,见 secrets.ts 头注) =====
 
 export async function loadKey(): Promise<string> {
-  if (isTauri()) {
-    const { invoke } = await import('@tauri-apps/api/core');
-    const key = await invoke<string | null>('get_api_key');
-    return key ?? '';
-  }
-  return memoryKey;
+  return getSecret(LLM_API_KEY_NAME);
 }
 
 export async function saveKey(key: string): Promise<void> {
-  if (isTauri()) {
-    const { invoke } = await import('@tauri-apps/api/core');
-    await invoke('set_api_key', { key });
-    return;
-  }
-  memoryKey = key;
+  await setSecret(LLM_API_KEY_NAME, key);
 }
 
 // ===== 拼装 provider.chat 所需参数;未配齐(key/baseURL/model 任缺)返回 null =====
@@ -62,8 +49,8 @@ export async function resolveChatOptions(): Promise<ChatOptions | null> {
   return { apiKey: key, baseURL: c.baseURL, model: c.model };
 }
 
-// 测试钩子:清内存 key
+// 测试钩子:清 localStorage 配置 + 内存 key
 export function _resetLlmConfigForTest(): void {
-  memoryKey = '';
   localStorage.removeItem(STORAGE_KEY);
+  _resetSecretsForTest();
 }

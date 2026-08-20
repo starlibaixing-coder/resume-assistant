@@ -26,9 +26,6 @@ tauri-plugin-log = "2"
 # sqlite 驱动是可选 feature,不开 = Database.load 报 "No database driver enabled",
 # 前端静默降级内存模式(所有数据退出即丢)。必须显式开启。
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
-# keyring v3 平台后端是可选 feature,不开 apple-native 则 Entry::new 报 NoStorageAccess
-# (钥匙串静默失效:保存报错、读取被前端吞掉)
-keyring = { version = "3.6.3", features = ["apple-native"] }
 
 [dev-dependencies]
 # bundled 自带 SQLite,测试时不依赖系统 libsqlite3

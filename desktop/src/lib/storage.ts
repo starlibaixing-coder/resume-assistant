@@ -13,6 +13,7 @@ import type { CardState } from './sm2';
 import type { Database } from '@tauri-apps/plugin-sql';
 import { initMyLibDb, loadMyQuestionsFromDb } from './mylib';
 import { initProfileDb, loadProfileFromDb } from './profile';
+import { initSecretsDb, loadSecretsFromDb } from './secrets';
 
 // ===== SQLite 行 ↔ CardState 映射(纯函数,独立单测) =====
 export interface ReviewRow {
@@ -75,11 +76,13 @@ export async function initStorage(): Promise<void> {
       notesOf(n.category)[n.id] = n.content;
     }
 
-    // 我的库(questions 表)与求职档案(profile 表)同批灌入(阶段 1/2)
+    // 我的库(questions 表)、求职档案(profile 表)、密钥(secrets 表)同批灌入(阶段 1/2)
     initMyLibDb(db);
     await loadMyQuestionsFromDb();
     initProfileDb(db);
     await loadProfileFromDb();
+    initSecretsDb(db);
+    await loadSecretsFromDb();
   })();
   return initPromise;
 }
