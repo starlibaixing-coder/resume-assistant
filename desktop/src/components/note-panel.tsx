@@ -29,7 +29,9 @@ function NotePanelEditor({ category, questionId }: { category: string; questionI
   const editor = useEditor({
     extensions: [StarterKit],
     content: initialContent || '',
-    immediatelyRender: false, // 避免 SSR/挂载时序问题(Tiptap 官方推荐)
+    // 纯 CSR(无 SSR/水合),立即渲染编辑器——false 会推迟到首帧后创建,
+    // 展开笔记时先闪一个空编辑器再出内容。
+    immediatelyRender: true,
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
       latestRef.current = html;
