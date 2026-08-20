@@ -1,0 +1,22 @@
+{
+  "name": "resume-assistant-repo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "求职两件套根工作区:desktop(主开发线)+ skill(简历渲染);quiz-app 冻结独立,不入工作区",
+  "workspaces": [
+    "desktop",
+    "skill"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w desktop",
+    "tauri:dev": "npm run tauri dev -w desktop",
+    "test": "npm run test:run -w desktop",
+    "typecheck": "npm run typecheck -w desktop",
+    "e2e": "npm run e2e -w desktop",
+    "smoke": "python3 desktop/scripts/smoke.py",
+    "build": "npm run build -w desktop",
+    "build:bank": "npm run build:bank -w desktop",
+    "resume:render": "node skill/scripts/render-pdf.mjs",
+    "test:rust": "cargo test --manifest-path desktop/src-tauri/Cargo.toml"
+  }
+}
