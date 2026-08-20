@@ -16,7 +16,7 @@ export function QueuePage({ category }: { category: string }) {
   const { data, error } = useQuestions();
   const limit = loadLimit();
 
-  const { ids, stats, queue } = useMemo(() => {
+  const { stats, queue } = useMemo(() => {
     if (!data) return { ids: [] as string[], stats: null, queue: null };
     const ids = data.questions.filter((q) => q.category === category).map((q) => q.id);
     return {

@@ -30,6 +30,8 @@ test('首页渲染:不白屏,有题库入口', async ({ page }) => {
   await expect(body).not.toBeEmpty();
   const text = await body.innerText();
   expect(text.length).toBeGreaterThan(0);
+  // 存储初始化不得失败:横幅出现 = initStorage 链路断裂(曾因未导入函数漏网,真机才炸)
+  await expect(page.getByText('存储初始化失败')).toHaveCount(0);
 });
 
 test('首页含 AI Agent 题库入口', async ({ page }) => {

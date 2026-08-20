@@ -4,7 +4,7 @@
 // 自用本地工具,key 存本地库的安全等级可接受,换全平台一致 + 零弹窗。
 // 非 Tauri 环境(浏览器/e2e)降级内存(刷新即失,仅测试用,与旧 keyring 降级同语义)。
 
-import type { Database } from '@tauri-apps/plugin-sql';
+import type Database from '@tauri-apps/plugin-sql';
 
 export const LLM_API_KEY_NAME = 'llm-api-key';
 

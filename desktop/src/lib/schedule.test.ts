@@ -14,7 +14,7 @@ function card(partial: Partial<CardState> = {}): CardState {
 
 function q(partial: Partial<Question> & { id: string }): Question {
   return {
-    id: '', category: CAT, module: 1, moduleName: 'm', index: 1, type: 'qa',
+    category: CAT, module: 1, moduleName: 'm', index: 1, type: 'qa',
     difficulty: '中', tags: [], title: 't', focus: 'f', answer: [], followups: [],
     ...partial,
   };

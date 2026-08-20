@@ -1,6 +1,6 @@
 // JS agent 编排骨架(Vercel AI SDK)。阶段 0 框架,真正用于生题/简历/面试在阶段 1+。
 // provider 配置复用 ChatOptions 字段(baseURL/apiKey/model,ADR-8 OpenAI 兼容)。
-import { streamText, tool as aiTool, type CoreMessage } from 'ai';
+import { streamText, tool as aiTool, type ModelMessage, type ToolSet } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 
@@ -48,20 +48,19 @@ export interface AgentConfig {
 // agent 运行:streamText + tools。Vercel AI SDK 自动处理 tool call 多步循环。
 // 阶段 0 骨架;阶段 1 生题等真正接入。
 export function runAgent(
-  messages: CoreMessage[],
+  messages: ModelMessage[],
   config: AgentConfig,
   registry: ToolRegistry,
 ) {
   const openai = createOpenAI({ baseURL: config.baseURL, apiKey: config.apiKey });
-  const tools = Object.fromEntries(
-    registry.list().map((t) => [
-      t.name,
-      aiTool({
-        description: t.description,
-        parameters: t.parameters,
-        execute: t.execute,
-      }),
-    ]),
-  );
+  // ToolDef 的 execute 是 unknown 进出,ai SDK 要求窄类型;骨架层桥接,阶段 3 真正编排时再收紧
+  const tools: ToolSet = {};
+  for (const t of registry.list()) {
+    tools[t.name] = aiTool({
+      description: t.description,
+      inputSchema: t.parameters, // ai v5+ 起 tool 的入参 schema 字段名从 parameters 改为 inputSchema
+      execute: t.execute as never,
+    });
+  }
   return streamText({ model: openai(config.model), messages, tools });
 }

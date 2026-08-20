@@ -1,6 +1,6 @@
 // 我的库数据层 —— 缓存逻辑 + id 分配 + CRUD persist 契约 + 级联清理
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Database } from '@tauri-apps/plugin-sql';
+import type Database from '@tauri-apps/plugin-sql';
 import {
   addDrafts,
   allocateIds,
@@ -102,7 +102,7 @@ describe('rowToMyQuestion', () => {
       id: 'my.1.1', category: 'my', module: 1, module_name: 'React', index_real: 1.5,
       difficulty: '中', title: 't', focus: 'f',
       answer: '["a"]', followups: '["q"]', tags: '["x"]',
-      status: 'pending', created_at: 1, updated_at: 2,
+      status: 'pending', source_id: null, created_at: 1, updated_at: 2,
     };
     const q = rowToMyQuestion(row);
     expect(q.index).toBe(1.5);

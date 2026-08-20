@@ -2,7 +2,7 @@
 // 与 mylib 同哲学:读走同步缓存,写 await 后 notify;简历/JD/公司被 JD 定向生题(阶段 2)
 // 与简历/模拟面试(阶段 3/5)共享。preferences 字段本阶段不用(留给阶段 3)。
 
-import type { Database } from '@tauri-apps/plugin-sql';
+import type Database from '@tauri-apps/plugin-sql';
 import { logger } from './logger';
 
 export interface JobProfile {

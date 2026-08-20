@@ -9,7 +9,7 @@
     "build:bank": "tsx scripts/build.mjs",
     "audit": "tsx ../banks/audit/audit.mjs --format-only",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -b",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",

@@ -21,11 +21,6 @@ function jdBatchName(company: string, jd: string): string {
   return `JD定向 · ${c}`;
 }
 
-const pill = (active: boolean) =>
-  `px-2.5 py-1 rounded text-xs font-mono transition-colors ${
-    active ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-accent'
-  }`;
-
 export function GeneratePage() {
   const navigate = useNavigate();
   const location = useLocation();
