@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 
 // 生题全链路(web 层):生题 → 草稿区 approve → 我的题库 → 刷题入口。
 // chat endpoint 用 page.route mock;Tauri invoke 用 init mock(SQLite 降级内存)。
@@ -58,8 +59,12 @@ async function mockChat(page: Page) {
   );
 }
 
+// 包内官方题库(e2e 里官方读路径走 mock DB → 播种自包内 JSON;同步远端拦截为同一份,自动同步零差异)
+const BUNDLED_BANK = JSON.parse(readFileSync(new URL('../../public/questions.json', import.meta.url), 'utf8'));
+
 test.beforeEach(async ({ page }) => {
   await mockTauri(page);
+  await page.route('**/resume-assistant/questions.json', (r) => r.fulfill({ json: BUNDLED_BANK }));
   await mockChat(page);
   // LLM 配置(自定义形式,无预设默认):种一份 mock 端点,聊天请求由 mockChat 拦截
   await page.addInitScript(() =>
@@ -177,6 +182,27 @@ test('JD 定向无档案 → 引导去求职目标页', async ({ page }) => {
   await page.getByRole('button', { name: 'JD 定向', exact: true }).click();
   await expect(page.getByText('还没填求职档案')).toBeVisible();
   await expect(page.getByRole('link', { name: '去填写 →' })).toBeVisible();
+});
+
+test('设置页:同步官方题库 → 远端新增题落地', async ({ page }) => {
+  // 远端比包内多一题(后注册的 route 优先)
+  const remote = JSON.parse(JSON.stringify(BUNDLED_BANK));
+  remote.questions.push({
+    id: 'agent.99.1', category: 'agent', module: 99, moduleName: '同步验证', index: 1, type: 'qa',
+    difficulty: '中', tags: ['sync'], title: '远端同步新增的验证题?', focus: '同步链路',
+    answer: ['这是远端新增题的答案,内容长度超过五十字以满足共享校验的最低要求,验证同步落库链路完整。'],
+    followups: [],
+  });
+  remote.total = remote.questions.length;
+  await page.route('**/resume-assistant/questions.json', (r) => r.fulfill({ json: remote }));
+
+  await page.goto('/#/settings');
+  await page.getByRole('button', { name: '同步官方题库' }).click();
+  await expect(page.getByText(/官方题库已同步:新增 1 · 修订 0 · 移除 0/)).toBeVisible({ timeout: 10_000 });
+
+  // 同步进来的题进官方库聚合(浏览页可见)
+  await page.goto('/#/agent/browse');
+  await expect(page.getByText('远端同步新增的验证题?')).toBeVisible({ timeout: 10_000 });
 });
 
 test('设置页渲染:预设与 key 表单', async ({ page }) => {

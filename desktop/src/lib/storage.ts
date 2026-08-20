@@ -14,6 +14,7 @@ import type Database from '@tauri-apps/plugin-sql';
 import { initMyLibDb, loadMyQuestionsFromDb, getMyQuestions } from './mylib';
 import { initProfileDb, loadProfileFromDb } from './profile';
 import { initSecretsDb, loadSecretsFromDb } from './secrets';
+import { initOfficialDb, ensureOfficial, getOfficial } from './officialbank';
 import { logger } from './logger';
 
 // ===== SQLite 行 ↔ CardState 映射(纯函数,独立单测) =====
@@ -77,15 +78,17 @@ export async function initStorage(): Promise<void> {
       notesOf(n.category)[n.id] = n.content;
     }
 
-    // 我的库(questions 表)、求职档案(profile 表)、密钥(secrets 表)同批灌入(阶段 1/2)
+    // 我的库(questions 表)、求职档案(profile 表)、密钥(secrets 表)、官方题库物化(official_* 表)
     initMyLibDb(db);
     await loadMyQuestionsFromDb();
     initProfileDb(db);
     await loadProfileFromDb();
     initSecretsDb(db);
     await loadSecretsFromDb();
+    initOfficialDb(db);
+    await ensureOfficial();
     logger.info(
-      `[storage] init 完成: 进度 ${Object.values(progressCache).reduce((n, m) => n + Object.keys(m).length, 0)} 条 / 笔记 ${Object.values(notesCache).reduce((n, m) => n + Object.keys(m).length, 0)} 条 / 我的题 ${getMyQuestions().length} 题`,
+      `[storage] init 完成: 进度 ${Object.values(progressCache).reduce((n, m) => n + Object.keys(m).length, 0)} 条 / 笔记 ${Object.values(notesCache).reduce((n, m) => n + Object.keys(m).length, 0)} 条 / 我的题 ${getMyQuestions().length} 题 / 官方题 ${getOfficial()?.total ?? 0} 题`,
     );
   })();
   return initPromise;
