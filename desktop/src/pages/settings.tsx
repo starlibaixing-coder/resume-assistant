@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Sun, Moon, Monitor, type LucideIcon } from 'lucide-react';
 import { loadConfig, loadKey, saveConfig, saveKey, isTauri } from '@/lib/llm-config';
+import { syncOfficialBank, getLastSyncedAt } from '@/lib/officialbank';
+import { toast } from 'sonner';
 import { useTheme, type Theme } from '@/lib/theme';
 import { useQuestions } from '@/lib/questions';
 import { clearProgress, clearNotes, loadProgress, loadNotes } from '@/lib/storage';
@@ -42,6 +44,8 @@ export function SettingsPage() {
 
   // ── 数据管理 ──
   const [refresh, setRefresh] = useState(0);
+  const [syncing, setSyncing] = useState(false);
+  const [lastSynced, setLastSynced] = useState<number | null>(null);
   const [confirm, setConfirm] = useState<{ kind: 'progress' | 'notes'; category: string; name: string } | null>(null);
 
   // 启动时读已存 key 回显(password 输入框视觉遮蔽即可,不做 '********' 掩码——
@@ -54,6 +58,23 @@ export function SettingsPage() {
         setStatus({ kind: 'err', text: `读取已存 key 失败:${e instanceof Error ? e.message : String(e)}` });
       });
   }, []);
+
+  useEffect(() => {
+    getLastSyncedAt().then(setLastSynced).catch(() => {});
+  }, [refresh]);
+
+  const handleSyncOfficial = async () => {
+    setSyncing(true);
+    try {
+      const stats = await syncOfficialBank();
+      toast.success(`官方题库已同步:新增 ${stats.added} · 修订 ${stats.updated} · 移除 ${stats.removed}`);
+      setLastSynced(await getLastSyncedAt());
+    } catch (e) {
+      toast.error('同步失败', { description: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -209,6 +230,18 @@ export function SettingsPage() {
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-base">数据管理</CardTitle></CardHeader>
         <CardContent className="space-y-3">
+        {/* 官方题库同步:远端(GitHub Pages)→ 本地 SQLite 物化 */}
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border px-3.5 py-2.5">
+          <div className="min-w-0">
+            <div className="text-sm">官方题库</div>
+            <div className="mt-0.5 font-mono text-xs text-muted-foreground">
+              {lastSynced ? `上次同步 ${new Date(lastSynced).toLocaleString()}` : '尚未同步(仅包内快照)'}
+            </div>
+          </div>
+          <Button size="sm" variant="outline" disabled={syncing} onClick={handleSyncOfficial}>
+            {syncing ? '同步中…' : '同步官方题库'}
+          </Button>
+        </div>
         <div className="text-xs text-muted-foreground">
           清空操作按分类执行:清空进度删 SM-2 记录(题目和笔记保留);清空笔记只删笔记(进度保留)。均不可恢复。
         </div>

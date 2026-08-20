@@ -1,9 +1,14 @@
 import { test, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 
 // mock Tauri invoke:web 环境无 __TAURI__,storage 的 initStorage 会降级(catch 兜底,空 cache)。
 // 此 mock 让 plugin-sql/keyring 的 invoke 调用不抛错,保证应用渲染。
 // 注:持久化在降级模式不跨刷新;真持久化已由 tauri dev 运行时验证。
+const BUNDLED_BANK = JSON.parse(readFileSync(new URL('../../public/questions.json', import.meta.url), 'utf8'));
+
 test.beforeEach(async ({ page }) => {
+  // 官方题库同步远端拦截为包内同款(启动自动同步零差异、不出网、确定性)
+  await page.route('**/resume-assistant/questions.json', (r) => r.fulfill({ json: BUNDLED_BANK }));
   await page.addInitScript(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).__TAURI_INTERNALS__ = {

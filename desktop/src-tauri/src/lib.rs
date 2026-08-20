@@ -28,6 +28,12 @@ fn db_migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/003_secrets.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 4,
+            description: "create_official_bank_tables",
+            sql: include_str!("../migrations/004_official_bank.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -111,9 +117,17 @@ mod tests {
     }
 
     #[test]
-    fn creates_all_four_tables() {
+    fn creates_all_tables() {
         let conn = migrated_db();
-        for table in ["questions", "review_state", "notes", "profile"] {
+        for table in [
+            "questions",
+            "review_state",
+            "notes",
+            "profile",
+            "secrets",
+            "official_questions",
+            "official_categories",
+        ] {
             let n: i64 = conn
                 .query_row(
                     &format!(

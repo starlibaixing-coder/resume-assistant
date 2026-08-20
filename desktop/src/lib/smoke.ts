@@ -100,5 +100,16 @@ export async function runSmoke(): Promise<boolean> {
     }),
   );
 
+  results.push(
+    await step('official.seed', async () => {
+      const ob = await import('./officialbank');
+      ob.initOfficialDb(db!);
+      await ob.ensureOfficial();
+      const total = ob.getOfficial()?.total ?? 0;
+      if (!total) throw new Error('官方题播种后为空');
+      return `官方题入库 ${total} 题(包内快照播种,读路径=DB 物化)`;
+    }),
+  );
+
   return results.every(Boolean);
 }
