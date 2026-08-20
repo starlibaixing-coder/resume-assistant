@@ -24,6 +24,7 @@ Workspace instructions for ZCode agents working in this repo.
 3. **完成标准**:单测 + typecheck + build 全绿才算完;UI 改动加截图目检;涉及 e2e 的行为变更同步更新用例。**e2e 是 web 层回归**(mock Tauri IPC 与 LLM 端点,测 React 交互逻辑),Tauri 壳/真 SQLite/真 LLM 只有 `npm run tauri dev` 真机能验证——报告"全绿"必须注明覆盖层,不得暗示桌面端已验证(sqlite feature/写权限缺失两案都在 e2e 盲区,却一路全绿)。
 4. **提交**:conventional-commits 前缀 + 中文描述;feature 从 `main` 拉分支,完成后 `--no-ff` 合回;**不 push 远端**,除非用户明确要求。
 5. **文档同步**:行为或约定变了,当轮 commit 里同步更新 AGENTS.md / plan 文档,不让文档欠账。
+6. **目录纪律**:npm/cargo 命令一律从仓库根执行(根脚本 / `-w <包>` / `--manifest-path`),或显式 `cd` 绝对路径;禁止依赖上一次调用的目录残留。给子包装依赖必须 `npm install <pkg> -w <包>`,禁止在无 package.json 的目录裸跑 install(教训:目录漂移把依赖装到仓库根,desktop 缺依赖,新环境直接构建失败)。
 
 ## 不可违反的原则
 
@@ -55,23 +56,22 @@ Workspace instructions for ZCode agents working in this repo.
 ## 命令
 
 ```bash
-# 桌面端(主开发线)
-cd desktop
-npm run tauri dev        # 完整桌面壳(Rust 编译,首次较慢;真 LLM/SQLite 手测入口)
+# 根工作区(npm workspaces = desktop + skill;quiz-app 冻结独立不入)——所有日常命令从根目录跑
+npm run tauri:dev        # 完整桌面壳(Rust 编译,首次较慢;真 LLM/SQLite 手测入口)
 npm run dev              # 仅前端(浏览器,SQLite 降级内存)
-npm run test:run         # vitest 单测
+npm run test             # vitest 单测(desktop)
 npm run typecheck        # tsc --noEmit
-npx playwright test      # e2e(web 层,IPC/LLM 均 mock)
-python3 scripts/smoke.py # 真机冒烟(真 SQLite/权限,五步自检出报告;改 Rust 侧/迁移后必跑)
-# 运行日志:~/Library/Logs/com.resume-assistant.desktop/app.log(存储失败/关键事件都落这里,用户报障先查)
+npm run e2e              # e2e(web 层,IPC/LLM 均 mock)
+npm run smoke            # 真机冒烟(真 SQLite/权限;改 Rust 侧/迁移后必跑)
+npm run test:rust        # cargo 测试(迁移等 Rust 侧)
+npm run build            # vite build
 npm run build:bank       # YAML -> questions.json(desktop 侧)
+npm run resume:render -- <input.md> <output.pdf>   # 简历渲染(skill,需系统 Chrome)
+# 运行日志:~/Library/Logs/com.resume-assistant.desktop/app.log(存储失败/关键事件都落这里,用户报障先查)
 
-# web 刷题站(冻结)
+# web 刷题站(冻结,不入工作区,命令仍在它自己目录)
 cd quiz-app && npm run build:bank   # 同款校验(quiz-app 侧)
 cd quiz-app && npm run audit        # 题库质量审计
-
-# 简历渲染
-cd skill && node scripts/render-pdf.mjs <input.md> <output.pdf>
 ```
 
 Node 18+(简历渲染需系统 Chrome);CI 用 Node 20+。

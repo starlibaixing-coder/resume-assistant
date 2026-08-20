@@ -13,6 +13,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "e2e": "playwright test",
     "tauri": "tauri"
   },
   "dependencies": {
