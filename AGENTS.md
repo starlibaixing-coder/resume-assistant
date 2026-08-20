@@ -63,6 +63,7 @@ npm run test:run         # vitest 单测
 npm run typecheck        # tsc --noEmit
 npx playwright test      # e2e(web 层,IPC/LLM 均 mock)
 python3 scripts/smoke.py # 真机冒烟(真 SQLite/权限,五步自检出报告;改 Rust 侧/迁移后必跑)
+# 运行日志:~/Library/Logs/com.resume-assistant.desktop/app.log(存储失败/关键事件都落这里,用户报障先查)
 npm run build:bank       # YAML -> questions.json(desktop 侧)
 
 # web 刷题站(冻结)

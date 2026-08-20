@@ -14,6 +14,7 @@ import type { Database } from '@tauri-apps/plugin-sql';
 import { initMyLibDb, loadMyQuestionsFromDb } from './mylib';
 import { initProfileDb, loadProfileFromDb } from './profile';
 import { initSecretsDb, loadSecretsFromDb } from './secrets';
+import { logger } from './logger';
 
 // ===== SQLite 行 ↔ CardState 映射(纯函数,独立单测) =====
 export interface ReviewRow {
@@ -83,6 +84,9 @@ export async function initStorage(): Promise<void> {
     await loadProfileFromDb();
     initSecretsDb(db);
     await loadSecretsFromDb();
+    logger.info(
+      `[storage] init 完成: 进度 ${Object.values(progressCache).reduce((n, m) => n + Object.keys(m).length, 0)} 条 / 笔记 ${Object.values(notesCache).reduce((n, m) => n + Object.keys(m).length, 0)} 条 / 我的题 ${getMyQuestions().length} 题`,
+    );
   })();
   return initPromise;
 }
@@ -138,7 +142,7 @@ async function persistCard(category: string, id: string, c: CardState): Promise<
       [id, category, c.interval, c.ease, c.reps, c.due, c.lastReview]
     );
   } catch (e) {
-    console.error('[storage] persistCard failed', e);
+    logger.error(`[storage] persistCard failed: ${e instanceof Error ? e.message : String(e)}`);
   }
 }
 
@@ -155,7 +159,7 @@ async function persistNote(category: string, id: string, html: string): Promise<
       await db.execute('DELETE FROM notes WHERE id=$1', [id]);
     }
   } catch (e) {
-    console.error('[storage] persistNote failed', e);
+    logger.error(`[storage] persistNote failed: ${e instanceof Error ? e.message : String(e)}`);
   }
 }
 
@@ -164,7 +168,7 @@ async function persistDeleteCategory(table: 'review_state' | 'notes', category: 
   try {
     await db.execute(`DELETE FROM ${table} WHERE category=$1`, [category]);
   } catch (e) {
-    console.error(`[storage] persistDelete ${table} failed`, e);
+    logger.error(`[storage] persistDelete ${table} failed: ${e instanceof Error ? e.message : String(e)}`);
   }
 }
 

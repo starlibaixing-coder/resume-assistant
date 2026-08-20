@@ -3,6 +3,7 @@
 // 与简历/模拟面试(阶段 3/5)共享。preferences 字段本阶段不用(留给阶段 3)。
 
 import type { Database } from '@tauri-apps/plugin-sql';
+import { logger } from './logger';
 
 export interface JobProfile {
   company: string;
@@ -52,7 +53,7 @@ export async function saveProfile(p: JobProfile): Promise<JobProfile> {
         [p.company, p.jd, p.resume],
       );
     } catch (e) {
-      console.error('[profile] persist failed', e);
+      logger.error(`[profile] persist failed: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
   notify();
