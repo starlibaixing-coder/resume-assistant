@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, lazy, Suspense } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { useQuestions } from '@/lib/questions';
 import { getReviewQueue } from '@/lib/schedule';
@@ -7,12 +7,10 @@ import { saveCard, loadProgress } from '@/lib/storage';
 import { loadLimit } from '@/lib/prefs';
 import type { Rating } from '@/types/question';
 import { AnswerPanel } from '@/components/answer-panel';
+import NotePanel from '@/components/note-panel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-
-// Tiptap 体积大,懒加载拆为独立 chunk
-const NotePanel = lazy(() => import('@/components/note-panel'));
 
 export function QuizPage({ category }: { category: string }) {
   const { data, error } = useQuestions();
@@ -92,9 +90,7 @@ export function QuizPage({ category }: { category: string }) {
         <div className="text-lg font-semibold text-foreground leading-snug">{current.title}</div>
         <div className="text-sm text-muted-foreground">{current.focus}</div>
 
-        <Suspense fallback={<div className="text-sm text-muted-foreground">加载笔记…</div>}>
-          <NotePanel category={category} questionId={current.id} />
-        </Suspense>
+        <NotePanel category={category} questionId={current.id} />
 
         {!revealed ? (
           <div className="pt-2 space-y-2">

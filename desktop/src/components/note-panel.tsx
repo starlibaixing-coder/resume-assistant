@@ -5,7 +5,8 @@ import { getNote, saveNote } from '@/lib/storage';
 
 // 笔记区:Tiptap WYSIWYG 所见即所得 + 防抖自动保存。
 // 切题不重建编辑器(单实例 + setContent 原地换内容)——重建会闪一下空态。
-// default export(React.lazy 需要)
+// 同步引入(quiz.tsx 不再 React.lazy):懒加载 chunk 会先出「加载笔记…」兜底再闪出内容,
+// 桌面本地加载没有省体积的必要。
 
 export default function NotePanel({ category, questionId }: { category: string; questionId: string }) {
   return <NotePanelEditor category={category} questionId={questionId} />;
