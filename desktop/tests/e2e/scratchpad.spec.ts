@@ -101,6 +101,21 @@ test('空态手动加题 → 直接进我的题库(不经草稿区)', async ({ p
   await expect(page.getByText('面试手写').first()).toBeVisible();
 });
 
+test('侧栏「我的题库」落地队列页即有手动加题入口', async ({ page }) => {
+  await page.goto('/#/my');
+  // 空库:队列页(侧栏落地页)直接给出双入口,不用先找到题目浏览页
+  await expect(page.getByText('我的题库还没有题')).toBeVisible();
+  await page.getByRole('button', { name: '手动加题' }).click();
+  await page.getByLabel('新模块名').fill('面试手写');
+  await fillQuestionForm(page, '落地页加的题?', '基础', ANSWER_50);
+  await page.getByRole('dialog').getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('已加入我的题库')).toBeVisible();
+
+  // 加完即入队:队列页出现题量统计,头部入口仍在(非空态)
+  await expect(page.getByText(/已学 0 \/ 1/)).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByRole('button', { name: '手动加题' })).toBeVisible();
+});
+
 test('手动加题可进既有模块;校验失败拦截保存', async ({ page }) => {
   await page.goto('/#/my/browse');
   await page.getByRole('button', { name: '手动加题' }).click();

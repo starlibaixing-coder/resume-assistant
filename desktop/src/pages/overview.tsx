@@ -144,7 +144,7 @@ export function OverviewPage() {
           const pct = e.total ? Math.round((e.learned / e.total) * 100) : 0;
           const empty = e.isMy && e.total === 0;
           return (
-            <Link key={e.slug} to={empty ? '/generate' : `/${e.slug}`} className="group cursor-pointer">
+            <Link key={e.slug} to={`/${e.slug}`} className="group cursor-pointer">
             <Card className={`h-full transition-colors ${
               empty ? 'border-dashed bg-card/50 hover:border-primary' : 'hover:border-primary'
             }`}>
@@ -157,8 +157,8 @@ export function OverviewPage() {
               </div>
               {empty ? (
                 <div className="text-xs text-muted-foreground">
-                  还是空的——去 AI 生题,或把官方题复制过来改
-                  <span className="ml-1 text-primary opacity-0 transition-opacity group-hover:opacity-100">去生题 →</span>
+                  还是空的——去 AI 生题,或手动写一道
+                  <span className="ml-1 text-primary opacity-0 transition-opacity group-hover:opacity-100">去添加 →</span>
                 </div>
               ) : (
                 <>
