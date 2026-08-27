@@ -1,0 +1,129 @@
+import { test, expect, type Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+
+// 代码草稿纸 + 手动加题(web 层)。
+// Worker 是浏览器原生能力,chromium 真跑(非 mock);Tauri invoke 走 init mock(SQLite 降级内存)。
+// 真 SQLite 持久化由 tauri dev / smoke 验证。
+
+const BUNDLED_BANK = JSON.parse(readFileSync(new URL('../../public/questions.json', import.meta.url), 'utf8'));
+
+test.beforeEach(async ({ page }) => {
+  await page.route('**/resume-assistant/questions.json', (r) => r.fulfill({ json: BUNDLED_BANK }));
+  await page.addInitScript(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__TAURI_INTERNALS__ = {
+      invoke: async (cmd: string) => {
+        if (cmd.includes('|select')) return [];
+        if (cmd.includes('|execute')) return [0, 0];
+        if (cmd.includes('|load')) return ':memory:';
+        return null;
+      },
+      transformCallback: () => 0,
+      metadata: { currentWindow: { label: 'main' } },
+    };
+  });
+});
+
+// ===== 代码草稿纸 =====
+
+test('刷题页:写代码 → 运行出输出(含异步)→ 报错可见', async ({ page }) => {
+  await page.goto('/#/agent/quiz');
+  await page.getByRole('button', { name: /代码草稿纸/ }).click();
+
+  // CodeMirror 是 contenteditable:点进去键盘输入(带花括号的函数——closeBrackets 已关,所敲即所得)
+  const editor = page.locator('.cm-content');
+  const output = page.getByRole('log', { name: '运行输出' }); // 断言只看输出区,不撞编辑器里的代码文本
+  await editor.click();
+  await page.keyboard.type('function add(a, b) {\n  return a + b;\n}\nconsole.log(add(1, 2));');
+  await page.getByRole('button', { name: '运行', exact: true }).click();
+  await expect(output.getByText('3', { exact: true })).toBeVisible({ timeout: 5_000 });
+
+  // 异步输出:超时窗内持续追加(真 Worker 行为)
+  await editor.click();
+  await page.keyboard.press('Meta+a');
+  await page.keyboard.type("setTimeout(() => console.log('async-out'), 30);");
+  await page.getByRole('button', { name: '运行', exact: true }).click();
+  await expect(output.getByText('async-out', { exact: true })).toBeVisible({ timeout: 5_000 });
+
+  // 运行抛错:error 行可见(颜色 + [error] 标签双指示)
+  await editor.click();
+  await page.keyboard.press('Meta+a');
+  await page.keyboard.type("throw new Error('boom')");
+  await page.getByRole('button', { name: '运行', exact: true }).click();
+  await expect(output.getByText(/Error: boom/)).toBeVisible({ timeout: 5_000 });
+});
+
+test('代码按题保存:离开再回来草稿还在,新题不串', async ({ page }) => {
+  await page.goto('/#/agent/quiz');
+  await page.getByRole('button', { name: /代码草稿纸/ }).click();
+  const editor = page.locator('.cm-content');
+  await editor.click();
+  await page.keyboard.type("let draft = 'kept-code';");
+  // 等防抖(500ms)落内存缓存
+  await page.waitForTimeout(700);
+
+  // 离开 → 回来:同题(无进度,队列确定)草稿自动展开恢复
+  await page.goto('/#/agent/browse');
+  await page.goto('/#/agent/quiz');
+  await expect(page.locator('.cm-content')).toContainText('kept-code');
+
+  // 评掉本题进下一题:新题的草稿纸收起、无残留
+  await page.getByRole('button', { name: /看答案/ }).click();
+  await page.getByRole('button', { name: '掌握' }).click();
+  await expect(page.getByRole('button', { name: /代码草稿纸$/ })).toBeVisible();
+});
+
+// ===== 手动加题 =====
+
+// 表单 label 均经 htmlFor 关联输入,直接 getByLabel 定位
+const ANSWER_50 = '闭包是函数与其词法环境的组合;每次触发前先 clearTimeout 上一次的定时器;immediate 模式要记录是否已立即执行过;this 用参数或箭头函数保留。';
+
+async function fillQuestionForm(page: Page, title: string, focus: string, answer: string) {
+  const dlg = page.getByRole('dialog');
+  await dlg.getByLabel('题干').fill(title);
+  await dlg.getByLabel('考察点(focus)').fill(focus);
+  await dlg.getByLabel('答案要点(一行一条,合计 ≥50 字)').fill(answer);
+}
+
+test('空态手动加题 → 直接进我的题库(不经草稿区)', async ({ page }) => {
+  await page.goto('/#/my/browse');
+  await expect(page.getByText('我的题库还没有题')).toBeVisible();
+
+  await page.getByRole('button', { name: '手动加题' }).click();
+  await page.getByLabel('新模块名').fill('面试手写');
+  await fillQuestionForm(page, '手写一个防抖函数要注意什么?', '闭包与定时器清理', ANSWER_50);
+  await page.getByRole('dialog').getByLabel('标签(逗号分隔)').fill('js, 手写');
+  await page.getByRole('dialog').getByRole('button', { name: '保存', exact: true }).click();
+
+  // toast + 直接出现在浏览列表(无草稿区步骤)
+  await expect(page.getByText('已加入我的题库')).toBeVisible();
+  await expect(page.getByText('手写一个防抖函数要注意什么?')).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByText('面试手写').first()).toBeVisible();
+});
+
+test('手动加题可进既有模块;校验失败拦截保存', async ({ page }) => {
+  await page.goto('/#/my/browse');
+  await page.getByRole('button', { name: '手动加题' }).click();
+  await page.getByLabel('新模块名').fill('面试手写');
+  await fillQuestionForm(page, '第一题?', '基础', ANSWER_50);
+  await page.getByRole('dialog').getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('已加入我的题库')).toBeVisible();
+  await page.waitForTimeout(300);
+
+  // 第二题:选既有模块(下拉里出现「01 · 面试手写」)
+  await page.getByRole('button', { name: '手动加题' }).click();
+  await page.getByRole('dialog').getByRole('combobox', { name: '归属模块' }).click();
+  await page.getByRole('option', { name: /01 · 面试手写/ }).click();
+
+  // 答案过短 → 共享校验拦截,报错可见、对话框不关
+  await fillQuestionForm(page, '第二题?', '基础', '太短');
+  await page.getByRole('dialog').getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText(/过短/)).toBeVisible();
+  await expect(page.getByRole('dialog')).toBeVisible();
+
+  // 补长重存:成功,同模块两题
+  await page.getByRole('dialog').getByLabel('答案要点(一行一条,合计 ≥50 字)').fill(ANSWER_50);
+  await page.getByRole('dialog').getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByText('第二题?')).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByText(/共 2 题/)).toBeVisible();
+});

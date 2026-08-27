@@ -8,6 +8,8 @@ import {
   saveNote,
   getNote,
   clearNotes,
+  getCodeDraft,
+  saveCodeDraft,
   rowToCard,
   _resetStorageForTest,
   _setDbForTest,
@@ -91,6 +93,30 @@ describe('笔记缓存', () => {
   });
 });
 
+describe('代码草稿纸缓存', () => {
+  it('saveCodeDraft/getCodeDraft 往返', () => {
+    saveCodeDraft(CAT, 'a', 'console.log(1)');
+    expect(getCodeDraft(CAT, 'a')).toBe('console.log(1)');
+  });
+
+  it('空白内容删除', () => {
+    saveCodeDraft(CAT, 'a', 'console.log(1)');
+    saveCodeDraft(CAT, 'a', '   ');
+    expect(getCodeDraft(CAT, 'a')).toBe('');
+  });
+
+  it('getCodeDraft 不存在返回空串', () => {
+    expect(getCodeDraft(CAT, 'x')).toBe('');
+  });
+
+  it('与笔记隔离(同 id 互不干扰)', () => {
+    saveNote(CAT, 'a', '<p>n</p>');
+    saveCodeDraft(CAT, 'a', 'let x = 1');
+    clearNotes(CAT);
+    expect(getCodeDraft(CAT, 'a')).toBe('let x = 1');
+  });
+});
+
 describe('persist 契约(mock db)', () => {
   it('saveCard 触发 review_state UPSERT(参数顺序正确)', async () => {
     const execute = vi.fn().mockResolvedValue({});
@@ -113,6 +139,20 @@ describe('persist 契约(mock db)', () => {
     saveNote(CAT, 'a', '');
     await vi.waitFor(() => expect(execute).toHaveBeenCalled());
     expect(execute.mock.calls[0][0]).toContain('DELETE FROM notes');
+  });
+
+  it('saveCodeDraft 非空 UPSERT / 空 DELETE', async () => {
+    const execute = vi.fn().mockResolvedValue({});
+    _setDbForTest({ execute, select: vi.fn() } as never);
+    saveCodeDraft(CAT, 'a', 'let x = 1');
+    await vi.waitFor(() => expect(execute).toHaveBeenCalled());
+    const [sql, args] = execute.mock.calls[0];
+    expect(sql).toContain('INSERT INTO code_drafts');
+    expect(args).toEqual(['a', CAT, 'let x = 1', expect.any(Number)]);
+    execute.mockClear();
+    saveCodeDraft(CAT, 'a', '  ');
+    await vi.waitFor(() => expect(execute).toHaveBeenCalled());
+    expect(execute.mock.calls[0][0]).toContain('DELETE FROM code_drafts');
   });
 
   it('db 未就绪时 persist 静默跳过(不抛错)', () => {

@@ -35,6 +35,7 @@ export function rowToCard(r: ReviewRow): CardState {
 // ===== 内存缓存(模块级单例) =====
 const progressCache = new Map<string, Record<string, CardState>>();
 const notesCache = new Map<string, Record<string, string>>();
+const codeDraftsCache = new Map<string, Record<string, string>>();
 // db 懒加载(initStorage 时赋值);未 init 时为 null,persist 静默跳过(测试/降级)
 let db: Database | null = null;
 let initPromise: Promise<void> | null = null;
@@ -53,6 +54,15 @@ function notesOf(category: string): Record<string, string> {
   if (!m) {
     m = {};
     notesCache.set(category, m);
+  }
+  return m;
+}
+
+function codeDraftsOf(category: string): Record<string, string> {
+  let m = codeDraftsCache.get(category);
+  if (!m) {
+    m = {};
+    codeDraftsCache.set(category, m);
   }
   return m;
 }
@@ -76,6 +86,13 @@ export async function initStorage(): Promise<void> {
     );
     for (const n of notes) {
       notesOf(n.category)[n.id] = n.content;
+    }
+
+    const codeDrafts = await db.select<{ id: string; category: string; content: string }[]>(
+      'SELECT id, category, content FROM code_drafts'
+    );
+    for (const d of codeDrafts) {
+      codeDraftsOf(d.category)[d.id] = d.content;
     }
 
     // 我的库(questions 表)、求职档案(profile 表)、密钥(secrets 表)、官方题库物化(official_* 表)
@@ -135,6 +152,21 @@ export function clearNotes(category: string): void {
   void persistDeleteCategory('notes', category);
 }
 
+// ===== 代码草稿纸(与 notes 同模式:同步读 + fire-and-forget 持久化,空串删行) =====
+
+export function getCodeDraft(category: string, id: string): string {
+  return codeDraftsOf(category)[id] || '';
+}
+
+export function saveCodeDraft(category: string, id: string, code: string): void {
+  if (code.trim()) {
+    codeDraftsOf(category)[id] = code;
+  } else {
+    delete codeDraftsOf(category)[id];
+  }
+  void persistCodeDraft(category, id, code);
+}
+
 // ===== 持久化(fire-and-forget;db 未就绪则跳过,失败仅 log 不阻塞 UI) =====
 async function persistCard(category: string, id: string, c: CardState): Promise<void> {
   if (!db) return;
@@ -166,6 +198,23 @@ async function persistNote(category: string, id: string, html: string): Promise<
   }
 }
 
+async function persistCodeDraft(category: string, id: string, code: string): Promise<void> {
+  if (!db) return;
+  try {
+    if (code.trim()) {
+      await db.execute(
+        'INSERT INTO code_drafts(id,category,content,updated_at) VALUES($1,$2,$3,$4) ' +
+          'ON CONFLICT(id) DO UPDATE SET content=$3,updated_at=$4',
+        [id, category, code, Date.now()]
+      );
+    } else {
+      await db.execute('DELETE FROM code_drafts WHERE id=$1', [id]);
+    }
+  } catch (e) {
+    logger.error(`[storage] persistCodeDraft failed: ${e instanceof Error ? e.message : String(e)}`);
+  }
+}
+
 async function persistDeleteCategory(table: 'review_state' | 'notes', category: string): Promise<void> {
   if (!db) return;
   try {
@@ -179,6 +228,7 @@ async function persistDeleteCategory(table: 'review_state' | 'notes', category: 
 export function _resetStorageForTest(): void {
   progressCache.clear();
   notesCache.clear();
+  codeDraftsCache.clear();
   db = null;
   initPromise = null;
 }
