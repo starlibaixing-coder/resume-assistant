@@ -73,6 +73,42 @@ test('代码按题保存:离开再回来草稿还在,新题不串', async ({ pag
   await expect(page.getByRole('button', { name: /代码草稿纸$/ })).toBeVisible();
 });
 
+// 回归:basicSetup/onChange 引用不稳时,@uiw 每次按键都 reconfigure,
+// 补全提示刚弹出就被拆掉(修复前本用例红)
+test('编辑器补全:console 全局对象与成员有提示', async ({ page }) => {
+  await page.goto('/#/agent/quiz');
+  await page.getByRole('button', { name: /代码草稿纸/ }).click();
+  const editor = page.locator('.cm-content');
+  await editor.click();
+  await page.keyboard.type('cons');
+  const tooltip = page.locator('.cm-tooltip-autocomplete');
+  await expect(tooltip).toBeVisible();
+  await expect(tooltip).toContainText('console');
+
+  // 成员级:补全 console 后接 ".",提示 log/warn
+  await page.keyboard.press('Escape'); // 关掉当前补全
+  await page.keyboard.press('End');
+  await page.keyboard.type('ole.');
+  await expect(tooltip).toBeVisible();
+  await expect(tooltip).toContainText('log');
+  await expect(tooltip).toContainText('warn');
+});
+
+// 回归:跨行选中必须绘制 drawSelection 选中层(修复前选中层随 reconfigure 抖动丢失)
+test('编辑器选中:跨行选中绘制选中层', async ({ page }) => {
+  await page.goto('/#/agent/quiz');
+  await page.getByRole('button', { name: /代码草稿纸/ }).click();
+  const editor = page.locator('.cm-content');
+  await editor.click();
+  await page.keyboard.type('let a = 1;\nlet b = 2;\nlet c = 3;');
+  // 光标回文件头,Shift+↓×2 跨行选中:drawSelection 应绘制出选中背景层
+  await page.keyboard.press('Meta+ArrowUp');
+  await page.keyboard.press('Shift+ArrowDown');
+  await page.keyboard.press('Shift+ArrowDown');
+  await expect(page.locator('.cm-selectionBackground').first()).toBeVisible();
+  await expect(page.locator('.cm-selectionBackground')).not.toHaveCount(0);
+});
+
 // ===== 手动加题 =====
 
 // 表单 label 均经 htmlFor 关联输入,直接 getByLabel 定位
