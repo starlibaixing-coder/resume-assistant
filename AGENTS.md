@@ -49,7 +49,9 @@ Workspace instructions for ZCode agents working in this repo.
 - **在 token 体系内工作**:颜色、边框、间距只用现有 CSS token 与既有层级,不引入魔法值和新色调。
 - **AI 产物必经人工审核**(ADR-10):生成内容一律先进草稿区,approve 后才入正式库与 SM-2 队列。手动加题例外:人写即人审,`addManualQuestion` 直接 approved(2026-08-26 用户确认)。
 - **官方题库走 DB 物化**(`officialbank.ts`):首次启动播种包内 questions.json,之后启动自动 + 设置页手动同步 GitHub Pages 远端;远端下架的题连带清进度/笔记/代码草稿(id 作废不复用,ADR-9);YAML 仍是唯一真相源。
-- **刷题卡片有代码草稿纸**(`code-scratchpad.tsx`):按题存代码(code_drafts 表,与 notes 同模式),JS 走 Web Worker 沙箱运行(`js-runner.ts` + worker,超时强杀,异步输出转发);CodeMirror 的 closeBrackets 必须保持关闭(补全与手输闭括号叠加会出语法错误),编辑器主题只吃 CSS token。
+- **刷题卡片有代码草稿纸**(`code-scratchpad.tsx`):按题存代码(code_drafts 表,与 notes 同模式),JS 走 Web Worker 沙箱运行(`js-runner.ts` + worker,超时强杀,异步输出转发);CodeMirror 的 closeBrackets 必须保持关闭(补全与手输闭括号叠加会出语法错误),编辑器主题只吃 CSS token;**basicSetup/onChange 必须稳定引用**(内联对象/未 memo 的函数会让 @uiw 每次按键都 reconfigure,补全提示刚弹出就被拆掉、选中层异常,2026-08-27 教训)。
+- **沉浸式刷题**(`lib/immersive.tsx`,2026-08-27):刷题页 meta 行入口进入,AppShell 不渲染侧栏/返回条,Tauri 壳内联动系统全屏;Esc/按钮/离开 quiz 路由三通道退出。Esc **不加**输入框/编辑器守卫——刷题时焦点常驻 CodeMirror/tiptap,守卫会让 Esc 永远够不到。
+- **问 AI 走子 webview 窗口**(`lib/ai-assistant.ts`,2026-08-27):chat.qwen.ai 开独立 `WebviewWindow`(已开聚焦,登录态存应用数据);`ai-chat` 窗口不进 capabilities windows 列表——远端页面零 IPC,默认安全;浏览器层降级新标签页;不用 iframe(X-Frame-Options 拦截 + 第三方 iframe 登录态不可用)。
 
 ### web 刷题站(quiz-app/)
 
