@@ -1,10 +1,14 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router';
+import { Maximize2, MessageCircleQuestion, Minimize2 } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getReviewQueue } from '@/lib/schedule';
 import { newCard, review } from '@/lib/sm2';
 import { saveCard, loadProgress } from '@/lib/storage';
 import { loadLimit } from '@/lib/prefs';
+import { isTauri } from '@/lib/secrets';
+import { useImmersive } from '@/lib/immersive';
+import { AI_CHAT_URL, openAiAssistant } from '@/lib/ai-assistant';
 import type { Rating } from '@/types/question';
 import { AnswerPanel } from '@/components/answer-panel';
 import NotePanel from '@/components/note-panel';
@@ -12,6 +16,7 @@ import CodeScratchpad from '@/components/code-scratchpad';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function QuizPage({ category }: { category: string }) {
   const { data, error } = useQuestions();
@@ -74,7 +79,11 @@ export function QuizPage({ category }: { category: string }) {
         <span>
           {queueIdx + 1} / {queue.length}
         </span>
-        <span>{current.moduleName}</span>
+        <div className="flex items-center gap-1.5">
+          <span>{current.moduleName}</span>
+          <AskAiIconButton />
+          <ImmersiveIconButton />
+        </div>
       </div>
 
       <Card>
@@ -131,6 +140,67 @@ export function QuizPage({ category }: { category: string }) {
         </div>
       )}
     </div>
+  );
+}
+
+// 问 AI:桌面壳内开 chat.qwen.ai 子 webview 窗口(已开则聚焦);
+// 浏览器/web 层降级为新标签页(渲染成外链,便于与桌面行为区分)
+function AskAiIconButton() {
+  if (!isTauri()) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <a
+            href={AI_CHAT_URL}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="问 AI(浏览器打开)"
+            className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+          >
+            <MessageCircleQuestion aria-hidden />
+          </a>
+        </TooltipTrigger>
+        <TooltipContent>问 AI(浏览器打开)</TooltipContent>
+      </Tooltip>
+    );
+  }
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-7 w-7 shrink-0 text-muted-foreground"
+          aria-label="问 AI"
+          onClick={() => void openAiAssistant()}
+        >
+          <MessageCircleQuestion aria-hidden />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>问 AI</TooltipContent>
+    </Tooltip>
+  );
+}
+
+// 沉浸式:隐藏侧栏/返回条(Tauri 壳内同时系统全屏),Esc 或本按钮退出;
+// 该行是沉浸中唯一保留的 chrome,按钮常驻兼作退出入口
+function ImmersiveIconButton() {
+  const { immersive, toggle } = useImmersive();
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-7 w-7 shrink-0 text-muted-foreground"
+          aria-label={immersive ? '退出沉浸模式' : '沉浸模式'}
+          onClick={toggle}
+        >
+          {immersive ? <Minimize2 aria-hidden /> : <Maximize2 aria-hidden />}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{immersive ? '退出沉浸模式(Esc)' : '沉浸模式'}</TooltipContent>
+    </Tooltip>
   );
 }
 

@@ -6,11 +6,13 @@ import {
 } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getMyCategory, getPendingCount, subscribeMyLib } from '@/lib/mylib';
+import { useImmersive } from '@/lib/immersive';
 
 // 桌面壳:常驻侧栏导航 + 内容区(页面由 App.tsx 的 Routes 经 children 传入)。
 // 后退语义:侧栏直达页是同级切换不显示后退;只有下钻子页(刷题/浏览)显示
 // 「← 回到{分类名}题库」,固定回该分类队列页(不依赖历史栈)。
 // Cmd/Ctrl/Alt+← 为系统级 history.back()(编辑器内不抢键);窄窗(<lg)侧栏收成图标栏。
+// 沉浸式刷题(lib/immersive)时侧栏与返回条不渲染,内容区结构不变。
 
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   agent: Bot,
@@ -57,6 +59,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
   const parts = location.pathname.split('/').filter(Boolean);
   const { data } = useQuestions();
+  const { immersive } = useImmersive();
 
   // 草稿角标/我的题库计数跟随 mylib 变化
   const [, bump] = useState(0);
@@ -94,51 +97,54 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
-      <aside className="flex h-full w-14 shrink-0 flex-col border-r border-border bg-card lg:w-56">
-        {/* 品牌 */}
-        <Link to="/" className="flex items-center gap-2.5 px-2.5 py-4 lg:px-3.5" title="刷题 Agent">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Zap className="h-4 w-4" />
-          </div>
-          <span className="hidden text-sm font-semibold tracking-tight lg:inline">刷题 Agent</span>
-        </Link>
+      {/* 沉浸式:侧边栏与返回条都不渲染,内容区结构保持不变(刷题页自留进度行作唯一 chrome) */}
+      {!immersive && (
+        <aside className="flex h-full w-14 shrink-0 flex-col border-r border-border bg-card lg:w-56">
+          {/* 品牌 */}
+          <Link to="/" className="flex items-center gap-2.5 px-2.5 py-4 lg:px-3.5" title="刷题 Agent">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              <Zap className="h-4 w-4" />
+            </div>
+            <span className="hidden text-sm font-semibold tracking-tight lg:inline">刷题 Agent</span>
+          </Link>
 
-        <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-1">
-          <NavItem to="/" icon={LayoutDashboard} label="总览" active={root === ''} />
-          <NavItem to="/profile" icon={Target} label="求职目标" active={root === 'profile'} />
-          <NavItem to="/generate" icon={Sparkles} label="AI 生题" active={root === 'generate'} />
-          <NavItem to="/drafts" icon={Inbox} label="草稿区" active={root === 'drafts'} badge={pendingCount} />
+          <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-1">
+            <NavItem to="/" icon={LayoutDashboard} label="总览" active={root === ''} />
+            <NavItem to="/profile" icon={Target} label="求职目标" active={root === 'profile'} />
+            <NavItem to="/generate" icon={Sparkles} label="AI 生题" active={root === 'generate'} />
+            <NavItem to="/drafts" icon={Inbox} label="草稿区" active={root === 'drafts'} badge={pendingCount} />
 
-          <div className="hidden px-2.5 pb-1 pt-4 text-[11px] font-mono uppercase tracking-wider text-muted-foreground/60 lg:block">
-            题库分类
-          </div>
-          {cats.map((c) => (
+            <div className="hidden px-2.5 pb-1 pt-4 text-[11px] font-mono uppercase tracking-wider text-muted-foreground/60 lg:block">
+              题库分类
+            </div>
+            {cats.map((c) => (
+              <NavItem
+                key={c.slug}
+                to={`/${c.slug}`}
+                icon={CATEGORY_ICONS[c.slug] ?? BookOpen}
+                label={c.name}
+                active={root === c.slug}
+                count={c.count}
+              />
+            ))}
             <NavItem
-              key={c.slug}
-              to={`/${c.slug}`}
-              icon={CATEGORY_ICONS[c.slug] ?? BookOpen}
-              label={c.name}
-              active={root === c.slug}
-              count={c.count}
+              to="/my"
+              icon={LibraryBig}
+              label="我的题库"
+              active={root === 'my'}
+              count={myCategory.count}
             />
-          ))}
-          <NavItem
-            to="/my"
-            icon={LibraryBig}
-            label="我的题库"
-            active={root === 'my'}
-            count={myCategory.count}
-          />
-        </nav>
+          </nav>
 
-        {/* 底部:设置 */}
-        <div className="border-t border-border p-2">
-          <NavItem to="/settings" icon={Settings} label="设置" active={root === 'settings'} />
-        </div>
-      </aside>
+          {/* 底部:设置 */}
+          <div className="border-t border-border p-2">
+            <NavItem to="/settings" icon={Settings} label="设置" active={root === 'settings'} />
+          </div>
+        </aside>
+      )}
 
       <main className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-        {isSubPage && backCatSlug && (
+        {!immersive && isSubPage && backCatSlug && (
           <div className="shrink-0 px-6 pt-4">
             <Link
               to={`/${backCatSlug}`}

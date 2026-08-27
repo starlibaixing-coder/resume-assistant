@@ -66,7 +66,8 @@ fn smoke_report(step: String, pass: bool, detail: String) {
 #[tauri::command]
 fn smoke_finish(app: tauri::AppHandle, passed: bool) {
     log::info!("[smoke] RESULT {}", if passed { "all-passed" } else { "FAILED" });
-    app.exit(passed as i32);
+    // 退出码契约(smoke.py 文档):0 全过 / 1 有失败——bool as i32 是 全过=1,正好相反
+    app.exit(i32::from(!passed));
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

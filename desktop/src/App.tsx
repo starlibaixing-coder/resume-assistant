@@ -1,6 +1,7 @@
 import { HashRouter, Routes, Route, Outlet, useParams } from 'react-router';
 import { AppShell } from '@/components/app-shell';
 import { Toaster } from '@/components/ui/sonner';
+import { ImmersiveProvider } from '@/lib/immersive';
 import { OverviewPage } from '@/pages/overview';
 import { QueuePage } from '@/pages/queue';
 import { QuizPage } from '@/pages/quiz';
@@ -22,18 +23,21 @@ function CategoryRoute({ children }: { children: (category: string) => React.Rea
 export default function App() {
   return (
     <HashRouter>
-      <Routes>
-        <Route element={<AppShell><Outlet /></AppShell>}>
-          <Route index element={<OverviewPage />} />
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="generate" element={<GeneratePage />} />
-          <Route path="drafts" element={<DraftsPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path=":category" element={<CategoryRoute>{(c) => <QueuePage category={c} />}</CategoryRoute>} />
-          <Route path=":category/quiz" element={<CategoryRoute>{(c) => <QuizPage category={c} />}</CategoryRoute>} />
-          <Route path=":category/browse" element={<CategoryRoute>{(c) => <BrowsePage category={c} />}</CategoryRoute>} />
-        </Route>
-      </Routes>
+      {/* 沉浸式状态需在 Router 内(useLocation 路由守卫),AppShell/刷题页共同消费 */}
+      <ImmersiveProvider>
+        <Routes>
+          <Route element={<AppShell><Outlet /></AppShell>}>
+            <Route index element={<OverviewPage />} />
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="generate" element={<GeneratePage />} />
+            <Route path="drafts" element={<DraftsPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path=":category" element={<CategoryRoute>{(c) => <QueuePage category={c} />}</CategoryRoute>} />
+            <Route path=":category/quiz" element={<CategoryRoute>{(c) => <QuizPage category={c} />}</CategoryRoute>} />
+            <Route path=":category/browse" element={<CategoryRoute>{(c) => <BrowsePage category={c} />}</CategoryRoute>} />
+          </Route>
+        </Routes>
+      </ImmersiveProvider>
       <Toaster />
     </HashRouter>
   );

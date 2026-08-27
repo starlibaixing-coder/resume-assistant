@@ -14,7 +14,7 @@ import re
 import subprocess
 import sys
 
-# 日志经 tauri-plugin-log 输出,行首带时间戳,不锚定行首
+# 日志经 tauri-plugin-log 输出,行首带时间戳([2026-..][..][app_lib][INFO]),不锚定行首
 SMOKE_LINE = re.compile(r"\[smoke\] (PASS|FAIL)  (\S+)\s*(.*)$")
 TIMEOUT_SECONDS = 900  # 首次 Rust 编译可能数分钟
 
@@ -39,7 +39,7 @@ def main() -> int:
     output = (proc.stdout or "") + (proc.stderr or "")
     rows = []
     for line in output.splitlines():
-        m = SMOKE_LINE.match(line.strip())
+        m = SMOKE_LINE.search(line)
         if m:
             rows.append(m.groups())
 
