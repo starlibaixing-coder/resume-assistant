@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { EditorView } from '@codemirror/view';
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
-import { javascript } from '@codemirror/lang-javascript';
+import { javascript, javascriptLanguage } from '@codemirror/lang-javascript';
+import { ifNotIn, type CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
 import { tags as t } from '@lezer/highlight';
 import { Code2, Play } from 'lucide-react';
 import { getCodeDraft, saveCodeDraft } from '@/lib/storage';
@@ -32,15 +33,68 @@ const editorTheme = EditorView.theme({
 // 语法高亮同样只吃 token:keyword=主色 / 字符串=success / 数字=warning / 注释=muted
 const highlightTheme = HighlightStyle.define([
   { tag: [t.keyword, t.moduleKeyword, t.controlKeyword], color: 'var(--primary)' },
-  { tag: [t.string, t.special(t.string)], color: 'var(--success)' },
-  { tag: [t.number, t.bool, t.null], color: 'var(--warning)' },
+  { tag: [t.string, t.special(t.string), t.regexp, t.escape], color: 'var(--success)' },
+  { tag: [t.number, t.bool, t.null, t.typeName, t.className], color: 'var(--warning)' },
   { tag: [t.comment, t.docComment], color: 'var(--muted-foreground)', fontStyle: 'italic' },
-  { tag: [t.function(t.variableName), t.definition(t.variableName)], color: 'var(--primary)' },
-  { tag: [t.operator, t.punctuation, t.bracket], color: 'var(--muted-foreground)' },
+  { tag: [t.function(t.variableName), t.definition(t.variableName), t.definition(t.propertyName)], color: 'var(--primary)' },
+  { tag: [t.operator, t.punctuation, t.bracket, t.meta], color: 'var(--muted-foreground)' },
+  { tag: t.invalid, color: 'var(--destructive)' },
   { tag: [t.propertyName, t.variableName], color: 'var(--foreground)' },
 ]);
 
-const extensions = [javascript(), editorTheme, syntaxHighlighting(highlightTheme)];
+// lang-javascript 自带补全只覆盖关键字/片段/局部变量,console 等全局对象永远不提示;
+// 这里补一个小型静态源:常用全局名 + console 的常用成员,挂在语言数据上与自带源叠加。
+const GLOBAL_MEMBERS: Record<string, readonly string[]> = {
+  console: ['log', 'warn', 'error', 'info', 'debug', 'table', 'time', 'timeEnd'],
+};
+const GLOBAL_NAMES = [
+  'console', 'Math', 'JSON', 'Object', 'Array', 'String', 'Number', 'Boolean',
+  'Promise', 'Map', 'Set', 'Date', 'setTimeout', 'setInterval', 'clearTimeout',
+  'clearInterval', 'fetch', 'document', 'window', 'globalThis',
+];
+
+function globalCompletionSource(context: CompletionContext): CompletionResult | null {
+  const path = context.matchBefore(/[\w$]*(\.[\w$]*)?$/);
+  if (!path) return null;
+  const text = path.text;
+  const dot = text.lastIndexOf('.');
+  if (dot >= 0) {
+    const members = GLOBAL_MEMBERS[text.slice(0, dot)];
+    if (!members) return null;
+    const prefix = text.slice(dot + 1);
+    return {
+      from: path.from + dot + 1,
+      options: members
+        .filter((m) => !prefix || m.startsWith(prefix))
+        .map((m) => ({ label: m, type: 'method' })),
+      validFor: /^[\w$]*$/,
+    };
+  }
+  return {
+    from: path.from,
+    options: GLOBAL_NAMES
+      .filter((n) => !text || n.startsWith(text))
+      .map((n) => ({ label: n, type: 'variable' })),
+    validFor: /^[\w$]*$/,
+  };
+}
+
+const extensions = [
+  javascript(),
+  // 节点名单沿 lang-javascript 自带的 dontComplete:字符串/模板串/正则/注释/定义位不补
+  javascriptLanguage.data.of({ autocomplete: ifNotIn(
+    ['TemplateString', 'String', 'RegExp', 'LineComment', 'BlockComment', 'VariableDefinition', 'TypeDefinition', 'Label'],
+    globalCompletionSource,
+  ) }),
+  editorTheme,
+  syntaxHighlighting(highlightTheme),
+];
+
+// basicSetup 必须是稳定引用:@uiw 的 reconfigure effect 依赖它和 onChange,
+// 内联字面量 + 每次 render 新建的 onChange 会让每次按键都重建编辑器插件——
+// 补全提示刚弹出就被拆掉、选中层(drawSelection)也随之异常。
+// closeBrackets 保持关闭:补全 + 回车拆行会和自己输入的闭括号叠加成语法错误(AGENTS.md 约定)。
+const BASIC_SETUP = { closeBrackets: false };
 
 // 当前题的上下文(闭包里读 ref,避免切题后闭包过期)
 interface ScratchCtx {
@@ -64,13 +118,14 @@ export default function CodeScratchpad({ category, questionId }: { category: str
   // 运行代次:切题/重跑后旧 run 的迟到输出直接丢弃
   const runSeedRef = useRef(0);
 
-  const handleChange = (value: string) => {
+  // 稳定引用(空依赖):内部只触达 refs 与稳定的 setCode,供 CodeMirror 的 onChange 使用
+  const handleChange = useCallback((value: string) => {
     latestRef.current = value;
     setCode(value);
     const { category: c, questionId: id } = ctxRef.current;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => saveCodeDraft(c, id, value), 500);
-  };
+  }, []);
 
   // 切题:flush 旧题未落盘输入 → 换内容、清输出
   useEffect(() => {
@@ -177,9 +232,7 @@ export default function CodeScratchpad({ category, questionId }: { category: str
           extensions={extensions}
           onChange={handleChange}
           aria-label="代码草稿编辑区"
-          // 关掉括号自动补全:补全 + 回车拆行会和自己输入的闭括号叠加成语法错误,
-          // 草稿纸要的是所敲即所得(括号匹配高亮仍保留)
-          basicSetup={{ closeBrackets: false }}
+          basicSetup={BASIC_SETUP}
         />
       </div>
 
