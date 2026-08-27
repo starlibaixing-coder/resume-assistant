@@ -34,6 +34,12 @@ fn db_migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/004_official_bank.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 5,
+            description: "create_code_drafts_table",
+            sql: include_str!("../migrations/005_code_drafts.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -127,6 +133,7 @@ mod tests {
             "secrets",
             "official_questions",
             "official_categories",
+            "code_drafts",
         ] {
             let n: i64 = conn
                 .query_row(

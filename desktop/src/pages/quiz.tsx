@@ -8,6 +8,7 @@ import { loadLimit } from '@/lib/prefs';
 import type { Rating } from '@/types/question';
 import { AnswerPanel } from '@/components/answer-panel';
 import NotePanel from '@/components/note-panel';
+import CodeScratchpad from '@/components/code-scratchpad';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -91,6 +92,7 @@ export function QuizPage({ category }: { category: string }) {
         <div className="text-sm text-muted-foreground">{current.focus}</div>
 
         <NotePanel category={category} questionId={current.id} />
+        <CodeScratchpad category={category} questionId={current.id} />
 
         {!revealed ? (
           <div className="pt-2 space-y-2">

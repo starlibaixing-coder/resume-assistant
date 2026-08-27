@@ -224,9 +224,10 @@ async function applyBank(bank: QuestionData): Promise<SyncStats> {
     for (const q of [...added, ...updated]) await db.execute(UPSERT_QUESTION_SQL, questionToParams(q, now));
     for (const id of removedIds) {
       await db.execute('DELETE FROM official_questions WHERE id=$1', [id]);
-      // 远端下架:进度/笔记连带清(id 作废不复用,ADR-9)
+      // 远端下架:进度/笔记/代码草稿连带清(id 作废不复用,ADR-9)
       await db.execute('DELETE FROM review_state WHERE id=$1', [id]);
       await db.execute('DELETE FROM notes WHERE id=$1', [id]);
+      await db.execute('DELETE FROM code_drafts WHERE id=$1', [id]);
     }
     for (const c of bank.categories) {
       await db.execute(UPSERT_CATEGORY_SQL, [c.slug, c.name, c.description ?? '', now]);

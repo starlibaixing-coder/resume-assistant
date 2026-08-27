@@ -47,8 +47,9 @@ Workspace instructions for ZCode agents working in this repo.
 - **行内重复动作用 ghost icon 按钮**:列表行内的操作(添加/编辑/删除)用 Lucide 图标 + shadcn Tooltip + `aria-label`,不放常驻文本按钮,不用展开抽屉装动作,不写"可改可删"类说明文案;图标不用 emoji/文本字符。
 - **路由用 react-router**:页面组件放 `src/pages/`,路由表在 `App.tsx`(HashRouter);站内导航一律 `Link`/`useNavigate`,不写 `<a href="#/…">`(外部链接除外)。
 - **在 token 体系内工作**:颜色、边框、间距只用现有 CSS token 与既有层级,不引入魔法值和新色调。
-- **AI 产物必经人工审核**(ADR-10):生成内容一律先进草稿区,approve 后才入正式库与 SM-2 队列。
-- **官方题库走 DB 物化**(`officialbank.ts`):首次启动播种包内 questions.json,之后启动自动 + 设置页手动同步 GitHub Pages 远端;远端下架的题连带清进度/笔记(id 作废不复用,ADR-9);YAML 仍是唯一真相源。
+- **AI 产物必经人工审核**(ADR-10):生成内容一律先进草稿区,approve 后才入正式库与 SM-2 队列。手动加题例外:人写即人审,`addManualQuestion` 直接 approved(2026-08-26 用户确认)。
+- **官方题库走 DB 物化**(`officialbank.ts`):首次启动播种包内 questions.json,之后启动自动 + 设置页手动同步 GitHub Pages 远端;远端下架的题连带清进度/笔记/代码草稿(id 作废不复用,ADR-9);YAML 仍是唯一真相源。
+- **刷题卡片有代码草稿纸**(`code-scratchpad.tsx`):按题存代码(code_drafts 表,与 notes 同模式),JS 走 Web Worker 沙箱运行(`js-runner.ts` + worker,超时强杀,异步输出转发);CodeMirror 的 closeBrackets 必须保持关闭(补全与手输闭括号叠加会出语法错误),编辑器主题只吃 CSS token。
 
 ### web 刷题站(quiz-app/)
 

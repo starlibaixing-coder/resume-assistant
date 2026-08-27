@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type Database from '@tauri-apps/plugin-sql';
 import {
   addDrafts,
+  addManualQuestion,
   allocateIds,
   approveQuestion,
   copyOfficial,
@@ -259,6 +260,47 @@ describe('copyOfficial(ADR-3 复制后改)', () => {
   });
 });
 
+describe('addManualQuestion(手动加题,直接 approved)', () => {
+  it('新模块:approved + id 分配 + 无溯源', async () => {
+    const q = await addManualQuestion(draft(), { moduleName: '面试手写' });
+    expect(q.id).toBe('my.1.1');
+    expect(q.module).toBe(1);
+    expect(q.moduleName).toBe('面试手写');
+    expect(q.status).toBe('approved');
+    expect(q.sourceId).toBeNull();
+    // 直接进聚合分类(不进草稿区)
+    expect(getMyCategory().count).toBe(1);
+    expect(getPendingCount()).toBe(0);
+  });
+
+  it('指定既有模块:进该模块且题号顺延', async () => {
+    const first = await addManualQuestion(draft(), { moduleName: '面试手写' });
+    const second = await addManualQuestion(draft({ title: '第二题?' }), {
+      moduleId: first.module,
+      moduleName: first.moduleName,
+    });
+    expect(second.id).toBe('my.1.2');
+    expect(second.module).toBe(1);
+    expect(getMyCategory().modules).toHaveLength(1);
+  });
+
+  it('校验失败拒绝入库(共享硬规则)', async () => {
+    await expect(
+      addManualQuestion(draft({ answer: ['太短'] }), { moduleName: 'x' }),
+    ).rejects.toThrow(/过短/);
+    expect(getMyQuestions()).toHaveLength(0);
+  });
+
+  it('persist 走 INSERT questions(status=approved)', async () => {
+    const db = mockDb();
+    _setMyLibDbForTest(db);
+    await addManualQuestion(draft(), { moduleName: '面试手写' });
+    const [sql, params] = (db.execute as ReturnType<typeof vi.fn>).mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain('INSERT INTO questions');
+    expect(params).toContain('approved');
+  });
+});
+
 describe('updateQuestion', () => {
   it('改后可读 + persist UPDATE', async () => {
     const db = mockDb();
@@ -280,7 +322,7 @@ describe('updateQuestion', () => {
 });
 
 describe('deleteQuestion(级联清理)', () => {
-  it('删题同时清 review_state / notes 孤儿', async () => {
+  it('删题同时清 review_state / notes / code_drafts 孤儿', async () => {
     const db = mockDb();
     _setMyLibDbForTest(db);
     const [q] = await addDrafts([draft()], 'React');
@@ -293,6 +335,7 @@ describe('deleteQuestion(级联清理)', () => {
       'DELETE FROM questions WHERE id=$1',
       'DELETE FROM review_state WHERE id=$1',
       'DELETE FROM notes WHERE id=$1',
+      'DELETE FROM code_drafts WHERE id=$1',
     ]);
   });
 

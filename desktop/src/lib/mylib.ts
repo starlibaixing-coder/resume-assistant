@@ -274,6 +274,41 @@ export async function rejectDraft(id: string): Promise<void> {
   notify();
 }
 
+// 手动加题(2026-08-26):用户手写,直接 approved(人写即人审,ADR-10 只约束 AI 产物,见 plan D5)。
+// 模块归属:给 moduleId 进既有模块;不给则按新模块分配(nextModuleId)。id 仍走 my 空间(ADR-9)。
+export async function addManualQuestion(
+  draft: DraftQuestion,
+  opts: { moduleId?: number; moduleName: string },
+): Promise<MyQuestion> {
+  validateDraft(draft, '手动加题');
+  const existing = getMyQuestions();
+  const moduleId = opts.moduleId ?? nextModuleId(existing);
+  const [id] = allocateIds(
+    existing.map((q) => q.id),
+    moduleId,
+    1,
+  );
+  const now = Date.now();
+  const created: MyQuestion = {
+    ...draft,
+    id,
+    category: MY_CATEGORY_SLUG,
+    module: moduleId,
+    moduleName: opts.moduleName.slice(0, 30) || `模块 ${moduleId}`,
+    index: parseInt(id.split('.')[2] || '1', 10),
+    type: 'qa' as const,
+    status: 'approved' as const,
+    sourceId: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+  cache.set(created.id, created);
+  await persistInsert(created);
+  notify();
+  logger.info(`[mylib] addManualQuestion: ${created.id} → 模块 ${moduleId}「${created.moduleName}」`);
+  return created;
+}
+
 // 编辑我的题(改后再校验,硬规则不过拒绝保存)
 export async function updateQuestion(
   id: string,
@@ -299,7 +334,7 @@ export async function updateQuestion(
   return q;
 }
 
-// 删除我的题(任意状态)+ 级联清进度/笔记孤儿
+// 删除我的题(任意状态)+ 级联清进度/笔记/代码草稿孤儿
 export async function deleteQuestion(id: string): Promise<void> {
   const q = cache.get(id);
   if (!q) return;
@@ -307,6 +342,7 @@ export async function deleteQuestion(id: string): Promise<void> {
   await execute('DELETE FROM questions WHERE id=$1', [id]);
   await execute('DELETE FROM review_state WHERE id=$1', [id]);
   await execute('DELETE FROM notes WHERE id=$1', [id]);
+  await execute('DELETE FROM code_drafts WHERE id=$1', [id]);
   notify();
 }
 
