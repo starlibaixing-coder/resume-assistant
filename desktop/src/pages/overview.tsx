@@ -131,7 +131,7 @@ export function OverviewPage() {
       {/* 快捷操作:生题是核心功能,一级入口 */}
       <div className="flex flex-wrap gap-2">
         <Button asChild>
-          <Link to="/generate"><Sparkles className="mr-1.5 h-4 w-4" />AI 生题</Link>
+          <Link to="/generate"><Sparkles className="mr-1.5 h-4 w-4" />生题</Link>
         </Button>
         <Button asChild variant="outline">
           <Link to="/drafts"><Inbox className="mr-1.5 h-4 w-4" />草稿区{pendingCount > 0 ? `(${pendingCount})` : ''}</Link>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
+import { Check, ChevronDown, ChevronRight, Inbox, Sparkles, X } from 'lucide-react';
 import { approveQuestion, getMyQuestions, rejectDraft, subscribeMyLib } from '@/lib/mylib';
 import type { MyQuestion } from '@/types/question';
 import { AnswerPanel } from '@/components/answer-panel';
@@ -47,18 +48,30 @@ export function DraftsPage() {
     <div className="mx-auto max-w-3xl space-y-6" data-version={version}>
       <div className="flex flex-wrap items-end justify-between gap-2">
         <PageHeader title="草稿区" subtitle={pending.length > 0 ? `${pending.length} 题待审` : undefined} />
-        <Link to="/generate" className="pb-0.5 text-sm text-primary hover:underline font-mono">+ AI 生题</Link>
+        <Button asChild size="sm" variant="outline" className="mb-1">
+          <Link to="/generate">
+            <Sparkles className="size-3.5" aria-hidden />
+            去生题
+          </Link>
+        </Button>
       </div>
 
       {pending.length === 0 ? (
         <Card>
           <CardContent className="space-y-3 py-16 text-center">
-            <div className="text-4xl">✓</div>
+            <Inbox className="mx-auto size-10 text-muted-foreground" aria-hidden />
             <div className="text-foreground">草稿区是空的</div>
             <div className="text-sm text-muted-foreground">
               AI 生成的题会先进这里,你确认后才进刷题队列。
             </div>
-            <Link to="/generate" className="inline-block text-primary hover:underline text-sm">去生题 →</Link>
+            <div>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/generate">
+                  <Sparkles className="size-3.5" aria-hidden />
+                  去生题
+                </Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : (
@@ -79,26 +92,33 @@ export function DraftsPage() {
                   const isOpen = expandedId === q.id;
                   return (
                     <div key={q.id} className="border-b border-border last:border-b-0">
-                      <div
-                        className="flex items-center gap-3 p-3 cursor-pointer hover:bg-accent transition-colors"
+                      <button
+                        type="button"
+                        aria-expanded={isOpen}
+                        className="flex w-full items-center gap-3 p-3 text-left cursor-pointer hover:bg-accent transition-colors"
                         onClick={() => setExpandedId(isOpen ? null : q.id)}
                       >
-                        <span className="font-mono text-xs text-muted-foreground shrink-0">
-                          {isOpen ? '▼' : '▶'} {q.id}
+                        <span className="flex shrink-0 items-center gap-0.5 font-mono text-xs text-muted-foreground">
+                          {isOpen
+                            ? <ChevronDown className="size-3.5" aria-hidden />
+                            : <ChevronRight className="size-3.5" aria-hidden />}
+                          {q.id}
                         </span>
                         <span className="text-sm text-foreground flex-1">{q.title}</span>
                         <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
-                      </div>
+                      </button>
                       {isOpen && (
                         <div className="px-3.5 pb-4 space-y-3">
                           <div className="text-sm text-muted-foreground pt-2">{q.focus}</div>
                           <AnswerPanel answer={q.answer} followups={q.followups} />
                           <div className="flex gap-2 pt-1">
                             <Button size="sm" variant="success" onClick={() => handleApprove(q.id)}>
-                              ✓ 通过,进我的题库
+                              <Check className="size-3.5" aria-hidden />
+                              通过,进我的题库
                             </Button>
                             <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleReject(q.id)}>
-                              ✗ 拒绝
+                              <X className="size-3.5" aria-hidden />
+                              拒绝
                             </Button>
                           </div>
                         </div>

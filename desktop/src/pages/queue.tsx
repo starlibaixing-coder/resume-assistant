@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router';
-import { toast } from 'sonner';
-import { Plus } from 'lucide-react';
+import { CheckCircle2, Plus, Sparkles } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getReviewQueue, getStats } from '@/lib/schedule';
 import { MY_CATEGORY_SLUG } from '@/lib/mylib';
@@ -10,17 +9,15 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/page-header';
-import { QuestionCreateDialog } from '@/components/question-edit-dialog';
 
 // 分类队列页:今日数字 + 开始按钮 + 模块入口。
 // 每次学习题量是全局偏好,在设置页「刷题」分区配置(此页不再临时选)。
-// 我的题库:手动加题入口(空态 + 头部)与浏览页同款——侧栏点「我的题库」落地于此,
-// 入口只放浏览页会找不到(2026-08-26 用户反馈)。
+// 我的题库:加题入口(空态 + 头部)深链生题页——侧栏点「我的题库」落地于此,
+// 入口只放浏览页会找不到(2026-08-26 用户反馈;2026-08-28 收敛为 /generate 深链)。
 
 export function QueuePage({ category }: { category: string }) {
   const { data, error } = useQuestions();
   const limit = loadLimit();
-  const [createOpen, setCreateOpen] = useState(false);
 
   const { stats, queue } = useMemo(() => {
     if (!data) return { ids: [] as string[], stats: null, queue: null };
@@ -47,21 +44,21 @@ export function QueuePage({ category }: { category: string }) {
               <div className="text-foreground">我的题库还没有题</div>
               <div className="text-sm text-muted-foreground">手动写一道,或让 AI 生题(先进草稿区,通过后出现在这里)。</div>
               <div className="flex justify-center gap-2 pt-1">
-                <Button size="sm" onClick={() => setCreateOpen(true)}>
-                  <Plus className="size-3.5" aria-hidden />
-                  手动加题
+                <Button asChild size="sm">
+                  <Link to="/generate?mode=manual">
+                    <Plus className="size-3.5" aria-hidden />
+                    手动加题
+                  </Link>
                 </Button>
                 <Button asChild size="sm" variant="outline">
-                  <Link to="/generate">去 AI 生题</Link>
+                  <Link to="/generate">
+                    <Sparkles className="size-3.5" aria-hidden />
+                    去生题
+                  </Link>
                 </Button>
               </div>
             </CardContent>
           </Card>
-          <QuestionCreateDialog
-            open={createOpen}
-            onOpenChange={setCreateOpen}
-            onCreated={(id) => toast.success('已加入我的题库', { description: id })}
-          />
         </div>
       );
     }
@@ -75,12 +72,17 @@ export function QueuePage({ category }: { category: string }) {
         <PageHeader title={cat?.name || category} />
         {category === MY_CATEGORY_SLUG && (
           <div className="flex shrink-0 gap-2">
-            <Button size="sm" variant="outline" onClick={() => setCreateOpen(true)}>
-              <Plus className="size-3.5" aria-hidden />
-              手动加题
+            <Button asChild size="sm" variant="outline">
+              <Link to="/generate?mode=manual">
+                <Plus className="size-3.5" aria-hidden />
+                手动加题
+              </Link>
             </Button>
             <Button asChild size="sm">
-              <Link to="/generate">＋ AI 生题</Link>
+              <Link to="/generate">
+                <Sparkles className="size-3.5" aria-hidden />
+                去生题
+              </Link>
             </Button>
           </div>
         )}
@@ -101,7 +103,7 @@ export function QueuePage({ category }: { category: string }) {
             </>
           ) : (
             <>
-              <div className="text-4xl font-bold text-success">✓</div>
+              <CheckCircle2 className="mx-auto size-10 text-success" aria-hidden />
               <div className="text-sm text-muted-foreground">今日已清空,全部学过</div>
             </>
           )}
@@ -144,14 +146,6 @@ export function QueuePage({ category }: { category: string }) {
           ))}
         </div>
       </div>
-
-      {category === MY_CATEGORY_SLUG && (
-        <QuestionCreateDialog
-          open={createOpen}
-          onOpenChange={setCreateOpen}
-          onCreated={(id) => toast.success('已加入我的题库', { description: id })}
-        />
-      )}
     </div>
   );
 }
