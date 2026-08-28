@@ -1,16 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { StickyNote } from 'lucide-react';
 import { getNote, saveNote } from '@/lib/storage';
+import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
-// 笔记区:Tiptap WYSIWYG 所见即所得 + 防抖自动保存。
-// 切题不重建编辑器(单实例 + setContent 原地换内容)——重建会闪一下空态。
-// 同步引入(quiz.tsx 不再 React.lazy):懒加载 chunk 会先出「加载笔记…」兜底再闪出内容,
-// 桌面本地加载没有省体积的必要。
-
-export default function NotePanel({ category, questionId }: { category: string; questionId: string }) {
-  return <NotePanelEditor category={category} questionId={questionId} />;
-}
+// 笔记:题卡上 ghost 图标入口 + 右侧抽屉(Sheet)承载编辑器(2026-08-28 UX 审计 B6)。
+// 编辑器单实例 + setContent 原地换内容防闪烁;tiptap v3 的 EditorContent 卸载时只把
+// 视图 DOM 挪到游离节点(不 destroy),抽屉重开原样搬回——关抽屉不丢内容、不重建。
+// 同步引入(quiz.tsx 不 React.lazy):懒加载 chunk 会先出兜底再闪出内容,桌面本地没必要。
 
 // 当前题的上下文(onUpdate/清理闭包里读 ref,避免切题后闭包过期)
 interface NoteCtx {
@@ -19,10 +25,15 @@ interface NoteCtx {
   initialContent: string;
 }
 
+export default function NotePanel({ category, questionId }: { category: string; questionId: string }) {
+  return <NotePanelEditor category={category} questionId={questionId} />;
+}
+
 function NotePanelEditor({ category, questionId }: { category: string; questionId: string }) {
   // 首次渲染同步读已有笔记(不靠 useEffect,否则 useEditor 拿不到初始 content)
   const [initialContent] = useState(() => getNote(category, questionId));
-  const [expanded, setExpanded] = useState(() => !!initialContent);
+  const [open, setOpen] = useState(false);
+  const [hasNote, setHasNote] = useState(() => !!initialContent);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestRef = useRef(initialContent);
   const ctxRef = useRef<NoteCtx>({ category, questionId, initialContent });
@@ -31,11 +42,12 @@ function NotePanelEditor({ category, questionId }: { category: string; questionI
     extensions: [StarterKit],
     content: initialContent || '',
     // 纯 CSR(无 SSR/水合),立即渲染编辑器——false 会推迟到首帧后创建,
-    // 展开笔记时先闪一个空编辑器再出内容。
+    // 打开抽屉时先闪一个空编辑器再出内容。
     immediatelyRender: true,
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
       latestRef.current = html;
+      setHasNote(!!html && html !== '<p></p>');
       const { category: c, questionId: id } = ctxRef.current;
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
@@ -68,7 +80,7 @@ function NotePanelEditor({ category, questionId }: { category: string; questionI
     latestRef.current = next;
     ctxRef.current = { category, questionId, initialContent: next };
     editor?.commands.setContent(next || '<p></p>', { emitUpdate: false }); // 不触发 onUpdate
-    setExpanded(!!next);
+    setHasNote(!!next);
   }, [category, questionId, editor]);
 
   // 卸载前 flush 残留输入
@@ -85,32 +97,40 @@ function NotePanelEditor({ category, questionId }: { category: string; questionI
     };
   }, []);
 
-  // 空且未展开:收起态,显示入口按钮
-  if (!expanded) {
-    return (
-      <div className="mt-4">
-        <button
-          className="w-full px-3 py-2 bg-transparent border border-dashed border-border rounded-md text-muted-foreground hover:border-primary hover:text-primary transition-colors text-[13px] cursor-pointer"
-          onClick={() => setExpanded(true)}
-        >
-          ➕ 写笔记
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <div className="mt-4 p-3.5 bg-card border border-border rounded-lg">
-      <div className="flex justify-between items-center mb-2.5">
-        <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-          📝 我的笔记
-        </span>
-        <span className="font-mono text-[11px] text-muted-foreground">自动保存</span>
-      </div>
-      <EditorContent
-        editor={editor}
-        className="bg-popover border border-border rounded-md overflow-hidden focus-within:border-primary transition-colors [&_.ProseMirror]:min-h-[120px] [&_.ProseMirror]:max-h-[320px] [&_.ProseMirror]:overflow-y-auto [&_.ProseMirror]:p-3 [&_.ProseMirror]:outline-none [&_.ProseMirror]:text-[13px] [&_.ProseMirror]:leading-relaxed [&_.ProseMirror]:text-foreground [&_.ProseMirror_ul]:my-1 [&_.ProseMirror_ol]:my-1 [&_.ProseMirror_li]:my-0 [&_.ProseMirror_p]:my-1 [&_.ProseMirror_h1]:text-[1.25rem] [&_.ProseMirror_h2]:text-[1.1rem] [&_.ProseMirror_h3]:text-[1rem] [&_.ProseMirror_h1]:my-2 [&_.ProseMirror_h2]:my-2 [&_.ProseMirror_h3]:my-2 [&_.ProseMirror_blockquote]:my-1 [&_.ProseMirror_pre]:my-2"
-      />
-    </div>
+    <>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7 shrink-0 text-muted-foreground"
+            aria-label={hasNote ? '查看笔记(已有笔记)' : '写笔记'}
+            onClick={() => setOpen(true)}
+          >
+            <StickyNote aria-hidden />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{hasNote ? '我的笔记 · 已有笔记' : '写笔记'}</TooltipContent>
+      </Tooltip>
+
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-md">
+          <SheetHeader className="flex-none border-b border-border px-4 py-3">
+            <SheetTitle className="text-sm font-medium">我的笔记</SheetTitle>
+            <SheetDescription className="sr-only">按题保存的笔记,输入自动保存</SheetDescription>
+          </SheetHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto p-4">
+            <EditorContent
+              editor={editor}
+              className="rounded-md border border-border bg-popover overflow-hidden transition-colors focus-within:border-primary [&_.ProseMirror]:min-h-[240px] [&_.ProseMirror]:p-3 [&_.ProseMirror]:outline-none [&_.ProseMirror]:text-[13px] [&_.ProseMirror]:leading-relaxed [&_.ProseMirror]:text-foreground [&_.ProseMirror_ul]:my-1 [&_.ProseMirror_ol]:my-1 [&_.ProseMirror_li]:my-0 [&_.ProseMirror_p]:my-1 [&_.ProseMirror_h1]:text-[1.25rem] [&_.ProseMirror_h2]:text-[1.1rem] [&_.ProseMirror_h3]:text-[1rem] [&_.ProseMirror_h1]:my-2 [&_.ProseMirror_h2]:my-2 [&_.ProseMirror_h3]:my-2 [&_.ProseMirror_blockquote]:my-1 [&_.ProseMirror_pre]:my-2"
+            />
+          </div>
+          <div className="flex-none border-t border-border px-4 py-2">
+            <span className="font-mono text-[11px] text-muted-foreground">自动保存</span>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }

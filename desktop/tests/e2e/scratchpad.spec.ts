@@ -62,15 +62,20 @@ test('代码按题保存:离开再回来草稿还在,新题不串', async ({ pag
   // 等防抖(500ms)落内存缓存
   await page.waitForTimeout(700);
 
-  // 离开 → 回来:同题(无进度,队列确定)草稿自动展开恢复
+  // 离开 → 回来:同题(无进度,队列确定)入口带「有草稿」标记,打开后草稿恢复
   await page.goto('/#/agent/browse');
   await page.goto('/#/agent/quiz');
+  const padBtn = page.getByRole('button', { name: '代码草稿纸(有草稿)' });
+  await expect(padBtn).toBeVisible();
+  await padBtn.click();
   await expect(page.locator('.cm-content')).toContainText('kept-code');
+  await page.keyboard.press('Escape'); // 关弹窗(顺带覆盖 Esc 关闭)
+  await expect(page.getByRole('dialog')).toBeHidden();
 
-  // 评掉本题进下一题:新题的草稿纸收起、无残留
+  // 评掉本题进下一题:新题无草稿,入口回到无标记态
   await page.getByRole('button', { name: /看答案/ }).click();
-  await page.getByRole('button', { name: '掌握' }).click();
-  await expect(page.getByRole('button', { name: /代码草稿纸$/ })).toBeVisible();
+  await page.getByRole('button', { name: /掌握/ }).click();
+  await expect(page.getByRole('button', { name: '代码草稿纸', exact: true })).toBeVisible();
 });
 
 // 回归:basicSetup/onChange 引用不稳时,@uiw 每次按键都 reconfigure,
