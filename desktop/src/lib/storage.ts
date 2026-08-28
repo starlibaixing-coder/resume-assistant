@@ -130,6 +130,12 @@ export function clearProgress(category: string): void {
   void persistDeleteCategory('review_state', category);
 }
 
+// 撤销评分用:删除单题进度行(该题首次评分前没有卡,撤销 = 回到无卡状态)
+export function deleteCard(category: string, id: string): void {
+  delete progressOf(category)[id];
+  void persistDeleteCard(id);
+}
+
 export function loadNotes(category: string): Record<string, string> {
   return { ...notesOf(category) };
 }
@@ -212,6 +218,15 @@ async function persistCodeDraft(category: string, id: string, code: string): Pro
     }
   } catch (e) {
     logger.error(`[storage] persistCodeDraft failed: ${e instanceof Error ? e.message : String(e)}`);
+  }
+}
+
+async function persistDeleteCard(id: string): Promise<void> {
+  if (!db) return;
+  try {
+    await db.execute('DELETE FROM review_state WHERE id=$1', [id]);
+  } catch (e) {
+    logger.error(`[storage] persistDeleteCard failed: ${e instanceof Error ? e.message : String(e)}`);
   }
 }
 

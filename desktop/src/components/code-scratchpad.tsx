@@ -8,13 +8,25 @@ import { tags as t } from '@lezer/highlight';
 import { Code2, Play } from 'lucide-react';
 import { getCodeDraft, saveCodeDraft } from '@/lib/storage';
 import { runJs, DEFAULT_TIMEOUT_MS, type RunLog } from '@/lib/js-runner';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
-// 代码草稿纸:刷题卡片内的按题代码区(CodeMirror)+ JS 运行(Web Worker 沙箱)。
+// 代码草稿纸:题卡上 ghost 图标入口 + 大弹窗承载(2026-08-28 UX 审计 B5):
+// 弹窗上半看题、下半 CodeMirror + 运行输出,编辑器不再挤在卡片里。
 // 交互/持久化沿 note-panel 模式:同步读缓存初始化、防抖自动保存、切题 flush 原地换内容。
 // 运行:每次新起 worker,同步结果先出,异步回调输出继续追加,超时(默认 3s)强制终止。
 
-// 编辑器主题:全部引用仓库 CSS 变量,.dark 切换自动跟随,不落魔法色值(AGENTS.md token 体系)
+// 编辑器主题:全部引用仓库 CSS 变量,.dark 切换自动跟随,不落魔法色值(AGENTS.md token 体系)。
+// 注意:组件层还要传 theme="none"——@uiw 的 theme 默认 'light',会叠加内置浅色主题
+// 把 .cm-editor 背景刷成白色,盖掉这里的 var(--popover)。
 const editorTheme = EditorView.theme({
   '&': { backgroundColor: 'var(--popover)', color: 'var(--foreground)', fontSize: '12.5px' },
   '&.cm-focused': { outline: 'none' },
@@ -103,10 +115,26 @@ interface ScratchCtx {
   initialContent: string;
 }
 
-export default function CodeScratchpad({ category, questionId }: { category: string; questionId: string }) {
+// 弹窗上半要展示的题目信息(quiz 页传入,只取需要的字段)
+export interface ScratchpadQuestion {
+  difficulty: string;
+  title: string;
+  focus: string;
+}
+
+export default function CodeScratchpad({
+  category,
+  questionId,
+  question,
+}: {
+  category: string;
+  questionId: string;
+  question: ScratchpadQuestion;
+}) {
   // 首次渲染同步读已有代码(不靠 useEffect,否则首帧拿不到内容)
   const [code, setCode] = useState(() => getCodeDraft(category, questionId));
-  const [expanded, setExpanded] = useState(() => !!getCodeDraft(category, questionId));
+  const [open, setOpen] = useState(false);
+  const [hasDraft, setHasDraft] = useState(() => !!code);
   const [output, setOutput] = useState<RunLog[] | null>(null); // null = 尚未运行过
   const [running, setRunning] = useState(false);
   const [durationMs, setDurationMs] = useState<number | null>(null);
@@ -122,6 +150,7 @@ export default function CodeScratchpad({ category, questionId }: { category: str
   const handleChange = useCallback((value: string) => {
     latestRef.current = value;
     setCode(value);
+    setHasDraft(!!value.trim());
     const { category: c, questionId: id } = ctxRef.current;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => saveCodeDraft(c, id, value), 500);
@@ -145,7 +174,7 @@ export default function CodeScratchpad({ category, questionId }: { category: str
     latestRef.current = next;
     ctxRef.current = { category, questionId, initialContent: next };
     setCode(next);
-    setExpanded(!!next);
+    setHasDraft(!!next);
     setOutput(null);
     setDurationMs(null);
     setErrorMsg(null);
@@ -194,89 +223,114 @@ export default function CodeScratchpad({ category, questionId }: { category: str
     });
   };
 
-  // 空且未展开:收起态,显示入口
-  if (!expanded) {
-    return (
-      <div className="mt-3">
-        <button
-          className="flex w-full items-center justify-center gap-1.5 px-3 py-2 bg-transparent border border-dashed border-border rounded-md text-muted-foreground hover:border-primary hover:text-primary transition-colors text-[13px] cursor-pointer"
-          onClick={() => setExpanded(true)}
-        >
-          <Code2 className="size-3.5" aria-hidden />
-          {code ? '打开代码草稿纸(有草稿)' : '代码草稿纸'}
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <div className="mt-3 p-3.5 bg-card border border-border rounded-lg">
-      <div className="flex justify-between items-center mb-2.5">
-        <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-wide text-muted-foreground">
-          <Code2 className="size-3.5" aria-hidden />
-          代码草稿纸 · JavaScript
-        </span>
-        <div className="flex items-center gap-2.5">
-          <span className="font-mono text-[11px] text-muted-foreground">自动保存</span>
-          <Button size="sm" className="h-7 px-2.5 text-xs" onClick={handleRun} disabled={running}>
-            <Play className="size-3" aria-hidden />
-            {running ? '运行中…' : '运行'}
-          </Button>
-        </div>
-      </div>
-
-      <div className="border border-border rounded-md overflow-hidden">
-        <CodeMirror
-          value={code}
-          height="220px"
-          extensions={extensions}
-          onChange={handleChange}
-          aria-label="代码草稿编辑区"
-          basicSetup={BASIC_SETUP}
-        />
-      </div>
-
-      {output !== null && (
-        <div className="mt-2 rounded-md border border-border bg-popover p-2.5">
-          <div className="flex justify-between items-center mb-1">
-            <span className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">输出</span>
-            {durationMs != null && (
-              <span className="font-mono text-[10px] text-muted-foreground">{durationMs}ms</span>
-            )}
-          </div>
-          <div
-            role="log"
-            aria-label="运行输出"
-            className="max-h-40 overflow-y-auto font-mono text-xs leading-relaxed"
+    <>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7 shrink-0 text-muted-foreground"
+            aria-label={hasDraft ? '代码草稿纸(有草稿)' : '代码草稿纸'}
+            onClick={() => setOpen(true)}
           >
-            {output.length === 0 && !errorMsg && (
-              <div className="text-muted-foreground">(无输出;console.log 的内容会显示在这里)</div>
-            )}
-            {output.map((log, i) => (
-              <div
-                key={i}
-                className={
-                  log.level === 'error'
-                    ? 'text-destructive'
-                    : log.level === 'warn'
-                      ? 'text-warning'
-                      : 'text-foreground'
-                }
-              >
-                {log.level !== 'log' && <span className="opacity-70">[{log.level}] </span>}
-                {log.text}
-              </div>
-            ))}
-            {errorMsg && (
-              <div className="text-destructive whitespace-pre-wrap">
-                <span className="opacity-70">[error] </span>
-                {errorMsg}
-              </div>
-            )}
-            {running && <div className="text-muted-foreground">… 异步输出最多再等 {DEFAULT_TIMEOUT_MS / 1000}s</div>}
+            <Code2 aria-hidden />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{hasDraft ? '代码草稿纸 · 有草稿' : '代码草稿纸'}</TooltipContent>
+      </Tooltip>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent
+          className="flex max-h-[88vh] max-w-5xl flex-col gap-0 overflow-hidden p-0"
+          // 焦点在 CodeMirror 内时 Esc 归编辑器(radix 的关闭监听在 document 捕获阶段,
+          // 不拦会先于补全把整个弹窗关掉)。CM 消费 Esc 会 preventDefault,弹窗不动;
+          // 无补全可关时 Esc 不做事,关弹窗走 X / 点击遮罩——防误关代码草稿
+          onEscapeKeyDown={(e) => {
+            const el = document.activeElement as HTMLElement | null;
+            if (el?.closest('.cm-editor')) e.preventDefault();
+          }}
+        >
+          <DialogHeader className="flex-none border-b border-border px-6 py-4 pr-12">
+            <DialogTitle className="text-sm font-medium">代码草稿纸 · JavaScript</DialogTitle>
+            <DialogDescription className="sr-only">按题保存的代码草稿,自动保存;JS 在沙箱运行</DialogDescription>
+          </DialogHeader>
+
+          {/* 上半:当前题(写码不用来回切页面) */}
+          <div className="max-h-[26vh] flex-none space-y-2 overflow-y-auto border-b border-border px-6 py-4">
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline">{question.difficulty}</Badge>
+            </div>
+            <div className="text-base font-semibold leading-snug text-foreground">{question.title}</div>
+            <div className="text-sm text-muted-foreground">{question.focus}</div>
           </div>
-        </div>
-      )}
-    </div>
+
+          {/* 下半:编辑器 + 运行输出 */}
+          <div className="flex min-h-0 flex-1 flex-col gap-2 p-4">
+            <div className="flex items-center justify-between">
+              <Button size="sm" className="h-7 px-2.5 text-xs" onClick={handleRun} disabled={running}>
+                <Play className="size-3" aria-hidden />
+                {running ? '运行中…' : '运行'}
+              </Button>
+              <span className="font-mono text-[11px] text-muted-foreground">自动保存</span>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-hidden rounded-md border border-border">
+              <CodeMirror
+                value={code}
+                height="100%"
+                theme="none"
+                extensions={extensions}
+                onChange={handleChange}
+                aria-label="代码草稿编辑区"
+                basicSetup={BASIC_SETUP}
+              />
+            </div>
+
+            {output !== null && (
+              <div className="flex-none rounded-md border border-border bg-popover p-2.5">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">输出</span>
+                  {durationMs != null && (
+                    <span className="font-mono text-[10px] text-muted-foreground">{durationMs}ms</span>
+                  )}
+                </div>
+                <div
+                  role="log"
+                  aria-label="运行输出"
+                  className="max-h-40 overflow-y-auto font-mono text-xs leading-relaxed"
+                >
+                  {output.length === 0 && !errorMsg && (
+                    <div className="text-muted-foreground">(无输出;console.log 的内容会显示在这里)</div>
+                  )}
+                  {output.map((log, i) => (
+                    <div
+                      key={i}
+                      className={
+                        log.level === 'error'
+                          ? 'text-destructive'
+                          : log.level === 'warn'
+                            ? 'text-warning'
+                            : 'text-foreground'
+                      }
+                    >
+                      {log.level !== 'log' && <span className="opacity-70">[{log.level}] </span>}
+                      {log.text}
+                    </div>
+                  ))}
+                  {errorMsg && (
+                    <div className="text-destructive whitespace-pre-wrap">
+                      <span className="opacity-70">[error] </span>
+                      {errorMsg}
+                    </div>
+                  )}
+                  {running && <div className="text-muted-foreground">… 异步输出最多再等 {DEFAULT_TIMEOUT_MS / 1000}s</div>}
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

@@ -16,6 +16,7 @@ import { logger } from './logger';
 // 退出三通道:Esc 全局键、刷题页退出按钮、离开刷题路由自动退出。
 // Esc 不加输入框/编辑器守卫——刷题时焦点常驻 CodeMirror/tiptap,守卫会让 Esc 永远够不到;
 // 编辑器内 Esc 会先关掉补全提示再冒泡到这里退出沉浸,两者并存可接受。
+// 弹窗优先:Dialog/Sheet(代码草稿纸/笔记)开着时 Esc 归弹窗,不退沉浸(2026-08-28)。
 
 interface ImmersiveState {
   immersive: boolean;
@@ -61,7 +62,16 @@ export function ImmersiveProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!immersive) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setImmersive(false);
+      if (e.key !== 'Escape') return;
+      // 弹窗优先(Esc 归 Dialog/Sheet,不退沉浸)。两道守卫都与监听顺序无关:
+      // radix 的关闭监听在 document 捕获阶段先跑,关弹窗时会 preventDefault——
+      // 本监听(冒泡)看到 defaultPrevented 即返回;若本监听先执行,
+      // DOM 里 data-state=open 还在,第二道守卫兜住
+      if (e.defaultPrevented) return;
+      if (document.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]')) {
+        return;
+      }
+      setImmersive(false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);

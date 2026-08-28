@@ -42,6 +42,25 @@ test('沉浸式:离开刷题路由自动退出(含后退场景)', async ({ page 
   await expect(page.locator('aside')).toBeVisible();
 });
 
+test('沉浸式:弹窗打开时 Esc 只关弹窗,不退沉浸', async ({ page }) => {
+  await page.goto('/#/agent/quiz');
+  await page.getByRole('button', { name: '沉浸模式' }).click();
+  await expect(page.locator('aside')).toBeHidden();
+
+  // 打开代码草稿纸弹窗
+  await page.getByRole('button', { name: /代码草稿纸/ }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+
+  // 第一次 Esc:弹窗关,沉浸保持
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toBeHidden();
+  await expect(page.locator('aside')).toBeHidden();
+
+  // 第二次 Esc:退出沉浸,chrome 恢复
+  await page.keyboard.press('Escape');
+  await expect(page.locator('aside')).toBeVisible();
+});
+
 test('问 AI:web 层降级为外部链接', async ({ page }) => {
   await page.goto('/#/agent/quiz');
   const link = page.getByRole('link', { name: '问 AI(浏览器打开)' });

@@ -4,6 +4,7 @@ import {
   loadProgress,
   saveCard,
   getCard,
+  deleteCard,
   clearProgress,
   saveNote,
   getNote,
@@ -65,6 +66,19 @@ describe('进度缓存(同步 API)', () => {
     saveCard('fe', 'a', card({ interval: 9 }));
     expect(getCard(CAT, 'a')?.interval).toBe(1);
     expect(getCard('fe', 'a')?.interval).toBe(9);
+  });
+
+  it('deleteCard 删单题,不影响同分类其它题(撤销评分用)', () => {
+    saveCard(CAT, 'a', card({ interval: 1 }));
+    saveCard(CAT, 'b', card({ interval: 2 }));
+    deleteCard(CAT, 'a');
+    expect(getCard(CAT, 'a')).toBeNull();
+    expect(getCard(CAT, 'b')?.interval).toBe(2);
+  });
+
+  it('deleteCard 不存在的题是 no-op', () => {
+    expect(() => deleteCard(CAT, 'ghost')).not.toThrow();
+    expect(loadProgress(CAT)).toEqual({});
   });
 });
 
@@ -153,6 +167,16 @@ describe('persist 契约(mock db)', () => {
     saveCodeDraft(CAT, 'a', '  ');
     await vi.waitFor(() => expect(execute).toHaveBeenCalled());
     expect(execute.mock.calls[0][0]).toContain('DELETE FROM code_drafts');
+  });
+
+  it('deleteCard 触发 review_state DELETE', async () => {
+    const execute = vi.fn().mockResolvedValue({});
+    _setDbForTest({ execute, select: vi.fn() } as never);
+    deleteCard(CAT, 'a');
+    await vi.waitFor(() => expect(execute).toHaveBeenCalled());
+    const [sql, args] = execute.mock.calls[0];
+    expect(sql).toContain('DELETE FROM review_state');
+    expect(args).toEqual(['a']);
   });
 
   it('db 未就绪时 persist 静默跳过(不抛错)', () => {
