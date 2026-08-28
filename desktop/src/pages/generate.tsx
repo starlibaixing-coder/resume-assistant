@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router';
+import { toast } from 'sonner';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { generateQuestions, generateJdQuestions, type GeneratedQuestion } from '@/lib/generate';
 import { getProfile, subscribeProfile } from '@/lib/profile';
 import { resolveChatOptions } from '@/lib/llm-config';
-import { addDrafts } from '@/lib/mylib';
+import { addDrafts, addManualQuestion, getMyCategory } from '@/lib/mylib';
 import type { Difficulty } from '@/types/question';
 import { AnswerPanel } from '@/components/answer-panel';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +13,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/page-header';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  EMPTY_FORM,
+  QuestionFormFields,
+  formToDraft,
+  type QuestionFormState,
+} from '@/components/question-edit-dialog';
+
+// 生题页:顶层 Tabs「AI 生题 / 手动加题」(2026-08-28 审计 A4)。
+// ?mode=manual 深链直达手动表单(队列/浏览页空态入口收敛,A5);
+// 手动加题用页面级表单(原 max-w-lg 弹窗塞不下长题干),人写即人审直接 approved(ADR-10)。
 
 const DIFFICULTIES: Array<Difficulty | '不限'> = ['不限', '初', '中', '高'];
 type Mode = 'topic' | 'jd';
@@ -24,6 +38,9 @@ function jdBatchName(company: string, jd: string): string {
 export function GeneratePage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const pageMode = searchParams.get('mode') === 'manual' ? 'manual' : 'ai';
+
   const [mode, setMode] = useState<Mode>('topic');
   const [topic, setTopic] = useState('');
   const [difficulty, setDifficulty] = useState<Difficulty | '不限'>('不限');
@@ -55,7 +72,6 @@ export function GeneratePage() {
   const handleGenerate = async () => {
     setError(null);
     setNoKey(false);
-    setResult(null);
     if (mode === 'topic' && !topic.trim()) {
       setError('先填一个知识点,比如「React Hooks 深入」「浏览器事件循环」');
       return;
@@ -107,6 +123,7 @@ export function GeneratePage() {
         })),
         result.topic,
       );
+      toast.success('已存入草稿区,审核通过后进我的题库');
       navigate('/drafts');
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -116,147 +133,254 @@ export function GeneratePage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <PageHeader title="AI 生题" />
+      <PageHeader title="生题" subtitle="AI 生成整批进草稿区审核;或手动写一道,直接进我的题库。" />
 
-      {llmReady === false && (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-warning/50 bg-warning/10 p-4 text-sm">
-          <span>还没配置 LLM(baseURL / model / API key),生成前需要先设置。</span>
-          <Button asChild size="sm">
-            <Link to="/settings">去设置 →</Link>
-          </Button>
-        </div>
-      )}
+      <Tabs
+        value={pageMode}
+        onValueChange={(v) => setSearchParams(v === 'manual' ? { mode: 'manual' } : {}, { replace: true })}
+      >
+        <TabsList>
+          <TabsTrigger value="ai">AI 生题</TabsTrigger>
+          <TabsTrigger value="manual">手动加题</TabsTrigger>
+        </TabsList>
 
-      <Card>
-        <CardContent className="flex flex-col gap-4 p-6">
-        {/* 模式切换:知识点(通用刷题)/ JD 定向(读求职档案,功能④) */}
-        <div className="flex gap-2">
-          <Button size="sm" variant={mode === 'topic' ? 'default' : 'outline'} onClick={() => setMode('topic')}>
-            知识点生题
-          </Button>
-          <Button size="sm" variant={mode === 'jd' ? 'default' : 'outline'} onClick={() => setMode('jd')}>
-            JD 定向
-          </Button>
-        </div>
-
-        {mode === 'topic' ? (
-          <div className="space-y-1.5">
-            <label className="text-xs text-muted-foreground font-mono">知识点</label>
-            <Input
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="如:React Hooks 深入 / 浏览器事件循环 / RAG 检索优化"
-              autoFocus
-            />
-            <div className="text-xs leading-relaxed text-muted-foreground">
-              出多少道题由 LLM 按知识点广度判断(简单概念 2~4 道,宽领域可达 10 道,宁缺毋滥);整批作为一个「批次」进草稿区,审核通过后成为一个模块进我的题库。
+        {/* forceMount:切 tab 不卸载——生成的结果/表单草稿不因瞄一眼手动页而丢 */}
+        <TabsContent value="ai" forceMount className="mt-6 space-y-6">
+          {llmReady === false && (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-warning/50 bg-warning/10 p-4 text-sm">
+              <span>还没配置 LLM(baseURL / model / API key),生成前需要先设置。</span>
+              <Button asChild size="sm">
+                <Link to="/settings">去设置 →</Link>
+              </Button>
             </div>
-          </div>
-        ) : !jdReady ? (
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-warning/50 bg-warning/10 p-4 text-sm">
-            <span>还没填求职档案——JD 定向生题需要档案里的职位描述(JD)。</span>
-            <Button asChild size="sm">
-              <Link to="/profile">去填写 →</Link>
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-2.5">
-            <div className="space-y-1.5">
-              <label className="text-xs text-muted-foreground font-mono">档案上下文</label>
-              <div className="text-xs leading-relaxed text-muted-foreground">
-                {profile!.company.trim() || '(未填公司)'} · JD {profile!.jd.trim().length} 字
-                {profile!.resume.trim() ? ` · 简历 ${profile!.resume.trim().length} 字` : ' · 无简历(只用 JD 出题)'}
+          )}
+
+          <Card>
+            <CardContent className="flex flex-col gap-4 p-6">
+            {/* 模式切换:知识点(通用刷题)/ JD 定向(读求职档案,功能④) */}
+            <div className="flex gap-2">
+              <Button size="sm" variant={mode === 'topic' ? 'default' : 'outline'} onClick={() => setMode('topic')}>
+                知识点生题
+              </Button>
+              <Button size="sm" variant={mode === 'jd' ? 'default' : 'outline'} onClick={() => setMode('jd')}>
+                JD 定向
+              </Button>
+            </div>
+
+            {mode === 'topic' ? (
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground font-mono">知识点</label>
+                <Input
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="如:React Hooks 深入 / 浏览器事件循环 / RAG 检索优化"
+                  autoFocus
+                />
+                <div className="text-xs leading-relaxed text-muted-foreground">
+                  出多少道题由 LLM 按知识点广度判断(简单概念 2~4 道,宽领域可达 10 道,宁缺毋滥);整批作为一个「批次」进草稿区,审核通过后成为一个模块进我的题库。
+                </div>
               </div>
-            </div>
-            {profile!.resume.trim() && (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs text-muted-foreground font-mono">出题范围</span>
-                <Button size="sm" variant={!includeResume ? 'default' : 'outline'} onClick={() => setIncludeResume(false)}>
-                  只用 JD
+            ) : !jdReady ? (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-warning/50 bg-warning/10 p-4 text-sm">
+                <span>还没填求职档案——JD 定向生题需要档案里的职位描述(JD)。</span>
+                <Button asChild size="sm">
+                  <Link to="/profile">去填写 →</Link>
                 </Button>
-                <Button size="sm" variant={includeResume ? 'default' : 'outline'} onClick={() => setIncludeResume(true)}>
-                  结合简历
-                </Button>
-                <span className="text-xs text-muted-foreground">结合简历 = 出深挖题,考察 JD 要求与简历声称能力的匹配</span>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground font-mono">档案上下文</label>
+                  <div className="text-xs leading-relaxed text-muted-foreground">
+                    {profile!.company.trim() || '(未填公司)'} · JD {profile!.jd.trim().length} 字
+                    {profile!.resume.trim() ? ` · 简历 ${profile!.resume.trim().length} 字` : ' · 无简历(只用 JD 出题)'}
+                  </div>
+                </div>
+                {profile!.resume.trim() && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-muted-foreground font-mono">出题范围</span>
+                    <Button size="sm" variant={!includeResume ? 'default' : 'outline'} onClick={() => setIncludeResume(false)}>
+                      只用 JD
+                    </Button>
+                    <Button size="sm" variant={includeResume ? 'default' : 'outline'} onClick={() => setIncludeResume(true)}>
+                      结合简历
+                    </Button>
+                    <span className="text-xs text-muted-foreground">结合简历 = 出深挖题,考察 JD 要求与简历声称能力的匹配</span>
+                  </div>
+                )}
+                <div className="text-xs leading-relaxed text-muted-foreground">
+                  按 JD 的技术要求出题(核心必备项优先),数量由 LLM 判断;整批进草稿区,审核通过后成一个模块。改动档案去
+                  <Link to="/profile" className="mx-0.5 text-primary hover:underline">求职目标</Link>。
+                </div>
               </div>
             )}
-            <div className="text-xs leading-relaxed text-muted-foreground">
-              按 JD 的技术要求出题(核心必备项优先),数量由 LLM 判断;整批进草稿区,审核通过后成一个模块。改动档案去
-              <Link to="/profile" className="mx-0.5 text-primary hover:underline">求职目标</Link>。
-            </div>
-          </div>
-        )}
 
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-muted-foreground font-mono">难度</span>
-          {DIFFICULTIES.map((d) => (
-            <Button key={d} size="sm" variant={difficulty === d ? 'default' : 'outline'} onClick={() => setDifficulty(d)}>
-              {d}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-muted-foreground font-mono">难度</span>
+              {DIFFICULTIES.map((d) => (
+                <Button key={d} size="sm" variant={difficulty === d ? 'default' : 'outline'} onClick={() => setDifficulty(d)}>
+                  {d}
+                </Button>
+              ))}
+              <span className="text-xs text-muted-foreground">(出题数量由 LLM 按知识点广度判断)</span>
+            </div>
+
+            <Button onClick={handleGenerate} disabled={loading} className="w-full">
+              {loading ? '生成中…(LLM 出题约需十几秒)' : '生成'}
             </Button>
-          ))}
-          <span className="text-xs text-muted-foreground">(出题数量由 LLM 按知识点广度判断)</span>
+
+            {noKey && (
+              <div className="text-sm text-muted-foreground">
+                还没配置 LLM。先去{' '}
+                <Link to="/settings" className="text-primary hover:underline">设置页</Link>
+                {' '}填 API key(智谱/DeepSeek/本地 Ollama 均可)。
+              </div>
+            )}
+            {error && (
+              <div className="text-sm text-destructive whitespace-pre-wrap rounded-md border border-destructive/40 bg-destructive/10 p-3">
+                {error}
+              </div>
+            )}
+            </CardContent>
+          </Card>
+
+          {result && (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="text-sm text-muted-foreground font-mono">
+                  LLM 判断出 {result.questions.length} 道 · {result.retries === 0 ? '一次通过' : `自修正 ${result.retries} 次`}
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={handleGenerate} disabled={loading || saving}>重新生成</Button>
+                  <Button size="sm" onClick={handleSaveDrafts} disabled={saving}>
+                    {saving ? '入库中…' : '存入草稿区 →'}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="text-xs text-muted-foreground">
+                先过目,确认质量后进草稿区;在草稿区 approve 才会进刷题队列。
+              </div>
+
+              {result.questions.map((q, i) => {
+                const isOpen = expanded === i;
+                return (
+                  <Card key={i} className="overflow-hidden">
+                    <button
+                      type="button"
+                      aria-expanded={isOpen}
+                      className="flex w-full items-center gap-3 p-3 text-left cursor-pointer hover:bg-accent transition-colors"
+                      onClick={() => setExpanded(isOpen ? null : i)}
+                    >
+                      {isOpen
+                        ? <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                        : <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />}
+                      <span className="text-sm text-foreground flex-1">{q.title}</span>
+                      <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
+                    </button>
+                    {isOpen && (
+                      <div className="px-3.5 pb-4 space-y-2">
+                        <div className="text-sm text-muted-foreground pt-2">{q.focus}</div>
+                        <AnswerPanel answer={q.answer} followups={q.followups} />
+                      </div>
+                    )}
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="manual" forceMount className="mt-6">
+          <ManualAddForm />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// 模块归属:'new' = 新建模块,否则为模块号字符串
+const NEW_MODULE = '__new__';
+
+// 手动加题页面级表单:直接 approved(人写即人审,ADR-10 只约束 AI 产物),保存即进刷题/SM-2。
+// 保存后清空题面、保留模块选择——连续录入同一模块不用重选。
+function ManualAddForm() {
+  const [form, setForm] = useState<QuestionFormState>(EMPTY_FORM);
+  const [modules, setModules] = useState<Array<{ id: number; name: string }>>(() =>
+    getMyCategory().modules.map((m) => ({ id: m.id, name: m.name })),
+  );
+  const [moduleTarget, setModuleTarget] = useState(NEW_MODULE);
+  const [newModuleName, setNewModuleName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      const existing = modules.find((m) => String(m.id) === moduleTarget);
+      const created = await addManualQuestion(formToDraft(form), existing
+        ? { moduleId: existing.id, moduleName: existing.name }
+        : { moduleName: newModuleName });
+      toast.success('已加入我的题库', { description: created.id });
+      // 重置题面;模块指到刚落的模块,连续加题不重选
+      setForm(EMPTY_FORM);
+      setModules(getMyCategory().modules.map((m) => ({ id: m.id, name: m.name })));
+      setModuleTarget(String(created.module));
+      setNewModuleName('');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardContent className="flex flex-col gap-4 p-6">
+        <div className="space-y-1.5">
+          <label className="text-xs text-muted-foreground font-mono">归属模块</label>
+          <div className="flex items-center gap-2">
+            <Select value={moduleTarget} onValueChange={setModuleTarget}>
+              <SelectTrigger aria-label="归属模块" className="h-9 flex-1 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value={NEW_MODULE} className="text-xs">新建模块</SelectItem>
+                {modules.map((m) => (
+                  <SelectItem key={m.id} value={String(m.id)} className="text-xs">
+                    {String(m.id).padStart(2, '0')} · {m.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {moduleTarget === NEW_MODULE && (
+              <Input
+                className="flex-1"
+                value={newModuleName}
+                onChange={(e) => setNewModuleName(e.target.value)}
+                placeholder="模块名,如:面试手写"
+                aria-label="新模块名"
+              />
+            )}
+          </div>
         </div>
 
-        <Button onClick={handleGenerate} disabled={loading} className="w-full">
-          {loading ? '生成中…(LLM 出题约需十几秒)' : '生成'}
-        </Button>
+        <QuestionFormFields value={form} onChange={(patch) => setForm((f) => ({ ...f, ...patch }))} />
 
-        {noKey && (
-          <div className="text-sm text-muted-foreground">
-            还没配置 LLM。先去{' '}
-            <Link to="/settings" className="text-primary hover:underline">设置页</Link>
-            {' '}填 API key(智谱/DeepSeek/本地 Ollama 均可)。
-          </div>
-        )}
         {error && (
           <div className="text-sm text-destructive whitespace-pre-wrap rounded-md border border-destructive/40 bg-destructive/10 p-3">
             {error}
           </div>
         )}
-        </CardContent>
-      </Card>
 
-      {result && (
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="text-sm text-muted-foreground font-mono">
-              LLM 判断出 {result.questions.length} 道 · {result.retries === 0 ? '一次通过' : `自修正 ${result.retries} 次}`}
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleGenerate} disabled={loading || saving}>重新生成</Button>
-              <Button size="sm" onClick={handleSaveDrafts} disabled={saving}>
-                {saving ? '入库中…' : '存入草稿区 →'}
-              </Button>
-            </div>
-          </div>
-
-          <div className="text-xs text-muted-foreground">
-            先过目,确认质量后进草稿区;在草稿区 approve 才会进刷题队列。
-          </div>
-
-          {result.questions.map((q, i) => {
-            const isOpen = expanded === i;
-            return (
-              <Card key={i} className="overflow-hidden">
-                <div
-                  className="flex items-center gap-3 p-3 cursor-pointer hover:bg-accent transition-colors"
-                  onClick={() => setExpanded(isOpen ? null : i)}
-                >
-                  <span className="font-mono text-xs text-muted-foreground shrink-0">{isOpen ? '▼' : '▶'}</span>
-                  <span className="text-sm text-foreground flex-1">{q.title}</span>
-                  <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
-                </div>
-                {isOpen && (
-                  <div className="px-3.5 pb-4 space-y-2">
-                    <div className="text-sm text-muted-foreground pt-2">{q.focus}</div>
-                    <AnswerPanel answer={q.answer} followups={q.followups} />
-                  </div>
-                )}
-              </Card>
-            );
-          })}
+        <Button onClick={handleSave} disabled={saving} className="w-full">
+          {saving ? '保存中…' : '加入我的题库'}
+        </Button>
+        <div className="text-xs leading-relaxed text-muted-foreground">
+          手写的题不经草稿区,保存后直接进我的题库与复习队列;提交走共享校验(答案要点合计 ≥50 字)。
         </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 }

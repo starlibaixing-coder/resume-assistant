@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { BookmarkPlus, Pencil, Plus, Trash2 } from 'lucide-react';
+import { BookmarkPlus, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getModuleStats, getQuestionStatus } from '@/lib/schedule';
 import { MY_CATEGORY_SLUG, getMyQuestion, copyOfficial, getCopiedSourceIds } from '@/lib/mylib';
@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Progress } from '@/components/ui/progress';
 import { PageHeader } from '@/components/page-header';
-import { QuestionEditDialog, QuestionCreateDialog, DeleteQuestionDialog } from '@/components/question-edit-dialog';
+import { QuestionEditDialog, DeleteQuestionDialog } from '@/components/question-edit-dialog';
 
 // 题目浏览 = 题库后台:一个列表 + 一条筛选栏(三个维度可组合,下拉而非按钮平铺)。
 // - 模块:默认全部;筛到单个模块时,列表上方显示该模块统计 + 进度条
@@ -81,7 +81,6 @@ export function BrowsePage({ category }: { category: string }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copyingId, setCopyingId] = useState<string | null>(null);
-  const [createOpen, setCreateOpen] = useState(false);
   const isMy = category === MY_CATEGORY_SLUG;
 
   // copiedSourceIds 随 data 重算(copyOfficial notify → useQuestions setData)
@@ -112,23 +111,21 @@ export function BrowsePage({ category }: { category: string }) {
             <div className="text-foreground">我的题库还没有题</div>
             <div className="text-sm text-muted-foreground">手动写一道,或让 AI 生题(先进草稿区,通过后出现在这里)。</div>
             <div className="flex justify-center gap-2 pt-1">
-              <Button size="sm" onClick={() => setCreateOpen(true)}>
-                <Plus className="size-3.5" aria-hidden />
-                手动加题
+              <Button asChild size="sm">
+                <Link to="/generate?mode=manual">
+                  <Plus className="size-3.5" aria-hidden />
+                  手动加题
+                </Link>
               </Button>
               <Button asChild size="sm" variant="outline">
-                <Link to="/generate">去 AI 生题</Link>
+                <Link to="/generate">
+                  <Sparkles className="size-3.5" aria-hidden />
+                  去生题
+                </Link>
               </Button>
             </div>
           </CardContent>
         </Card>
-        {isMy && (
-          <QuestionCreateDialog
-            open={createOpen}
-            onOpenChange={setCreateOpen}
-            onCreated={(id) => toast.success('已加入我的题库', { description: id })}
-          />
-        )}
       </div>
     );
   }
@@ -187,12 +184,17 @@ export function BrowsePage({ category }: { category: string }) {
         />
         {isMy && (
           <div className="flex shrink-0 gap-2">
-            <Button size="sm" variant="outline" onClick={() => setCreateOpen(true)}>
-              <Plus className="size-3.5" aria-hidden />
-              手动加题
+            <Button asChild size="sm" variant="outline">
+              <Link to="/generate?mode=manual">
+                <Plus className="size-3.5" aria-hidden />
+                手动加题
+              </Link>
             </Button>
             <Button asChild size="sm">
-              <Link to="/generate">＋ AI 生题</Link>
+              <Link to="/generate">
+                <Sparkles className="size-3.5" aria-hidden />
+                去生题
+              </Link>
             </Button>
           </div>
         )}
@@ -320,11 +322,6 @@ export function BrowsePage({ category }: { category: string }) {
         question={editingId ? getMyQuestion(editingId) : null}
         open={!!editingId}
         onOpenChange={(o) => !o && setEditingId(null)}
-      />
-      <QuestionCreateDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onCreated={(id) => toast.success('已加入我的题库', { description: id })}
       />
       <DeleteQuestionDialog
         question={deletingId ? getMyQuestion(deletingId) : null}

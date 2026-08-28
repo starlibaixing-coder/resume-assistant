@@ -1,5 +1,5 @@
 import { useEffect, useId, useState } from 'react';
-import { addManualQuestion, deleteQuestion, getMyCategory, updateQuestion, type DraftQuestion } from '@/lib/mylib';
+import { deleteQuestion, updateQuestion, type DraftQuestion } from '@/lib/mylib';
 import type { Difficulty, MyQuestion } from '@/types/question';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
@@ -7,10 +7,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-// 编辑/创建我的题。官方题不可原地改(ADR-3),先复制再改。
-// 表单体抽成 QuestionFormFields 共用;创建对话框多一个模块归属选择(现有模块 / 新建)。
+// 编辑我的题 + 删除确认。官方题不可原地改(ADR-3),先复制再改。
+// 表单体抽成 QuestionFormFields 导出,创建(手动加题)已迁去生题页页面级表单
+// (2026-08-28 审计 A4:AI/手动同页顶层切换,不再塞 max-w-lg 弹窗)。
 
 // 表单态:文本域形态(tags/answer/followups 是原始多行文本,提交时再拆)
 export interface QuestionFormState {
@@ -53,6 +53,8 @@ const EMPTY_FORM: QuestionFormState = {
   followups: '',
 };
 
+export { EMPTY_FORM };
+
 function FormError({ error }: { error: string | null }) {
   if (!error) return null;
   return (
@@ -62,8 +64,8 @@ function FormError({ error }: { error: string | null }) {
   );
 }
 
-// 共享表单字段(编辑/创建同一套);label 经 htmlFor/id 关联输入(a11y + 测试钩子)
-function QuestionFormFields({
+// 共享表单字段(编辑弹窗/生题页手动表单同一套);label 经 htmlFor/id 关联输入(a11y + 测试钩子)
+export function QuestionFormFields({
   value,
   onChange,
 }: {
@@ -153,104 +155,6 @@ export function QuestionEditDialog({
 
         <QuestionFormFields value={form} onChange={(patch) => setForm((f) => ({ ...f, ...patch }))} />
         <FormError error={error} />
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
-          <Button onClick={handleSave} disabled={saving}>{saving ? '保存中…' : '保存'}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// 模块归属:'new' = 新建模块,否则为模块号字符串
-const NEW_MODULE = '__new__';
-
-// 手动加题:直接 approved(人写即人审,ADR-10 只约束 AI 产物),保存即进刷题/SM-2。
-export function QuestionCreateDialog({
-  open,
-  onOpenChange,
-  onCreated,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onCreated?: (id: string) => void;
-}) {
-  const [form, setForm] = useState<QuestionFormState>(EMPTY_FORM);
-  // 打开时重算模块列表(上次创建的模块这次可选)
-  const [modules, setModules] = useState<Array<{ id: number; name: string }>>([]);
-  const [moduleTarget, setModuleTarget] = useState<string>(NEW_MODULE);
-  const [newModuleName, setNewModuleName] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      setModules(getMyCategory().modules.map((m) => ({ id: m.id, name: m.name })));
-      setForm(EMPTY_FORM);
-      setModuleTarget(NEW_MODULE);
-      setNewModuleName('');
-      setError(null);
-    }
-  }, [open]);
-
-  const handleSave = async () => {
-    setSaving(true);
-    setError(null);
-    try {
-      const existing = modules.find((m) => String(m.id) === moduleTarget);
-      const created = await addManualQuestion(formToDraft(form), existing
-        ? { moduleId: existing.id, moduleName: existing.name }
-        : { moduleName: newModuleName });
-      onOpenChange(false);
-      onCreated?.(created.id);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>手动加题</DialogTitle>
-          <DialogDescription>手写的题不经草稿区,保存后直接进我的题库与复习队列。</DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-3">
-          <div className="space-y-1.5">
-            <label className="text-xs text-muted-foreground font-mono">归属模块</label>
-            <div className="flex items-center gap-2">
-              <Select value={moduleTarget} onValueChange={setModuleTarget}>
-                <SelectTrigger aria-label="归属模块" className="h-9 flex-1 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="max-h-72">
-                  <SelectItem value={NEW_MODULE} className="text-xs">新建模块</SelectItem>
-                  {modules.map((m) => (
-                    <SelectItem key={m.id} value={String(m.id)} className="text-xs">
-                      {String(m.id).padStart(2, '0')} · {m.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {moduleTarget === NEW_MODULE && (
-                <Input
-                  className="flex-1"
-                  value={newModuleName}
-                  onChange={(e) => setNewModuleName(e.target.value)}
-                  placeholder="模块名,如:面试手写"
-                  aria-label="新模块名"
-                />
-              )}
-            </div>
-          </div>
-
-          <QuestionFormFields value={form} onChange={(patch) => setForm((f) => ({ ...f, ...patch }))} />
-          <FormError error={error} />
-        </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>

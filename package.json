@@ -18,5 +18,8 @@
     "build:bank": "npm run build:bank -w desktop",
     "resume:render": "node skill/scripts/render-pdf.mjs",
     "test:rust": "cargo test --manifest-path desktop/src-tauri/Cargo.toml"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18"
   }
 }
