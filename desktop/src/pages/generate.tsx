@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { ChevronDown, ChevronRight } from 'lucide-react';
@@ -47,10 +47,14 @@ export function GeneratePage() {
   const [includeResume, setIncludeResume] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null); // 存草稿失败:就近渲染在结果区,不远处表单卡底
   const [noKey, setNoKey] = useState(false);
   const [result, setResult] = useState<{ questions: GeneratedQuestion[]; retries: number; topic: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState<number | null>(null);
+  // 生成计时(审计 C5:LLM 十几秒,光"生成中"不够)与取消(AbortSignal 透传到 fetch)
+  const [elapsed, setElapsed] = useState(0);
+  const abortRef = useRef<AbortController | null>(null);
   // 进入页面就检查 LLM 配置(不等点生成才提示);从设置页回来也刷新
   const [llmReady, setLlmReady] = useState<boolean | null>(null);
 
@@ -69,9 +73,19 @@ export function GeneratePage() {
     check();
   }, [location.pathname]);
 
+  // 生成中每秒计时(审计 C5:十几秒的等待,光"生成中"不够);离开页面中断请求
+  useEffect(() => {
+    if (!loading) return;
+    const t = setInterval(() => setElapsed((s) => s + 1), 1000);
+    return () => clearInterval(t);
+  }, [loading]);
+
+  useEffect(() => () => abortRef.current?.abort(), []);
+
   const handleGenerate = async () => {
     setError(null);
     setNoKey(false);
+    // 不预清旧结果:重新生成期间旧批次保持在屏,新结果回来才替换(审计 D)
     if (mode === 'topic' && !topic.trim()) {
       setError('先填一个知识点,比如「React Hooks 深入」「浏览器事件循环」');
       return;
@@ -85,16 +99,20 @@ export function GeneratePage() {
       setNoKey(true);
       return;
     }
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+    setElapsed(0);
     setLoading(true);
     try {
       const diff = difficulty === '不限' ? undefined : difficulty;
       const r =
         mode === 'topic'
-          ? await generateQuestions({ topic: topic.trim(), difficulty: diff }, chatOpts)
+          ? await generateQuestions({ topic: topic.trim(), difficulty: diff }, { ...chatOpts, signal: ctrl.signal })
           : await generateJdQuestions(
               profile!,
               { difficulty: diff, includeResume: includeResume && !!profile!.resume.trim() },
-              chatOpts,
+              { ...chatOpts, signal: ctrl.signal },
             );
       setResult({
         questions: r.questions,
@@ -102,15 +120,21 @@ export function GeneratePage() {
         topic: mode === 'topic' ? topic.trim() : jdBatchName(profile!.company, profile!.jd),
       });
     } catch (e) {
+      // 主动取消:静默回到表单态,不算错误
+      if (e instanceof DOMException && e.name === 'AbortError') return;
       setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setLoading(false);
+      if (abortRef.current === ctrl) {
+        abortRef.current = null;
+        setLoading(false);
+      }
     }
   };
 
   const handleSaveDrafts = async () => {
     if (!result) return;
     setSaving(true);
+    setSaveError(null);
     try {
       await addDrafts(
         result.questions.map((q) => ({
@@ -126,7 +150,8 @@ export function GeneratePage() {
       toast.success('已存入草稿区,审核通过后进我的题库');
       navigate('/drafts');
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      // 失败就近渲染在结果区按钮下方(审计 D),不远放表单卡
+      setSaveError(e instanceof Error ? e.message : String(e));
       setSaving(false);
     }
   };
@@ -159,22 +184,27 @@ export function GeneratePage() {
             <CardContent className="flex flex-col gap-4 p-6">
             {/* 模式切换:知识点(通用刷题)/ JD 定向(读求职档案,功能④) */}
             <div className="flex gap-2">
-              <Button size="sm" variant={mode === 'topic' ? 'default' : 'outline'} onClick={() => setMode('topic')}>
+              <Button size="sm" variant={mode === 'topic' ? 'default' : 'outline'} onClick={() => setMode('topic')} disabled={loading}>
                 知识点生题
               </Button>
-              <Button size="sm" variant={mode === 'jd' ? 'default' : 'outline'} onClick={() => setMode('jd')}>
+              <Button size="sm" variant={mode === 'jd' ? 'default' : 'outline'} onClick={() => setMode('jd')} disabled={loading}>
                 JD 定向
               </Button>
             </div>
 
             {mode === 'topic' ? (
               <div className="space-y-1.5">
-                <label className="text-xs text-muted-foreground font-mono">知识点</label>
+                <label className="text-xs text-muted-foreground">知识点</label>
                 <Input
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
+                  onKeyDown={(e) => {
+                    // 回车即生成(输入法组词结束才触发,审计 D)
+                    if (e.key === 'Enter' && !e.nativeEvent.isComposing && !loading) void handleGenerate();
+                  }}
                   placeholder="如:React Hooks 深入 / 浏览器事件循环 / RAG 检索优化"
                   autoFocus
+                  disabled={loading}
                 />
                 <div className="text-xs leading-relaxed text-muted-foreground">
                   出多少道题由 LLM 按知识点广度判断(简单概念 2~4 道,宽领域可达 10 道,宁缺毋滥);整批作为一个「批次」进草稿区,审核通过后成为一个模块进我的题库。
@@ -190,7 +220,7 @@ export function GeneratePage() {
             ) : (
               <div className="space-y-2.5">
                 <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground font-mono">档案上下文</label>
+                  <label className="text-xs text-muted-foreground">档案上下文</label>
                   <div className="text-xs leading-relaxed text-muted-foreground">
                     {profile!.company.trim() || '(未填公司)'} · JD {profile!.jd.trim().length} 字
                     {profile!.resume.trim() ? ` · 简历 ${profile!.resume.trim().length} 字` : ' · 无简历(只用 JD 出题)'}
@@ -198,11 +228,11 @@ export function GeneratePage() {
                 </div>
                 {profile!.resume.trim() && (
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs text-muted-foreground font-mono">出题范围</span>
-                    <Button size="sm" variant={!includeResume ? 'default' : 'outline'} onClick={() => setIncludeResume(false)}>
+                    <span className="text-xs text-muted-foreground">出题范围</span>
+                    <Button size="sm" variant={!includeResume ? 'default' : 'outline'} onClick={() => setIncludeResume(false)} disabled={loading}>
                       只用 JD
                     </Button>
-                    <Button size="sm" variant={includeResume ? 'default' : 'outline'} onClick={() => setIncludeResume(true)}>
+                    <Button size="sm" variant={includeResume ? 'default' : 'outline'} onClick={() => setIncludeResume(true)} disabled={loading}>
                       结合简历
                     </Button>
                     <span className="text-xs text-muted-foreground">结合简历 = 出深挖题,考察 JD 要求与简历声称能力的匹配</span>
@@ -216,18 +246,26 @@ export function GeneratePage() {
             )}
 
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-muted-foreground font-mono">难度</span>
+              <span className="text-xs text-muted-foreground">难度</span>
               {DIFFICULTIES.map((d) => (
-                <Button key={d} size="sm" variant={difficulty === d ? 'default' : 'outline'} onClick={() => setDifficulty(d)}>
+                <Button key={d} size="sm" variant={difficulty === d ? 'default' : 'outline'} onClick={() => setDifficulty(d)} disabled={loading}>
                   {d}
                 </Button>
               ))}
               <span className="text-xs text-muted-foreground">(出题数量由 LLM 按知识点广度判断)</span>
             </div>
 
-            <Button onClick={handleGenerate} disabled={loading} className="w-full">
-              {loading ? '生成中…(LLM 出题约需十几秒)' : '生成'}
-            </Button>
+            {/* 生成中锁定表单 + 可取消(审计 C5) */}
+            <div className="flex gap-2">
+              <Button onClick={handleGenerate} disabled={loading} className="flex-1">
+                {loading ? `生成中…已用 ${elapsed}s` : '生成'}
+              </Button>
+              {loading && (
+                <Button variant="outline" onClick={() => abortRef.current?.abort()}>
+                  取消
+                </Button>
+              )}
+            </div>
 
             {noKey && (
               <div className="text-sm text-muted-foreground">
@@ -247,8 +285,9 @@ export function GeneratePage() {
           {result && (
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="text-sm text-muted-foreground font-mono">
+                <div className="text-sm text-muted-foreground">
                   LLM 判断出 {result.questions.length} 道 · {result.retries === 0 ? '一次通过' : `自修正 ${result.retries} 次`}
+                  {loading && <span className="ml-2 text-xs">重新生成中…</span>}
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={handleGenerate} disabled={loading || saving}>重新生成</Button>
@@ -261,6 +300,12 @@ export function GeneratePage() {
               <div className="text-xs text-muted-foreground">
                 先过目,确认质量后进草稿区;在草稿区 approve 才会进刷题队列。
               </div>
+
+              {saveError && (
+                <div className="text-sm text-destructive whitespace-pre-wrap rounded-md border border-destructive/40 bg-destructive/10 p-3">
+                  {saveError}
+                </div>
+              )}
 
               {result.questions.map((q, i) => {
                 const isOpen = expanded === i;
@@ -339,7 +384,7 @@ function ManualAddForm() {
     <Card>
       <CardContent className="flex flex-col gap-4 p-6">
         <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground font-mono">归属模块</label>
+          <label className="text-xs text-muted-foreground">归属模块</label>
           <div className="flex items-center gap-2">
             <Select value={moduleTarget} onValueChange={setModuleTarget}>
               <SelectTrigger aria-label="归属模块" className="h-9 flex-1 text-xs">

@@ -21,11 +21,13 @@ export function mergeQuestionData(official: QuestionData, myQuestions: MyQuestio
   };
 }
 
-export function useQuestions(): { data: QuestionData | null; error: string | null } {
+export function useQuestions(): { data: QuestionData | null; error: string | null; retry: () => void } {
   const [data, setData] = useState<QuestionData | null>(() =>
     getOfficial() ? mergeQuestionData(getOfficial()!, getMyQuestions()) : null,
   );
   const [error, setError] = useState<string | null>(null);
+  // attempt 变化触发 effect 重跑(ensureOfficial 失败后的页面级重试)
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let alive = true;
@@ -46,7 +48,7 @@ export function useQuestions(): { data: QuestionData | null; error: string | nul
       un1();
       un2();
     };
-  }, []);
+  }, [attempt]);
 
-  return { data, error };
+  return { data, error, retry: () => { setError(null); setAttempt((a) => a + 1); } };
 }

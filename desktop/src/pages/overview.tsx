@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { Sparkles, Inbox, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Inbox, ChevronRight, Plus, Sparkles } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getStats } from '@/lib/schedule';
 import { loadProgress } from '@/lib/storage';
@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/page-header';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // 总览(桌面,行动优先):第一眼回答"现在刷什么"——
 // 行动卡(待复习最多/新题最多的分类 + 大按钮),数字行,分类进度网格。
@@ -33,7 +34,7 @@ function lastActiveOf(slug: string): number {
 }
 
 export function OverviewPage() {
-  const { data } = useQuestions();
+  const { data, error, retry } = useQuestions();
   const [, bump] = useState(0);
   useEffect(() => subscribeMyLib(() => bump((v) => v + 1)), []);
   const myCategory = getMyCategory();
@@ -76,6 +77,41 @@ export function OverviewPage() {
   const totalRemaining = entries.reduce((n, e) => n + e.remaining, 0);
   const totalCount = entries.reduce((n, e) => n + e.total, 0);
 
+  // 题库还没就绪(DB 加载/播种中):骨架屏,不闪"全部学完"假完成态(审计 C4)
+  if (!data && !error) {
+    return (
+      <div className="mx-auto max-w-5xl space-y-6">
+        <PageHeader title="总览" subtitle="官方题库只读共享,你刷的进度和 AI 生成的题都存在本机。" />
+        <Skeleton className="h-24 w-full" />
+        <div className="flex gap-5">
+          <Skeleton className="h-5 w-24" />
+          <Skeleton className="h-5 w-40" />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-5xl space-y-6">
+        <PageHeader title="总览" subtitle="官方题库只读共享,你刷的进度和 AI 生成的题都存在本机。" />
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
+            <div className="text-foreground">题库加载失败</div>
+            <div className="text-sm text-muted-foreground">{error}</div>
+            <Button size="sm" variant="outline" onClick={retry}>重试</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <PageHeader title="总览" subtitle="官方题库只读共享,你刷的进度和 AI 生成的题都存在本机。" />
@@ -104,14 +140,21 @@ export function OverviewPage() {
         <Card>
           <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
             <div>
-              <div className="text-xl font-bold text-success">全部学完 ✓</div>
+              <div className="flex items-center gap-2 text-xl font-bold text-success">
+                <CheckCircle2 className="size-5" aria-hidden />
+                全部学完
+              </div>
               <div className="mt-1 text-sm text-muted-foreground">没有待复习和新题,再过一遍保持记忆。</div>
             </div>
-            {entries.find((e) => !e.isMy) && (
-              <Button asChild size="lg" variant="outline">
-                <Link to={`/${entries.find((e) => !e.isMy)!.slug}/quiz`}>再过一遍</Link>
-              </Button>
-            )}
+            {(() => {
+              // 只跳有题的官方分类(空分类进去也是死胡同)
+              const target = entries.find((e) => !e.isMy && e.total > 0);
+              return target ? (
+                <Button asChild size="lg" variant="outline">
+                  <Link to={`/${target.slug}/quiz`}>再过一遍</Link>
+                </Button>
+              ) : null;
+            })()}
           </CardContent>
         </Card>
       )}
@@ -143,11 +186,37 @@ export function OverviewPage() {
         {entries.map((e) => {
           const pct = e.total ? Math.round((e.learned / e.total) * 100) : 0;
           const empty = e.isMy && e.total === 0;
+          // 空卡不做整卡链接:承诺与目标一致——常显两个动作按钮直达生题(审计 D/E7)
+          if (empty) {
+            return (
+              <Card key={e.slug} className="h-full border-dashed bg-card/50">
+                <CardContent className="flex h-full flex-col gap-2.5 p-4">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="text-base font-semibold">{e.name}</span>
+                    <span className="font-mono text-xs text-muted-foreground">0/0</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">还是空的——去生题,或手动写一道</div>
+                  <div className="mt-auto flex flex-wrap gap-2 pt-1">
+                    <Button asChild size="sm">
+                      <Link to="/generate?mode=manual">
+                        <Plus className="size-3.5" aria-hidden />
+                        手动加题
+                      </Link>
+                    </Button>
+                    <Button asChild size="sm" variant="outline">
+                      <Link to="/generate">
+                        <Sparkles className="size-3.5" aria-hidden />
+                        AI 生题
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          }
           return (
             <Link key={e.slug} to={`/${e.slug}`} className="group cursor-pointer">
-            <Card className={`h-full transition-colors ${
-              empty ? 'border-dashed bg-card/50 hover:border-primary' : 'hover:border-primary'
-            }`}>
+            <Card className="h-full transition-colors hover:border-primary">
               <CardContent className="flex h-full flex-col gap-2.5 p-4">
               <div className="flex items-baseline justify-between gap-2">
                 <span className="text-base font-semibold">{e.name}</span>
@@ -155,14 +224,8 @@ export function OverviewPage() {
                   {e.learned}/{e.total}
                 </span>
               </div>
-              {empty ? (
-                <div className="text-xs text-muted-foreground">
-                  还是空的——去 AI 生题,或手动写一道
-                  <span className="ml-1 text-primary opacity-0 transition-opacity group-hover:opacity-100">去添加 →</span>
-                </div>
-              ) : (
-                <>
-                  <Progress value={pct} className="h-1.5" />
+                  <>
+                  <Progress value={pct} className="h-1.5 ring-1 ring-border" />
                   <div className="flex items-center justify-between">
                     <div className="flex gap-2 text-xs">
                       {e.dueToday > 0 && <span className="text-warning">待复习 {e.dueToday}</span>}
@@ -175,7 +238,6 @@ export function OverviewPage() {
                     </span>
                   </div>
                 </>
-              )}
               </CardContent>
             </Card>
             </Link>

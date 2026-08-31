@@ -127,7 +127,7 @@ function NotePanelEditor({ category, questionId }: { category: string; questionI
             />
           </div>
           <div className="flex-none border-t border-border px-4 py-2">
-            <span className="font-mono text-[11px] text-muted-foreground">自动保存</span>
+            <span className="text-[11px] text-muted-foreground">自动保存</span>
           </div>
         </SheetContent>
       </Sheet>
