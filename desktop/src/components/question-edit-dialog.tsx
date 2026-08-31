@@ -1,4 +1,5 @@
 import { useEffect, useId, useState } from 'react';
+import { toast } from 'sonner';
 import { deleteQuestion, updateQuestion, type DraftQuestion } from '@/lib/mylib';
 import type { Difficulty, MyQuestion } from '@/types/question';
 import {
@@ -77,15 +78,15 @@ export function QuestionFormFields({
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">
-        <label htmlFor={id('title')} className="text-xs text-muted-foreground font-mono">题干</label>
+        <label htmlFor={id('title')} className="text-xs text-muted-foreground">题干</label>
         <Input id={id('title')} value={value.title} onChange={(e) => onChange({ title: e.target.value })} />
       </div>
       <div className="space-y-1.5">
-        <label htmlFor={id('focus')} className="text-xs text-muted-foreground font-mono">考察点(focus)</label>
+        <label htmlFor={id('focus')} className="text-xs text-muted-foreground">考察点(focus)</label>
         <Input id={id('focus')} value={value.focus} onChange={(e) => onChange({ focus: e.target.value })} />
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground font-mono">难度</span>
+        <span className="text-xs text-muted-foreground">难度</span>
         {(['初', '中', '高'] as const).map((d) => (
           <Button key={d} size="sm" variant={value.difficulty === d ? 'default' : 'outline'} onClick={() => onChange({ difficulty: d })}>
             {d}
@@ -93,15 +94,15 @@ export function QuestionFormFields({
         ))}
       </div>
       <div className="space-y-1.5">
-        <label htmlFor={id('answer')} className="text-xs text-muted-foreground font-mono">答案要点(一行一条,合计 ≥50 字)</label>
+        <label htmlFor={id('answer')} className="text-xs text-muted-foreground">答案要点(一行一条,合计 ≥50 字)</label>
         <Textarea id={id('answer')} className="min-h-32 font-mono text-xs" value={value.answer} onChange={(e) => onChange({ answer: e.target.value })} />
       </div>
       <div className="space-y-1.5">
-        <label htmlFor={id('followups')} className="text-xs text-muted-foreground font-mono">追问(一行一条,可空)</label>
+        <label htmlFor={id('followups')} className="text-xs text-muted-foreground">追问(一行一条,可空)</label>
         <Textarea id={id('followups')} className="min-h-16 font-mono text-xs" value={value.followups} onChange={(e) => onChange({ followups: e.target.value })} />
       </div>
       <div className="space-y-1.5">
-        <label htmlFor={id('tags')} className="text-xs text-muted-foreground font-mono">标签(逗号分隔)</label>
+        <label htmlFor={id('tags')} className="text-xs text-muted-foreground">标签(逗号分隔)</label>
         <Input id={id('tags')} value={value.tags} onChange={(e) => onChange({ tags: e.target.value })} placeholder="react, hooks" />
       </div>
     </div>
@@ -137,6 +138,7 @@ export function QuestionEditDialog({
     setError(null);
     try {
       await updateQuestion(question.id, formToDraft(form));
+      toast.success('已保存');
       onOpenChange(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -176,7 +178,13 @@ export function DeleteQuestionDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const handleDelete = async () => {
-    if (question) await deleteQuestion(question.id);
+    if (!question) return;
+    try {
+      await deleteQuestion(question.id);
+      toast.success('已删除');
+    } catch (e) {
+      toast.error('删除失败', { description: e instanceof Error ? e.message : String(e) });
+    }
     onOpenChange(false);
   };
 

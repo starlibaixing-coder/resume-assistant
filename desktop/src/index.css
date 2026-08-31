@@ -110,7 +110,10 @@
   --radius-sm: calc(var(--radius) - 4px);
   --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
     "Microsoft YaHei", "Segoe UI", Helvetica, Arial, sans-serif;
-  --font-mono: "JetBrains Mono", "SF Mono", "Cascadia Code", "Fira Code", Consolas, monospace;
+  /* mono 栈必须以 ui-monospace 开头 + 带 CJK 回退(2026-08-28 审计 E1):
+     旧栈五款字体本机全未命中,且无中文回退——中文全部掉进浏览器默认衬线(宋体)。
+     ui-monospace 跟随系统等宽;装了 JetBrains Mono 的机器英文/数字仍优先;中文回退 PingFang/雅黑。 */
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", "Fira Code", Consolas, "PingFang SC", "Microsoft YaHei", monospace;
 }
 
 @layer base {

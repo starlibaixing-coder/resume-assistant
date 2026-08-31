@@ -16,7 +16,7 @@ import { PageHeader } from '@/components/page-header';
 // 入口只放浏览页会找不到(2026-08-26 用户反馈;2026-08-28 收敛为 /generate 深链)。
 
 export function QueuePage({ category }: { category: string }) {
-  const { data, error } = useQuestions();
+  const { data, error, retry } = useQuestions();
   const limit = loadLimit();
 
   const { stats, queue } = useMemo(() => {
@@ -29,7 +29,20 @@ export function QueuePage({ category }: { category: string }) {
     };
   }, [data, category, limit]);
 
-  if (error) return <div className="text-muted-foreground p-8 text-center">加载失败: {error}</div>;
+  if (error) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-6">
+        <PageHeader title="题库队列" />
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
+            <div className="text-foreground">题库加载失败</div>
+            <div className="text-sm text-muted-foreground">{error}</div>
+            <Button size="sm" variant="outline" onClick={retry}>重试</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   if (!data || !stats || !queue) return <div className="text-muted-foreground p-8 text-center">加载中…</div>;
 
   const cat = data.categories.find((c) => c.slug === category);
@@ -109,7 +122,7 @@ export function QueuePage({ category }: { category: string }) {
           )}
         </div>
 
-        <div className="text-center text-xs text-muted-foreground font-mono">
+        <div className="text-center text-xs text-muted-foreground">
           每次学 {limit === 0 ? '全部' : limit} 题(可在设置中调整)
         </div>
 
@@ -120,7 +133,7 @@ export function QueuePage({ category }: { category: string }) {
         </Button>
 
         <div className="space-y-1.5">
-          <Progress value={learnPct} className="h-1.5" />
+          <Progress value={learnPct} className="h-1.5 ring-1 ring-border" />
           <div className="text-xs text-muted-foreground font-mono text-center">
             已学 {stats.learned} / {stats.total} · {learnPct}%
           </div>
@@ -129,7 +142,7 @@ export function QueuePage({ category }: { category: string }) {
       </Card>
 
       <div>
-        <div className="text-xs font-mono uppercase tracking-wide text-muted-foreground mb-3">模块浏览</div>
+        <div className="text-xs font-medium text-muted-foreground mb-3">模块浏览</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {cat?.modules.map((mod) => (
             <Link
@@ -139,7 +152,7 @@ export function QueuePage({ category }: { category: string }) {
             >
               <div>
                 <div className="text-sm text-foreground">{mod.name}</div>
-                <div className="text-xs text-muted-foreground font-mono">模块 {String(mod.id).padStart(2, '0')}</div>
+                <div className="text-xs text-muted-foreground">模块 {String(mod.id).padStart(2, '0')}</div>
               </div>
               <div className="text-xs text-muted-foreground">{mod.count} 题</div>
             </Link>

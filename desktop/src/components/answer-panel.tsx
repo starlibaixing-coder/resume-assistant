@@ -8,7 +8,7 @@ interface AnswerPanelProps {
 export function AnswerPanel({ answer, followups }: AnswerPanelProps) {
   return (
     <div className="border-t border-border pt-5 mt-2 space-y-3">
-      <div className="text-xs font-mono uppercase tracking-wide text-muted-foreground">
+      <div className="text-xs font-medium text-muted-foreground">
         参考答案要点
       </div>
       <div
@@ -17,7 +17,7 @@ export function AnswerPanel({ answer, followups }: AnswerPanelProps) {
       />
       {followups.length > 0 && (
         <>
-          <div className="text-xs font-mono uppercase tracking-wide text-muted-foreground pt-2">
+          <div className="text-xs font-medium text-muted-foreground pt-2">
             追问方向
           </div>
           <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">

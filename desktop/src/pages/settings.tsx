@@ -39,8 +39,11 @@ export function SettingsPage() {
   const [baseURL, setBaseURL] = useState(loadConfig().baseURL);
   const [model, setModel] = useState(loadConfig().model);
   const [apiKey, setApiKey] = useState('');
+  // 内联状态只承载"异步就近"的结果:测试连接回显 + key 读取失败;
+  // 保存的成败走 toast(全局反馈统一,审计 C1),不再挤在这里
   const [status, setStatus] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
   const [testing, setTesting] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // ── 数据管理 ──
   const [refresh, setRefresh] = useState(0);
@@ -77,12 +80,15 @@ export function SettingsPage() {
   };
 
   const handleSave = async () => {
+    setSaving(true);
     try {
       saveConfig({ baseURL: baseURL.trim(), model: model.trim() });
       await saveKey(apiKey.trim());
-      setStatus({ kind: 'ok', text: '已保存' });
+      toast.success('LLM 配置已保存');
     } catch (e) {
-      setStatus({ kind: 'err', text: `保存失败: ${e instanceof Error ? e.message : String(e)}` });
+      toast.error('保存失败', { description: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -209,7 +215,7 @@ export function SettingsPage() {
 
         {/* 操作 */}
         <div className="flex flex-wrap items-center gap-2 pt-1">
-          <Button onClick={handleSave}>保存</Button>
+          <Button onClick={handleSave} disabled={saving}>{saving ? '保存中…' : '保存'}</Button>
           <Button variant="outline" onClick={handleTest} disabled={testing}>
             {testing ? '测试中…' : '测试连接'}
           </Button>
@@ -229,12 +235,13 @@ export function SettingsPage() {
       {/* ── 数据管理 ───────────────────────────────── */}
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-base">数据管理</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
+        {/* 行列表用分隔线,不再卡中卡(审计 E6):同层级信息不套边框 */}
+        <CardContent className="divide-y divide-border">
         {/* 官方题库同步:远端(GitHub Pages)→ 本地 SQLite 物化 */}
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border px-3.5 py-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 py-3">
           <div className="min-w-0">
             <div className="text-sm">官方题库</div>
-            <div className="mt-0.5 font-mono text-xs text-muted-foreground">
+            <div className="mt-0.5 text-xs text-muted-foreground">
               {lastSynced ? `上次同步 ${new Date(lastSynced).toLocaleString()}` : '尚未同步(仅包内快照)'}
             </div>
           </div>
@@ -242,20 +249,14 @@ export function SettingsPage() {
             {syncing ? '同步中…' : '同步官方题库'}
           </Button>
         </div>
-        <div className="text-xs text-muted-foreground">
-          清空操作按分类执行:清空进度删 SM-2 记录(题目和笔记保留);清空笔记只删笔记(进度保留)。均不可恢复。
-        </div>
         {categories.map((c) => {
           const progressCount = Object.keys(loadProgress(c.slug)).length;
           const noteCount = Object.keys(loadNotes(c.slug)).length;
           return (
-            <div
-              key={c.slug}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border px-3.5 py-2.5"
-            >
+            <div key={c.slug} className="flex flex-wrap items-center justify-between gap-2 py-3">
               <div className="min-w-0">
                 <div className="text-sm">{c.name}</div>
-                <div className="mt-0.5 font-mono text-xs text-muted-foreground">
+                <div className="mt-0.5 text-xs text-muted-foreground">
                   进度 {progressCount} 条 · 笔记 {noteCount} 条
                 </div>
               </div>
@@ -280,6 +281,9 @@ export function SettingsPage() {
             </div>
           );
         })}
+        <div className="py-3 text-xs text-muted-foreground">
+          清空操作按分类执行:清空进度删 SM-2 记录(题目和笔记保留);清空笔记只删笔记(进度保留)。均不可恢复。
+        </div>
         </CardContent>
       </Card>
 

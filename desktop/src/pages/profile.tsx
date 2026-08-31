@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { getProfile, saveProfile, type JobProfile } from '@/lib/profile';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { PageHeader } from '@/components/page-header';
 
 // 求职目标档案(ADR-4 中枢):公司/JD/简历,被「JD 定向生题」(本阶段)与
-// 简历生成/模拟面试(阶段 3/5)共享。录入 = 纯粘贴,校验放消费侧(JD 定向要求 JD 非空)。
+// 简历生成/模拟面试(后续阶段)共享。录入 = 纯粘贴,校验放消费侧(JD 定向要求 JD 非空)。
 
 const charCount = (s: string) => (s ? `${s.length} 字` : '未填');
 
@@ -22,6 +22,17 @@ export function ProfilePage() {
   const dirty = !!saved
     ? saved.company !== company || saved.jd !== jd || saved.resume !== resume
     : !!(company || jd || resume);
+
+  // 未保存就关窗/刷新:浏览器原生确认兜底。
+  // 站内路由拦截需要 data router(useBlocker),超出本轮——已知限制,记录于施工计划。
+  useEffect(() => {
+    if (!dirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [dirty]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -39,13 +50,13 @@ export function ProfilePage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeader
         title="求职目标"
-        subtitle="JD 定向生题读这份档案;后续简历生成、模拟面试(阶段 3/5)也围绕它。JD 必填才能定向生题,简历建议贴 markdown 全文。"
+        subtitle="JD 定向生题读这份档案;后续简历生成、模拟面试也围绕它。JD 必填才能定向生题,简历建议贴 markdown 全文。"
       />
 
       <Card>
         <CardContent className="flex flex-col gap-5 p-6">
           <div className="space-y-1.5">
-            <label className="text-xs text-muted-foreground font-mono">公司 / 岗位</label>
+            <label className="text-xs text-muted-foreground">公司 / 岗位</label>
             <Input
               value={company}
               onChange={(e) => setCompany(e.target.value)}
@@ -55,8 +66,8 @@ export function ProfilePage() {
 
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs text-muted-foreground font-mono">职位描述(JD)</label>
-              <span className="font-mono text-[10px] text-muted-foreground">{charCount(jd)}</span>
+              <label className="text-xs text-muted-foreground">职位描述(JD)</label>
+              <span className="text-[10px] text-muted-foreground">{charCount(jd)}</span>
             </div>
             <Textarea
               value={jd}
@@ -68,8 +79,8 @@ export function ProfilePage() {
 
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs text-muted-foreground font-mono">我的简历</label>
-              <span className="font-mono text-[10px] text-muted-foreground">{charCount(resume)}</span>
+              <label className="text-xs text-muted-foreground">我的简历</label>
+              <span className="text-[10px] text-muted-foreground">{charCount(resume)}</span>
             </div>
             <Textarea
               value={resume}

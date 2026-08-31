@@ -74,7 +74,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/#/settings');
   await page.getByPlaceholder('sk-…').fill('sk-e2e-test');
   await page.getByRole('button', { name: '保存', exact: true }).click();
-  await expect(page.getByText('已保存')).toBeVisible();
+  await expect(page.getByText('LLM 配置已保存').first()).toBeVisible();
 });
 
 test('生题 → 存草稿 → approve → 我的题库可见 → 可开始刷题', async ({ page }) => {
@@ -121,9 +121,11 @@ test('草稿区:逐题拒绝不进我的题库', async ({ page }) => {
   await page.getByRole('button', { name: /存入草稿区/ }).click();
   await expect(page.getByText(/2 题待审/)).toBeVisible();
 
-  // 展开第一题拒绝
+  // 展开第一题拒绝(拒绝 = 删除,需确认)
   await page.getByText('useEffect 的清理函数在哪些时机执行?').click();
   await page.getByRole('button', { name: /拒绝/ }).click();
+  await expect(page.getByText('拒绝这道题?')).toBeVisible();
+  await page.getByRole('button', { name: '确认拒绝' }).click();
   await expect(page.getByText(/1 题待审/)).toBeVisible({ timeout: 10_000 });
 
   // 首页我的题库仍为空(引导去生题)
@@ -221,7 +223,7 @@ test('设置页渲染:预设与 key 表单', async ({ page }) => {
   await expect(keyInput).toBeVisible();
   await keyInput.fill('sk-e2e-test');
   await page.getByRole('button', { name: '保存', exact: true }).click();
-  await expect(page.getByText('已保存')).toBeVisible();
+  await expect(page.getByText('LLM 配置已保存').first()).toBeVisible();
 });
 
 test('官方题浏览页:统一筛选栏(模块/难度/状态)', async ({ page }) => {

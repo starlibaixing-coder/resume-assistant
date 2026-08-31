@@ -27,7 +27,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils';
 
 export function QuizPage({ category }: { category: string }) {
-  const { data, error } = useQuestions();
+  const { data, error, retry } = useQuestions();
   const { immersive } = useImmersive();
   const [searchParams] = useSearchParams();
   const [queueIdx, setQueueIdx] = useState(0);
@@ -134,7 +134,19 @@ export function QuizPage({ category }: { category: string }) {
     return () => window.removeEventListener('keydown', onKey);
   });
 
-  if (error) return <div className="text-muted-foreground p-8 text-center">加载失败: {error}</div>;
+  if (error) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-6">
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
+            <div className="text-foreground">题库加载失败</div>
+            <div className="text-sm text-muted-foreground">{error}</div>
+            <Button size="sm" variant="outline" onClick={retry}>重试</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   if (!data) return <div className="text-muted-foreground p-8 text-center">加载中…</div>;
   if (!queue.length)
     return <DoneState category={category} total={catQuestions.length} onReviewAll={() => handleNextRound(true)} />;

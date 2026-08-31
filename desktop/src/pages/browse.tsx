@@ -53,7 +53,7 @@ function FilterSelect({
 }) {
   return (
     <label className="flex items-center gap-1.5">
-      <span className="text-xs text-muted-foreground font-mono">{label}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger aria-label={label} className="h-8 w-36 text-xs">
           <SelectValue />
@@ -71,7 +71,7 @@ function FilterSelect({
 }
 
 export function BrowsePage({ category }: { category: string }) {
-  const { data, error } = useQuestions();
+  const { data, error, retry } = useQuestions();
   // 模块筛选:'all' 或模块号字符串;初始取 ?m= 深链
   const [searchParams] = useSearchParams();
   const [moduleFilter, setModuleFilter] = useState<string>(() => searchParams.get('m') ?? 'all');
@@ -99,7 +99,20 @@ export function BrowsePage({ category }: { category: string }) {
     setModuleFilter('all');
   }, [category]);
 
-  if (error) return <div className="text-muted-foreground p-8 text-center">加载失败: {error}</div>;
+  if (error) {
+    return (
+      <div className="mx-auto max-w-4xl space-y-6">
+        <PageHeader title="题目浏览" />
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
+            <div className="text-foreground">题库加载失败</div>
+            <div className="text-sm text-muted-foreground">{error}</div>
+            <Button size="sm" variant="outline" onClick={retry}>重试</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   if (!data) return <div className="text-muted-foreground p-8 text-center">加载中…</div>;
   // my 分类无 approved 题时聚合里没有它(避免卡"加载中"),给空态引导
   if (!cat) {
@@ -217,7 +230,7 @@ export function BrowsePage({ category }: { category: string }) {
       {singleModule && singleStats && (
         <div className="space-y-2">
           <div className="flex justify-between items-center flex-wrap gap-2">
-            <div className="font-mono text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground">
               {String(singleModule.id).padStart(2, '0')} · {singleModule.name}
             </div>
             <div className="flex gap-3 text-xs">
@@ -228,7 +241,7 @@ export function BrowsePage({ category }: { category: string }) {
           </div>
           <Progress
             value={singleStats.total ? Math.round((singleStats.learned / singleStats.total) * 100) : 0}
-            className="h-1.5"
+            className="h-1.5 ring-1 ring-border"
           />
         </div>
       )}
@@ -236,13 +249,21 @@ export function BrowsePage({ category }: { category: string }) {
       {/* 题目列表 */}
       <Card className="overflow-hidden">
         {listQuestions.length === 0 ? (
-          <div className="p-4 text-center text-sm text-muted-foreground">无符合条件的题</div>
+          <div className="flex items-center justify-center gap-3 p-4 text-sm text-muted-foreground">
+            无符合条件的题
+            {hasFilter && (
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={handleReset}>
+                清除筛选
+              </Button>
+            )}
+          </div>
         ) : (
           listQuestions.map((q, i) => {
             const modName = modules.find((m) => m.id === q.module)?.name ?? String(q.module);
             const copied = !isMy && copiedSourceIds.has(q.id);
             return (
-              <div key={q.id} className="border-b border-border last:border-b-0 p-3">
+              // content-visibility:屏外行跳过渲染(282 题全量 DOM 保留,e2e/DOM 查询不受影响)
+              <div key={q.id} className="border-b border-border last:border-b-0 p-3 [contain-intrinsic-size:auto_88px] [content-visibility:auto]">
                 <div className="flex items-center gap-2.5">
                   <span className="font-mono text-xs text-muted-foreground shrink-0">{i + 1}</span>
                   <span className="max-w-24 truncate shrink-0 rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">

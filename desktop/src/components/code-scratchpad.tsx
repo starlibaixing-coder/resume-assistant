@@ -272,7 +272,7 @@ export default function CodeScratchpad({
                 <Play className="size-3" aria-hidden />
                 {running ? '运行中…' : '运行'}
               </Button>
-              <span className="font-mono text-[11px] text-muted-foreground">自动保存</span>
+              <span className="text-[11px] text-muted-foreground">自动保存</span>
             </div>
 
             <div className="min-h-0 flex-1 overflow-hidden rounded-md border border-border">
@@ -290,7 +290,7 @@ export default function CodeScratchpad({
             {output !== null && (
               <div className="flex-none rounded-md border border-border bg-popover p-2.5">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">输出</span>
+                  <span className="text-[10px] font-medium text-muted-foreground">输出</span>
                   {durationMs != null && (
                     <span className="font-mono text-[10px] text-muted-foreground">{durationMs}ms</span>
                   )}

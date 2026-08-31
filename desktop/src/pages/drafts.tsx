@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
+import { toast } from 'sonner';
 import { Check, ChevronDown, ChevronRight, Inbox, Sparkles, X } from 'lucide-react';
 import { approveQuestion, getMyQuestions, rejectDraft, subscribeMyLib } from '@/lib/mylib';
 import type { MyQuestion } from '@/types/question';
@@ -8,13 +9,20 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/page-header';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,
+} from '@/components/ui/dialog';
 
 // 草稿区(ADR-10):AI 生成的题先进 pending,在这里人工过目,
-// 通过(approved)才进「我的题库」聚合刷题;拒绝 = 删除。
+// 通过(approved)才进「我的题库」聚合刷题;拒绝 = 永久删除,需确认(与删题同款防线)。
 
 export function DraftsPage() {
   const [version, setVersion] = useState(0);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  // 进行中的操作(按钮禁用防重入):'all:模块号' 或题 id
+  const [busy, setBusy] = useState<string | null>(null);
+  // 拒绝确认(拒绝 = 删除,不可恢复)
+  const [confirmReject, setConfirmReject] = useState<MyQuestion | null>(null);
 
   useEffect(() => subscribeMyLib(() => setVersion((v) => v + 1)), []);
 
@@ -31,17 +39,43 @@ export function DraftsPage() {
     g.push(q);
   }
 
+  // 反馈统一 toast + try/catch(审计 C1:审核是 ADR-10 关键闸门,曾全程静默)
   const handleApprove = async (id: string) => {
-    await approveQuestion(id);
-    setVersion((v) => v + 1); // 立即刷新(订阅也会触发,幂等)
+    setBusy(id);
+    try {
+      await approveQuestion(id);
+      toast.success('已通过,进我的题库');
+      setVersion((v) => v + 1); // 立即刷新(订阅也会触发,幂等)
+    } catch (e) {
+      toast.error('通过失败', { description: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setBusy(null);
+    }
   };
-  const handleReject = async (id: string) => {
-    await rejectDraft(id);
-    setVersion((v) => v + 1);
+  const handleReject = async (q: MyQuestion) => {
+    setBusy(q.id);
+    try {
+      await rejectDraft(q.id);
+      toast.success('已拒绝并删除');
+      setVersion((v) => v + 1);
+    } catch (e) {
+      toast.error('拒绝失败', { description: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setBusy(null);
+    }
   };
   const handleApproveAll = async (qs: MyQuestion[]) => {
-    await Promise.all(qs.map((q) => approveQuestion(q.id)));
-    setVersion((v) => v + 1);
+    const key = `all:${qs[0]?.module ?? ''}`;
+    setBusy(key);
+    try {
+      await Promise.all(qs.map((q) => approveQuestion(q.id)));
+      toast.success(`本批 ${qs.length} 题已全部通过`);
+      setVersion((v) => v + 1);
+    } catch (e) {
+      toast.error('批量通过失败', { description: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setBusy(null);
+    }
   };
 
   return (
@@ -79,11 +113,16 @@ export function DraftsPage() {
           {[...groups.entries()].map(([moduleId, qs]) => (
             <div key={moduleId} className="space-y-2">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="font-mono text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground">
                   批次 {String(moduleId).padStart(2, '0')} · {qs[0].moduleName}({qs.length} 题)
                 </div>
-                <Button size="sm" variant="outline" onClick={() => handleApproveAll(qs)}>
-                  本批全部通过
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={busy != null}
+                  onClick={() => handleApproveAll(qs)}
+                >
+                  {busy === `all:${moduleId}` ? '通过中…' : '本批全部通过'}
                 </Button>
               </div>
 
@@ -112,11 +151,26 @@ export function DraftsPage() {
                           <div className="text-sm text-muted-foreground pt-2">{q.focus}</div>
                           <AnswerPanel answer={q.answer} followups={q.followups} />
                           <div className="flex gap-2 pt-1">
-                            <Button size="sm" variant="success" onClick={() => handleApprove(q.id)}>
-                              <Check className="size-3.5" aria-hidden />
-                              通过,进我的题库
+                            <Button
+                              size="sm"
+                              variant="success"
+                              disabled={busy != null}
+                              onClick={() => handleApprove(q.id)}
+                            >
+                              {busy === q.id ? '通过中…' : (
+                                <>
+                                  <Check className="size-3.5" aria-hidden />
+                                  通过,进我的题库
+                                </>
+                              )}
                             </Button>
-                            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleReject(q.id)}>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-destructive"
+                              disabled={busy != null}
+                              onClick={() => setConfirmReject(q)}
+                            >
                               <X className="size-3.5" aria-hidden />
                               拒绝
                             </Button>
@@ -135,6 +189,28 @@ export function DraftsPage() {
           </div>
         </div>
       )}
+
+      {/* 拒绝 = 永久删除:确认(审计 C2,与删题/清空进度同款防线) */}
+      <Dialog open={!!confirmReject} onOpenChange={(o) => !o && setConfirmReject(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>拒绝这道题?</DialogTitle>
+            <DialogDescription>
+              「{confirmReject?.title}」将被永久删除,不会进任何题库。此操作不可恢复。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">取消</Button>
+            </DialogClose>
+            <DialogClose asChild>
+              <Button variant="destructive" onClick={() => confirmReject && handleReject(confirmReject)}>
+                确认拒绝
+              </Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

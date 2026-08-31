@@ -34,7 +34,7 @@ function NavItem({ to, icon: Icon, label, active, count, badge }: NavItemProps) 
     <Link
       to={to}
       title={label}
-      className={`flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm cursor-pointer transition-colors ${
+      className={`relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm cursor-pointer transition-colors ${
         active
           ? 'bg-primary/10 text-primary font-medium'
           : 'text-muted-foreground hover:bg-accent hover:text-foreground'
@@ -42,8 +42,9 @@ function NavItem({ to, icon: Icon, label, active, count, badge }: NavItemProps) 
     >
       <Icon className="h-4 w-4 shrink-0" />
       <span className="hidden min-w-0 flex-1 truncate lg:inline">{label}</span>
+      {/* 角标挂图标右上角:窄窗(<lg 只剩图标)也能看到"有待审"信号(审计 E4) */}
       {badge != null && badge > 0 && (
-        <span className="hidden rounded-full bg-warning px-1.5 py-0.5 text-[10px] font-mono leading-none text-warning-foreground lg:inline">
+        <span className="absolute left-5.5 top-1 min-w-4 rounded-full bg-warning px-1 text-center text-[10px] font-mono leading-4 text-warning-foreground">
           {badge}
         </span>
       )}
@@ -114,7 +115,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <NavItem to="/generate" icon={Sparkles} label="生题" active={root === 'generate'} />
             <NavItem to="/drafts" icon={Inbox} label="草稿区" active={root === 'drafts'} badge={pendingCount} />
 
-            <div className="hidden px-2.5 pb-1 pt-4 text-[11px] font-mono uppercase tracking-wider text-muted-foreground/60 lg:block">
+            <div className="hidden px-2.5 pb-1 pt-4 text-xs font-medium text-muted-foreground/70 lg:block">
               题库分类
             </div>
             {cats.map((c) => (
@@ -149,7 +150,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link
               to={`/${backCatSlug}`}
               title="回到该分类题库"
-              className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-mono text-muted-foreground cursor-pointer transition-colors hover:bg-accent hover:text-foreground"
+              className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted-foreground cursor-pointer transition-colors hover:bg-accent hover:text-foreground"
             >
               <ArrowLeft className="h-3.5 w-3.5" /> 回到{backCatName ?? backCatSlug}
               {(backCatName ?? '').endsWith('题库') ? '' : '题库'}
