@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "resume-assistant",
+  "productName": "CommitCareer",
   "version": "0.1.0",
   "identifier": "com.resume-assistant.desktop",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "刷题 Agent",
+        "title": "CommitCareer",
         "width": 1200,
         "height": 800,
         "minWidth": 820,

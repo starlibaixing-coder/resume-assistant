@@ -174,10 +174,10 @@ export function OverviewPage() {
       {/* 快捷操作:生题是核心功能,一级入口 */}
       <div className="flex flex-wrap gap-2">
         <Button asChild>
-          <Link to="/generate"><Sparkles className="mr-1.5 h-4 w-4" />生题</Link>
+          <Link to="/generate"><Sparkles className="mr-1.5 h-4 w-4" />出题</Link>
         </Button>
         <Button asChild variant="outline">
-          <Link to="/drafts"><Inbox className="mr-1.5 h-4 w-4" />草稿区{pendingCount > 0 ? `(${pendingCount})` : ''}</Link>
+          <Link to="/drafts"><Inbox className="mr-1.5 h-4 w-4" />待审核{pendingCount > 0 ? `(${pendingCount})` : ''}</Link>
         </Button>
       </div>
 
@@ -195,7 +195,7 @@ export function OverviewPage() {
                     <span className="text-base font-semibold">{e.name}</span>
                     <span className="font-mono text-xs text-muted-foreground">0/0</span>
                   </div>
-                  <div className="text-xs text-muted-foreground">还是空的——去生题,或手动写一道</div>
+                  <div className="text-xs text-muted-foreground">还是空的——去出题,或手动写一道</div>
                   <div className="mt-auto flex flex-wrap gap-2 pt-1">
                     <Button asChild size="sm">
                       <Link to="/generate?mode=manual">
@@ -206,7 +206,7 @@ export function OverviewPage() {
                     <Button asChild size="sm" variant="outline">
                       <Link to="/generate">
                         <Sparkles className="size-3.5" aria-hidden />
-                        AI 生题
+                        AI 出题
                       </Link>
                     </Button>
                   </div>

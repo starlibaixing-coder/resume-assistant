@@ -87,14 +87,14 @@ test('生题 → 存草稿 → approve → 我的题库可见 → 可开始刷�
   await expect(page.getByText('LLM 判断出 2 道')).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText('useEffect 的清理函数在哪些时机执行?')).toBeVisible();
 
-  // 3) 存入草稿区(自动跳 #/drafts)
-  await page.getByRole('button', { name: /存入草稿区/ }).click();
+  // 3) 提交审核(自动跳 #/drafts)
+  await page.getByRole('button', { name: /提交审核/ }).click();
   await expect(page.getByText(/批次 01 · React Hooks 深入/)).toBeVisible();
   await expect(page.getByText(/2 题待审/)).toBeVisible();
 
   // 4) 本批全部通过 → 草稿区清空
   await page.getByRole('button', { name: '本批全部通过' }).click();
-  await expect(page.getByText('草稿区是空的')).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText('没有待审核的题')).toBeVisible({ timeout: 10_000 });
 
   // 5) 首页:我的题库卡片出现 2 题(限主内容区,侧栏也有同名入口)
   await page.goto('/#/');
@@ -118,7 +118,7 @@ test('草稿区:逐题拒绝不进我的题库', async ({ page }) => {
   await page.getByPlaceholder(/React Hooks/).fill('Event Loop');
   await page.getByRole('button', { name: '生成', exact: true }).click();
   await expect(page.getByText('LLM 判断出 2 道')).toBeVisible({ timeout: 10_000 });
-  await page.getByRole('button', { name: /存入草稿区/ }).click();
+  await page.getByRole('button', { name: /提交审核/ }).click();
   await expect(page.getByText(/2 题待审/)).toBeVisible();
 
   // 展开第一题拒绝(拒绝 = 删除,需确认)
@@ -179,7 +179,7 @@ test('中枢新增 JD → 行内定向生题 → 草稿区(功能④)', async ({
   await expect(page.getByText('LLM 判断出 2 道')).toBeVisible({ timeout: 10_000 });
 
   // 4) 存草稿区:批次名带 JD定向 · 公司
-  await page.getByRole('button', { name: /存入草稿区/ }).click();
+  await page.getByRole('button', { name: /提交审核/ }).click();
   await expect(page.getByText(/批次 01 · JD定向 · 示例公司/)).toBeVisible();
 });
 

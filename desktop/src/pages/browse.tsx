@@ -118,11 +118,11 @@ export function BrowsePage({ category }: { category: string }) {
   if (!cat) {
     return (
       <div className="mx-auto max-w-4xl space-y-6">
-        <PageHeader title="我的题库 / 题目浏览" />
+        <PageHeader title="我的题库 · 题目浏览" />
         <Card>
           <CardContent className="space-y-3 py-16 text-center">
             <div className="text-foreground">我的题库还没有题</div>
-            <div className="text-sm text-muted-foreground">手动写一道,或让 AI 生题(先进草稿区,通过后出现在这里)。</div>
+            <div className="text-sm text-muted-foreground">手动写一道,或让 AI 出题(先进待审核,通过后出现在这里)。</div>
             <div className="flex justify-center gap-2 pt-1">
               <Button asChild size="sm">
                 <Link to="/generate?mode=manual">
@@ -133,7 +133,7 @@ export function BrowsePage({ category }: { category: string }) {
               <Button asChild size="sm" variant="outline">
                 <Link to="/generate">
                   <Sparkles className="size-3.5" aria-hidden />
-                  去生题
+                  去出题
                 </Link>
               </Button>
             </div>
@@ -187,7 +187,7 @@ export function BrowsePage({ category }: { category: string }) {
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <PageHeader
-          title={`${cat.name} / 题目浏览`}
+          title={`${cat.name} · 题目浏览`}
           subtitle={
             <>
               管理与查阅:我的题可编辑删除;刷题、评分、写笔记去
@@ -206,7 +206,7 @@ export function BrowsePage({ category }: { category: string }) {
             <Button asChild size="sm">
               <Link to="/generate">
                 <Sparkles className="size-3.5" aria-hidden />
-                去生题
+                去出题
               </Link>
             </Button>
           </div>

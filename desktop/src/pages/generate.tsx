@@ -155,7 +155,7 @@ export function GeneratePage() {
         })),
         result.topic,
       );
-      toast.success('已存入草稿区,审核通过后进我的题库');
+      toast.success('已提交审核,通过后进我的题库');
       navigate('/drafts');
     } catch (e) {
       // 失败就近渲染在结果区按钮下方(审计 D),不远放表单卡
@@ -166,7 +166,7 @@ export function GeneratePage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <PageHeader title="生题" subtitle="AI 生成整批进草稿区审核;或手动写一道,直接进我的题库。" />
+      <PageHeader title="出题" subtitle="AI 生成整批进待审核;或手动写一道,直接进我的题库。" />
 
       <Tabs
         value={pageMode}
@@ -232,7 +232,7 @@ export function GeneratePage() {
                   </div>
                 )}
                 <div className="text-xs leading-relaxed text-muted-foreground">
-                  按 JD 的技术要求出题(核心必备项优先),数量由 LLM 判断;整批进草稿区,审核通过后成一个模块。换 JD 或改内容去
+                  按 JD 的技术要求出题(核心必备项优先),数量由 LLM 判断;整批提交审核,通过后成一个模块。换 JD 或改内容去
                   <Link to="/profile" className="mx-0.5 text-primary hover:underline">求职中枢</Link>。
                 </div>
               </div>
@@ -251,7 +251,7 @@ export function GeneratePage() {
                   disabled={loading}
                 />
                 <div className="text-xs leading-relaxed text-muted-foreground">
-                  出多少道题由 LLM 按知识点广度判断(简单概念 2~4 道,宽领域可达 10 道,宁缺毋滥);整批作为一个「批次」进草稿区,审核通过后成为一个模块进我的题库。
+                  出多少道题由 LLM 按知识点广度判断(简单概念 2~4 道,宽领域可达 10 道,宁缺毋滥);整批作为一个「批次」提交审核,通过后成为一个模块进我的题库。
                   JD 定向生题从
                   <Link to="/profile" className="mx-0.5 text-primary hover:underline">求职中枢</Link>
                   的 JD 条目发起。
@@ -306,13 +306,13 @@ export function GeneratePage() {
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={handleGenerate} disabled={loading || saving}>重新生成</Button>
                   <Button size="sm" onClick={handleSaveDrafts} disabled={saving}>
-                    {saving ? '入库中…' : '存入草稿区 →'}
+                    {saving ? '入库中…' : '提交审核 →'}
                   </Button>
                 </div>
               </div>
 
               <div className="text-xs text-muted-foreground">
-                先过目,确认质量后进草稿区;在草稿区 approve 才会进刷题队列。
+                先过目,确认质量后提交审核;通过后才会进刷题队列。
               </div>
 
               {saveError && (
@@ -437,7 +437,7 @@ function ManualAddForm() {
           {saving ? '保存中…' : '加入我的题库'}
         </Button>
         <div className="text-xs leading-relaxed text-muted-foreground">
-          手写的题不经草稿区,保存后直接进我的题库与复习队列;提交走共享校验(答案要点合计 ≥50 字)。
+          手写的题不经审核,保存后直接进我的题库与复习队列;提交走共享校验(答案要点合计 ≥50 字)。
         </div>
       </CardContent>
     </Card>

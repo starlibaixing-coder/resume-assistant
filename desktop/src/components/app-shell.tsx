@@ -9,10 +9,14 @@ import { getMyCategory, getPendingCount, subscribeMyLib } from '@/lib/mylib';
 import { useImmersive } from '@/lib/immersive';
 
 // 桌面壳:常驻侧栏导航 + 内容区(页面由 App.tsx 的 Routes 经 children 传入)。
+// 品牌 CommitCareer(2026-08-31:窗口标题/productName/侧栏/document.title 四处统一)。
+// 菜单按使用频率与工作流分组:总览 →【刷题】题库分类+我的题库(高频在前)→
+// 【求职】中枢 → 出题 → 待审核(生成工作流顺序)→ 设置。
 // 后退语义:侧栏直达页是同级切换不显示后退;只有下钻子页(刷题/浏览)显示
 // 「← 回到{分类名}题库」,固定回该分类队列页(不依赖历史栈)。
 // Cmd/Ctrl/Alt+← 为系统级 history.back()(编辑器内不抢键);窄窗(<lg)侧栏收成图标栏。
 // 沉浸式刷题(lib/immersive)时侧栏与返回条不渲染,内容区结构不变。
+// document.title 跟随路由显示「页面 · CommitCareer」。
 
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   agent: Bot,
@@ -73,6 +77,31 @@ export function AppShell({ children }: { children: ReactNode }) {
     mainRef.current?.scrollTo({ top: 0 });
   }, [location.pathname, location.search]);
 
+  // document.title 跟随路由:顶层页用菜单名,子页用「分类 · 页面」
+  useEffect(() => {
+    const root = parts[0] ?? '';
+    const sub = parts[1];
+    const topTitles: Record<string, string> = {
+      '': '总览',
+      profile: '求职中枢',
+      generate: '出题',
+      drafts: '待审核',
+      settings: '设置',
+    };
+    let title: string;
+    if (topTitles[root] != null || root === '') {
+      title = topTitles[root] ?? '总览';
+    } else if (sub === 'quiz') {
+      title = '刷题';
+    } else if (sub === 'browse') {
+      title = '题目浏览';
+    } else {
+      title = backCatName ?? root; // 分类队列页:分类名
+    }
+    document.title = `${title} · CommitCareer`;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
   // Cmd/Ctrl+← 或 Alt+← 系统级后退;编辑场景(输入框/编辑器)不抢快捷键
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -102,21 +131,19 @@ export function AppShell({ children }: { children: ReactNode }) {
       {!immersive && (
         <aside className="flex h-full w-14 shrink-0 flex-col border-r border-border bg-card lg:w-56">
           {/* 品牌 */}
-          <Link to="/" className="flex items-center gap-2.5 px-2.5 py-4 lg:px-3.5" title="刷题 Agent">
+          <Link to="/" className="flex items-center gap-2.5 px-2.5 py-4 lg:px-3.5" title="CommitCareer">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <Zap className="h-4 w-4" />
             </div>
-            <span className="hidden text-sm font-semibold tracking-tight lg:inline">刷题 Agent</span>
+            <span className="hidden text-sm font-semibold tracking-tight lg:inline">CommitCareer</span>
           </Link>
 
           <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-1">
             <NavItem to="/" icon={LayoutDashboard} label="总览" active={root === ''} />
-            <NavItem to="/profile" icon={Target} label="求职中枢" active={root === 'profile'} />
-            <NavItem to="/generate" icon={Sparkles} label="生题" active={root === 'generate'} />
-            <NavItem to="/drafts" icon={Inbox} label="草稿区" active={root === 'drafts'} badge={pendingCount} />
 
+            {/* 刷题组:题库是最高频入口,放上半区 */}
             <div className="hidden px-2.5 pb-1 pt-4 text-xs font-medium text-muted-foreground/70 lg:block">
-              题库分类
+              刷题
             </div>
             {cats.map((c) => (
               <NavItem
@@ -135,6 +162,14 @@ export function AppShell({ children }: { children: ReactNode }) {
               active={root === 'my'}
               count={myCategory.count}
             />
+
+            {/* 求职组:中枢 → 出题 → 待审核,生成工作流顺序 */}
+            <div className="hidden px-2.5 pb-1 pt-4 text-xs font-medium text-muted-foreground/70 lg:block">
+              求职
+            </div>
+            <NavItem to="/profile" icon={Target} label="求职中枢" active={root === 'profile'} />
+            <NavItem to="/generate" icon={Sparkles} label="出题" active={root === 'generate'} />
+            <NavItem to="/drafts" icon={Inbox} label="待审核" active={root === 'drafts'} badge={pendingCount} />
           </nav>
 
           {/* 底部:设置 */}

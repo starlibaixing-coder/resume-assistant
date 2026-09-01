@@ -169,7 +169,7 @@ function JdManager() {
           <DialogHeader>
             <DialogTitle>删除这份 JD?</DialogTitle>
             <DialogDescription>
-              「{deleting?.title}」将被删除。已用它生成的题不受影响(题目在草稿区/我的题库,与 JD 不再关联)。此操作不可恢复。
+              「{deleting?.title}」将被删除。已用它生成的题不受影响(题目在待审核/我的题库,与 JD 不再关联)。此操作不可恢复。
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

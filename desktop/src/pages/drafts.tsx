@@ -13,7 +13,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,
 } from '@/components/ui/dialog';
 
-// 草稿区(ADR-10):AI 生成的题先进 pending,在这里人工过目,
+// 待审核(ADR-10 草稿区):AI 出的题先进 pending,在这里人工过目,
 // 通过(approved)才进「我的题库」聚合刷题;拒绝 = 永久删除,需确认(与删题同款防线)。
 
 export function DraftsPage() {
@@ -81,11 +81,11 @@ export function DraftsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6" data-version={version}>
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <PageHeader title="草稿区" subtitle={pending.length > 0 ? `${pending.length} 题待审` : undefined} />
+        <PageHeader title="待审核" subtitle={pending.length > 0 ? `${pending.length} 题待审` : undefined} />
         <Button asChild size="sm" variant="outline" className="mb-1">
           <Link to="/generate">
             <Sparkles className="size-3.5" aria-hidden />
-            去生题
+            去出题
           </Link>
         </Button>
       </div>
@@ -94,15 +94,15 @@ export function DraftsPage() {
         <Card>
           <CardContent className="space-y-3 py-16 text-center">
             <Inbox className="mx-auto size-10 text-muted-foreground" aria-hidden />
-            <div className="text-foreground">草稿区是空的</div>
+            <div className="text-foreground">没有待审核的题</div>
             <div className="text-sm text-muted-foreground">
-              AI 生成的题会先进这里,你确认后才进刷题队列。
+              AI 出的题先进这里,你逐题确认后才进刷题队列。
             </div>
             <div>
               <Button asChild size="sm" variant="outline">
                 <Link to="/generate">
                   <Sparkles className="size-3.5" aria-hidden />
-                  去生题
+                  去出题
                 </Link>
               </Button>
             </div>
