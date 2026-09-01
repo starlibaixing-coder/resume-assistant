@@ -7,7 +7,6 @@
 
 import { chat as defaultChat, type ChatMessage, type ChatOptions } from './provider';
 import { validateQuestion, type RawQuestion } from './validate';
-import type { JobProfile } from './profile';
 import type { Difficulty } from '@/types/question';
 
 export const MAX_RETRIES = 2;
@@ -202,27 +201,34 @@ ${opts.difficulty ? `- 全部题目的 difficulty 必须是 "${opts.difficulty}"
 6. 技术内容必须准确:不出事实性/技术性硬错误,不编造不存在的 API 或特性。`;
 }
 
-export function buildJdUserPrompt(profile: JobProfile): string {
-  const lines = [`目标公司:${profile.company.trim() || '(未填写)'}`, '', '职位描述(JD):', profile.jd.trim()];
-  if (profile.resume.trim()) {
-    lines.push('', '候选人简历:', profile.resume.trim(), '', '结合简历与 JD 出题(简历深挖题应考察 JD 要求与简历声称能力的匹配)。');
+// JD 定向上下文(求职中枢一期):JD 条目 + 可选简历,不再吃整个 profile
+export interface JdContext {
+  company: string;
+  content: string;
+  resume?: string;
+}
+
+export function buildJdUserPrompt(jd: JdContext): string {
+  const lines = [`目标公司:${jd.company.trim() || '(未填写)'}`, '', '职位描述(JD):', jd.content.trim()];
+  if (jd.resume && jd.resume.trim()) {
+    lines.push('', '候选人简历:', jd.resume.trim(), '', '结合简历与 JD 出题(简历深挖题应考察 JD 要求与简历声称能力的匹配)。');
   }
   lines.push('', '按 system 中的要求(含数量判断)出题,只输出 JSON 数组。');
   return lines.join('\n');
 }
 
 export async function generateJdQuestions(
-  profile: JobProfile,
+  jd: JdContext,
   opts: JdGenerateOptions,
   chatOpts: ChatOptions,
   chat: ChatFn = defaultChat,
 ): Promise<GenerateResult> {
-  if (!profile.jd.trim()) throw new Error('档案里还没有 JD——先去「求职目标」页填写职位描述');
+  if (!jd.content.trim()) throw new Error('JD 内容为空——先去「求职中枢」填写职位描述');
 
   return generateWithRetry(
     [
       { role: 'system', content: buildJdSystemPrompt(opts) },
-      { role: 'user', content: buildJdUserPrompt(profile) },
+      { role: 'user', content: buildJdUserPrompt(jd) },
     ],
     chatOpts,
     chat,

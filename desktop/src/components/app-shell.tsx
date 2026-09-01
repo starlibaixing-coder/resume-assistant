@@ -111,7 +111,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-1">
             <NavItem to="/" icon={LayoutDashboard} label="总览" active={root === ''} />
-            <NavItem to="/profile" icon={Target} label="求职目标" active={root === 'profile'} />
+            <NavItem to="/profile" icon={Target} label="求职中枢" active={root === 'profile'} />
             <NavItem to="/generate" icon={Sparkles} label="生题" active={root === 'generate'} />
             <NavItem to="/drafts" icon={Inbox} label="草稿区" active={root === 'drafts'} badge={pendingCount} />
 

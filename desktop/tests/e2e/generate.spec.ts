@@ -157,33 +157,42 @@ test('官方题浏览页:添加到我的题库 → toast + 标识 + 副本进我
   await expect(page.getByText('官方题副本').first()).toBeVisible();
 });
 
-test('档案 + JD 定向生题 → 草稿区(功能④)', async ({ page }) => {
-  // 1) 求职目标页:填公司/JD/简历,保存
+test('中枢新增 JD → 行内定向生题 → 草稿区(功能④)', async ({ page }) => {
+  // 1) 求职中枢:新增 JD(弹窗)
   await page.goto('/#/profile');
-  await page.getByPlaceholder(/示例公司/).fill('示例公司 · AI 应用工程师');
-  await page.getByPlaceholder(/JD 全文/).fill('负责 RAG 检索系统的设计与优化,熟悉向量数据库与 embedding 调优,有 LLM 应用落地经验。');
-  await page.getByPlaceholder(/简历全文/).fill('# 后端工程师\n- 5 年经验,做过搜索与推荐系统');
-  await page.getByRole('button', { name: '保存档案' }).click();
-  await expect(page.getByText('档案已保存')).toBeVisible();
-  await expect(page.getByText('已与档案同步')).toBeVisible();
+  await expect(page.getByRole('heading', { name: '求职中枢' })).toBeVisible();
+  // 空态:页头与空态卡各有一个「新增 JD」,取第一个
+  await page.getByRole('button', { name: '新增 JD' }).first().click();
+  await page.getByRole('dialog').getByLabel('标题(可空)').fill('AI 应用工程师');
+  await page.getByRole('dialog').getByLabel('公司').fill('示例公司');
+  await page.getByRole('dialog').getByLabel('职位描述(JD)').fill('负责 RAG 检索系统的设计与优化,熟悉向量数据库与 embedding 调优,有 LLM 应用落地经验。');
+  await page.getByRole('dialog').getByRole('button', { name: '保存', exact: true }).click();
 
-  // 2) 生题页切 JD 定向:上下文摘要可见,生成(mock)
-  await page.goto('/#/generate');
-  await page.getByRole('button', { name: 'JD 定向', exact: true }).click();
-  await expect(page.getByText(/JD \d+ 字 · 简历 \d+ 字/)).toBeVisible();
-  await page.getByRole('button', { name: '生成', exact: true }).click();
+  // 2) JD 列表出现该条;行内「定向生题」深链到生题页(?jd=)
+  await expect(page.getByText('AI 应用工程师').first()).toBeVisible();
+  await page.getByRole('link', { name: /定向生题/ }).click();
+  await expect(page).toHaveURL(/generate\?jd=\d+/);
+  await expect(page.getByText('定向上下文')).toBeVisible();
+
+  // 3) 定向生成(mock)
+  await page.getByRole('button', { name: /定向生成/ }).click();
   await expect(page.getByText('LLM 判断出 2 道')).toBeVisible({ timeout: 10_000 });
 
-  // 3) 存草稿区:批次名带 JD定向 · 公司
+  // 4) 存草稿区:批次名带 JD定向 · 公司
   await page.getByRole('button', { name: /存入草稿区/ }).click();
   await expect(page.getByText(/批次 01 · JD定向 · 示例公司/)).toBeVisible();
 });
 
-test('JD 定向无档案 → 引导去求职目标页', async ({ page }) => {
+test('无深链时生题页引导去中枢;失效 JD 参数给警示', async ({ page }) => {
   await page.goto('/#/generate');
-  await page.getByRole('button', { name: 'JD 定向', exact: true }).click();
-  await expect(page.getByText('还没填求职档案')).toBeVisible();
-  await expect(page.getByRole('link', { name: '去填写 →' })).toBeVisible();
+  // 知识点模式仍在,JD 定向入口收敛到中枢
+  await expect(page.getByPlaceholder(/React Hooks/)).toBeVisible();
+  await expect(page.getByRole('link', { name: '求职中枢' }).first()).toBeVisible();
+
+  // 失效 jd 参数:警示 + 引导
+  await page.goto('/#/generate?jd=999');
+  await expect(page.getByText('这份 JD 不存在')).toBeVisible();
+  await expect(page.getByRole('link', { name: /去求职中枢重新选择/ })).toBeVisible();
 });
 
 test('设置页:同步官方题库 → 远端新增题落地', async ({ page }) => {
