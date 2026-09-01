@@ -13,13 +13,13 @@ import {
   type GeneratedQuestion,
 } from './generate';
 import type { ChatOptions } from './provider';
-import type { JobProfile } from './profile';
+import type { JdContext } from './generate';
 
 const CHAT_OPTS: ChatOptions = { apiKey: 'k', baseURL: 'https://x', model: 'm' };
 
-const PROFILE: JobProfile = {
+const JD: JdContext = {
   company: '示例公司',
-  jd: '负责 RAG 检索系统的设计与优化,熟悉向量数据库与 embedding 模型调优。',
+  content: '负责 RAG 检索系统的设计与优化,熟悉向量数据库与 embedding 模型调优。',
   resume: '# 后端工程师\n- 5 年经验,做过搜索与推荐系统',
 };
 
@@ -224,7 +224,7 @@ describe('buildJdSystemPrompt', () => {
 
 describe('buildJdUserPrompt', () => {
   it('含公司 / JD / 简历,无公司回退(未填写)', () => {
-    const u = buildJdUserPrompt(PROFILE);
+    const u = buildJdUserPrompt(JD);
     expect(u).toContain('示例公司');
     expect(u).toContain('RAG 检索系统');
     expect(u).toContain('5 年经验');
@@ -232,12 +232,12 @@ describe('buildJdUserPrompt', () => {
   });
 
   it('公司为空显示(未填写)', () => {
-    const u = buildJdUserPrompt({ ...PROFILE, company: '' });
+    const u = buildJdUserPrompt({ ...JD, company: '' });
     expect(u).toContain('(未填写)');
   });
 
   it('简历为空不出现简历段落', () => {
-    const u = buildJdUserPrompt({ ...PROFILE, resume: '' });
+    const u = buildJdUserPrompt({ ...JD, resume: '' });
     expect(u).not.toContain('候选人简历:');
   });
 });
@@ -245,18 +245,18 @@ describe('buildJdUserPrompt', () => {
 describe('generateJdQuestions', () => {
   it('复用管线:一次通过,system 含红线,user 含 JD', async () => {
     const chat = vi.fn().mockResolvedValue(JSON.stringify(good()));
-    const r = await generateJdQuestions(PROFILE, { includeResume: true }, CHAT_OPTS, chat);
+    const r = await generateJdQuestions(JD, { includeResume: true }, CHAT_OPTS, chat);
     expect(r.retries).toBe(0);
     const [messages] = chat.mock.calls[0];
     expect(messages[0].content).toContain('答案不得泄漏进题干');
     expect(messages[1].content).toContain('RAG 检索系统');
   });
 
-  it('档案缺 JD 直接抛错,不调 LLM', async () => {
+  it('JD 内容为空直接抛错,不调 LLM', async () => {
     const chat = vi.fn();
     await expect(
-      generateJdQuestions({ company: 'c', jd: '  ', resume: 'r' }, { includeResume: false }, CHAT_OPTS, chat),
-    ).rejects.toThrow('还没有 JD');
+      generateJdQuestions({ company: 'c', content: '  ' }, { includeResume: false }, CHAT_OPTS, chat),
+    ).rejects.toThrow('JD 内容为空');
     expect(chat).not.toHaveBeenCalled();
   });
 
@@ -267,7 +267,7 @@ describe('generateJdQuestions', () => {
       .fn()
       .mockResolvedValueOnce(JSON.stringify(bad))
       .mockResolvedValueOnce(JSON.stringify(good()));
-    const r = await generateJdQuestions(PROFILE, { includeResume: false }, CHAT_OPTS, chat);
+    const r = await generateJdQuestions(JD, { includeResume: false }, CHAT_OPTS, chat);
     expect(r.retries).toBe(1);
     expect(chat).toHaveBeenCalledTimes(2);
   });

@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { generateQuestions, generateJdQuestions, type GeneratedQuestion } from '@/lib/generate';
 import { getProfile, subscribeProfile } from '@/lib/profile';
+import { getJd, subscribeJds, touchJd } from '@/lib/jd';
 import { resolveChatOptions } from '@/lib/llm-config';
 import { addDrafts, addManualQuestion, getMyCategory } from '@/lib/mylib';
 import type { Difficulty } from '@/types/question';
@@ -22,12 +23,12 @@ import {
   type QuestionFormState,
 } from '@/components/question-edit-dialog';
 
-// 生题页:顶层 Tabs「AI 生题 / 手动加题」(2026-08-28 审计 A4)。
-// ?mode=manual 深链直达手动表单(队列/浏览页空态入口收敛,A5);
-// 手动加题用页面级表单(原 max-w-lg 弹窗塞不下长题干),人写即人审直接 approved(ADR-10)。
+// 生题页:顶层 Tabs「AI 生题 / 手动加题」(审计 A4)。
+// AI 侧两种上下文:知识点自由生题;JD 定向从中枢的 JD 条目深链发起(?jd=<id>,审计 A2,
+// 2026-08-31 中枢一期落地)——本页不再有 JD 模式开关,无 jd 参数时引导去中枢。
+// ?mode=manual 深链直达手动表单(入口收敛,A5);手动加题人写即人审直接 approved(ADR-10)。
 
 const DIFFICULTIES: Array<Difficulty | '不限'> = ['不限', '初', '中', '高'];
-type Mode = 'topic' | 'jd';
 
 // JD 模式批次名:JD定向 · 公司(无公司取 JD 前 12 字);addDrafts 再截 30 字
 function jdBatchName(company: string, jd: string): string {
@@ -40,8 +41,9 @@ export function GeneratePage() {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const pageMode = searchParams.get('mode') === 'manual' ? 'manual' : 'ai';
+  const jdIdParam = searchParams.get('jd');
+  const jdId = jdIdParam != null && /^\d+$/.test(jdIdParam) ? parseInt(jdIdParam, 10) : null;
 
-  const [mode, setMode] = useState<Mode>('topic');
   const [topic, setTopic] = useState('');
   const [difficulty, setDifficulty] = useState<Difficulty | '不限'>('不限');
   const [includeResume, setIncludeResume] = useState(true);
@@ -58,11 +60,18 @@ export function GeneratePage() {
   // 进入页面就检查 LLM 配置(不等点生成才提示);从设置页回来也刷新
   const [llmReady, setLlmReady] = useState<boolean | null>(null);
 
-  // 档案跟随 profile 变化(保存/清空后本页摘要同步)
+  // 档案(简历上下文)与 JD 列表跟随变化
   const [, bump] = useState(0);
   useEffect(() => subscribeProfile(() => bump((v) => v + 1)), []);
+  useEffect(() => subscribeJds(() => bump((v) => v + 1)), []);
   const profile = getProfile();
-  const jdReady = !!profile?.jd.trim();
+  const activeJd = jdId != null ? getJd(jdId) : null;
+
+  // 从 JD 深链进入:置顶 + 记录最近使用(中枢列表排序依据)
+  useEffect(() => {
+    if (jdId != null && getJd(jdId)) void touchJd(jdId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jdId]);
 
   useEffect(() => {
     const check = () => {
@@ -86,12 +95,8 @@ export function GeneratePage() {
     setError(null);
     setNoKey(false);
     // 不预清旧结果:重新生成期间旧批次保持在屏,新结果回来才替换(审计 D)
-    if (mode === 'topic' && !topic.trim()) {
+    if (!activeJd && !topic.trim()) {
       setError('先填一个知识点,比如「React Hooks 深入」「浏览器事件循环」');
-      return;
-    }
-    if (mode === 'jd' && !jdReady) {
-      setError('档案里还没有 JD——先去「求职目标」页填写');
       return;
     }
     const chatOpts = await resolveChatOptions();
@@ -106,18 +111,21 @@ export function GeneratePage() {
     setLoading(true);
     try {
       const diff = difficulty === '不限' ? undefined : difficulty;
-      const r =
-        mode === 'topic'
-          ? await generateQuestions({ topic: topic.trim(), difficulty: diff }, { ...chatOpts, signal: ctrl.signal })
-          : await generateJdQuestions(
-              profile!,
-              { difficulty: diff, includeResume: includeResume && !!profile!.resume.trim() },
-              { ...chatOpts, signal: ctrl.signal },
-            );
+      const r = activeJd
+        ? await generateJdQuestions(
+            {
+              company: activeJd.company,
+              content: activeJd.content,
+              resume: includeResume ? (profile?.resume ?? '') : '',
+            },
+            { difficulty: diff, includeResume: includeResume && !!profile?.resume.trim() },
+            { ...chatOpts, signal: ctrl.signal },
+          )
+        : await generateQuestions({ topic: topic.trim(), difficulty: diff }, { ...chatOpts, signal: ctrl.signal });
       setResult({
         questions: r.questions,
         retries: r.retries,
-        topic: mode === 'topic' ? topic.trim() : jdBatchName(profile!.company, profile!.jd),
+        topic: activeJd ? jdBatchName(activeJd.company, activeJd.content) : topic.trim(),
       });
     } catch (e) {
       // 主动取消:静默回到表单态,不算错误
@@ -162,7 +170,17 @@ export function GeneratePage() {
 
       <Tabs
         value={pageMode}
-        onValueChange={(v) => setSearchParams(v === 'manual' ? { mode: 'manual' } : {}, { replace: true })}
+        onValueChange={(v) =>
+          setSearchParams(
+            (prev) => {
+              const next = new URLSearchParams(prev);
+              if (v === 'manual') next.set('mode', 'manual');
+              else next.delete('mode');
+              return next;
+            },
+            { replace: true },
+          )
+        }
       >
         <TabsList>
           <TabsTrigger value="ai">AI 生题</TabsTrigger>
@@ -183,17 +201,42 @@ export function GeneratePage() {
 
           <Card>
             <CardContent className="flex flex-col gap-4 p-6">
-            {/* 模式切换:知识点(通用刷题)/ JD 定向(读求职档案,功能④) */}
-            <div className="flex gap-2">
-              <Button size="sm" variant={mode === 'topic' ? 'default' : 'outline'} onClick={() => setMode('topic')} disabled={loading}>
-                知识点生题
-              </Button>
-              <Button size="sm" variant={mode === 'jd' ? 'default' : 'outline'} onClick={() => setMode('jd')} disabled={loading}>
-                JD 定向
-              </Button>
-            </div>
-
-            {mode === 'topic' ? (
+            {/* JD 深链:锁定该 JD 定向;无参数 = 知识点自由生题 */}
+            {jdId != null && !activeJd ? (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-warning/50 bg-warning/10 p-4 text-sm">
+                <span>这份 JD 不存在(可能已被删除)。</span>
+                <Button asChild size="sm">
+                  <Link to="/profile">去求职中枢重新选择 →</Link>
+                </Button>
+              </div>
+            ) : activeJd ? (
+              <div className="space-y-2.5">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">定向上下文</label>
+                  <div className="text-sm font-medium text-foreground">{activeJd.title}</div>
+                  <div className="text-xs leading-relaxed text-muted-foreground">
+                    {activeJd.company.trim() || '(未填公司)'} · JD {activeJd.content.trim().length} 字
+                    {profile?.resume.trim() ? ` · 简历 ${profile.resume.trim().length} 字` : ' · 无简历(只用 JD 出题)'}
+                  </div>
+                </div>
+                {profile?.resume.trim() && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-muted-foreground">出题范围</span>
+                    <Button size="sm" variant={!includeResume ? 'default' : 'outline'} onClick={() => setIncludeResume(false)} disabled={loading}>
+                      只用 JD
+                    </Button>
+                    <Button size="sm" variant={includeResume ? 'default' : 'outline'} onClick={() => setIncludeResume(true)} disabled={loading}>
+                      结合简历
+                    </Button>
+                    <span className="text-xs text-muted-foreground">结合简历 = 出深挖题,考察 JD 要求与简历声称能力的匹配</span>
+                  </div>
+                )}
+                <div className="text-xs leading-relaxed text-muted-foreground">
+                  按 JD 的技术要求出题(核心必备项优先),数量由 LLM 判断;整批进草稿区,审核通过后成一个模块。换 JD 或改内容去
+                  <Link to="/profile" className="mx-0.5 text-primary hover:underline">求职中枢</Link>。
+                </div>
+              </div>
+            ) : (
               <div className="space-y-1.5">
                 <label className="text-xs text-muted-foreground">知识点</label>
                 <Input
@@ -209,39 +252,9 @@ export function GeneratePage() {
                 />
                 <div className="text-xs leading-relaxed text-muted-foreground">
                   出多少道题由 LLM 按知识点广度判断(简单概念 2~4 道,宽领域可达 10 道,宁缺毋滥);整批作为一个「批次」进草稿区,审核通过后成为一个模块进我的题库。
-                </div>
-              </div>
-            ) : !jdReady ? (
-              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-warning/50 bg-warning/10 p-4 text-sm">
-                <span>还没填求职档案——JD 定向生题需要档案里的职位描述(JD)。</span>
-                <Button asChild size="sm">
-                  <Link to="/profile">去填写 →</Link>
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-2.5">
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground">档案上下文</label>
-                  <div className="text-xs leading-relaxed text-muted-foreground">
-                    {profile!.company.trim() || '(未填公司)'} · JD {profile!.jd.trim().length} 字
-                    {profile!.resume.trim() ? ` · 简历 ${profile!.resume.trim().length} 字` : ' · 无简历(只用 JD 出题)'}
-                  </div>
-                </div>
-                {profile!.resume.trim() && (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs text-muted-foreground">出题范围</span>
-                    <Button size="sm" variant={!includeResume ? 'default' : 'outline'} onClick={() => setIncludeResume(false)} disabled={loading}>
-                      只用 JD
-                    </Button>
-                    <Button size="sm" variant={includeResume ? 'default' : 'outline'} onClick={() => setIncludeResume(true)} disabled={loading}>
-                      结合简历
-                    </Button>
-                    <span className="text-xs text-muted-foreground">结合简历 = 出深挖题,考察 JD 要求与简历声称能力的匹配</span>
-                  </div>
-                )}
-                <div className="text-xs leading-relaxed text-muted-foreground">
-                  按 JD 的技术要求出题(核心必备项优先),数量由 LLM 判断;整批进草稿区,审核通过后成一个模块。改动档案去
-                  <Link to="/profile" className="mx-0.5 text-primary hover:underline">求职目标</Link>。
+                  JD 定向生题从
+                  <Link to="/profile" className="mx-0.5 text-primary hover:underline">求职中枢</Link>
+                  的 JD 条目发起。
                 </div>
               </div>
             )}
@@ -253,13 +266,13 @@ export function GeneratePage() {
                   {d}
                 </Button>
               ))}
-              <span className="text-xs text-muted-foreground">(出题数量由 LLM 按知识点广度判断)</span>
+              <span className="text-xs text-muted-foreground">(出题数量由 LLM 按上下文广度判断)</span>
             </div>
 
             {/* 生成中锁定表单 + 可取消(审计 C5) */}
             <div className="flex gap-2">
               <Button onClick={handleGenerate} disabled={loading} className="flex-1">
-                {loading ? `生成中…已用 ${elapsed}s` : '生成'}
+                {loading ? `生成中…已用 ${elapsed}s` : activeJd ? `按「${activeJd.title}」定向生成` : '生成'}
               </Button>
               {loading && (
                 <Button variant="outline" onClick={() => abortRef.current?.abort()}>

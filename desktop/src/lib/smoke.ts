@@ -31,18 +31,21 @@ export async function runSmoke(): Promise<boolean> {
   results.push(
     await step('storage.init', async () => {
       db = await Database.load('sqlite:smoke.db');
-      return 'sqlite:smoke.db 连接 + 迁移 001-003';
+      return 'sqlite:smoke.db 连接 + 迁移 001-006';
     }),
   );
   if (!db) return false;
 
   const { initMyLibDb, loadMyQuestionsFromDb, addDrafts, approveQuestion, getMyQuestions } = await import('./mylib');
   const { initProfileDb, loadProfileFromDb, saveProfile, getProfile } = await import('./profile');
+  const { initJdsDb, loadJdsFromDb, addJd, getJds } = await import('./jd');
   const { initSecretsDb, loadSecretsFromDb, setSecret, getSecret } = await import('./secrets');
   initMyLibDb(db);
   await loadMyQuestionsFromDb();
   initProfileDb(db);
   await loadProfileFromDb();
+  initJdsDb(db);
+  await loadJdsFromDb();
   initSecretsDb(db);
   await loadSecretsFromDb();
 
@@ -71,10 +74,13 @@ export async function runSmoke(): Promise<boolean> {
 
   results.push(
     await step('profile.save', async () => {
-      await saveProfile({ company: 'smoke 公司', jd: 'smoke JD', resume: '' });
+      await saveProfile({ company: 'smoke 公司', resume: '# smoke 简历' });
       const p = getProfile();
-      if (p?.company !== 'smoke 公司' || p?.jd !== 'smoke JD') throw new Error('档案写读不一致');
-      return '档案存取(单行 UPSERT)';
+      if (p?.company !== 'smoke 公司' || !p.resume) throw new Error('档案写读不一致');
+      // JD 走 jds 表(中枢一期):INSERT 自增 id 回填 + 列表读回
+      const jd = await addJd({ title: '', company: 'smoke 公司', content: '负责 smoke 自检…' });
+      if (!getJds().some((j) => j.id === jd.id && j.content.includes('smoke'))) throw new Error('JD 写读不一致');
+      return '档案(公司+简历)+ JD(jds 表)存取';
     }),
   );
 

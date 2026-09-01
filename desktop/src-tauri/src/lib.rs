@@ -40,6 +40,12 @@ fn db_migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/005_code_drafts.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 6,
+            description: "create_jds_table_migrate_profile_jd",
+            sql: include_str!("../migrations/006_jds.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -135,6 +141,7 @@ mod tests {
             "official_questions",
             "official_categories",
             "code_drafts",
+            "jds",
         ] {
             let n: i64 = conn
                 .query_row(

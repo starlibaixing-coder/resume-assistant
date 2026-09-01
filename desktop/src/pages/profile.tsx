@@ -1,30 +1,302 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router';
 import { toast } from 'sonner';
+import { Inbox, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { getProfile, saveProfile, type JobProfile } from '@/lib/profile';
+import {
+  addJd,
+  deleteJd,
+  getJds,
+  updateJd,
+  subscribeJds,
+  type Jd,
+} from '@/lib/jd';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { PageHeader } from '@/components/page-header';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,
+} from '@/components/ui/dialog';
 
-// 求职目标档案(ADR-4 中枢):公司/JD/简历,被「JD 定向生题」(本阶段)与
-// 简历生成/模拟面试(后续阶段)共享。录入 = 纯粘贴,校验放消费侧(JD 定向要求 JD 非空)。
+// 求职中枢(ADR-4,2026-08-31 一期):JD 从档案单字段升级为多 JD 管理(lib/jd.ts + jds 表),
+// JD 定向生题从 JD 条目深链发起(/generate?jd=<id>);简历多版本留二期,本期仍单份编辑。
+// 简历/公司与 JD 拆开:JD 是"投递目标"集合,简历是"我的材料",生命周期不同。
 
 const charCount = (s: string) => (s ? `${s.length} 字` : '未填');
 
 export function ProfilePage() {
+  return (
+    <div className="mx-auto max-w-3xl space-y-6">
+      <PageHeader
+        title="求职中枢"
+        subtitle="管理投递目标(JD)与简历;从任意 JD 一键发起定向生题,后续简历生成与模拟面试也围绕这里。"
+      />
+
+      <Tabs defaultValue="jds">
+        <TabsList>
+          <TabsTrigger value="jds">JD 管理</TabsTrigger>
+          <TabsTrigger value="resume">简历与公司</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="jds" className="mt-6">
+          <JdManager />
+        </TabsContent>
+
+        <TabsContent value="resume" className="mt-6">
+          <ResumeCard />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// ── JD 管理:列表(最近使用在前)+ 新增/编辑弹窗 + 行内定向生题深链 ──
+
+function JdManager() {
+  const [, bump] = useState(0);
+  useEffect(() => subscribeJds(() => bump((v) => v + 1)), []);
+  const jds = getJds();
+
+  const [editing, setEditing] = useState<Jd | null>(null); // null = 关闭;有值为编辑
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<Jd | null>(null);
+
+  return (
+    <>
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-sm text-muted-foreground">
+          {jds.length > 0 ? `${jds.length} 个 JD,最近使用的在前` : '从一份 JD 开始'}
+        </div>
+        <Button size="sm" onClick={() => setCreating(true)}>
+          <Plus className="size-3.5" aria-hidden />
+          新增 JD
+        </Button>
+      </div>
+
+      {jds.length === 0 ? (
+        <Card>
+          <CardContent className="space-y-3 py-14 text-center">
+            <Inbox className="mx-auto size-10 text-muted-foreground" aria-hidden />
+            <div className="text-foreground">还没有 JD</div>
+            <div className="text-sm text-muted-foreground">
+              贴上目标岗位的职位描述,就能从它发起定向生题。
+            </div>
+            <div>
+              <Button size="sm" variant="outline" onClick={() => setCreating(true)}>
+                <Plus className="size-3.5" aria-hidden />
+                新增 JD
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="divide-y divide-border p-0">
+            {jds.map((j) => (
+              <div key={j.id} className="flex items-start gap-3 p-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-baseline gap-x-2">
+                    <span className="text-sm font-medium text-foreground">{j.title}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {j.company || '未填公司'} · {j.content.length} 字
+                    </span>
+                  </div>
+                  <div className="mt-1 truncate text-xs leading-relaxed text-muted-foreground">
+                    {j.content}
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-0.5">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button asChild size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-primary">
+                        <Link to={`/generate?jd=${j.id}`} aria-label={`定向生题:${j.title}`}>
+                          <Sparkles aria-hidden />
+                        </Link>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>定向生题</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-muted-foreground"
+                        aria-label={`编辑 JD:${j.title}`}
+                        onClick={() => setEditing(j)}
+                      >
+                        <Pencil aria-hidden />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>编辑</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        aria-label={`删除 JD:${j.title}`}
+                        onClick={() => setDeleting(j)}
+                      >
+                        <Trash2 aria-hidden />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>删除</TooltipContent>
+                  </Tooltip>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      <JdEditDialog
+        open={creating || editing != null}
+        jd={editing}
+        onClose={() => {
+          setCreating(false);
+          setEditing(null);
+        }}
+      />
+
+      <Dialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>删除这份 JD?</DialogTitle>
+            <DialogDescription>
+              「{deleting?.title}」将被删除。已用它生成的题不受影响(题目在草稿区/我的题库,与 JD 不再关联)。此操作不可恢复。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">取消</Button>
+            </DialogClose>
+            <DialogClose asChild>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (deleting) void deleteJd(deleting.id);
+                  toast.success('已删除');
+                }}
+              >
+                确认删除
+              </Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+// 新增/编辑共用:标题可留空(回退公司名 → JD 前 12 字),JD 内容必填
+function JdEditDialog({ open, jd, onClose }: { open: boolean; jd: Jd | null; onClose: () => void }) {
+  const saved = getProfile();
+  const [title, setTitle] = useState('');
+  const [company, setCompany] = useState('');
+  const [content, setContent] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setTitle(jd?.title ?? '');
+      // 新增时用档案里的默认公司预填,少打一次
+      setCompany(jd?.company ?? saved?.company ?? '');
+      setContent(jd?.content ?? '');
+      setError(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, jd]);
+
+  const handleSave = async () => {
+    if (!content.trim()) {
+      setError('JD 内容不能为空——贴上职位描述全文');
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      if (jd) {
+        await updateJd(jd.id, { title, company, content });
+        toast.success('JD 已更新');
+      } else {
+        await addJd({ title, company, content });
+        toast.success('JD 已添加');
+      }
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{jd ? '编辑 JD' : '新增 JD'}</DialogTitle>
+          <DialogDescription>标题可留空(默认取公司名);JD 全文粘贴,定向生题按它出题。</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <label htmlFor="jd-title" className="text-xs text-muted-foreground">标题(可空)</label>
+              <Input id="jd-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="如:AI 应用工程师" />
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="jd-company" className="text-xs text-muted-foreground">公司</label>
+              <Input id="jd-company" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="如:示例公司" />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="jd-content" className="text-xs text-muted-foreground">职位描述(JD)</label>
+            <Textarea
+              id="jd-content"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="粘贴目标岗位的 JD 全文。定向生题按 JD 的技术要求出题,核心必备项优先。"
+              rows={12}
+            />
+          </div>
+          {error && (
+            <div className="text-sm text-destructive whitespace-pre-wrap rounded-md border border-destructive/40 bg-destructive/10 p-3">
+              {error}
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline">取消</Button>
+          </DialogClose>
+          <Button onClick={handleSave} disabled={saving}>{saving ? '保存中…' : '保存'}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── 简历与公司:单份简历 + 默认公司(多版本留二期)──
+
+function ResumeCard() {
   const saved = getProfile();
   const [company, setCompany] = useState(saved?.company ?? '');
-  const [jd, setJd] = useState(saved?.jd ?? '');
   const [resume, setResume] = useState(saved?.resume ?? '');
   const [saving, setSaving] = useState(false);
 
   const dirty = !!saved
-    ? saved.company !== company || saved.jd !== jd || saved.resume !== resume
-    : !!(company || jd || resume);
+    ? saved.company !== company || saved.resume !== resume
+    : !!(company || resume);
 
-  // 未保存就关窗/刷新:浏览器原生确认兜底。
-  // 站内路由拦截需要 data router(useBlocker),超出本轮——已知限制,记录于施工计划。
+  // 未保存就关窗/刷新:浏览器原生确认兜底(站内拦截需 data router,已知限制)
   useEffect(() => {
     if (!dirty) return;
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -37,7 +309,7 @@ export function ProfilePage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await saveProfile({ company: company.trim(), jd: jd.trim(), resume: resume.trim() });
+      await saveProfile({ company: company.trim(), resume: resume.trim() });
       toast.success('档案已保存');
     } catch (e) {
       toast.error('保存失败', { description: e instanceof Error ? e.message : String(e) });
@@ -47,60 +319,42 @@ export function ProfilePage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <PageHeader
-        title="求职目标"
-        subtitle="JD 定向生题读这份档案;后续简历生成、模拟面试也围绕它。JD 必填才能定向生题,简历建议贴 markdown 全文。"
-      />
+    <Card>
+      <CardContent className="flex flex-col gap-5 p-6">
+        <div className="space-y-1.5">
+          <label htmlFor="resume-company" className="text-xs text-muted-foreground">默认公司 / 岗位</label>
+          <Input
+            id="resume-company"
+            value={company}
+            onChange={(e) => setCompany(e.target.value)}
+            placeholder="如:示例公司 · AI 应用工程师(新增 JD 时预填)"
+          />
+        </div>
 
-      <Card>
-        <CardContent className="flex flex-col gap-5 p-6">
-          <div className="space-y-1.5">
-            <label className="text-xs text-muted-foreground">公司 / 岗位</label>
-            <Input
-              value={company}
-              onChange={(e) => setCompany(e.target.value)}
-              placeholder="如:示例公司 · AI 应用工程师"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs text-muted-foreground">职位描述(JD)</label>
-              <span className="text-[10px] text-muted-foreground">{charCount(jd)}</span>
-            </div>
-            <Textarea
-              value={jd}
-              onChange={(e) => setJd(e.target.value)}
-              placeholder="粘贴目标岗位的 JD 全文。定向生题按 JD 的技术要求出题,核心必备项优先。"
-              rows={10}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs text-muted-foreground">我的简历</label>
-              <span className="text-[10px] text-muted-foreground">{charCount(resume)}</span>
-            </div>
-            <Textarea
-              value={resume}
-              onChange={(e) => setResume(e.target.value)}
-              placeholder="粘贴简历全文(markdown)。定向生题可选「结合简历深挖」;留空则只按 JD 出题。"
-              rows={14}
-            />
-          </div>
-
+        <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">
-              {dirty ? '有未保存的修改' : '已与档案同步'}
-            </span>
-            <Button onClick={handleSave} disabled={!dirty || saving}>
-              {saving ? '保存中…' : '保存档案'}
-            </Button>
+            <label htmlFor="resume-content" className="text-xs text-muted-foreground">我的简历</label>
+            <span className="text-[10px] text-muted-foreground">{charCount(resume)}</span>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+          <Textarea
+            id="resume-content"
+            value={resume}
+            onChange={(e) => setResume(e.target.value)}
+            placeholder="粘贴简历全文(markdown)。JD 定向生题可选「结合简历深挖」;留空则只按 JD 出题。"
+            rows={14}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">
+            {dirty ? '有未保存的修改' : '已保存'}
+          </span>
+          <Button onClick={handleSave} disabled={!dirty || saving}>
+            {saving ? '保存中…' : '保存'}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
