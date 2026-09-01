@@ -52,6 +52,7 @@ Workspace instructions for ZCode agents working in this repo.
 - **刷题卡片有代码草稿纸**(`code-scratchpad.tsx`):按题存代码(code_drafts 表,与 notes 同模式),JS 走 Web Worker 沙箱运行(`js-runner.ts` + worker,超时强杀,异步输出转发);CodeMirror 的 closeBrackets 必须保持关闭(补全与手输闭括号叠加会出语法错误),编辑器主题只吃 CSS token;**basicSetup/onChange 必须稳定引用**(内联对象/未 memo 的函数会让 @uiw 每次按键都 reconfigure,补全提示刚弹出就被拆掉、选中层异常,2026-08-27 教训)。
 - **沉浸式刷题**(`lib/immersive.tsx`,2026-08-27):刷题页 meta 行入口进入,AppShell 不渲染侧栏/返回条,Tauri 壳内联动系统全屏;Esc/按钮/离开 quiz 路由三通道退出。Esc **不加**输入框/编辑器守卫——刷题时焦点常驻 CodeMirror/tiptap,守卫会让 Esc 永远够不到。
 - **问 AI 走子 webview 窗口**(`lib/ai-assistant.ts`,2026-08-27):chat.qwen.ai 开独立 `WebviewWindow`(已开聚焦,登录态存应用数据);`ai-chat` 窗口不进 capabilities windows 列表——远端页面零 IPC,默认安全;浏览器层降级新标签页;不用 iframe(X-Frame-Options 拦截 + 第三方 iframe 登录态不可用)。
+- **求职中枢是 /profile**(2026-08-31 一期):JD 走 `jds` 表(`lib/jd.ts`,多 JD、最近使用置顶),档案(profile 表)只剩公司+简历;JD 定向生题从 JD 条目深链 `/generate?jd=<id>` 发起,生题页不再有 JD 模式开关;简历多版本/简历优化/JD 匹配留后续阶段。
 
 ### web 刷题站(quiz-app/)
 
