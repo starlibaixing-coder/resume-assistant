@@ -4,7 +4,7 @@
 
 四个交付物:
 
-- **刷题桌面端**([`desktop/`](./desktop),主开发线)- Tauri 桌面应用。在刷题核心之上加了 AI 能力:**知识点生题**(LLM 按知识点广度自主定量)→ **草稿区人工审核** → 通过后进"我的题库"一起刷(SM-2 间隔重复)。进度/笔记/我的题存本地 SQLite,LLM key 存系统钥匙串,零上传。
+- **刷题桌面端 CommitCareer**([`desktop/`](./desktop),主开发线)- Tauri 桌面应用。在刷题核心之上加了 AI 能力:**知识点生题**(LLM 按知识点广度自主定量)→ **草稿区人工审核** → 通过后进"我的题库"一起刷(SM-2 间隔重复)。进度/笔记/我的题存本地 SQLite,LLM key 存系统钥匙串,零上传。
 - **web 刷题站**([`quiz-app/`](./quiz-app))- 上述刷题核心的纯前端只读快照,无需安装即可体验。🚀 在线:https://starlibaixing-coder.github.io/resume-assistant/ (已冻结,新功能只进桌面端)
 - **面试题库**([`banks/`](./banks))- 桌面端与 web 站的共同数据源。两个分类:**前端工程师**(135题)和 **AI Agent 工程师**(147题,适合前端转方向)。
 - **简历生成 skill**([`skill/`](./skill))- ZCode agent skill,六阶段工作流从项目材料 + JD 生成 JD 定向、扛得住面试的 PDF 简历。

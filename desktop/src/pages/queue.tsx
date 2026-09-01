@@ -32,7 +32,7 @@ export function QueuePage({ category }: { category: string }) {
   if (error) {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
-        <PageHeader title="题库队列" />
+        <PageHeader title="刷题队列" />
         <Card>
           <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
             <div className="text-foreground">题库加载失败</div>
@@ -55,7 +55,7 @@ export function QueuePage({ category }: { category: string }) {
           <Card>
             <CardContent className="space-y-3 py-16 text-center">
               <div className="text-foreground">我的题库还没有题</div>
-              <div className="text-sm text-muted-foreground">手动写一道,或让 AI 生题(先进草稿区,通过后出现在这里)。</div>
+              <div className="text-sm text-muted-foreground">手动写一道,或让 AI 出题(先进待审核,通过后出现在这里)。</div>
               <div className="flex justify-center gap-2 pt-1">
                 <Button asChild size="sm">
                   <Link to="/generate?mode=manual">
@@ -66,7 +66,7 @@ export function QueuePage({ category }: { category: string }) {
                 <Button asChild size="sm" variant="outline">
                   <Link to="/generate">
                     <Sparkles className="size-3.5" aria-hidden />
-                    去生题
+                    去出题
                   </Link>
                 </Button>
               </div>
@@ -82,7 +82,7 @@ export function QueuePage({ category }: { category: string }) {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="flex items-center justify-between gap-2">
-        <PageHeader title={cat?.name || category} />
+        <PageHeader title={`${cat?.name || category} · 刷题队列`} />
         {category === MY_CATEGORY_SLUG && (
           <div className="flex shrink-0 gap-2">
             <Button asChild size="sm" variant="outline">
@@ -94,7 +94,7 @@ export function QueuePage({ category }: { category: string }) {
             <Button asChild size="sm">
               <Link to="/generate">
                 <Sparkles className="size-3.5" aria-hidden />
-                去生题
+                去出题
               </Link>
             </Button>
           </div>
