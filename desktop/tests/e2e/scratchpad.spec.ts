@@ -132,6 +132,8 @@ test('深链手动加题 → 直接进我的题库(不经草稿区)', async ({ p
   // 空态入口深链到生题页手动 tab
   await page.getByRole('link', { name: '手动加题' }).click();
   await expect(page.getByRole('tab', { name: '手动加题' })).toHaveAttribute('data-state', 'active');
+  // 回归:forceMount 不隐藏的坑——AI 表单(知识点输入)必须真的藏掉,不能两个 tab 内容同屏
+  await expect(page.getByPlaceholder(/React Hooks/)).toBeHidden();
 
   await page.getByLabel('新模块名').fill('面试手写');
   await fillQuestionForm(page, '手写一个防抖函数要注意什么?', '闭包与定时器清理', ANSWER_50);

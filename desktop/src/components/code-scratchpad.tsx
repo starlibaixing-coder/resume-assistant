@@ -242,7 +242,7 @@ export default function CodeScratchpad({
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
-          className="flex max-h-[88vh] max-w-5xl flex-col gap-0 overflow-hidden p-0"
+          className="flex max-h-[88vh] max-w-5xl flex-col gap-0 overflow-y-auto p-0"
           // 焦点在 CodeMirror 内时 Esc 归编辑器(radix 的关闭监听在 document 捕获阶段,
           // 不拦会先于补全把整个弹窗关掉)。CM 消费 Esc 会 preventDefault,弹窗不动;
           // 无补全可关时 Esc 不做事,关弹窗走 X / 点击遮罩——防误关代码草稿
@@ -265,8 +265,8 @@ export default function CodeScratchpad({
             <div className="text-sm text-muted-foreground">{question.focus}</div>
           </div>
 
-          {/* 下半:编辑器 + 运行输出 */}
-          <div className="flex min-h-0 flex-1 flex-col gap-2 p-4">
+          {/* 下半:编辑器 + 运行输出。编辑器定高(DialogContent 高度随内容,flex-1 会塌成一行,2026-08-31 修正) */}
+          <div className="flex flex-col gap-2 p-4">
             <div className="flex items-center justify-between">
               <Button size="sm" className="h-7 px-2.5 text-xs" onClick={handleRun} disabled={running}>
                 <Play className="size-3" aria-hidden />
@@ -275,7 +275,8 @@ export default function CodeScratchpad({
               <span className="text-[11px] text-muted-foreground">自动保存</span>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-hidden rounded-md border border-border">
+            {/* theme="none" 时 @uiw 会包一层 .cm-theme-none(高度 auto),必须显式撑满,否则编辑器塌成一行 */}
+            <div className="h-[46vh] shrink-0 overflow-hidden rounded-md border border-border [&_.cm-theme-none]:h-full">
               <CodeMirror
                 value={code}
                 height="100%"
