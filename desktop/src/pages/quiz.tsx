@@ -203,14 +203,7 @@ export function QuizPage({ category }: { category: string }) {
           <CodeScratchpad category={category} questionId={current.id} question={current} />
         </div>
 
-        {!revealed ? (
-          <div className="pt-2 space-y-2">
-            <Button onClick={() => setRevealed(true)} className="w-full">
-              我想好了，看答案<Kbd>空格</Kbd>
-            </Button>
-            <div className="text-xs text-muted-foreground text-center">先在脑中想清楚，再对答案</div>
-          </div>
-        ) : (
+        {revealed && (
           <>
             <AnswerPanel answer={current.answer} followups={current.followups} />
             <Button
@@ -226,26 +219,45 @@ export function QuizPage({ category }: { category: string }) {
       </CardContent>
       </Card>
 
-      {/* 操作条 sticky 吸底:长答案滚动时评分/跳过仍可达(审计 B3) */}
-      <div className="sticky bottom-4 z-10 rounded-lg border border-border bg-card p-2.5 shadow-sm">
+      {/* 操作条:真吸底(bottom-0,无悬空距离),长答案滚动时评分/跳过始终可达;
+          快捷键仍可用但不打数字徽章,改挂按钮 title 提示(2026-08-31 用户反馈修正) */}
+      <div className="sticky bottom-0 z-10 border-t border-border bg-background/95 pt-2.5 pb-2 backdrop-blur">
         {revealed ? (
           <div className="grid grid-cols-3 gap-2">
-            <Button variant="destructive" onClick={() => handleRate('不会')}>
-              不会<Kbd>1</Kbd>
+            <Button
+              variant="outline"
+              title="快捷键 1"
+              className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => handleRate('不会')}
+            >
+              不会
             </Button>
-            <Button variant="warning" onClick={() => handleRate('模糊')}>
-              模糊<Kbd>2</Kbd>
+            <Button
+              variant="outline"
+              title="快捷键 2"
+              className="border-warning/40 text-warning hover:bg-warning/10 hover:text-warning"
+              onClick={() => handleRate('模糊')}
+            >
+              模糊
             </Button>
-            <Button variant="success" onClick={() => handleRate('掌握')}>
-              掌握<Kbd>3</Kbd>
+            <Button
+              variant="outline"
+              title="快捷键 3"
+              className="border-success/40 text-success hover:bg-success/10 hover:text-success"
+              onClick={() => handleRate('掌握')}
+            >
+              掌握
             </Button>
           </div>
         ) : (
-          <div className="text-center text-xs text-muted-foreground">
-            翻答案后用 1 / 2 / 3 评分
+          <div className="space-y-1.5">
+            <Button onClick={() => setRevealed(true)} className="w-full" title="快捷键:空格">
+              我想好了，看答案
+            </Button>
+            <div className="text-center text-[11px] text-muted-foreground">先在脑中想清楚，再对答案</div>
           </div>
         )}
-        <div className="mt-2 flex items-center justify-center gap-2 border-t border-border pt-2">
+        <div className="mt-1.5 flex items-center justify-center gap-2">
           {ratedHistory.length > 0 && (
             <Button
               variant="ghost"
@@ -268,15 +280,6 @@ export function QuizPage({ category }: { category: string }) {
         </div>
       </div>
     </div>
-  );
-}
-
-// 快捷键提示小标(空格 / 1 / 2 / 3)
-function Kbd({ children }: { children: string }) {
-  return (
-    <kbd className="pointer-events-none ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded border border-border bg-secondary px-1 font-mono text-[10px] font-normal leading-none text-muted-foreground">
-      {children}
-    </kbd>
   );
 }
 

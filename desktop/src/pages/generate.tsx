@@ -169,8 +169,9 @@ export function GeneratePage() {
           <TabsTrigger value="manual">手动加题</TabsTrigger>
         </TabsList>
 
-        {/* forceMount:切 tab 不卸载——生成的结果/表单草稿不因瞄一眼手动页而丢 */}
-        <TabsContent value="ai" forceMount className="mt-6 space-y-6">
+        {/* forceMount 保持挂载(切 tab 不丢已生成的结果/表单),但 radix 的 forceMount 不隐藏——
+            必须自己按 data-state 加 display:none,否则两个 tab 内容同时渲染(2026-08-31 用户发现) */}
+        <TabsContent value="ai" forceMount className="mt-6 space-y-6 data-[state=inactive]:hidden">
           {llmReady === false && (
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-warning/50 bg-warning/10 p-4 text-sm">
               <span>还没配置 LLM(baseURL / model / API key),生成前需要先设置。</span>
@@ -336,7 +337,7 @@ export function GeneratePage() {
           )}
         </TabsContent>
 
-        <TabsContent value="manual" forceMount className="mt-6">
+        <TabsContent value="manual" forceMount className="mt-6 data-[state=inactive]:hidden">
           <ManualAddForm />
         </TabsContent>
       </Tabs>
