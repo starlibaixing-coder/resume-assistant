@@ -134,9 +134,9 @@ test('待审核:逐题拒绝不进我的题库', async ({ page }) => {
   await page.getByRole('button', { name: '确认拒绝' }).click();
   await expect(page.getByText(/1 题待审/)).toBeVisible({ timeout: 10_000 });
 
-  // 首页我的题库仍为空(引导去出题)
+  // 首页我的题库仍为空(空态卡中性文案)
   await page.goto('/#/');
-  await expect(page.getByText('还是空的')).toBeVisible();
+  await expect(page.getByText('暂无题目')).toBeVisible();
 });
 
 test('JD 管理:新增 JD → 行内「按 JD 生成」弹窗 → 提交审核(来源按 JD)', async ({ page }) => {
