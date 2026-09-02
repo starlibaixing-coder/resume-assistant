@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { CheckCircle2, ChevronRight, FileText, Target } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Target } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getStats } from '@/lib/schedule';
 import { loadProgress } from '@/lib/storage';
@@ -13,7 +13,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// 总览(2026-09-02 按两大块重排):数字行 + 【题库】分类网格 + 【求职】卡片。
+// 总览(2026-09-02 按两大块重排;同日总览瘦身):数字行只放刷题侧的工作量与审核状态
+// (可点规则统一——仅待审核 >0 时是链接,落点 /drafts;JD 数不在此,归求职卡),
+// 【题库】分类网格(空态卡与非空卡同一模式:整卡可点 + hover「进入」),
+// 【求职】一张紧凑卡(现在只有库存信息;匹配度/多版本等真状态出现后再展开)。
 // 不再做"行动卡"替用户选入口——两种刷法(复习/学新题)在分类页里自己选。
 // 分类卡片按「最近学习」降序;没学过的保持原序靠后。
 
@@ -73,7 +76,7 @@ export function OverviewPage() {
   if (!data && !error) {
     return (
       <div className="mx-auto max-w-5xl space-y-6">
-        <PageHeader title="总览" subtitle="官方题库只读共享,你刷的进度和生成的题都存在本机。" />
+        <PageHeader title="总览" />
         <div className="flex gap-5">
           <Skeleton className="h-5 w-24" />
           <Skeleton className="h-5 w-40" />
@@ -91,7 +94,7 @@ export function OverviewPage() {
   if (error) {
     return (
       <div className="mx-auto max-w-5xl space-y-6">
-        <PageHeader title="总览" subtitle="官方题库只读共享,你刷的进度和生成的题都存在本机。" />
+        <PageHeader title="总览" />
         <Card>
           <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
             <div className="text-foreground">题库加载失败</div>
@@ -105,19 +108,21 @@ export function OverviewPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <PageHeader title="总览" subtitle="官方题库只读共享,你刷的进度和生成的题都存在本机。" />
+      <PageHeader title="总览" />
 
-      {/* 数字行:两大块的关键数字 */}
+      {/* 数字行:刷题侧今日工作量 + 审核状态。可点规则统一:默认全为纯文本,
+          仅待审核 >0 时渲染为链接(下划线,落点 /drafts);待复习/新题无全局落点
+          (quiz 按分类路由),保持纯文本,不用链接样式伪装可点 */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
         <span className={totalDue > 0 ? 'text-warning' : 'text-muted-foreground'}>待复习 {totalDue}</span>
         <span className="text-muted-foreground">新题 {totalRemaining}</span>
-        <Link
-          to="/drafts"
-          className={pendingCount > 0 ? 'text-warning hover:underline' : 'text-muted-foreground hover:text-foreground'}
-        >
-          待审核 {pendingCount}
-        </Link>
-        <span className="text-muted-foreground">JD {jds.length}</span>
+        {pendingCount > 0 ? (
+          <Link to="/drafts" className="text-warning underline underline-offset-2 transition-opacity hover:opacity-80">
+            待审核 {pendingCount}
+          </Link>
+        ) : (
+          <span className="text-muted-foreground">待审核 0</span>
+        )}
       </div>
       {allCleared && (
         <div className="flex items-center gap-2 text-sm text-success">
@@ -134,22 +139,22 @@ export function OverviewPage() {
             const pct = e.total ? Math.round((e.learned / e.total) * 100) : 0;
             const empty = e.isMy && e.total === 0;
             if (empty) {
-              // 空的我的题库:虚线卡 + 直达入口(添加题目/AI 生成在分类页里)
+              // 空的我的题库:与非空卡同一模式(整卡可点 + hover「进入」),文案中性
               return (
-                <Card key={e.slug} className="h-full border-dashed bg-card/50">
-                  <CardContent className="flex h-full flex-col gap-2.5 p-4">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-base font-semibold">{e.name}</span>
-                      <span className="font-mono text-xs text-muted-foreground">0/0</span>
-                    </div>
-                    <div className="text-xs text-muted-foreground">还是空的——添加题目,或让 AI 生成</div>
-                    <div className="mt-auto pt-1">
-                      <Button asChild size="sm" variant="outline">
-                        <Link to="/my">进入</Link>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <Link key={e.slug} to={`/${e.slug}`} className="group cursor-pointer">
+                  <Card className="h-full border-dashed bg-card/50 transition-colors hover:border-primary">
+                    <CardContent className="flex h-full flex-col gap-2.5 p-4">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="text-base font-semibold">{e.name}</span>
+                        <span className="font-mono text-xs text-muted-foreground">0/0</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">暂无题目</div>
+                      <span className="mt-auto flex items-center text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">
+                        进入 <ChevronRight className="h-3 w-3" />
+                      </span>
+                    </CardContent>
+                  </Card>
+                </Link>
               );
             }
             return (
@@ -182,55 +187,29 @@ export function OverviewPage() {
         </div>
       </section>
 
-      {/* 求职:JD + 简历概况 */}
+      {/* 求职:一张紧凑卡(两张大卡同指 /profile 而信息量撑不起——导航是侧栏职责,
+          总览只给库存状态;JD 数因此从数字行移除) */}
       <section className="space-y-3">
         <h2 className="text-sm font-medium text-foreground">求职</h2>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Link to="/profile" className="group cursor-pointer">
-            <Card className="h-full transition-colors hover:border-primary">
-              <CardContent className="flex h-full flex-col gap-2.5 p-4">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="flex items-center gap-2 text-base font-semibold">
-                    <Target className="size-4 text-muted-foreground" aria-hidden />
-                    JD 管理
-                  </span>
-                  <span className="font-mono text-xs text-muted-foreground">{jds.length} 个</span>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {jds.length > 0
-                    ? `最近:${jds[0].title}`
-                    : '还没有 JD——添加后可按 JD 生成题目'}
-                </div>
-                <span className="mt-auto flex items-center text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">
+        <Link to="/profile" className="group cursor-pointer">
+          <Card className="transition-colors hover:border-primary">
+            <CardContent className="flex items-center justify-between gap-3 p-4">
+              <span className="flex items-center gap-2 text-base font-semibold">
+                <Target className="size-4 text-muted-foreground" aria-hidden />
+                求职中枢
+              </span>
+              <span className="flex items-center gap-4">
+                <span className="text-xs text-muted-foreground">
+                  JD {jds.length} 个 · 简历{' '}
+                  {profile?.resume.trim() ? `${profile.resume.trim().length} 字` : '未填'}
+                </span>
+                <span className="flex items-center text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">
                   进入 <ChevronRight className="h-3 w-3" />
                 </span>
-              </CardContent>
-            </Card>
-          </Link>
-          <Link to="/profile?tab=resume" className="group cursor-pointer">
-            <Card className="h-full transition-colors hover:border-primary">
-              <CardContent className="flex h-full flex-col gap-2.5 p-4">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="flex items-center gap-2 text-base font-semibold">
-                    <FileText className="size-4 text-muted-foreground" aria-hidden />
-                    简历管理
-                  </span>
-                  <span className="font-mono text-xs text-muted-foreground">
-                    {profile?.resume.trim() ? `${profile.resume.trim().length} 字` : '未填'}
-                  </span>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {profile?.resume.trim()
-                    ? `默认公司:${profile.company.trim() || '未填'};按 JD 生成可选「结合简历」`
-                    : '贴入简历全文后,按 JD 生成可出深挖题'}
-                </div>
-                <span className="mt-auto flex items-center text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">
-                  进入 <ChevronRight className="h-3 w-3" />
-                </span>
-              </CardContent>
-            </Card>
-          </Link>
-        </div>
+              </span>
+            </CardContent>
+          </Card>
+        </Link>
       </section>
     </div>
   );
