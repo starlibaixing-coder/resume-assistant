@@ -1,22 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { CheckCircle2, ChevronRight, Target } from 'lucide-react';
+import { CheckCircle2, ChevronRight } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getStats } from '@/lib/schedule';
 import { loadProgress } from '@/lib/storage';
 import { getMyCategory, getPendingCount, subscribeMyLib } from '@/lib/mylib';
-import { getProfile } from '@/lib/profile';
-import { getJds, subscribeJds } from '@/lib/jd';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// 总览(2026-09-02 按两大块重排;同日总览瘦身):数字行只放刷题侧的工作量与审核状态
-// (可点规则统一——仅待审核 >0 时是链接,落点 /drafts;JD 数不在此,归求职卡),
-// 【题库】分类网格(空态卡与非空卡同一模式:整卡可点 + hover「进入」),
-// 【求职】一张紧凑卡(现在只有库存信息;匹配度/多版本等真状态出现后再展开)。
+// 总览(2026-09-02 按两大块重排;同日两轮瘦身):只服务刷题——数字行只放刷题侧的
+// 工作量与审核状态(可点规则统一——仅待审核 >0 时是链接,落点 /drafts),
+// 【题库】分类网格(空态卡与非空卡同一模式:整卡可点 + hover「进入」)。
+// 求职区已删(用户指示:总览的求职卡没用,导航归侧栏,状态等阶段 3 再说)。
 // 不再做"行动卡"替用户选入口——两种刷法(复习/学新题)在分类页里自己选。
 // 分类卡片按「最近学习」降序;没学过的保持原序靠后。
 
@@ -42,11 +40,8 @@ export function OverviewPage() {
   const { data, error, retry } = useQuestions();
   const [, bump] = useState(0);
   useEffect(() => subscribeMyLib(() => bump((v) => v + 1)), []);
-  useEffect(() => subscribeJds(() => bump((v) => v + 1)), []);
   const myCategory = getMyCategory();
   const pendingCount = getPendingCount();
-  const jds = getJds();
-  const profile = getProfile();
 
   const entries = useMemo(() => {
     const all = data?.questions ?? [];
@@ -185,31 +180,6 @@ export function OverviewPage() {
             );
           })}
         </div>
-      </section>
-
-      {/* 求职:一张紧凑卡(两张大卡同指 /profile 而信息量撑不起——导航是侧栏职责,
-          总览只给库存状态;JD 数因此从数字行移除) */}
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium text-foreground">求职</h2>
-        <Link to="/profile" className="group cursor-pointer">
-          <Card className="transition-colors hover:border-primary">
-            <CardContent className="flex items-center justify-between gap-3 p-4">
-              <span className="flex items-center gap-2 text-base font-semibold">
-                <Target className="size-4 text-muted-foreground" aria-hidden />
-                求职中枢
-              </span>
-              <span className="flex items-center gap-4">
-                <span className="text-xs text-muted-foreground">
-                  JD {jds.length} 个 · 简历{' '}
-                  {profile?.resume.trim() ? `${profile.resume.trim().length} 字` : '未填'}
-                </span>
-                <span className="flex items-center text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">
-                  进入 <ChevronRight className="h-3 w-3" />
-                </span>
-              </span>
-            </CardContent>
-          </Card>
-        </Link>
       </section>
     </div>
   );
