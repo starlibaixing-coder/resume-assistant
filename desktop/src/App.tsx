@@ -6,13 +6,13 @@ import { OverviewPage } from '@/pages/overview';
 import { QueuePage } from '@/pages/queue';
 import { QuizPage } from '@/pages/quiz';
 import { BrowsePage } from '@/pages/browse';
-import { GeneratePage } from '@/pages/generate';
 import { ProfilePage } from '@/pages/profile';
 import { DraftsPage } from '@/pages/drafts';
 import { SettingsPage } from '@/pages/settings';
 
-// 路由:/ 总览;/generate /drafts /settings 工具页;/:category 分类队列;
-// /:category/quiz 刷题、/:category/browse 浏览(下钻子页,壳里显示"回到xxx题库")。
+// 路由:/ 总览;/profile 求职(JD+简历,?tab= 预选);/drafts 待审核;/settings;
+// /:category 题库分类页;/:category/quiz 刷题、/:category/browse 题目列表(下钻子页)。
+// 出题不再是路由:各页面的按钮 + 弹窗(2026-09-02 IA 重构)。
 // HashRouter:沿用 #/ 地址形态(Tauri 本地加载,无需服务端路由)。
 
 function CategoryRoute({ children }: { children: (category: string) => React.ReactElement }) {
@@ -29,7 +29,6 @@ export default function App() {
           <Route element={<AppShell><Outlet /></AppShell>}>
             <Route index element={<OverviewPage />} />
             <Route path="profile" element={<ProfilePage />} />
-            <Route path="generate" element={<GeneratePage />} />
             <Route path="drafts" element={<DraftsPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path=":category" element={<CategoryRoute>{(c) => <QueuePage category={c} />}</CategoryRoute>} />

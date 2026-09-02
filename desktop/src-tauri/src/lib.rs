@@ -46,6 +46,12 @@ fn db_migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/006_jds.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 7,
+            description: "add_questions_source_column",
+            sql: include_str!("../migrations/007_question_source.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

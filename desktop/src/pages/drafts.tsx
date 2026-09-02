@@ -12,6 +12,7 @@ import { PageHeader } from '@/components/page-header';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,
 } from '@/components/ui/dialog';
+import { GenerateDialog } from '@/components/generate-dialog';
 
 // 待审核(ADR-10 草稿区):AI 出的题先进 pending,在这里人工过目,
 // 通过(approved)才进「我的题库」聚合刷题;拒绝 = 永久删除,需确认(与删题同款防线)。
@@ -23,6 +24,7 @@ export function DraftsPage() {
   const [busy, setBusy] = useState<string | null>(null);
   // 拒绝确认(拒绝 = 删除,不可恢复)
   const [confirmReject, setConfirmReject] = useState<MyQuestion | null>(null);
+  const [genOpen, setGenOpen] = useState(false);
 
   useEffect(() => subscribeMyLib(() => setVersion((v) => v + 1)), []);
 
@@ -82,11 +84,9 @@ export function DraftsPage() {
     <div className="mx-auto max-w-3xl space-y-6" data-version={version}>
       <div className="flex flex-wrap items-end justify-between gap-2">
         <PageHeader title="待审核" subtitle={pending.length > 0 ? `${pending.length} 题待审` : undefined} />
-        <Button asChild size="sm" variant="outline" className="mb-1">
-          <Link to="/generate">
-            <Sparkles className="size-3.5" aria-hidden />
-            去出题
-          </Link>
+        <Button size="sm" variant="outline" className="mb-1" onClick={() => setGenOpen(true)}>
+          <Sparkles className="size-3.5" aria-hidden />
+          AI 生成题目
         </Button>
       </div>
 
@@ -99,11 +99,9 @@ export function DraftsPage() {
               AI 出的题先进这里,你逐题确认后才进刷题队列。
             </div>
             <div>
-              <Button asChild size="sm" variant="outline">
-                <Link to="/generate">
-                  <Sparkles className="size-3.5" aria-hidden />
-                  去出题
-                </Link>
+              <Button size="sm" variant="outline" onClick={() => setGenOpen(true)}>
+                <Sparkles className="size-3.5" aria-hidden />
+                AI 生成题目
               </Button>
             </div>
           </CardContent>
@@ -189,6 +187,8 @@ export function DraftsPage() {
           </div>
         </div>
       )}
+
+      <GenerateDialog open={genOpen} onOpenChange={setGenOpen} />
 
       {/* 拒绝 = 永久删除:确认(审计 C2,与删题/清空进度同款防线) */}
       <Dialog open={!!confirmReject} onOpenChange={(o) => !o && setConfirmReject(null)}>

@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
+import { toast } from 'sonner';
 import { CheckCircle2, Plus, Sparkles } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getReviewQueue, getStats } from '@/lib/schedule';
@@ -9,30 +10,33 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/page-header';
+import { QuestionCreateDialog } from '@/components/question-edit-dialog';
+import { GenerateDialog } from '@/components/generate-dialog';
 
-// 分类队列页:今日数字 + 开始按钮 + 模块入口。
-// 每次学习题量是全局偏好,在设置页「刷题」分区配置(此页不再临时选)。
-// 我的题库:加题入口(空态 + 头部)深链生题页——侧栏点「我的题库」落地于此,
-// 入口只放浏览页会找不到(2026-08-26 用户反馈;2026-08-28 收敛为 /generate 深链)。
+// 题库分类页:标题就是分类名(2026-09-02 IA 重构,不再加"· 刷题队列"后缀)。
+// 两种刷法分开选,不替用户做主:「开始复习」= 待复习(SM-2 到期题),
+// 「学习新题」= 没学过的题;各自的"是哪些题"深链到浏览页状态筛选。
+// 出题是页面按钮不是菜单(添加题目 / AI 生成题目,均进我的题库并标来源)。
 
 export function QueuePage({ category }: { category: string }) {
   const { data, error, retry } = useQuestions();
   const limit = loadLimit();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [genOpen, setGenOpen] = useState(false);
 
-  const { stats, queue } = useMemo(() => {
-    if (!data) return { ids: [] as string[], stats: null, queue: null };
+  const { stats, review } = useMemo(() => {
+    if (!data) return { stats: null, review: null };
     const ids = data.questions.filter((q) => q.category === category).map((q) => q.id);
     return {
-      ids,
       stats: getStats(category, ids),
-      queue: getReviewQueue(category, ids, limit),
+      review: getReviewQueue(category, ids, limit),
     };
   }, [data, category, limit]);
 
   if (error) {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
-        <PageHeader title="刷题队列" />
+        <PageHeader title="题库" />
         <Card>
           <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
             <div className="text-foreground">题库加载失败</div>
@@ -43,94 +47,121 @@ export function QueuePage({ category }: { category: string }) {
       </div>
     );
   }
-  if (!data || !stats || !queue) return <div className="text-muted-foreground p-8 text-center">加载中…</div>;
+  if (!data || !stats || !review) return <div className="text-muted-foreground p-8 text-center">加载中…</div>;
 
   const cat = data.categories.find((c) => c.slug === category);
-  // 我的库无 approved 题时聚合里没有该分类,给引导空态(而非误导的"今日已清空")
+  const isMy = category === MY_CATEGORY_SLUG;
+  // 我的库无 approved 题时聚合里没有该分类,给引导空态(而非误导的"已清空")
   if (!cat) {
-    if (category === MY_CATEGORY_SLUG) {
+    if (isMy) {
       return (
         <div className="mx-auto max-w-3xl space-y-6">
           <PageHeader title="我的题库" />
           <Card>
             <CardContent className="space-y-3 py-16 text-center">
               <div className="text-foreground">我的题库还没有题</div>
-              <div className="text-sm text-muted-foreground">手动写一道,或让 AI 出题(先进待审核,通过后出现在这里)。</div>
+              <div className="text-sm text-muted-foreground">手动写一道,或让 AI 生成(先进待审核,通过后出现在这里)。</div>
               <div className="flex justify-center gap-2 pt-1">
-                <Button asChild size="sm">
-                  <Link to="/generate?mode=manual">
-                    <Plus className="size-3.5" aria-hidden />
-                    手动加题
-                  </Link>
+                <Button size="sm" onClick={() => setCreateOpen(true)}>
+                  <Plus className="size-3.5" aria-hidden />
+                  添加题目
                 </Button>
-                <Button asChild size="sm" variant="outline">
-                  <Link to="/generate">
-                    <Sparkles className="size-3.5" aria-hidden />
-                    去出题
-                  </Link>
+                <Button size="sm" variant="outline" onClick={() => setGenOpen(true)}>
+                  <Sparkles className="size-3.5" aria-hidden />
+                  AI 生成题目
                 </Button>
               </div>
             </CardContent>
           </Card>
+          <QuestionCreateDialog
+            open={createOpen}
+            onOpenChange={setCreateOpen}
+            onCreated={(id) => toast.success('已加入我的题库', { description: id })}
+          />
+          <GenerateDialog open={genOpen} onOpenChange={setGenOpen} />
         </div>
       );
     }
     return <div className="text-muted-foreground p-8 text-center">分类不存在: {category}</div>;
   }
-  const dueCount = queue.dueIds.length;
+
+  const dueCount = review.dueIds.length;
+  const newCount = review.unseen.length;
   const learnPct = stats.total ? Math.round((stats.learned / stats.total) * 100) : 0;
+  const cleared = dueCount === 0 && newCount === 0;
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="flex items-center justify-between gap-2">
-        <PageHeader title={`${cat?.name || category} · 刷题队列`} />
-        {category === MY_CATEGORY_SLUG && (
-          <div className="flex shrink-0 gap-2">
-            <Button asChild size="sm" variant="outline">
-              <Link to="/generate?mode=manual">
-                <Plus className="size-3.5" aria-hidden />
-                手动加题
-              </Link>
+        <PageHeader title={cat?.name || category} />
+        <div className="flex shrink-0 gap-2">
+          {isMy && (
+            <Button size="sm" variant="outline" onClick={() => setCreateOpen(true)}>
+              <Plus className="size-3.5" aria-hidden />
+              添加题目
             </Button>
-            <Button asChild size="sm">
-              <Link to="/generate">
-                <Sparkles className="size-3.5" aria-hidden />
-                去出题
-              </Link>
-            </Button>
-          </div>
-        )}
+          )}
+          <Button size="sm" variant={isMy ? 'default' : 'outline'} onClick={() => setGenOpen(true)}>
+            <Sparkles className="size-3.5" aria-hidden />
+            AI 生成题目
+          </Button>
+        </div>
       </div>
 
       <Card>
         <CardContent className="flex flex-col gap-4 p-6">
-        <div className="space-y-1 text-center">
-          {dueCount > 0 ? (
-            <>
-              <div className="font-mono text-4xl font-bold text-primary">{dueCount}</div>
-              <div className="text-sm text-muted-foreground">题待复习</div>
-            </>
-          ) : stats.remaining > 0 ? (
-            <>
-              <div className="font-mono text-4xl font-bold text-primary">{stats.remaining}</div>
-              <div className="text-sm text-muted-foreground">题未学习</div>
-            </>
-          ) : (
-            <>
+        {cleared ? (
+          <>
+            <div className="space-y-1 text-center">
               <CheckCircle2 className="mx-auto size-10 text-success" aria-hidden />
-              <div className="text-sm text-muted-foreground">今日已清空,全部学过</div>
-            </>
-          )}
-        </div>
+              <div className="text-sm text-muted-foreground">全部学过,今日没有到期的</div>
+            </div>
+            <Button asChild size="lg" className="w-full">
+              <Link to={`/${category}/quiz?force=all`}>再过一遍(全部题)</Link>
+            </Button>
+          </>
+        ) : (
+          <>
+            {/* 两种刷法并列,用户自己选:复习到期题 or 学新题 */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1 rounded-lg border border-border p-3 text-center">
+                <div className={`text-2xl font-bold ${dueCount > 0 ? 'text-warning' : 'text-muted-foreground/60'}`}>{dueCount}</div>
+                <div className="text-xs text-muted-foreground">
+                  题待复习
+                  {dueCount > 0 && (
+                    <Link to={`/${category}/browse?status=due`} className="ml-1 text-primary hover:underline">是哪些题</Link>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-1 rounded-lg border border-border p-3 text-center">
+                <div className={`text-2xl font-bold ${newCount > 0 ? 'text-primary' : 'text-muted-foreground/60'}`}>{newCount}</div>
+                <div className="text-xs text-muted-foreground">
+                  题新题没学过
+                  {newCount > 0 && (
+                    <Link to={`/${category}/browse?status=unseen`} className="ml-1 text-primary hover:underline">是哪些题</Link>
+                  )}
+                </div>
+              </div>
+            </div>
 
-        <div className="text-center text-xs text-muted-foreground">
-          每次学 {limit === 0 ? '全部' : limit} 题(可在设置中调整)
-        </div>
+            <div className="flex gap-2">
+              {dueCount > 0 && (
+                <Button asChild className="flex-1">
+                  <Link to={`/${category}/quiz?focus=due`}>开始复习 {dueCount} 题</Link>
+                </Button>
+              )}
+              {newCount > 0 && (
+                <Button asChild variant={dueCount > 0 ? 'outline' : 'default'} className="flex-1">
+                  <Link to={`/${category}/quiz?focus=new`}>学习新题 {newCount} 题</Link>
+                </Button>
+              )}
+            </div>
 
-        <Button asChild size="lg" className="w-full">
-          <Link to={`/${category}/quiz`}>
-            开始{dueCount > 0 ? '复习' : stats.remaining > 0 ? '学习' : '再过一遍'} →
-          </Link>
-        </Button>
+            <div className="text-center text-xs text-muted-foreground">
+              待复习 = 之前刷过、按记忆曲线(SM-2)今天到期该再看一遍的题;每次学 {limit === 0 ? '全部' : limit} 题(可在设置中调整)
+            </div>
+          </>
+        )}
 
         <div className="space-y-1.5">
           <Progress value={learnPct} className="h-1.5 ring-1 ring-border" />
@@ -159,6 +190,13 @@ export function QueuePage({ category }: { category: string }) {
           ))}
         </div>
       </div>
+
+      <QuestionCreateDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={(id) => toast.success('已加入我的题库', { description: id })}
+      />
+      <GenerateDialog open={genOpen} onOpenChange={setGenOpen} />
     </div>
   );
 }

@@ -29,12 +29,11 @@ import { cn } from '@/lib/utils';
 export function QuizPage({ category }: { category: string }) {
   const { data, error, retry } = useQuestions();
   const { immersive } = useImmersive();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [queueIdx, setQueueIdx] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [roundDone, setRoundDone] = useState(false); // 本轮 N 题是否刷完
   const [round, setRound] = useState(0); // 轮次,变化时重算队列
-  const [forceAll, setForceAll] = useState(false); // 提前复习:不看 due/unseen,全部题按序入队
   // 评分历史:撤销用。prev=null 表示评之前无卡,撤销要删行而非回写
   const [ratedHistory, setRatedHistory] = useState<Array<{ id: string; prev: CardState | null }>>([]);
 
@@ -46,12 +45,20 @@ export function QuizPage({ category }: { category: string }) {
     // 每次题量:URL ?limit= 深链可覆盖,否则读全局设置(设置页「刷题」分区)
     const limitParam = searchParams.get('limit');
     const limit = limitParam != null ? parseInt(limitParam, 10) || 0 : loadLimit();
-    // 提前复习(forceAll):终态「再过一遍」发起,忽略调度全量入队
-    const queue = forceAll
-      ? (limit > 0 ? ids.slice(0, limit) : ids)
-      : getReviewQueue(category, ids, limit).queue;
+    const cap = (list: string[]) => (limit > 0 ? list.slice(0, limit) : list);
+    // 三种入队模式(2026-09-02:队列页「开始复习 / 学习新题 / 再过一遍」三按钮对应):
+    //   focus=due 只出到期题;focus=new 只出新题;force=all 全量(提前复习)。
+    //   默认(无参数)= 到期优先、新题补位。选中的集合为空时回落默认,避免空会话。
+    const r = getReviewQueue(category, ids, limit);
+    let queue = r.queue;
+    const focus = searchParams.get('focus');
+    const force = searchParams.get('force');
+    if (force === 'all') queue = cap(ids);
+    else if (focus === 'due' && r.dueIds.length > 0) queue = cap(r.dueIds);
+    else if (focus === 'new' && r.unseen.length > 0) queue = cap(r.unseen);
     return { queue, catQuestions };
-  }, [data, category, round, searchParams, forceAll]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, category, round, searchParams]);
 
   const currentId = queue[queueIdx];
   const current = catQuestions.find((q) => q.id === currentId);
@@ -100,8 +107,18 @@ export function QuizPage({ category }: { category: string }) {
     }
   };
 
-  const handleNextRound = (force = false) => {
-    setForceAll(force);
+  // 下一轮:mode='all' 时以全量模式重新入队(再过一遍);否则沿用 URL 里现有的 focus/force
+  const handleNextRound = (mode?: 'all') => {
+    if (mode === 'all') {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set('force', 'all');
+          return next;
+        },
+        { replace: true },
+      );
+    }
     setRound((r) => r + 1); // 触发队列重算
     setQueueIdx(0);
     setRoundDone(false);
@@ -149,7 +166,7 @@ export function QuizPage({ category }: { category: string }) {
   }
   if (!data) return <div className="text-muted-foreground p-8 text-center">加载中…</div>;
   if (!queue.length)
-    return <DoneState category={category} total={catQuestions.length} onReviewAll={() => handleNextRound(true)} />;
+    return <DoneState category={category} total={catQuestions.length} onReviewAll={() => handleNextRound('all')} />;
   if (roundDone || !current)
     return (
       <RoundDoneState
@@ -157,7 +174,7 @@ export function QuizPage({ category }: { category: string }) {
         done={queue.length}
         canUndo={ratedHistory.length > 0}
         onUndo={handleUndo}
-        onNextRound={() => handleNextRound(forceAll)}
+        onNextRound={() => handleNextRound()}
       />
     );
 

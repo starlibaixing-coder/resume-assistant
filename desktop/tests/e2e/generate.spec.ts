@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 
-// 生题全链路(web 层):生题 → 草稿区 approve → 我的题库 → 刷题入口。
+// 出题(AI 生成弹窗)全链路(web 层,2026-09-02 IA 重构:出题是各页面按钮,不再有独立页)。
 // chat endpoint 用 page.route mock;Tauri invoke 用 init mock(SQLite 降级内存)。
 // 真 LLM(智谱)与真 SQLite 持久化由 tauri dev 手测,此处验证 React 整链路。
 
@@ -66,59 +66,65 @@ test.beforeEach(async ({ page }) => {
   await mockTauri(page);
   await page.route('**/resume-assistant/questions.json', (r) => r.fulfill({ json: BUNDLED_BANK }));
   await mockChat(page);
-  // LLM 配置(自定义形式,无预设默认):种一份 mock 端点,聊天请求由 mockChat 拦截
+  // LLM 配置:种一份 mock 端点,聊天请求由 mockChat 拦截
   await page.addInitScript(() =>
     localStorage.setItem('llm-config', JSON.stringify({ baseURL: 'http://mock.local/v1', model: 'mock-model' })),
   );
-  // key 存内存 secrets(SQLite 降级):走设置页真实保存入口种下,生题链路才配齐
+  // key 存内存 secrets(SQLite 降级):走设置页真实保存入口种下,生成链路才配齐
   await page.goto('/#/settings');
   await page.getByPlaceholder('sk-…').fill('sk-e2e-test');
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.getByText('LLM 配置已保存').first()).toBeVisible();
 });
 
-test('生题 → 存草稿 → approve → 我的题库可见 → 可开始刷题', async ({ page }) => {
-  // 1) 生题页:填知识点,生成
-  await page.goto('/#/generate');
-  await page.getByPlaceholder(/React Hooks/).fill('React Hooks 深入');
-  await page.getByRole('button', { name: '生成', exact: true }).click();
+test('AI 生成弹窗:生成 → 提交审核 → 通过 → 我的题库可见 → 可开始刷题', async ({ page }) => {
+  // 1) 我的题库页开「AI 生成题目」弹窗,填知识点生成
+  await page.goto('/#/my');
+  await page.getByRole('button', { name: 'AI 生成题目' }).first().click();
+  const dlg = page.getByRole('dialog');
+  await expect(dlg.getByText('AI 生成题目')).toBeVisible();
+  await dlg.getByPlaceholder(/React Hooks/).fill('React Hooks 深入');
+  await dlg.getByRole('button', { name: '生成', exact: true }).click();
 
-  // 2) 预览出现(mock 返回 2 题)
-  await expect(page.getByText('LLM 判断出 2 道')).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByText('useEffect 的清理函数在哪些时机执行?')).toBeVisible();
+  // 2) 预览出现(mock 返回 2 题),展开一题看答案
+  await expect(dlg.getByText('LLM 判断出 2 道')).toBeVisible({ timeout: 10_000 });
+  await dlg.getByText('useEffect 的清理函数在哪些时机执行?').click();
+  await expect(dlg.getByText('参考答案要点')).toBeVisible();
 
-  // 3) 提交审核(自动跳 #/drafts)
-  await page.getByRole('button', { name: /提交审核/ }).click();
+  // 3) 提交审核(自动跳 #/drafts),批次名 = 知识点
+  await dlg.getByRole('button', { name: /提交审核/ }).click();
   await expect(page.getByText(/批次 01 · React Hooks 深入/)).toBeVisible();
   await expect(page.getByText(/2 题待审/)).toBeVisible();
 
-  // 4) 本批全部通过 → 草稿区清空
+  // 4) 本批全部通过 → 待审核清空
   await page.getByRole('button', { name: '本批全部通过' }).click();
   await expect(page.getByText('没有待审核的题')).toBeVisible({ timeout: 10_000 });
 
-  // 5) 首页:我的题库卡片出现 2 题(限主内容区,侧栏也有同名入口)
+  // 5) 首页:我的题库卡片出现 2 题
   await page.goto('/#/');
   const myCard = page.locator('main').getByRole('link', { name: /我的题库/ }).first();
   await expect(myCard).toBeVisible();
   await expect(myCard.getByText('0/2')).toBeVisible();
 
-  // 6) 进我的题库复习页:可开始刷题
+  // 6) 进我的题库:可开始刷题
   await myCard.click();
-  await expect(page.getByRole('heading', { name: /我的题库/ })).toBeVisible();
-  await expect(page.getByRole('link', { name: /开始/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '我的题库' })).toBeVisible();
 
-  // 7) 我的题库浏览:行尾 icon 编辑/删除直接可见(功能⑥),无展开机制
+  // 7) 我的题库题目列表:行尾 icon 编辑/删除直接可见;来源徽标可见(AI 生成)
   await page.goto('/#/my/browse');
   await expect(page.getByRole('button', { name: '编辑' }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: '删除' }).first()).toBeVisible();
+  await expect(page.getByText('AI 生成', { exact: true }).first()).toBeVisible();
 });
 
-test('草稿区:逐题拒绝不进我的题库', async ({ page }) => {
-  await page.goto('/#/generate');
-  await page.getByPlaceholder(/React Hooks/).fill('Event Loop');
-  await page.getByRole('button', { name: '生成', exact: true }).click();
-  await expect(page.getByText('LLM 判断出 2 道')).toBeVisible({ timeout: 10_000 });
-  await page.getByRole('button', { name: /提交审核/ }).click();
+test('待审核:逐题拒绝不进我的题库', async ({ page }) => {
+  await page.goto('/#/my');
+  await page.getByRole('button', { name: 'AI 生成题目' }).first().click();
+  const dlg = page.getByRole('dialog');
+  await dlg.getByPlaceholder(/React Hooks/).fill('Event Loop');
+  await dlg.getByRole('button', { name: '生成', exact: true }).click();
+  await expect(dlg.getByText('LLM 判断出 2 道')).toBeVisible({ timeout: 10_000 });
+  await dlg.getByRole('button', { name: /提交审核/ }).click();
   await expect(page.getByText(/2 题待审/)).toBeVisible();
 
   // 展开第一题拒绝(拒绝 = 删除,需确认)
@@ -128,71 +134,72 @@ test('草稿区:逐题拒绝不进我的题库', async ({ page }) => {
   await page.getByRole('button', { name: '确认拒绝' }).click();
   await expect(page.getByText(/1 题待审/)).toBeVisible({ timeout: 10_000 });
 
-  // 首页我的题库仍为空(引导去生题)
+  // 首页我的题库仍为空(引导去出题)
   await page.goto('/#/');
   await expect(page.getByText('还是空的')).toBeVisible();
 });
 
-test('官方题浏览页:添加到我的题库 → toast + 标识 + 副本进我的库', async ({ page }) => {
-  await page.goto('/#/agent/browse');
-  const firstRow = page.locator('main .bg-card > div.border-b').first();
-  const addBtn = firstRow.getByRole('button', { name: '添加到我的题库' });
-
-  // icon 按钮:hover 出 tooltip 说明
-  await addBtn.hover();
-  await expect(page.getByText('添加到我的题库')).toBeVisible();
-  await addBtn.click();
-
-  // 成功 toast;按钮转禁用态(aria-label 随之切换),hover 提示已在我的库
-  await expect(page.getByText('已添加到我的题库')).toBeVisible();
-  const addedBtn = firstRow.getByRole('button', { name: '已在我的库' });
-  await expect(addedBtn).toBeDisabled();
-  // click 已关掉本 tooltip,且"已开"标记要 pointerleave 才重置(Radix 行为):先移开再回来
-  await page.mouse.move(5, 5);
-  await addedBtn.locator('..').hover();
-  await expect(page.getByText('已在我的库')).toBeVisible();
-
-  // 副本落我的库模块 0(官方题副本)
-  await page.goto('/#/my/browse');
-  await expect(page.getByText('官方题副本').first()).toBeVisible();
-});
-
-test('中枢新增 JD → 行内定向生题 → 草稿区(功能④)', async ({ page }) => {
-  // 1) 求职中枢:新增 JD(弹窗)
+test('JD 管理:新增 JD → 行内「按 JD 生成」弹窗 → 提交审核(来源按 JD)', async ({ page }) => {
+  // 1) JD 管理:新增 JD(弹窗)
   await page.goto('/#/profile');
-  await expect(page.getByRole('heading', { name: '求职中枢' })).toBeVisible();
-  // 空态:页头与空态卡各有一个「新增 JD」,取第一个
+  await expect(page.getByRole('heading', { name: 'JD 管理' })).toBeVisible();
   await page.getByRole('button', { name: '新增 JD' }).first().click();
   await page.getByRole('dialog').getByLabel('标题(可空)').fill('AI 应用工程师');
   await page.getByRole('dialog').getByLabel('公司').fill('示例公司');
   await page.getByRole('dialog').getByLabel('职位描述(JD)').fill('负责 RAG 检索系统的设计与优化,熟悉向量数据库与 embedding 调优,有 LLM 应用落地经验。');
   await page.getByRole('dialog').getByRole('button', { name: '保存', exact: true }).click();
 
-  // 2) JD 列表出现该条;行内「定向生题」深链到生题页(?jd=)
+  // 2) JD 列表出现该条;行内「按 JD 生成题目」开弹窗(jd 模式,标题带 JD 名)
   await expect(page.getByText('AI 应用工程师').first()).toBeVisible();
-  await page.getByRole('link', { name: /定向生题/ }).click();
-  await expect(page).toHaveURL(/generate\?jd=\d+/);
-  await expect(page.getByText('定向上下文')).toBeVisible();
+  await page.getByRole('button', { name: /按 JD 生成题目/ }).click();
+  const dlg = page.getByRole('dialog');
+  await expect(dlg.getByText(/按 JD 生成题目 · AI 应用工程师/)).toBeVisible();
 
-  // 3) 定向生成(mock)
-  await page.getByRole('button', { name: /定向生成/ }).click();
-  await expect(page.getByText('LLM 判断出 2 道')).toBeVisible({ timeout: 10_000 });
-
-  // 4) 存草稿区:批次名带 JD定向 · 公司
-  await page.getByRole('button', { name: /提交审核/ }).click();
+  // 3) 定向生成(mock)并提交审核:批次名带 JD定向 · 公司
+  await dlg.getByRole('button', { name: '生成', exact: true }).click();
+  await expect(dlg.getByText('LLM 判断出 2 道')).toBeVisible({ timeout: 10_000 });
+  await dlg.getByRole('button', { name: /提交审核/ }).click();
   await expect(page.getByText(/批次 01 · JD定向 · 示例公司/)).toBeVisible();
+
+  // 4) 通过后来源徽标 = 按 JD
+  await page.getByRole('button', { name: '本批全部通过' }).click();
+  await page.goto('/#/my/browse');
+  await expect(page.getByText('按 JD', { exact: true }).first()).toBeVisible();
 });
 
-test('无深链时生题页引导去中枢;失效 JD 参数给警示', async ({ page }) => {
-  await page.goto('/#/generate');
-  // 知识点模式仍在,JD 定向入口收敛到中枢
-  await expect(page.getByPlaceholder(/React Hooks/)).toBeVisible();
-  await expect(page.getByRole('link', { name: '求职中枢' }).first()).toBeVisible();
+test('题库分类页:复习/学新题双入口 + 是哪些题深链', async ({ page }) => {
+  await page.goto('/#/agent');
+  // 两张数字卡:待复习 / 新题;新题有货 → 学习新题按钮
+  await expect(page.getByText('题待复习')).toBeVisible();
+  await expect(page.getByText('题新题没学过')).toBeVisible();
+  await expect(page.getByRole('link', { name: /学习新题 \d+ 题/ })).toBeVisible();
+  // 新库无进度:待复习为 0 时不渲染「开始复习」(有到期题才出现——模式用户自选)
+  await expect(page.getByRole('link', { name: /开始复习/ })).toHaveCount(0);
+  await page.getByRole('link', { name: '是哪些题' }).first().click();
+  await expect(page).toHaveURL(/browse\?status=/);
+  await expect(page.getByRole('combobox', { name: '状态' })).not.toContainText('全部状态');
+});
 
-  // 失效 jd 参数:警示 + 引导
-  await page.goto('/#/generate?jd=999');
-  await expect(page.getByText('这份 JD 不存在')).toBeVisible();
-  await expect(page.getByRole('link', { name: /去求职中枢重新选择/ })).toBeVisible();
+test('官方题题目列表:添加到我的题库 → toast + 标识 + 副本进我的库(来源官方复制)', async ({ page }) => {
+  await page.goto('/#/agent/browse');
+  const firstRow = page.locator('main .bg-card > div.border-b').first();
+  const addBtn = firstRow.getByRole('button', { name: '添加到我的题库' });
+
+  await addBtn.hover();
+  await expect(page.getByText('添加到我的题库')).toBeVisible();
+  await addBtn.click();
+
+  await expect(page.getByText('已添加到我的题库')).toBeVisible();
+  const addedBtn = firstRow.getByRole('button', { name: '已在我的库' });
+  await expect(addedBtn).toBeDisabled();
+  await page.mouse.move(5, 5);
+  await addedBtn.locator('..').hover();
+  await expect(page.getByText('已在我的库')).toBeVisible();
+
+  // 副本落我的库模块 0(官方题副本),来源徽标 = 官方复制
+  await page.goto('/#/my/browse');
+  await expect(page.getByText('官方题副本').first()).toBeVisible();
+  await expect(page.getByText('官方复制', { exact: true }).first()).toBeVisible();
 });
 
 test('设置页:同步官方题库 → 远端新增题落地', async ({ page }) => {
@@ -211,7 +218,7 @@ test('设置页:同步官方题库 → 远端新增题落地', async ({ page }) 
   await page.getByRole('button', { name: '同步官方题库' }).click();
   await expect(page.getByText(/官方题库已同步:新增 1 · 修订 0 · 移除 0/)).toBeVisible({ timeout: 10_000 });
 
-  // 同步进来的题进官方库聚合(浏览页可见)
+  // 同步进来的题进官方库聚合(题目列表可见)
   await page.goto('/#/agent/browse');
   await expect(page.getByText('远端同步新增的验证题?')).toBeVisible({ timeout: 10_000 });
 });
@@ -225,7 +232,6 @@ test('设置页渲染:预设与 key 表单', async ({ page }) => {
   await expect(page.getByText('LLM(AI 生题用)')).toBeVisible();
   await expect(page.getByText('数据管理')).toBeVisible();
   await expect(page.getByText('关于')).toBeVisible();
-  // LLM 区:自定义三字段;key 手填落内存(mock 环境),保存成功
   await expect(page.getByText('baseURL', { exact: true })).toBeVisible();
   await expect(page.getByText('OpenAI 兼容端点')).toBeVisible();
   const keyInput = page.getByPlaceholder('sk-…');
@@ -235,9 +241,8 @@ test('设置页渲染:预设与 key 表单', async ({ page }) => {
   await expect(page.getByText('LLM 配置已保存').first()).toBeVisible();
 });
 
-test('官方题浏览页:统一筛选栏(模块/难度/状态)', async ({ page }) => {
+test('官方题题目列表:统一筛选栏(模块/难度/状态)', async ({ page }) => {
   await page.goto('/#/agent/browse');
-  // 统一筛选栏:模块/难度/状态三个 shadcn Select,可组合,带结果计数
   await expect(page.getByRole('combobox', { name: '模块' })).toBeVisible();
   await expect(page.getByRole('combobox', { name: '难度' })).toBeVisible();
   await expect(page.getByRole('combobox', { name: '状态' })).toBeVisible();
