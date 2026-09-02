@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router';
 import {
-  LayoutDashboard, Sparkles, Inbox, Settings, Bot, Code2, LibraryBig, BookOpen, Zap, ArrowLeft, Target,
+  LayoutDashboard, Settings, Bot, Code2, LibraryBig, BookOpen, Zap, ArrowLeft, Target, FileText,
   type LucideIcon,
 } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
@@ -9,9 +9,10 @@ import { getMyCategory, getPendingCount, subscribeMyLib } from '@/lib/mylib';
 import { useImmersive } from '@/lib/immersive';
 
 // 桌面壳:常驻侧栏导航 + 内容区(页面由 App.tsx 的 Routes 经 children 传入)。
-// 品牌 CommitCareer(2026-08-31:窗口标题/productName/侧栏/document.title 四处统一)。
-// 菜单按使用频率与工作流分组:总览 →【刷题】题库分类+我的题库(高频在前)→
-// 【求职】中枢 → 出题 → 待审核(生成工作流顺序)→ 设置。
+// 品牌 CommitCareer(窗口标题/productName/侧栏/document.title 四处统一)。
+// 菜单按两大块分组(2026-09-02 IA 重构):总览 →【题库】官方分类+我的题库(待审数挂
+// 我的题库 badge)→【求职】JD 管理 / 简历管理(同一中枢页的两个 tab)→ 设置。
+// 出题不是菜单:是各页面的按钮(添加题目 / AI 生成题目 / 按 JD 生成)。
 // 后退语义:侧栏直达页是同级切换不显示后退;只有下钻子页(刷题/浏览)显示
 // 「← 回到{分类名}题库」,固定回该分类队列页(不依赖历史栈)。
 // Cmd/Ctrl/Alt+← 为系统级 history.back()(编辑器内不抢键);窄窗(<lg)侧栏收成图标栏。
@@ -83,24 +84,24 @@ export function AppShell({ children }: { children: ReactNode }) {
     const sub = parts[1];
     const topTitles: Record<string, string> = {
       '': '总览',
-      profile: '求职中枢',
-      generate: '出题',
       drafts: '待审核',
       settings: '设置',
     };
     let title: string;
-    if (topTitles[root] != null || root === '') {
+    if (root === 'profile') {
+      title = new URLSearchParams(location.search).get('tab') === 'resume' ? '简历管理' : 'JD 管理';
+    } else if (topTitles[root] != null || root === '') {
       title = topTitles[root] ?? '总览';
     } else if (sub === 'quiz') {
       title = '刷题';
     } else if (sub === 'browse') {
-      title = '题目浏览';
+      title = '题目列表';
     } else {
-      title = backCatName ?? root; // 分类队列页:分类名
+      title = backCatName ?? catNameOf(root) ?? root; // 题库分类页:分类名(如「我的题库」)
     }
     document.title = `${title} · CommitCareer`;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   // Cmd/Ctrl+← 或 Alt+← 系统级后退;编辑场景(输入框/编辑器)不抢快捷键
   useEffect(() => {
@@ -115,15 +116,19 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  const root = parts[0] ?? '';
+  const cats = (data?.categories ?? []).filter((c) => c.slug !== 'my');
+  // 求职中枢的两个侧栏入口(JD 管理 / 简历管理)共用 /profile,按 ?tab= 预选
+  const profileTab = new URLSearchParams(location.search).get('tab') === 'resume' ? 'resume' : 'jds';
+
+  // 分类名(分类页标题 / 返回条共用):my 特判,官方分类查聚合
+  const catNameOf = (slug: string) =>
+    slug === 'my' ? myCategory.name : data?.categories.find((c) => c.slug === slug)?.name;
+
   // 下钻子页(刷题/浏览):显示固定返回所属分类队列
   const isSubPage = parts.length >= 2;
   const backCatSlug = isSubPage ? parts[0] : null;
-  const backCatName = backCatSlug
-    ? (backCatSlug === 'my' ? myCategory.name : data?.categories.find((c) => c.slug === backCatSlug)?.name)
-    : null;
-
-  const root = parts[0] ?? '';
-  const cats = (data?.categories ?? []).filter((c) => c.slug !== 'my');
+  const backCatName = backCatSlug ? (catNameOf(backCatSlug) ?? null) : null;
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
@@ -141,9 +146,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-1">
             <NavItem to="/" icon={LayoutDashboard} label="总览" active={root === ''} />
 
-            {/* 刷题组:题库是最高频入口,放上半区 */}
+            {/* 题库组:官方分类 + 我的题库;待审数挂我的题库(待审的题本质是进我库的候选) */}
             <div className="hidden px-2.5 pb-1 pt-4 text-xs font-medium text-muted-foreground/70 lg:block">
-              刷题
+              题库
             </div>
             {cats.map((c) => (
               <NavItem
@@ -161,15 +166,25 @@ export function AppShell({ children }: { children: ReactNode }) {
               label="我的题库"
               active={root === 'my'}
               count={myCategory.count}
+              badge={pendingCount}
             />
 
-            {/* 求职组:中枢 → 出题 → 待审核,生成工作流顺序 */}
+            {/* 求职组:同一中枢页的两个入口,按 ?tab= 预选 */}
             <div className="hidden px-2.5 pb-1 pt-4 text-xs font-medium text-muted-foreground/70 lg:block">
               求职
             </div>
-            <NavItem to="/profile" icon={Target} label="求职中枢" active={root === 'profile'} />
-            <NavItem to="/generate" icon={Sparkles} label="出题" active={root === 'generate'} />
-            <NavItem to="/drafts" icon={Inbox} label="待审核" active={root === 'drafts'} badge={pendingCount} />
+            <NavItem
+              to="/profile"
+              icon={Target}
+              label="JD 管理"
+              active={root === 'profile' && profileTab === 'jds'}
+            />
+            <NavItem
+              to="/profile?tab=resume"
+              icon={FileText}
+              label="简历管理"
+              active={root === 'profile' && profileTab === 'resume'}
+            />
           </nav>
 
           {/* 底部:设置 */}

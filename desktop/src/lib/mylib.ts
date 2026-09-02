@@ -7,7 +7,7 @@
 // 官方题的"复制副本"统一进模块 0(官方题副本),生题批次从模块 1 起顺延。
 // 删除时级联清理 review_state/notes 孤儿行(无外键,手动删)。
 
-import type { Category, CategoryModule, Difficulty, MyQuestion, Question } from '@/types/question';
+import type { Category, CategoryModule, Difficulty, MyQuestion, Question, QuestionSource } from '@/types/question';
 import type Database from '@tauri-apps/plugin-sql';
 import { validateQuestion } from './validate';
 import { logger } from './logger';
@@ -42,9 +42,12 @@ export interface MyQuestionRow {
   tags: string; // JSON array
   status: 'pending' | 'approved';
   source_id: string | null;
+  source: QuestionSource;
   created_at: number;
   updated_at: number;
 }
+
+const VALID_SOURCE_SET = new Set<QuestionSource>(['manual', 'ai', 'jd', 'copy']);
 
 export function rowToMyQuestion(r: MyQuestionRow): MyQuestion {
   return {
@@ -62,6 +65,7 @@ export function rowToMyQuestion(r: MyQuestionRow): MyQuestion {
     followups: safeJsonArray(r.followups),
     status: r.status,
     sourceId: r.source_id ?? null,
+    source: VALID_SOURCE_SET.has(r.source) ? r.source : 'manual',
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -191,8 +195,9 @@ function validateDraft(q: DraftQuestion, loc: string): void {
 
 // ===== 异步写(mutate 缓存 → await 持久化 → notify) =====
 
-// 一批草稿进草稿区(新模块,模块名 = 知识点)。ADR-10:status=pending。
-export async function addDrafts(drafts: DraftQuestion[], moduleName: string): Promise<MyQuestion[]> {
+// 一批草稿进草稿区(新模块,模块名 = 知识点/JD 批次名)。ADR-10:status=pending。
+// source:题目来源标注('ai'=按知识点生成,'jd'=按 JD 生成),浏览页可见。
+export async function addDrafts(drafts: DraftQuestion[], moduleName: string, source: Extract<QuestionSource, 'ai' | 'jd'> = 'ai'): Promise<MyQuestion[]> {
   const existing = getMyQuestions();
   const moduleId = nextModuleId(existing);
   const ids = allocateIds(
@@ -212,6 +217,7 @@ export async function addDrafts(drafts: DraftQuestion[], moduleName: string): Pr
       index: i + 1,
       type: 'qa' as const,
       status: 'pending' as const,
+      source,
       createdAt: now,
       updatedAt: now,
     };
@@ -244,6 +250,7 @@ export async function copyOfficial(q: Question): Promise<MyQuestion> {
     index: parseInt(id.split('.')[2] || '1', 10),
     status: 'approved',
     sourceId: q.id,
+    source: 'copy',
     createdAt: now,
     updatedAt: now,
   };
@@ -299,6 +306,7 @@ export async function addManualQuestion(
     type: 'qa' as const,
     status: 'approved' as const,
     sourceId: null,
+    source: 'manual',
     createdAt: now,
     updatedAt: now,
   };
@@ -350,12 +358,12 @@ export async function deleteQuestion(id: string): Promise<void> {
 
 async function persistInsert(q: MyQuestion): Promise<void> {
   await execute(
-    'INSERT INTO questions(id,category,module,module_name,index_real,difficulty,title,focus,answer,followups,tags,status,source_id,created_at,updated_at) ' +
-      'VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)',
+    'INSERT INTO questions(id,category,module,module_name,index_real,difficulty,title,focus,answer,followups,tags,status,source_id,source,created_at,updated_at) ' +
+      'VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)',
     [
       q.id, q.category, q.module, q.moduleName, q.index, q.difficulty, q.title, q.focus,
       JSON.stringify(q.answer), JSON.stringify(q.followups), JSON.stringify(q.tags),
-      q.status, q.sourceId ?? null, q.createdAt, q.updatedAt,
+      q.status, q.sourceId ?? null, q.source, q.createdAt, q.updatedAt,
     ],
   );
 }

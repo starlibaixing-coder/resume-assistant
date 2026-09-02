@@ -103,18 +103,24 @@ describe('rowToMyQuestion', () => {
       id: 'my.1.1', category: 'my', module: 1, module_name: 'React', index_real: 1.5,
       difficulty: '中', title: 't', focus: 'f',
       answer: '["a"]', followups: '["q"]', tags: '["x"]',
-      status: 'pending', source_id: null, created_at: 1, updated_at: 2,
+      status: 'pending', source_id: null, source: 'ai', created_at: 1, updated_at: 2,
     };
     const q = rowToMyQuestion(row);
     expect(q.index).toBe(1.5);
     expect(q.answer).toEqual(['a']);
     expect(q.status).toBe('pending');
     expect(q.type).toBe('qa');
+    expect(q.source).toBe('ai');
   });
 
   it('difficulty 非法时降级为中(脏数据容错)', () => {
     const row = { difficulty: 'expert' } as MyQuestionRow;
     expect(rowToMyQuestion(row).difficulty).toBe('中');
+  });
+
+  it('source 非法时降级为 manual(脏数据容错)', () => {
+    const row = { source: 'weird' } as unknown as MyQuestionRow;
+    expect(rowToMyQuestion(row).source).toBe('manual');
   });
 
   it('JSON 解析失败返回空数组(脏数据容错)', () => {
@@ -135,7 +141,13 @@ describe('addDrafts', () => {
     expect(created.every((q) => q.status === 'pending')).toBe(true);
     expect(created[0].moduleName).toBe('React Hooks');
     expect(created[0].category).toBe(MY_CATEGORY_SLUG);
+    expect(created.every((q) => q.source === 'ai')).toBe(true);
     expect(getPendingCount()).toBe(2);
+  });
+
+  it('来源标注:jd 生成批次 source=jd', async () => {
+    const created = await addDrafts([draft()], 'JD定向 · 示例公司', 'jd');
+    expect(created[0].source).toBe('jd');
   });
 
   it('模块名截断 30 字', async () => {

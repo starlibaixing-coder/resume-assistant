@@ -15,7 +15,7 @@ export function mergeQuestionData(official: QuestionData, myQuestions: MyQuestio
     categories: [...official.categories, myCategory],
     questions: [
       ...official.questions,
-      ...approved.map(({ status: _status, createdAt: _createdAt, updatedAt: _updatedAt, sourceId: _sourceId, ...q }) => q),
+      ...approved.map(({ status: _status, createdAt: _createdAt, updatedAt: _updatedAt, sourceId: _sourceId, source: _source, ...q }) => q),
     ],
     total: official.total + approved.length,
   };

@@ -31,7 +31,7 @@ export async function runSmoke(): Promise<boolean> {
   results.push(
     await step('storage.init', async () => {
       db = await Database.load('sqlite:smoke.db');
-      return 'sqlite:smoke.db 连接 + 迁移 001-006';
+      return 'sqlite:smoke.db 连接 + 迁移 001-007';
     }),
   );
   if (!db) return false;
@@ -98,7 +98,9 @@ export async function runSmoke(): Promise<boolean> {
           },
         ],
         'smoke 批次',
+        'ai',
       );
+      if (q.source !== 'ai') throw new Error('来源标注未落库');
       await approveQuestion(q.id);
       const approved = getMyQuestions().find((x) => x.id === q.id);
       if (approved?.status !== 'approved') throw new Error('草稿 → approve 链路断裂');

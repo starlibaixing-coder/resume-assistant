@@ -4,8 +4,8 @@ import { toast } from 'sonner';
 import { BookmarkPlus, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getModuleStats, getQuestionStatus } from '@/lib/schedule';
-import { MY_CATEGORY_SLUG, getMyQuestion, copyOfficial, getCopiedSourceIds } from '@/lib/mylib';
-import type { Question, QuestionData } from '@/types/question';
+import { MY_CATEGORY_SLUG, getMyQuestion, getMyQuestions, copyOfficial, getCopiedSourceIds } from '@/lib/mylib';
+import type { Question, QuestionData, QuestionSource } from '@/types/question';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,9 +13,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Progress } from '@/components/ui/progress';
 import { PageHeader } from '@/components/page-header';
-import { QuestionEditDialog, DeleteQuestionDialog } from '@/components/question-edit-dialog';
+import { QuestionEditDialog, QuestionCreateDialog, DeleteQuestionDialog } from '@/components/question-edit-dialog';
+import { GenerateDialog } from '@/components/generate-dialog';
 
-// 题目浏览 = 题库后台:一个列表 + 一条筛选栏(三个维度可组合,下拉而非按钮平铺)。
+// 题目列表 = 题库后台:一个列表 + 一条筛选栏(三个维度可组合,下拉而非按钮平铺)。
+
+// 我的题来源标签(2026-09-02:三类出题入口产物都进我的题库,来源可见)
+const SOURCE_LABELS: Record<QuestionSource, string> = {
+  manual: '手动',
+  ai: 'AI 生成',
+  jd: '按 JD',
+  copy: '官方复制',
+};
 // - 模块:默认全部;筛到单个模块时,列表上方显示该模块统计 + 进度条
 // - 难度:全部/初/中/高;状态:全部/未学/待复习/已掌握
 // 行 = 全局序号 + 模块名小标签 + 题干 + focus 平铺 + 题目标签 + 难度 + 行尾动作区;
@@ -72,15 +81,20 @@ function FilterSelect({
 
 export function BrowsePage({ category }: { category: string }) {
   const { data, error, retry } = useQuestions();
-  // 模块筛选:'all' 或模块号字符串;初始取 ?m= 深链
+  // 模块筛选:'all' 或模块号字符串;初始取 ?m= 深链;状态筛选取 ?status= 深链(队列页"是哪些题")
   const [searchParams] = useSearchParams();
   const [moduleFilter, setModuleFilter] = useState<string>(() => searchParams.get('m') ?? 'all');
   const [diffFilter, setDiffFilter] = useState<DiffFilter>('all');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  // 编辑/删除/创建 dialog 目标;官方题添加中标记
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(() => {
+    const s = searchParams.get('status');
+    return s === 'due' || s === 'unseen' || s === 'mastered' ? s : 'all';
+  });
+  // 编辑/删除/创建/生成 dialog 目标;官方题添加中标记
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copyingId, setCopyingId] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [genOpen, setGenOpen] = useState(false);
   const isMy = category === MY_CATEGORY_SLUG;
 
   // copiedSourceIds 随 data 重算(copyOfficial notify → useQuestions setData)
@@ -102,7 +116,7 @@ export function BrowsePage({ category }: { category: string }) {
   if (error) {
     return (
       <div className="mx-auto max-w-4xl space-y-6">
-        <PageHeader title="题目浏览" />
+        <PageHeader title="题目列表" />
         <Card>
           <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
             <div className="text-foreground">题库加载失败</div>
@@ -118,27 +132,29 @@ export function BrowsePage({ category }: { category: string }) {
   if (!cat) {
     return (
       <div className="mx-auto max-w-4xl space-y-6">
-        <PageHeader title="我的题库 · 题目浏览" />
+        <PageHeader title="我的题库 · 题目列表" />
         <Card>
           <CardContent className="space-y-3 py-16 text-center">
             <div className="text-foreground">我的题库还没有题</div>
-            <div className="text-sm text-muted-foreground">手动写一道,或让 AI 出题(先进待审核,通过后出现在这里)。</div>
+            <div className="text-sm text-muted-foreground">手动写一道,或让 AI 生成(先进待审核,通过后出现在这里)。</div>
             <div className="flex justify-center gap-2 pt-1">
-              <Button asChild size="sm">
-                <Link to="/generate?mode=manual">
-                  <Plus className="size-3.5" aria-hidden />
-                  手动加题
-                </Link>
+              <Button size="sm" onClick={() => setCreateOpen(true)}>
+                <Plus className="size-3.5" aria-hidden />
+                添加题目
               </Button>
-              <Button asChild size="sm" variant="outline">
-                <Link to="/generate">
-                  <Sparkles className="size-3.5" aria-hidden />
-                  去出题
-                </Link>
+              <Button size="sm" variant="outline" onClick={() => setGenOpen(true)}>
+                <Sparkles className="size-3.5" aria-hidden />
+                AI 生成题目
               </Button>
             </div>
           </CardContent>
         </Card>
+        <QuestionCreateDialog
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          onCreated={(id) => toast.success('已加入我的题库', { description: id })}
+        />
+        <GenerateDialog open={genOpen} onOpenChange={setGenOpen} />
       </div>
     );
   }
@@ -169,6 +185,9 @@ export function BrowsePage({ category }: { category: string }) {
   };
   const hasFilter = effectiveModule !== 'all' || diffFilter !== 'all' || statusFilter !== 'all';
 
+  // 我的题来源(聚合层剥掉了 source,这里从 mylib 缓存查)
+  const sourceOf = (id: string): QuestionSource | null => getMyQuestions().find((q) => q.id === id)?.source ?? null;
+
   // 官方题 → 我的库副本(ADR-3)。成功 toast;行尾标识由 mylib notify 驱动自动出现。
   const handleAddToMy = async (q: Question) => {
     if (copyingId) return;
@@ -187,7 +206,7 @@ export function BrowsePage({ category }: { category: string }) {
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <PageHeader
-          title={`${cat.name} · 题目浏览`}
+          title={`${cat.name} · 题目列表`}
           subtitle={
             <>
               管理与查阅:我的题可编辑删除;刷题、评分、写笔记去
@@ -197,17 +216,13 @@ export function BrowsePage({ category }: { category: string }) {
         />
         {isMy && (
           <div className="flex shrink-0 gap-2">
-            <Button asChild size="sm" variant="outline">
-              <Link to="/generate?mode=manual">
-                <Plus className="size-3.5" aria-hidden />
-                手动加题
-              </Link>
+            <Button size="sm" variant="outline" onClick={() => setCreateOpen(true)}>
+              <Plus className="size-3.5" aria-hidden />
+              添加题目
             </Button>
-            <Button asChild size="sm">
-              <Link to="/generate">
-                <Sparkles className="size-3.5" aria-hidden />
-                去出题
-              </Link>
+            <Button size="sm" onClick={() => setGenOpen(true)}>
+              <Sparkles className="size-3.5" aria-hidden />
+              AI 生成题目
             </Button>
           </div>
         )}
@@ -261,6 +276,7 @@ export function BrowsePage({ category }: { category: string }) {
           listQuestions.map((q, i) => {
             const modName = modules.find((m) => m.id === q.module)?.name ?? String(q.module);
             const copied = !isMy && copiedSourceIds.has(q.id);
+            const source = isMy ? sourceOf(q.id) : null;
             return (
               // content-visibility:屏外行跳过渲染(282 题全量 DOM 保留,e2e/DOM 查询不受影响)
               <div key={q.id} className="border-b border-border last:border-b-0 p-3 [contain-intrinsic-size:auto_88px] [content-visibility:auto]">
@@ -269,6 +285,14 @@ export function BrowsePage({ category }: { category: string }) {
                   <span className="max-w-24 truncate shrink-0 rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                     {modName}
                   </span>
+                  {source && (
+                    <span
+                      title={`来源:${SOURCE_LABELS[source]}`}
+                      className="shrink-0 rounded bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                    >
+                      {SOURCE_LABELS[source]}
+                    </span>
+                  )}
                   <span className="text-sm text-foreground flex-1">{q.title}</span>
                   <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
                   {isMy ? (
@@ -344,6 +368,12 @@ export function BrowsePage({ category }: { category: string }) {
         open={!!editingId}
         onOpenChange={(o) => !o && setEditingId(null)}
       />
+      <QuestionCreateDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={(id) => toast.success('已加入我的题库', { description: id })}
+      />
+      <GenerateDialog open={genOpen} onOpenChange={setGenOpen} />
       <DeleteQuestionDialog
         question={deletingId ? getMyQuestion(deletingId) : null}
         open={!!deletingId}

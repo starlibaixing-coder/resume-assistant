@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { Inbox, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { getProfile, saveProfile, type JobProfile } from '@/lib/profile';
@@ -17,29 +17,38 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { PageHeader } from '@/components/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { GenerateDialog } from '@/components/generate-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,
 } from '@/components/ui/dialog';
 
-// 求职中枢(ADR-4,2026-08-31 一期):JD 从档案单字段升级为多 JD 管理(lib/jd.ts + jds 表),
-// JD 定向生题从 JD 条目深链发起(/generate?jd=<id>);简历多版本留二期,本期仍单份编辑。
-// 简历/公司与 JD 拆开:JD 是"投递目标"集合,简历是"我的材料",生命周期不同。
+// 求职中枢(ADR-4):JD 管理 + 简历管理两个 tab,侧栏两个入口按 ?tab= 预选(2026-09-02)。
+// 「按 JD 生成题目」从 JD 条目行内发起(GenerateDialog 弹窗,来源标 'jd');简历多版本留二期。
 
 const charCount = (s: string) => (s ? `${s.length} 字` : '未填');
 
 export function ProfilePage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get('tab') === 'resume' ? 'resume' : 'jds';
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeader
-        title="求职中枢"
-        subtitle="管理投递目标(JD)与简历;从任意 JD 一键发起定向生题,后续简历生成与模拟面试也围绕这里。"
+        title={tab === 'resume' ? '简历管理' : 'JD 管理'}
+        subtitle={
+          tab === 'resume'
+            ? '简历全文与默认公司;JD 生成题目可选「结合简历」出深挖题,后续简历生成也读它。'
+            : '管理投递目标:从任意 JD 一键「按 JD 生成题目」,数量由 LLM 判断。'
+        }
       />
 
-      <Tabs defaultValue="jds">
+      <Tabs
+        value={tab}
+        onValueChange={(v) => setSearchParams(v === 'resume' ? { tab: 'resume' } : {}, { replace: true })}
+      >
         <TabsList>
           <TabsTrigger value="jds">JD 管理</TabsTrigger>
-          <TabsTrigger value="resume">简历与公司</TabsTrigger>
+          <TabsTrigger value="resume">简历管理</TabsTrigger>
         </TabsList>
 
         <TabsContent value="jds" className="mt-6">
@@ -64,6 +73,7 @@ function JdManager() {
   const [editing, setEditing] = useState<Jd | null>(null); // null = 关闭;有值为编辑
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<Jd | null>(null);
+  const [genJd, setGenJd] = useState<Jd | null>(null); // 按 JD 生成弹窗的目标 JD
 
   return (
     <>
@@ -112,13 +122,17 @@ function JdManager() {
                 <div className="flex shrink-0 items-center gap-0.5">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button asChild size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-primary">
-                        <Link to={`/generate?jd=${j.id}`} aria-label={`定向生题:${j.title}`}>
-                          <Sparkles aria-hidden />
-                        </Link>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-muted-foreground hover:text-primary"
+                        aria-label={`按 JD 生成题目:${j.title}`}
+                        onClick={() => setGenJd(j)}
+                      >
+                        <Sparkles aria-hidden />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>定向生题</TooltipContent>
+                    <TooltipContent>按 JD 生成题目</TooltipContent>
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -163,6 +177,9 @@ function JdManager() {
           setEditing(null);
         }}
       />
+
+      {/* 按 JD 生成题目:弹窗承载,产物进待审核,来源标 'jd' */}
+      <GenerateDialog open={genJd != null} onOpenChange={(o) => !o && setGenJd(null)} jd={genJd} />
 
       <Dialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
         <DialogContent>
