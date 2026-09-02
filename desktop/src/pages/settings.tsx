@@ -152,7 +152,7 @@ export function SettingsPage() {
             </Button>
           ))}
         </div>
-          <p className="text-xs text-muted-foreground">进入队列即按此数量取题;待复习优先,不足用新题补。</p>
+          <p className="text-xs text-muted-foreground">进入队列即按此数量取题;先取待复习,再取待学习。</p>
         </CardContent>
       </Card>
 

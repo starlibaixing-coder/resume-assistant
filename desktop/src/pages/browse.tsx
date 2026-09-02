@@ -26,7 +26,7 @@ const SOURCE_LABELS: Record<QuestionSource, string> = {
   copy: '官方复制',
 };
 // - 模块:默认全部;筛到单个模块时,列表上方显示该模块统计 + 进度条
-// - 难度:全部/初/中/高;状态:全部/未学/待复习/已掌握
+// - 难度:全部/初/中/高;状态:全部/待学习/待复习/已掌握(术语表 specs/2026-09-02-terminology.md)
 // 行 = 全局序号 + 模块名小标签 + 题干 + focus 平铺 + 题目标签 + 难度 + 行尾动作区;
 // 行内动作用 ghost icon 按钮 + tooltip(不占行宽、不带文字噪音):
 // 官方题「添加到我的题库」(ADR-3 复制后改;已添加 = 同一按钮禁用态,hover 提示);我的题 编辑/删除。
@@ -43,7 +43,7 @@ const DIFF_OPTIONS: Array<{ key: DiffFilter; label: string }> = [
 ];
 const STATUS_OPTIONS: Array<{ key: StatusFilter; label: string }> = [
   { key: 'all', label: '全部状态' },
-  { key: 'unseen', label: '未学' },
+  { key: 'unseen', label: '待学习' },
   { key: 'due', label: '待复习' },
   { key: 'mastered', label: '已掌握' },
 ];
@@ -250,7 +250,7 @@ export function BrowsePage({ category }: { category: string }) {
             </div>
             <div className="flex gap-3 text-xs">
               <span className="text-muted-foreground">已学 {singleStats.learned}/{singleStats.total}</span>
-              {singleStats.mastered > 0 && <span className="text-success">掌握 {singleStats.mastered}</span>}
+              {singleStats.mastered > 0 && <span className="text-success">已掌握 {singleStats.mastered}</span>}
               {singleStats.dueToday > 0 && <span className="text-warning">待复习 {singleStats.dueToday}</span>}
             </div>
           </div>
