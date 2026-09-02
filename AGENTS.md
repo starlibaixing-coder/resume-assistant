@@ -43,7 +43,7 @@ Workspace instructions for ZCode agents working in this repo.
 
 ### 桌面端(desktop/,主开发线)
 
-- **品牌与命名 = CommitCareer**(2026-08-31 规范,详见 `docs/superpowers/specs/2026-08-31-brand-naming.md`):窗口标题/productName/侧栏/document.title 四处统一;侧栏分【刷题】【求职】两组;UI 用「出题/待审核」(代码与 ADR 文档仍用 drafts/pending/草稿区术语),子页标题 `{分类名} · 页面`。
+- **品牌与命名 = CommitCareer**(2026-08-31 规范,详见 `docs/superpowers/specs/2026-08-31-brand-naming.md`):窗口标题/productName/侧栏/document.title 四处统一;侧栏分【刷题】【求职】两组;**UI 术语以 `specs/2026-09-02-terminology.md` 为准**(待学习/待复习/待审核/学习队列,一词一义;代码与 ADR 文档仍用 drafts/pending/草稿区),子页标题 `{分类名} · 页面`。
 - **UI 组件照 shadcn 官方用法**:不写原生标签,不自创结构变体;缺组件按官方方式补源码进 `src/components/ui/`;有公共组件(PageHeader 等)就复用,不各写各的;布局类放 CardContent 等内容层,不堆在 Card 上。
 - **行内重复动作用 ghost icon 按钮**:列表行内的操作(添加/编辑/删除)用 Lucide 图标 + shadcn Tooltip + `aria-label`,不放常驻文本按钮,不用展开抽屉装动作,不写"可改可删"类说明文案;图标不用 emoji/文本字符。
 - **路由用 react-router**:页面组件放 `src/pages/`,路由表在 `App.tsx`(HashRouter);站内导航一律 `Link`/`useNavigate`,不写 `<a href="#/…">`(外部链接除外)。

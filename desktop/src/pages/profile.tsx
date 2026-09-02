@@ -327,7 +327,7 @@ function ResumeCard() {
     setSaving(true);
     try {
       await saveProfile({ company: company.trim(), resume: resume.trim() });
-      toast.success('档案已保存');
+      toast.success('已保存');
     } catch (e) {
       toast.error('保存失败', { description: e instanceof Error ? e.message : String(e) });
     } finally {

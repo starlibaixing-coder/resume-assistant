@@ -167,12 +167,12 @@ test('JD 管理:新增 JD → 行内「按 JD 生成」弹窗 → 提交审核(�
   await expect(page.getByText('按 JD', { exact: true }).first()).toBeVisible();
 });
 
-test('题库分类页:复习/学新题双入口 + 是哪些题深链', async ({ page }) => {
+test('题库分类页:复习/学习双入口 + 是哪些题深链', async ({ page }) => {
   await page.goto('/#/agent');
-  // 两张数字卡:待复习 / 新题;新题有货 → 学习新题按钮
+  // 两张数字卡:待复习 / 待学习;有待学习 → 开始学习按钮
   await expect(page.getByText('题待复习')).toBeVisible();
-  await expect(page.getByText('题新题没学过')).toBeVisible();
-  await expect(page.getByRole('link', { name: /学习新题 \d+ 题/ })).toBeVisible();
+  await expect(page.getByText('题待学习')).toBeVisible();
+  await expect(page.getByRole('link', { name: /开始学习 \d+ 题/ })).toBeVisible();
   // 新库无进度:待复习为 0 时不渲染「开始复习」(有到期题才出现——模式用户自选)
   await expect(page.getByRole('link', { name: /开始复习/ })).toHaveCount(0);
   await page.getByRole('link', { name: '是哪些题' }).first().click();

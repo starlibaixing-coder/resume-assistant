@@ -106,11 +106,11 @@ export function OverviewPage() {
       <PageHeader title="总览" />
 
       {/* 数字行:刷题侧今日工作量 + 审核状态。可点规则统一:默认全为纯文本,
-          仅待审核 >0 时渲染为链接(下划线,落点 /drafts);待复习/新题无全局落点
+          仅待审核 >0 时渲染为链接(下划线,落点 /drafts);待复习/待学习无全局落点
           (quiz 按分类路由),保持纯文本,不用链接样式伪装可点 */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
         <span className={totalDue > 0 ? 'text-warning' : 'text-muted-foreground'}>待复习 {totalDue}</span>
-        <span className="text-muted-foreground">新题 {totalRemaining}</span>
+        <span className="text-muted-foreground">待学习 {totalRemaining}</span>
         {pendingCount > 0 ? (
           <Link to="/drafts" className="text-warning underline underline-offset-2 transition-opacity hover:opacity-80">
             待审核 {pendingCount}
@@ -166,7 +166,7 @@ export function OverviewPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex gap-2 text-xs">
                         {e.dueToday > 0 && <span className="text-warning">待复习 {e.dueToday}</span>}
-                        {e.remaining > 0 && <span className="text-muted-foreground">新题 {e.remaining}</span>}
+                        {e.remaining > 0 && <span className="text-muted-foreground">待学习 {e.remaining}</span>}
                         {e.dueToday === 0 && e.remaining === 0 && <span className="text-success">已清空</span>}
                         {e.isMy && <span className="text-muted-foreground">· {myCategory.modules.length} 个模块</span>}
                       </div>

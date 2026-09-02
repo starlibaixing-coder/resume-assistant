@@ -15,7 +15,7 @@ import { GenerateDialog } from '@/components/generate-dialog';
 
 // 题库分类页:标题就是分类名(2026-09-02 IA 重构,不再加"· 刷题队列"后缀)。
 // 两种刷法分开选,不替用户做主:「开始复习」= 待复习(SM-2 到期题),
-// 「学习新题」= 没学过的题;各自的"是哪些题"深链到浏览页状态筛选。
+// 「开始学习」= 待学习的题;各自的"是哪些题"深链到浏览页状态筛选。
 // 出题是页面按钮不是菜单(添加题目 / AI 生成题目,均进我的题库并标来源)。
 
 export function QueuePage({ category }: { category: string }) {
@@ -136,7 +136,7 @@ export function QueuePage({ category }: { category: string }) {
               <div className="space-y-1 rounded-lg border border-border p-3 text-center">
                 <div className={`text-2xl font-bold ${newCount > 0 ? 'text-primary' : 'text-muted-foreground/60'}`}>{newCount}</div>
                 <div className="text-xs text-muted-foreground">
-                  题新题没学过
+                  题待学习
                   {newCount > 0 && (
                     <Link to={`/${category}/browse?status=unseen`} className="ml-1 text-primary hover:underline">是哪些题</Link>
                   )}
@@ -152,7 +152,7 @@ export function QueuePage({ category }: { category: string }) {
               )}
               {newCount > 0 && (
                 <Button asChild variant={dueCount > 0 ? 'outline' : 'default'} className="flex-1">
-                  <Link to={`/${category}/quiz?focus=new`}>学习新题 {newCount} 题</Link>
+                  <Link to={`/${category}/quiz?focus=new`}>开始学习 {newCount} 题</Link>
                 </Button>
               )}
             </div>

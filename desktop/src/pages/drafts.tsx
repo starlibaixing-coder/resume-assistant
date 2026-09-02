@@ -83,7 +83,7 @@ export function DraftsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6" data-version={version}>
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <PageHeader title="待审核" subtitle={pending.length > 0 ? `${pending.length} 题待审` : undefined} />
+        <PageHeader title="待审核" subtitle={pending.length > 0 ? `${pending.length} 题待审核` : undefined} />
         <Button size="sm" variant="outline" className="mb-1" onClick={() => setGenOpen(true)}>
           <Sparkles className="size-3.5" aria-hidden />
           AI 生成题目
@@ -96,7 +96,7 @@ export function DraftsPage() {
             <Inbox className="mx-auto size-10 text-muted-foreground" aria-hidden />
             <div className="text-foreground">没有待审核的题</div>
             <div className="text-sm text-muted-foreground">
-              AI 出的题先进这里,你逐题确认后才进刷题队列。
+              AI 出的题先进这里,你逐题通过后才进学习队列。
             </div>
             <div>
               <Button size="sm" variant="outline" onClick={() => setGenOpen(true)}>

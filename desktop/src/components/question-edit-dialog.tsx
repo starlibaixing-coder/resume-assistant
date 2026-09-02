@@ -222,7 +222,7 @@ export function QuestionCreateDialog({
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>添加题目</DialogTitle>
-          <DialogDescription>手写的题不经待审核,保存后直接进我的题库与复习队列。</DialogDescription>
+          <DialogDescription>手写的题不经待审核,保存后直接进我的题库与学习队列。</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">

@@ -155,8 +155,8 @@ export function GenerateDialog({
           <DialogTitle className="text-base">{jd ? `按 JD 生成题目 · ${jd.title}` : 'AI 生成题目'}</DialogTitle>
           <DialogDescription>
             {jd
-              ? '按这份 JD 的技术要求出题(核心必备项优先),数量由 LLM 判断;生成后先进待审核。'
-              : '按知识点出一批不同角度的题,数量由 LLM 按广度判断;生成后先进待审核。'}
+              ? '按这份 JD 的技术要求生成题目(核心必备项优先),数量由 LLM 判断;生成后先进待审核。'
+              : '按知识点生成一批不同角度的题,数量由 LLM 按广度判断;生成后先进待审核。'}
           </DialogDescription>
         </DialogHeader>
 
@@ -180,7 +180,7 @@ export function GenerateDialog({
               </div>
               {profile?.resume.trim() && (
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-muted-foreground">出题范围</span>
+                  <span className="text-xs text-muted-foreground">生成范围</span>
                   <Button size="sm" variant={!includeResume ? 'default' : 'outline'} onClick={() => setIncludeResume(false)} disabled={loading}>
                     只用 JD
                   </Button>

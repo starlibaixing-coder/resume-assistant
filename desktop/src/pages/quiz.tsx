@@ -46,8 +46,8 @@ export function QuizPage({ category }: { category: string }) {
     const limitParam = searchParams.get('limit');
     const limit = limitParam != null ? parseInt(limitParam, 10) || 0 : loadLimit();
     const cap = (list: string[]) => (limit > 0 ? list.slice(0, limit) : list);
-    // 三种入队模式(2026-09-02:队列页「开始复习 / 学习新题 / 再过一遍」三按钮对应):
-    //   focus=due 只出到期题;focus=new 只出新题;force=all 全量(提前复习)。
+    // 三种入队模式(2026-09-02:队列页「开始复习 / 开始学习 / 再过一遍」三按钮对应):
+    //   focus=due 只出待复习;focus=new 只出待学习;force=all 全量(提前复习)。
     //   默认(无参数)= 到期优先、新题补位。选中的集合为空时回落默认,避免空会话。
     const r = getReviewQueue(category, ids, limit);
     let queue = r.queue;
@@ -370,7 +370,7 @@ function DoneState({ category, total, onReviewAll }: { category: string; total: 
         <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
           <CheckCircle2 className="size-10 text-success" aria-hidden />
           <div className="text-lg font-semibold text-foreground">今日队列已清空</div>
-          <p className="text-sm text-muted-foreground">没有待复习和新题了。</p>
+          <p className="text-sm text-muted-foreground">没有待复习和待学习了。</p>
           <div className="mt-2 flex flex-col items-center gap-2.5">
             {total > 0 && <Button onClick={onReviewAll}>再过一遍(全部题)</Button>}
             <Link to={`/${category}/browse`} className="text-sm text-primary hover:underline">
