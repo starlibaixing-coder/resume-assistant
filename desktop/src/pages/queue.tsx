@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router';
 import { CheckCircle2, Plus } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
@@ -9,17 +9,15 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/page-header';
-import { AddQuestionDialog } from '@/components/add-question-dialog';
 
 // 题库分类页:标题就是分类名(2026-09-02 IA 重构,不再加"· 刷题队列"后缀)。
 // 两种刷法分开选,不替用户做主:「开始复习」= 待复习(SM-2 到期题),
 // 「开始学习」= 待学习的题;各自的"是哪些题"深链到浏览页状态筛选。
-// 出题是页面按钮不是菜单(添加题目 / AI 生成题目,均进我的题库并标来源)。
+// 出题入口 = 「添加题目」页(/add,2026-09-03 弃弹窗改页面),来源落 questions.source。
 
 export function QueuePage({ category }: { category: string }) {
   const { data, error, retry } = useQuestions();
   const limit = loadLimit();
-  const [addOpen, setAddOpen] = useState(false);
 
   const { stats, review } = useMemo(() => {
     if (!data) return { stats: null, review: null };
@@ -59,14 +57,15 @@ export function QueuePage({ category }: { category: string }) {
               <div className="text-foreground">我的题库还没有题</div>
               <div className="text-sm text-muted-foreground">手动写一道,或让 AI 生成(先进待审核,通过后出现在这里)。</div>
               <div className="flex justify-center pt-1">
-                <Button size="sm" onClick={() => setAddOpen(true)}>
-                  <Plus className="size-3.5" aria-hidden />
-                  添加题目
+                <Button size="sm" asChild>
+                  <Link to="/add">
+                    <Plus className="size-3.5" aria-hidden />
+                    添加题目
+                  </Link>
                 </Button>
               </div>
             </CardContent>
           </Card>
-          <AddQuestionDialog open={addOpen} onOpenChange={setAddOpen} />
         </div>
       );
     }
@@ -83,9 +82,11 @@ export function QueuePage({ category }: { category: string }) {
       <div className="flex items-center justify-between gap-2">
         <PageHeader title={cat?.name || category} />
         <div className="flex shrink-0 gap-2">
-          <Button size="sm" variant={isMy ? 'outline' : 'outline'} onClick={() => setAddOpen(true)}>
-            <Plus className="size-3.5" aria-hidden />
-            添加题目
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/add">
+              <Plus className="size-3.5" aria-hidden />
+              添加题目
+            </Link>
           </Button>
         </div>
       </div>
@@ -173,7 +174,6 @@ export function QueuePage({ category }: { category: string }) {
         </div>
       </div>
 
-      <AddQuestionDialog open={addOpen} onOpenChange={setAddOpen} />
     </div>
   );
 }

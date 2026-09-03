@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router';
 import {
-  LayoutDashboard, Settings, Bot, Code2, LibraryBig, BookOpen, Zap, ArrowLeft, Target, FileText,
+  LayoutDashboard, Settings, Bot, Code2, LibraryBig, BookOpen, ArrowLeft, Target, FileText,
   type LucideIcon,
 } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
@@ -86,6 +86,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       '': '总览',
       drafts: '待审核',
       settings: '设置',
+      add: '添加题目',
     };
     let title: string;
     if (root === 'profile') {
@@ -135,15 +136,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* 沉浸式:侧边栏与返回条都不渲染,内容区结构保持不变(刷题页自留进度行作唯一 chrome) */}
       {!immersive && (
         <aside className="flex h-full w-14 shrink-0 flex-col border-r border-border bg-card lg:w-56">
-          {/* 品牌 */}
-          <Link to="/" className="flex items-center gap-2.5 px-2.5 py-4 lg:px-3.5" title="CommitCareer">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <Zap className="h-4 w-4" />
-            </div>
-            <span className="hidden text-sm font-semibold tracking-tight lg:inline">CommitCareer</span>
-          </Link>
-
-          <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-1">
+          {/* 品牌 logo/名已按用户指示移除;品牌只在窗口标题与 document.title */}
+          <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 pt-3">
             <NavItem to="/" icon={LayoutDashboard} label="总览" active={root === ''} />
 
             {/* 题库组:官方分类 + 我的题库;待审数挂我的题库(待审的题本质是进我库的候选) */}

@@ -12,7 +12,6 @@ import { PageHeader } from '@/components/page-header';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,
 } from '@/components/ui/dialog';
-import { AddQuestionDialog } from '@/components/add-question-dialog';
 
 // 待审核(ADR-10 草稿区):AI 出的题先进 pending,在这里人工过目,
 // 通过(approved)才进「我的题库」聚合刷题;拒绝 = 永久删除,需确认(与删题同款防线)。
@@ -24,7 +23,6 @@ export function DraftsPage() {
   const [busy, setBusy] = useState<string | null>(null);
   // 拒绝确认(拒绝 = 删除,不可恢复)
   const [confirmReject, setConfirmReject] = useState<MyQuestion | null>(null);
-  const [addOpen, setAddOpen] = useState(false);
 
   useEffect(() => subscribeMyLib(() => setVersion((v) => v + 1)), []);
 
@@ -84,9 +82,11 @@ export function DraftsPage() {
     <div className="mx-auto max-w-3xl space-y-6" data-version={version}>
       <div className="flex flex-wrap items-end justify-between gap-2">
         <PageHeader title="待审核" subtitle={pending.length > 0 ? `${pending.length} 题待审核` : undefined} />
-        <Button size="sm" variant="outline" className="mb-1" onClick={() => setAddOpen(true)}>
-          <Plus className="size-3.5" aria-hidden />
-          添加题目
+        <Button size="sm" variant="outline" className="mb-1" asChild>
+          <Link to="/add">
+            <Plus className="size-3.5" aria-hidden />
+            添加题目
+          </Link>
         </Button>
       </div>
 
@@ -99,9 +99,11 @@ export function DraftsPage() {
               AI 出的题先进这里,你逐题通过后才进学习队列。
             </div>
             <div>
-              <Button size="sm" variant="outline" onClick={() => setAddOpen(true)}>
-                <Plus className="size-3.5" aria-hidden />
-                添加题目
+              <Button size="sm" variant="outline" asChild>
+                <Link to="/add">
+                  <Plus className="size-3.5" aria-hidden />
+                  添加题目
+                </Link>
               </Button>
             </div>
           </CardContent>
@@ -188,7 +190,6 @@ export function DraftsPage() {
         </div>
       )}
 
-      <AddQuestionDialog open={addOpen} onOpenChange={setAddOpen} />
 
       {/* 拒绝 = 永久删除:确认(审计 C2,与删题/清空进度同款防线) */}
       <Dialog open={!!confirmReject} onOpenChange={(o) => !o && setConfirmReject(null)}>
