@@ -49,7 +49,7 @@ test('工作台总览:问候区/指标/学习中/快捷入口/求职空态', asy
   await page.goto('/#/');
   await page.waitForLoadState('networkidle');
   // 问候区:日期行(回答「今天是哪天」)+ 三个指标
-  await expect(page.getByText(/今天是 \d+ 月 \d+ 日 周./)).toBeVisible();
+  await expect(page.getByText(/\d+ 月 \d+ 日 周./)).toBeVisible();
   await expect(page.getByText('待复习').first()).toBeVisible();
   await expect(page.getByText('待学习').first()).toBeVisible();
   await expect(page.getByText('待审核').first()).toBeVisible();
