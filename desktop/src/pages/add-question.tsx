@@ -14,9 +14,7 @@ import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // 添加题目页(2026-09-03,弃弹窗改独立路由 /add):三种方式——手动(直接 approved,
 // 人写即人审)/ AI 生成 / 按 JD 生成(后两者先进待审核,ADR-10)。
@@ -291,13 +289,13 @@ export function AddQuestionPage() {
   const [params] = useSearchParams();
   const jdParam = params.get('jd');
   const fixedJd = jdParam ? getJds().find((j) => String(j.id) === jdParam) ?? null : null;
-  const [tab, setTab] = useState<AddQuestionTab>(fixedJd ? 'jd' : 'manual');
   const [jdPick, setJdPick] = useState<Jd | null>(fixedJd);
+  const jdSectionRef = useRef<HTMLDivElement | null>(null);
 
-  // JD 深链参数变化时同步(同页换 JD 捷径目标)
+  // JD 深链:同步选中并滚动到「按 JD 生成」段
   useEffect(() => {
-    setTab(fixedJd ? 'jd' : 'manual');
     setJdPick(fixedJd);
+    if (fixedJd) jdSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [fixedJd]);
 
   const goBack = () => {
@@ -306,7 +304,7 @@ export function AddQuestionPage() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-2xl space-y-10">
       <div className="flex items-end justify-between gap-2">
         <PageHeader
           title={fixedJd ? `按 JD 生成题目 · ${fixedJd.title.trim() || '(未填标题)'}` : '添加题目'}
@@ -315,38 +313,37 @@ export function AddQuestionPage() {
         <Button variant="outline" size="sm" className="mb-1" onClick={goBack}>返回</Button>
       </div>
 
-      {fixedJd ? (
-        <Card>
-          <CardContent className="p-5">
-            <GenerateForm jd={fixedJd} onCancel={goBack} />
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent className="p-5">
-            <Tabs value={tab} onValueChange={(v) => setTab(v as AddQuestionTab)}>
-              <TabsList>
-                <TabsTrigger value="manual">手动</TabsTrigger>
-                <TabsTrigger value="ai">AI 生成</TabsTrigger>
-                <TabsTrigger value="jd">按 JD 生成</TabsTrigger>
-              </TabsList>
-              <TabsContent value="manual" className="pt-4">
-                <ManualAddForm onSaved={(id) => {
-                  toast.success('已加入我的题库', { description: id });
-                  navigate('/my/browse');
-                }} />
-              </TabsContent>
-              <TabsContent value="ai" className="pt-4">
-                <GenerateForm jd={null} onCancel={goBack} />
-              </TabsContent>
-              <TabsContent value="jd" className="space-y-4 pt-4">
-                <JdPicker value={jdPick} onChange={setJdPick} />
-                {jdPick && <GenerateForm jd={jdPick} onCancel={goBack} />}
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      )}
+      <section data-add-section="manual">
+        <h2 className="text-base font-semibold text-foreground">手动写题</h2>
+        <p className="mt-1 text-sm text-muted-foreground">人写即人审,保存直接进我的题库。</p>
+        <div className="mt-4">
+          <ManualAddForm onSaved={(id) => {
+            toast.success('已加入我的题库', { description: id });
+            navigate('/my/browse');
+          }} />
+        </div>
+      </section>
+
+      <div className="border-t border-border" />
+
+      <section data-add-section="ai">
+        <h2 className="text-base font-semibold text-foreground">AI 生成</h2>
+        <p className="mt-1 text-sm text-muted-foreground">按知识点出一批题,先进待审核。</p>
+        <div className="mt-4">
+          <GenerateForm jd={null} onCancel={goBack} />
+        </div>
+      </section>
+
+      <div className="border-t border-border" />
+
+      <section data-add-section="jd" ref={jdSectionRef}>
+        <h2 className="text-base font-semibold text-foreground">按 JD 生成</h2>
+        <p className="mt-1 text-sm text-muted-foreground">对着目标 JD 的技术要求出题,先进待审核。</p>
+        <div className="mt-4 space-y-4">
+          <JdPicker value={jdPick} onChange={setJdPick} />
+          {jdPick && <GenerateForm jd={jdPick} onCancel={goBack} />}
+        </div>
+      </section>
     </div>
   );
 }
