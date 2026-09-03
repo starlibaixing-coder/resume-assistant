@@ -77,22 +77,22 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByText('LLM 配置已保存').first()).toBeVisible();
 });
 
-test('AI 生成弹窗:生成 → 提交审核 → 通过 → 我的题库可见 → 可开始学习', async ({ page }) => {
-  // 1) 我的题库页「添加题目」→ 切「AI 生成」页签,填知识点生成
+test('AI 生成:生成 → 提交审核 → 通过 → 我的题库可见 → 可开始学习', async ({ page }) => {
+  // 1) 我的题库页「添加题目」进 /add,切「AI 生成」页签,填知识点生成
   await page.goto('/#/my');
-  await page.getByRole('button', { name: '添加题目' }).first().click();
-  const dlg = page.getByRole('dialog');
-  await dlg.getByRole('tab', { name: 'AI 生成' }).click();
-  await dlg.getByPlaceholder(/React Hooks/).fill('React Hooks 深入');
-  await dlg.getByRole('button', { name: '生成', exact: true }).click();
+  await page.getByRole('link', { name: '添加题目' }).first().click();
+  await expect(page.getByRole('heading', { name: '添加题目' })).toBeVisible();
+  await page.getByRole('tab', { name: 'AI 生成' }).click();
+  await page.getByPlaceholder(/React Hooks/).fill('React Hooks 深入');
+  await page.getByRole('button', { name: '生成', exact: true }).click();
 
   // 2) 预览出现(mock 返回 2 题),展开一题看答案
-  await expect(dlg.getByText('LLM 判断出 2 道')).toBeVisible({ timeout: 10_000 });
-  await dlg.getByText('useEffect 的清理函数在哪些时机执行?').click();
-  await expect(dlg.getByText('参考答案要点')).toBeVisible();
+  await expect(page.getByText('LLM 判断出 2 道题')).toBeVisible({ timeout: 10_000 });
+  await page.getByText('useEffect 的清理函数在哪些时机执行?').click();
+  await expect(page.getByText('参考答案要点')).toBeVisible();
 
   // 3) 提交审核(自动跳 #/drafts),批次名 = 知识点
-  await dlg.getByRole('button', { name: /提交审核/ }).click();
+  await page.getByRole('button', { name: /提交审核/ }).click();
   await expect(page.getByText(/批次 01 · React Hooks 深入/)).toBeVisible();
   await expect(page.getByText(/2 题待审/)).toBeVisible();
 
@@ -119,13 +119,12 @@ test('AI 生成弹窗:生成 → 提交审核 → 通过 → 我的题库可见 
 
 test('待审核:逐题拒绝不进我的题库', async ({ page }) => {
   await page.goto('/#/my');
-  await page.getByRole('button', { name: '添加题目' }).first().click();
-  const dlg = page.getByRole('dialog');
-  await dlg.getByRole('tab', { name: 'AI 生成' }).click();
-  await dlg.getByPlaceholder(/React Hooks/).fill('Event Loop');
-  await dlg.getByRole('button', { name: '生成', exact: true }).click();
-  await expect(dlg.getByText('LLM 判断出 2 道')).toBeVisible({ timeout: 10_000 });
-  await dlg.getByRole('button', { name: /提交审核/ }).click();
+  await page.getByRole('link', { name: '添加题目' }).first().click();
+  await page.getByRole('tab', { name: 'AI 生成' }).click();
+  await page.getByPlaceholder(/React Hooks/).fill('Event Loop');
+  await page.getByRole('button', { name: '生成', exact: true }).click();
+  await expect(page.getByText('LLM 判断出 2 道题')).toBeVisible({ timeout: 10_000 });
+  await page.getByRole('button', { name: /提交审核/ }).click();
   await expect(page.getByText(/2 题待审/)).toBeVisible();
 
   // 展开第一题拒绝(拒绝 = 删除,需确认)
@@ -153,13 +152,14 @@ test('JD 管理:新增 JD → 行内「按 JD 生成」弹窗 → 提交审核(�
   // 2) JD 列表出现该条;行内「按 JD 生成题目」开弹窗(jd 模式,标题带 JD 名)
   await expect(page.getByText('AI 应用工程师').first()).toBeVisible();
   await page.getByRole('button', { name: /按 JD 生成题目/ }).click();
-  const dlg = page.getByRole('dialog');
-  await expect(dlg.getByText(/按 JD 生成题目 · AI 应用工程师/)).toBeVisible();
+  // 深链 /add?jd=<id>:锁定按 JD 模式
+  await expect(page).toHaveURL(/add\?jd=/);
+  await expect(page.getByRole('heading', { name: /按 JD 生成题目 · AI 应用工程师/ })).toBeVisible();
 
   // 3) 定向生成(mock)并提交审核:批次名带 JD定向 · 公司
-  await dlg.getByRole('button', { name: '生成', exact: true }).click();
-  await expect(dlg.getByText('LLM 判断出 2 道')).toBeVisible({ timeout: 10_000 });
-  await dlg.getByRole('button', { name: /提交审核/ }).click();
+  await page.getByRole('button', { name: '生成', exact: true }).click();
+  await expect(page.getByText('LLM 判断出 2 道题')).toBeVisible({ timeout: 10_000 });
+  await page.getByRole('button', { name: /提交审核/ }).click();
   await expect(page.getByText(/批次 01 · JD定向 · 示例公司/)).toBeVisible();
 
   // 4) 通过后来源徽标 = 按 JD

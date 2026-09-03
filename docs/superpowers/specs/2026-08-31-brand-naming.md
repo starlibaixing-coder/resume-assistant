@@ -7,7 +7,7 @@
 
 ### 产品名:CommitCareer
 
-四处统一:窗口标题(tauri.conf `windows[0].title`)、productName、侧栏品牌、动态 `document.title`(跟随路由 `页面 · CommitCareer`,实现于 app-shell)。bundle identifier `com.resume-assistant.desktop` 不变(日志路径/数据目录不受影响)。
+四处统一(2026-09-03 修订为三处):窗口标题(tauri.conf `windows[0].title`)、productName、动态 `document.title`(跟随路由 `页面 · CommitCareer`,实现于 app-shell)。**侧栏 logo 与品牌名已按用户指示移除**——品牌不再常驻界面。bundle identifier `com.resume-assistant.desktop` 不变(日志路径/数据目录不受影响)。
 
 ### App 图标
 

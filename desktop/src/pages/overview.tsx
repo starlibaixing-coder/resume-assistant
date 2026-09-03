@@ -13,12 +13,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AddQuestionDialog } from '@/components/add-question-dialog';
 
 // 总览 = 工作台(2026-09-03,对照 Ant Design Pro Workplace,方案经 HTML mock 确认):
 // 问候区(时段问候 + 日期/累计学习 + 右侧三个指标)→ 左主栏(「学习中」分类卡 +
 // 「最近动态」本地推导)→ 右侧栏(「快捷入口」零计数不出现 + 「求职」状态,空态一个动词)。
-// 术语按 specs/2026-09-02-terminology.md(待复习/待学习/待审核/学习中);出题统一走「添加题目」弹窗。
+// 术语按 specs/2026-09-02-terminology.md(待复习/待学习/待审核/学习中);出题统一走「添加题目」页(/add)。
 
 interface CatEntry {
   slug: string;
@@ -58,6 +57,56 @@ function pickCat(list: CatEntry[]): CatEntry | null {
   return [...list].sort((a, b) => lastActiveOf(b.slug) - lastActiveOf(a.slug))[0];
 }
 
+// 分类卡(学习中/未开始两面板共用):空我的题库走虚线卡,其余带进度条与状态数字
+function renderCatCard(e: CatEntry) {
+  const pct = e.total ? Math.round((e.learned / e.total) * 100) : 0;
+  const empty = e.isMy && e.total === 0;
+  if (empty) {
+    return (
+      <Link key={e.slug} to={`/${e.slug}`} className="group cursor-pointer">
+        <Card className="h-full border-dashed bg-card/50 transition-colors hover:border-primary">
+          <CardContent className="flex h-full flex-col gap-2.5 p-4">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-base font-semibold">{e.name}</span>
+              <span className="font-mono text-xs text-muted-foreground">0/0</span>
+            </div>
+            <div className="text-xs text-muted-foreground">暂无题目</div>
+            <span className="mt-auto flex items-center text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">
+              进入 <ChevronRight className="h-3 w-3" />
+            </span>
+          </CardContent>
+        </Card>
+      </Link>
+    );
+  }
+  return (
+    <Link key={e.slug} to={`/${e.slug}`} className="group cursor-pointer">
+      <Card className="h-full bg-background transition-colors hover:border-primary">
+        <CardContent className="flex h-full flex-col gap-2.5 p-4">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-base font-semibold">{e.name}</span>
+            <span className="font-mono text-xs text-muted-foreground">
+              {e.learned}/{e.total}
+            </span>
+          </div>
+          <Progress value={pct} className="h-1.5 ring-1 ring-border" />
+          <div className="flex items-center justify-between">
+            <div className="flex gap-2 text-xs">
+              {e.dueToday > 0 && <span className="text-warning">待复习 {e.dueToday}</span>}
+              {e.remaining > 0 && <span className="text-muted-foreground">待学习 {e.remaining}</span>}
+              {e.dueToday === 0 && e.remaining === 0 && <span className="text-success">已清空</span>}
+              {e.isMy && <span className="text-muted-foreground">· 我的题库</span>}
+            </div>
+            <span className="flex items-center text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">
+              进入 <ChevronRight className="h-3 w-3" />
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
 function HeroMetric({ label, value, tone, to }: {
   label: string;
   value: number;
@@ -86,7 +135,7 @@ function ActivityRow({ item }: { item: Activity }) {
     return (
       <Link to={`/${item.categorySlug}`} className="flex items-center gap-2.5 border-b border-border/60 py-2 text-sm transition-colors last:border-0 hover:bg-accent/50">
         <span className="size-1.5 flex-none rounded-full bg-primary" aria-hidden />
-        <span className="flex-1">学习了 <b className="font-semibold text-foreground">{item.categoryName}</b> {item.count} 道{item.masteredCount > 0 && <span className="text-muted-foreground"> · 掌握 {item.masteredCount} 道</span>}</span>
+        <span className="flex-1">学习了 <b className="font-semibold text-foreground">{item.categoryName}</b> {item.count} 道题{item.masteredCount > 0 && <span className="text-muted-foreground"> · 掌握 {item.masteredCount} 道</span>}</span>
         {time}
       </Link>
     );
@@ -95,7 +144,7 @@ function ActivityRow({ item }: { item: Activity }) {
     return (
       <Link to="/drafts" className="flex items-center gap-2.5 border-b border-border/60 py-2 text-sm transition-colors last:border-0 hover:bg-accent/50">
         <span className="size-1.5 flex-none rounded-full bg-primary" aria-hidden />
-        <span className="flex-1">生成了 <b className="font-semibold text-foreground">{item.moduleName}</b> {item.count} 道，待审核</span>
+        <span className="flex-1">生成了 <b className="font-semibold text-foreground">{item.moduleName}</b> {item.count} 道题，待审核</span>
         {time}
       </Link>
     );
@@ -104,7 +153,7 @@ function ActivityRow({ item }: { item: Activity }) {
     return (
       <Link to="/my" className="flex items-center gap-2.5 border-b border-border/60 py-2 text-sm transition-colors last:border-0 hover:bg-accent/50">
         <span className="size-1.5 flex-none rounded-full bg-primary" aria-hidden />
-        <span className="flex-1">通过了生成的 <b className="font-semibold text-foreground">{item.moduleName}</b> {item.count} 道，已入我的题库</span>
+        <span className="flex-1">通过了生成的 <b className="font-semibold text-foreground">{item.moduleName}</b> {item.count} 道题，已入我的题库</span>
         {time}
       </Link>
     );
@@ -133,7 +182,6 @@ export function OverviewPage() {
   const pendingCount = getPendingCount();
   const jds = getJds();
   const profile = getProfile();
-  const [addOpen, setAddOpen] = useState(false);
 
   const entries = useMemo(() => {
     const all = data?.questions ?? [];
@@ -158,6 +206,9 @@ export function OverviewPage() {
   const totalDue = entries.reduce((n, e) => n + e.dueToday, 0);
   const totalRemaining = entries.reduce((n, e) => n + e.remaining, 0);
   const learnedTotal = entries.reduce((n, e) => n + e.learned, 0);
+  // 「学习中」= 有学习记录的分类;从未学过的(含空我的题库)归「未开始」,不冒充学习进度
+  const learning = entries.filter((e) => e.learned > 0);
+  const notStarted = entries.filter((e) => e.learned === 0);
   const dueCat = pickCat(entries.filter((e) => e.dueToday > 0));
   const newCat = pickCat(entries.filter((e) => e.remaining > 0));
   const activity = useMemo(
@@ -202,7 +253,7 @@ export function OverviewPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-5">
+    <div className="mx-auto max-w-6xl space-y-8">
       {/* 问候区 */}
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
         <div className="flex items-center gap-3.5">
@@ -210,7 +261,7 @@ export function OverviewPage() {
           <div>
             <h1 className="text-xl font-bold tracking-tight">{greetingOf(now.getHours())}，祝你离 offer 近一步。</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              今天是 {dateLabel(now)} · {learnedTotal > 0 ? `已累计学习 ${learnedTotal} 道` : '还没有学习记录'}
+              今天是 {dateLabel(now)} · {learnedTotal > 0 ? `已累计学习 ${learnedTotal} 道题` : '还没有学习记录'}
             </p>
           </div>
         </div>
@@ -223,68 +274,31 @@ export function OverviewPage() {
         </div>
       </div>
 
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
         {/* 左主栏 */}
-        <div className="space-y-4">
-          <section className="rounded-lg border border-border bg-card p-4">
-            <h2 className="text-sm font-semibold text-foreground">学习中</h2>
-            <div className="mt-3 grid content-start gap-3 sm:grid-cols-2">
-              {entries.map((e) => {
-                const pct = e.total ? Math.round((e.learned / e.total) * 100) : 0;
-                const empty = e.isMy && e.total === 0;
-                if (empty) {
-                  // 空的我的题库:与非空卡同一模式(整卡可点 + hover「进入」),文案中性
-                  return (
-                    <Link key={e.slug} to={`/${e.slug}`} className="group cursor-pointer">
-                      <Card className="h-full border-dashed bg-card/50 transition-colors hover:border-primary">
-                        <CardContent className="flex h-full flex-col gap-2.5 p-4">
-                          <div className="flex items-baseline justify-between gap-2">
-                            <span className="text-base font-semibold">{e.name}</span>
-                            <span className="font-mono text-xs text-muted-foreground">0/0</span>
-                          </div>
-                          <div className="text-xs text-muted-foreground">暂无题目</div>
-                          <span className="mt-auto flex items-center text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">
-                            进入 <ChevronRight className="h-3 w-3" />
-                          </span>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  );
-                }
-                return (
-                  <Link key={e.slug} to={`/${e.slug}`} className="group cursor-pointer">
-                    <Card className="h-full bg-background transition-colors hover:border-primary">
-                      <CardContent className="flex h-full flex-col gap-2.5 p-4">
-                        <div className="flex items-baseline justify-between gap-2">
-                          <span className="text-base font-semibold">{e.name}</span>
-                          <span className="font-mono text-xs text-muted-foreground">
-                            {e.learned}/{e.total}
-                          </span>
-                        </div>
-                        <Progress value={pct} className="h-1.5 ring-1 ring-border" />
-                        <div className="flex items-center justify-between">
-                          <div className="flex gap-2 text-xs">
-                            {e.dueToday > 0 && <span className="text-warning">待复习 {e.dueToday}</span>}
-                            {e.remaining > 0 && <span className="text-muted-foreground">待学习 {e.remaining}</span>}
-                            {e.dueToday === 0 && e.remaining === 0 && <span className="text-success">已清空</span>}
-                            {e.isMy && <span className="text-muted-foreground">· {myCategory.modules.length} 个模块</span>}
-                          </div>
-                          <span className="flex items-center text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">
-                            进入 <ChevronRight className="h-3 w-3" />
-                          </span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })}
+        <div className="space-y-6">
+          {learning.length > 0 && (
+          <section className="rounded-lg border border-border bg-card p-5">
+            <h2 className="text-base font-semibold text-foreground">学习中</h2>
+            <div className="mt-4 grid content-start gap-3 sm:grid-cols-2">
+              {learning.map((e) => renderCatCard(e))}
             </div>
           </section>
+          )}
 
-          <section className="rounded-lg border border-border bg-card p-4">
-            <h2 className="text-sm font-semibold text-foreground">最近动态</h2>
+          {notStarted.length > 0 && (
+            <section className="rounded-lg border border-border bg-card p-5">
+              <h2 className="text-base font-semibold text-foreground">未开始</h2>
+              <div className="mt-4 grid content-start gap-3 sm:grid-cols-2">
+                {notStarted.map((e) => renderCatCard(e))}
+              </div>
+            </section>
+          )}
+
+          <section className="rounded-lg border border-border bg-card p-5">
+            <h2 className="text-base font-semibold text-foreground">最近动态</h2>
             {activity.length === 0 ? (
-              <p className="mt-3 text-sm text-muted-foreground">还没有动态。从「学习中」挑一个分类开始，或用快捷入口出题。</p>
+              <p className="mt-3 text-sm text-muted-foreground">还没有动态。从「未开始」挑一个分类开始，或用快捷入口出题。</p>
             ) : (
               <div className="mt-1">
                 {activity.map((item, i) => <ActivityRow key={`${item.kind}-${item.time}-${i}`} item={item} />)}
@@ -294,10 +308,10 @@ export function OverviewPage() {
         </div>
 
         {/* 右侧栏 */}
-        <div className="space-y-4">
-          <section className="rounded-lg border border-border bg-card p-4">
-            <h2 className="text-sm font-semibold text-foreground">快捷入口</h2>
-            <div className="mt-3 flex flex-col gap-2">
+        <div className="space-y-6">
+          <section className="rounded-lg border border-border bg-card p-5">
+            <h2 className="text-base font-semibold text-foreground">快捷入口</h2>
+            <div className="mt-4 flex flex-col gap-2.5">
               {dueCat && (
                 <Button asChild className="justify-between">
                   <Link to={`/${dueCat.slug}/quiz?focus=due`}>
@@ -322,16 +336,18 @@ export function OverviewPage() {
                   </Link>
                 </Button>
               )}
-              <Button variant={dueCat || newCat ? 'outline' : 'default'} className="justify-between" onClick={() => setAddOpen(true)}>
-                添加题目
-                <ChevronRight className="h-3.5 w-3.5 opacity-60" aria-hidden />
+              <Button asChild variant={dueCat || newCat ? 'outline' : 'default'} className="justify-between">
+                <Link to="/add">
+                  添加题目
+                  <ChevronRight className="h-3.5 w-3.5 opacity-60" aria-hidden />
+                </Link>
               </Button>
             </div>
           </section>
 
-          <section className="rounded-lg border border-border bg-card p-4">
-            <h2 className="text-sm font-semibold text-foreground">求职</h2>
-            <div className="mt-1">
+          <section className="rounded-lg border border-border bg-card p-5">
+            <h2 className="text-base font-semibold text-foreground">求职</h2>
+            <div className="mt-2">
               <Link to="/profile" className="flex items-center justify-between border-b border-border/60 py-2.5 text-sm transition-colors last:border-0 hover:bg-accent/50">
                 <span className="text-muted-foreground">JD</span>
                 {jds.length > 0
@@ -349,7 +365,6 @@ export function OverviewPage() {
         </div>
       </div>
 
-      <AddQuestionDialog open={addOpen} onOpenChange={setAddOpen} />
     </div>
   );
 }

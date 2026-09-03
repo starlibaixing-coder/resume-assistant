@@ -14,7 +14,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Progress } from '@/components/ui/progress';
 import { PageHeader } from '@/components/page-header';
 import { QuestionEditDialog, DeleteQuestionDialog } from '@/components/question-edit-dialog';
-import { AddQuestionDialog } from '@/components/add-question-dialog';
 
 // 题目列表 = 题库后台:一个列表 + 一条筛选栏(三个维度可组合,下拉而非按钮平铺)。
 
@@ -93,7 +92,6 @@ export function BrowsePage({ category }: { category: string }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copyingId, setCopyingId] = useState<string | null>(null);
-  const [addOpen, setAddOpen] = useState(false);
   const isMy = category === MY_CATEGORY_SLUG;
 
   // copiedSourceIds 随 data 重算(copyOfficial notify → useQuestions setData)
@@ -137,15 +135,16 @@ export function BrowsePage({ category }: { category: string }) {
             <div className="text-foreground">我的题库还没有题</div>
             <div className="text-sm text-muted-foreground">手动写一道,或让 AI 生成(先进待审核,通过后出现在这里)。</div>
             <div className="flex justify-center gap-2 pt-1">
-              <Button size="sm" onClick={() => setAddOpen(true)}>
-                <Plus className="size-3.5" aria-hidden />
-                添加题目
+              <Button size="sm" asChild>
+                <Link to="/add">
+                  <Plus className="size-3.5" aria-hidden />
+                  添加题目
+                </Link>
               </Button>
             </div>
           </CardContent>
         </Card>
-        <AddQuestionDialog open={addOpen} onOpenChange={setAddOpen} />
-      </div>
+        </div>
     );
   }
 
@@ -206,9 +205,11 @@ export function BrowsePage({ category }: { category: string }) {
         />
         {isMy && (
           <div className="flex shrink-0 gap-2">
-            <Button size="sm" variant="outline" onClick={() => setAddOpen(true)}>
-              <Plus className="size-3.5" aria-hidden />
-              添加题目
+            <Button size="sm" variant="outline" asChild>
+              <Link to="/add">
+                <Plus className="size-3.5" aria-hidden />
+                添加题目
+              </Link>
             </Button>
           </div>
         )}
@@ -354,7 +355,6 @@ export function BrowsePage({ category }: { category: string }) {
         open={!!editingId}
         onOpenChange={(o) => !o && setEditingId(null)}
       />
-      <AddQuestionDialog open={addOpen} onOpenChange={setAddOpen} />
       <DeleteQuestionDialog
         question={deletingId ? getMyQuestion(deletingId) : null}
         open={!!deletingId}

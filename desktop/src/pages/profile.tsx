@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { Inbox, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { getProfile, saveProfile, type JobProfile } from '@/lib/profile';
@@ -17,14 +17,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { PageHeader } from '@/components/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AddQuestionDialog } from '@/components/add-question-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,
 } from '@/components/ui/dialog';
 
 // 求职中枢(ADR-4):JD 管理 + 简历管理两个 tab,侧栏两个入口按 ?tab= 预选(2026-09-02)。
-// 「按 JD 生成题目」从 JD 条目行内发起(AddQuestionDialog 锁定按 JD 页签,来源标 'jd');简历多版本留二期。
+// 「按 JD 生成题目」从 JD 条目行内发起(深链 /add?jd=<id>,锁定按 JD 模式,来源标 'jd');简历多版本留二期。
 
 const charCount = (s: string) => (s ? `${s.length} 字` : '未填');
 
@@ -66,6 +65,7 @@ export function ProfilePage() {
 // ── JD 管理:列表(最近使用在前)+ 新增/编辑弹窗 + 行内定向生题深链 ──
 
 function JdManager() {
+  const navigate = useNavigate();
   const [, bump] = useState(0);
   useEffect(() => subscribeJds(() => bump((v) => v + 1)), []);
   const jds = getJds();
@@ -73,7 +73,6 @@ function JdManager() {
   const [editing, setEditing] = useState<Jd | null>(null); // null = 关闭;有值为编辑
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<Jd | null>(null);
-  const [genJd, setGenJd] = useState<Jd | null>(null); // 按 JD 生成弹窗的目标 JD
 
   return (
     <>
@@ -127,7 +126,7 @@ function JdManager() {
                         variant="ghost"
                         className="h-7 w-7 text-muted-foreground hover:text-primary"
                         aria-label={`按 JD 生成题目:${j.title}`}
-                        onClick={() => setGenJd(j)}
+                        onClick={() => navigate(`/add?jd=${j.id}`)}
                       >
                         <Sparkles aria-hidden />
                       </Button>
@@ -179,7 +178,6 @@ function JdManager() {
       />
 
       {/* 按 JD 生成题目:弹窗承载,产物进待审核,来源标 'jd' */}
-      <AddQuestionDialog open={genJd != null} onOpenChange={(o) => !o && setGenJd(null)} jd={genJd} />
 
       <Dialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
         <DialogContent>
