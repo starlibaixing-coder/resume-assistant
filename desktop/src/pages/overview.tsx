@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import {
-  Bot, BookOpen, CheckCircle2, ChevronRight, CircleDashed, Code2, Inbox,
+  Bot, BookOpen, CheckCircle2, ChevronRight, CircleDashed, Code2, History, Inbox,
   Plus, Sparkles, Target, FileText, Zap, type LucideIcon,
 } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
@@ -79,6 +79,31 @@ function SectionHead({ icon: Icon, title, right }: { icon: LucideIcon; title: st
       <h2 className="text-sm font-semibold text-foreground">{title}</h2>
       <span className="h-px flex-1 bg-border/70" aria-hidden />
       {right}
+    </div>
+  );
+}
+
+// 问候区指标块:标签定高一字排开、数字 leading-none——三块同构,垂直居中不失配
+function HeroMetric({ label, value, tone, to, separated = false }: {
+  label: string;
+  value: number;
+  tone?: 'warning';
+  to?: string;
+  separated?: boolean;
+}) {
+  const numColor = tone === 'warning' && value > 0 ? 'text-warning' : value > 0 ? 'text-foreground' : 'text-foreground/40';
+  const num = to
+    ? (
+      <Link to={to} className={`mt-1.5 inline-flex items-center gap-0.5 text-3xl font-bold leading-none tabular-nums ${numColor} transition-opacity hover:opacity-80`}>
+        {value}
+        <ChevronRight className="size-5" aria-hidden />
+      </Link>
+    )
+    : <div className={`mt-1.5 text-3xl font-bold leading-none tabular-nums ${numColor}`}>{value}</div>;
+  return (
+    <div className={`flex flex-col items-end justify-center text-right ${separated ? 'ml-8 border-l border-border pl-8' : ''}`}>
+      <div className="flex h-4 items-center text-xs text-muted-foreground">{label}</div>
+      {num}
     </div>
   );
 }
@@ -230,26 +255,12 @@ export function OverviewPage() {
               </h1>
             </div>
           </div>
-          <div className="flex text-right">
-            <div className="text-right">
-              <div className="text-xs text-muted-foreground">待复习</div>
-              <div className={`mt-1.5 text-3xl font-bold leading-none tabular-nums ${totalDue > 0 ? 'text-warning' : 'text-foreground/40'}`}>{totalDue}</div>
-            </div>
-            <div className="ml-8 border-l border-border pl-8 text-right">
-              <div className="text-xs text-muted-foreground">待学习</div>
-              <div className="mt-1.5 text-3xl font-bold leading-none tabular-nums">{totalRemaining}</div>
-            </div>
-            <div className="ml-8 border-l border-border pl-8 text-right">
-              <div className="text-xs text-muted-foreground">待审核</div>
-              {pendingCount > 0 ? (
-                <Link to="/drafts" className="mt-1.5 inline-flex items-center gap-0.5 text-3xl font-bold leading-none tabular-nums text-warning transition-opacity hover:opacity-80">
-                  {pendingCount}
-                  <ChevronRight className="size-5" aria-hidden />
-                </Link>
-              ) : (
-                <div className="mt-1.5 text-3xl font-bold leading-none tabular-nums text-foreground/40">{pendingCount}</div>
-              )}
-            </div>
+          <div className="flex items-stretch text-right">
+            <HeroMetric label="待复习" value={totalDue} tone={totalDue > 0 ? 'warning' : undefined} />
+            <HeroMetric label="待学习" value={totalRemaining} separated />
+            {pendingCount > 0
+              ? <HeroMetric label="待审核" value={pendingCount} tone="warning" to="/drafts" separated />
+              : <HeroMetric label="待审核" value={0} separated />}
           </div>
         </div>
       </div>
@@ -276,7 +287,7 @@ export function OverviewPage() {
           )}
 
           <section>
-            <SectionHead icon={Inbox} title="最近动态" />
+            <SectionHead icon={History} title="最近动态" />
             {activity.length === 0 ? (
               <div className="mt-4 flex items-center gap-3 rounded-lg border border-dashed border-border/70 px-4 py-5 text-sm text-muted-foreground">
                 <Inbox className="size-5 text-muted-foreground/50" aria-hidden />
@@ -302,7 +313,7 @@ export function OverviewPage() {
                       <BookOpen className="size-4" aria-hidden />
                       开始复习
                     </span>
-                    <span className="rounded-full bg-primary-foreground/20 px-2 py-0.5 text-xs font-semibold tabular-nums">{totalDue}</span>
+                    <span className="rounded-full bg-primary-foreground/20 px-2 py-0.5 text-xs font-semibold tabular-nums">{dueCat.dueToday}</span>
                   </Link>
                 </Button>
               )}
@@ -313,7 +324,7 @@ export function OverviewPage() {
                       <Sparkles className="size-4" aria-hidden />
                       开始学习
                     </span>
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold tabular-nums text-muted-foreground">{totalRemaining}</span>
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold tabular-nums text-muted-foreground">{newCat.remaining}</span>
                   </Link>
                 </Button>
               )}
