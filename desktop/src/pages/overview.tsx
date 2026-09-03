@@ -222,7 +222,9 @@ export function OverviewPage() {
               <Zap className="size-6" />
             </div>
             <div>
-              <div className="text-xs font-medium text-muted-foreground">{dateLabel(now)}</div>
+              <div className="text-xs font-medium text-muted-foreground">
+                今天是 {dateLabel(now)} · {learnedTotal > 0 ? `已累计学习 ${learnedTotal} 道题` : '还没有学习记录'}
+              </div>
               <h1 className="mt-1 text-2xl font-bold tracking-tight">
                 {greetingOf(now.getHours())}，<span className="bg-gradient-to-r from-primary to-warning bg-clip-text text-transparent">祝你离 offer 近一步。</span>
               </h1>
@@ -250,9 +252,6 @@ export function OverviewPage() {
             </div>
           </div>
         </div>
-        {learnedTotal > 0 && (
-          <div className="relative mt-4 text-xs text-muted-foreground">已累计学习 {learnedTotal} 道题</div>
-        )}
       </div>
 
       <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_300px]">
@@ -341,6 +340,7 @@ export function OverviewPage() {
             </div>
 
             <div className="mt-6 border-t border-border pt-4">
+              <div className="px-1 pb-1.5 text-xs font-medium text-muted-foreground/70">求职</div>
               <Link to="/profile" className="group/row flex items-center justify-between rounded-md px-1 py-2 text-sm transition-colors hover:bg-accent/50">
                 <span className="flex items-center gap-2.5 text-muted-foreground">
                   <Target className="size-4 text-muted-foreground/70" aria-hidden />
@@ -403,7 +403,7 @@ function renderCatCard(e: CatEntry) {
   }
   return (
     <Link key={e.slug} to={`/${e.slug}`} className="group cursor-pointer">
-      <Card className="h-full bg-card transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-lg hover:shadow-primary/5">
+      <Card className="h-full bg-card transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-lg hover:shadow-primary/10">
         <CardContent className="flex h-full flex-col gap-3 p-4">
           <div className="flex items-center justify-between gap-2">
             <span className="flex items-center gap-2.5">
@@ -416,7 +416,7 @@ function renderCatCard(e: CatEntry) {
               {e.learned}/{e.total}
             </span>
           </div>
-          <Progress value={pct} className="h-1.5 bg-border/40 ring-0 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-warning" />
+          <Progress value={pct} className="h-1.5 bg-muted ring-0 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-warning" />
           <div className="flex items-center justify-between">
             <div className="flex gap-2 text-xs">
               {e.dueToday > 0 && (
