@@ -77,12 +77,12 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByText('LLM 配置已保存').first()).toBeVisible();
 });
 
-test('AI 生成弹窗:生成 → 提交审核 → 通过 → 我的题库可见 → 可开始刷题', async ({ page }) => {
-  // 1) 我的题库页开「AI 生成题目」弹窗,填知识点生成
+test('AI 生成弹窗:生成 → 提交审核 → 通过 → 我的题库可见 → 可开始学习', async ({ page }) => {
+  // 1) 我的题库页「添加题目」→ 切「AI 生成」页签,填知识点生成
   await page.goto('/#/my');
-  await page.getByRole('button', { name: 'AI 生成题目' }).first().click();
+  await page.getByRole('button', { name: '添加题目' }).first().click();
   const dlg = page.getByRole('dialog');
-  await expect(dlg.getByText('AI 生成题目')).toBeVisible();
+  await dlg.getByRole('tab', { name: 'AI 生成' }).click();
   await dlg.getByPlaceholder(/React Hooks/).fill('React Hooks 深入');
   await dlg.getByRole('button', { name: '生成', exact: true }).click();
 
@@ -119,8 +119,9 @@ test('AI 生成弹窗:生成 → 提交审核 → 通过 → 我的题库可见 
 
 test('待审核:逐题拒绝不进我的题库', async ({ page }) => {
   await page.goto('/#/my');
-  await page.getByRole('button', { name: 'AI 生成题目' }).first().click();
+  await page.getByRole('button', { name: '添加题目' }).first().click();
   const dlg = page.getByRole('dialog');
+  await dlg.getByRole('tab', { name: 'AI 生成' }).click();
   await dlg.getByPlaceholder(/React Hooks/).fill('Event Loop');
   await dlg.getByRole('button', { name: '生成', exact: true }).click();
   await expect(dlg.getByText('LLM 判断出 2 道')).toBeVisible({ timeout: 10_000 });

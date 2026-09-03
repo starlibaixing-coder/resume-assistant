@@ -402,9 +402,9 @@ function RoundDoneState({
       <Card>
         <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
           <CheckCircle2 className="size-10 text-success" aria-hidden />
-          <div className="text-lg font-semibold text-foreground">本轮完成,刷了 {done} 题</div>
+          <div className="text-lg font-semibold text-foreground">本轮完成,学了 {done} 题</div>
           <div className="mt-2 flex flex-col items-center gap-2.5">
-            <Button onClick={onNextRound}>继续刷下一轮</Button>
+            <Button onClick={onNextRound}>继续学下一轮</Button>
             <div className="flex items-center gap-3 text-sm">
               <Button
                 variant="ghost"

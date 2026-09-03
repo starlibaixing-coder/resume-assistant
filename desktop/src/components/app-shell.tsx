@@ -93,7 +93,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     } else if (topTitles[root] != null || root === '') {
       title = topTitles[root] ?? '总览';
     } else if (sub === 'quiz') {
-      title = '刷题';
+      title = '学习';
     } else if (sub === 'browse') {
       title = '题目列表';
     } else {

@@ -133,7 +133,7 @@ export function SettingsPage() {
 
       {/* ── 刷题 ─────────────────────────────────────── */}
       <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-base">刷题</CardTitle></CardHeader>
+        <CardHeader className="pb-3"><CardTitle className="text-base">学习</CardTitle></CardHeader>
         <CardContent className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-muted-foreground">每次学习题量</span>
@@ -308,7 +308,7 @@ export function SettingsPage() {
           <DialogHeader>
             <DialogTitle>{confirm?.kind === 'progress' ? '清空复习进度?' : '清空笔记?'}</DialogTitle>
             <DialogDescription>
-              将删除「{confirm?.name}」的{confirm?.kind === 'progress' ? '全部刷题进度(SM-2 记录)' : '全部笔记'}
+              将删除「{confirm?.name}」的{confirm?.kind === 'progress' ? '全部学习进度(SM-2 记录)' : '全部笔记'}
               ,{confirm?.kind === 'progress' ? '笔记会保留' : '复习进度会保留'}。此操作不可恢复。
             </DialogDescription>
           </DialogHeader>

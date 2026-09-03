@@ -172,16 +172,9 @@ export function QuestionEditDialog({
 // 模块归属:'new' = 新建模块,否则为模块号字符串
 const NEW_MODULE = '__new__';
 
-// 添加题目(手动):直接 approved(人写即人审,ADR-10 只约束 AI 产物),保存即进刷题/SM-2。
-export function QuestionCreateDialog({
-  open,
-  onOpenChange,
-  onCreated,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onCreated?: (id: string) => void;
-}) {
+// 手动加题表单体(2026-09-03 收敛进 AddQuestionDialog 的「手动」页签;人写即人审
+// 直接 approved,ADR-10 只约束 AI 产物)。保存成功后回调 onSaved(id),关闭由宿主管。
+export function ManualAddForm({ onSaved }: { onSaved: (id: string) => void }) {
   const [form, setForm] = useState<QuestionFormState>(EMPTY_FORM);
   const [modules, setModules] = useState<Array<{ id: number; name: string }>>([]);
   const [moduleTarget, setModuleTarget] = useState(NEW_MODULE);
@@ -189,16 +182,10 @@ export function QuestionCreateDialog({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // 打开时重算模块列表(上次创建的模块这次可选)
+  // 挂载即重算模块列表(上次创建的模块这次可选);弹窗关闭会卸载本组件,重开即重置
   useEffect(() => {
-    if (open) {
-      setModules(getMyCategory().modules.map((m) => ({ id: m.id, name: m.name })));
-      setForm(EMPTY_FORM);
-      setModuleTarget(NEW_MODULE);
-      setNewModuleName('');
-      setError(null);
-    }
-  }, [open]);
+    setModules(getMyCategory().modules.map((m) => ({ id: m.id, name: m.name })));
+  }, []);
 
   const handleSave = async () => {
     setSaving(true);
@@ -208,8 +195,7 @@ export function QuestionCreateDialog({
       const created = await addManualQuestion(formToDraft(form), existing
         ? { moduleId: existing.id, moduleName: existing.name }
         : { moduleName: newModuleName });
-      onOpenChange(false);
-      onCreated?.(created.id);
+      onSaved(created.id);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -218,52 +204,42 @@ export function QuestionCreateDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>添加题目</DialogTitle>
-          <DialogDescription>手写的题不经待审核,保存后直接进我的题库与学习队列。</DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-3">
-          <div className="space-y-1.5">
-            <label className="text-xs text-muted-foreground">归属模块</label>
-            <div className="flex items-center gap-2">
-              <Select value={moduleTarget} onValueChange={setModuleTarget}>
-                <SelectTrigger aria-label="归属模块" className="h-9 flex-1 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="max-h-72">
-                  <SelectItem value={NEW_MODULE} className="text-xs">新建模块</SelectItem>
-                  {modules.map((m) => (
-                    <SelectItem key={m.id} value={String(m.id)} className="text-xs">
-                      {String(m.id).padStart(2, '0')} · {m.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {moduleTarget === NEW_MODULE && (
-                <Input
-                  className="flex-1"
-                  value={newModuleName}
-                  onChange={(e) => setNewModuleName(e.target.value)}
-                  placeholder="模块名,如:面试手写"
-                  aria-label="新模块名"
-                />
-              )}
-            </div>
-          </div>
-
-          <QuestionFormFields value={form} onChange={(patch) => setForm((f) => ({ ...f, ...patch }))} />
-          <FormError error={error} />
+    <div className="space-y-3">
+      <div className="space-y-1.5">
+        <label className="text-xs text-muted-foreground">归属模块</label>
+        <div className="flex items-center gap-2">
+          <Select value={moduleTarget} onValueChange={setModuleTarget}>
+            <SelectTrigger aria-label="归属模块" className="h-9 flex-1 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="max-h-72">
+              <SelectItem value={NEW_MODULE} className="text-xs">新建模块</SelectItem>
+              {modules.map((m) => (
+                <SelectItem key={m.id} value={String(m.id)} className="text-xs">
+                  {String(m.id).padStart(2, '0')} · {m.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {moduleTarget === NEW_MODULE && (
+            <Input
+              className="flex-1"
+              value={newModuleName}
+              onChange={(e) => setNewModuleName(e.target.value)}
+              placeholder="模块名,如:面试手写"
+              aria-label="新模块名"
+            />
+          )}
         </div>
+      </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
-          <Button onClick={handleSave} disabled={saving}>{saving ? '保存中…' : '保存'}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <QuestionFormFields value={form} onChange={(patch) => setForm((f) => ({ ...f, ...patch }))} />
+      <FormError error={error} />
+
+      <div className="flex justify-end gap-2 pt-1">
+        <Button onClick={handleSave} disabled={saving}>{saving ? '保存中…' : '保存'}</Button>
+      </div>
+    </div>
   );
 }
 

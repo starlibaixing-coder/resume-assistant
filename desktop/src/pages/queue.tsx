@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { toast } from 'sonner';
-import { CheckCircle2, Plus, Sparkles } from 'lucide-react';
+import { CheckCircle2, Plus } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getReviewQueue, getStats } from '@/lib/schedule';
 import { MY_CATEGORY_SLUG } from '@/lib/mylib';
@@ -10,8 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/page-header';
-import { QuestionCreateDialog } from '@/components/question-edit-dialog';
-import { GenerateDialog } from '@/components/generate-dialog';
+import { AddQuestionDialog } from '@/components/add-question-dialog';
 
 // 题库分类页:标题就是分类名(2026-09-02 IA 重构,不再加"· 刷题队列"后缀)。
 // 两种刷法分开选,不替用户做主:「开始复习」= 待复习(SM-2 到期题),
@@ -21,8 +19,7 @@ import { GenerateDialog } from '@/components/generate-dialog';
 export function QueuePage({ category }: { category: string }) {
   const { data, error, retry } = useQuestions();
   const limit = loadLimit();
-  const [createOpen, setCreateOpen] = useState(false);
-  const [genOpen, setGenOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
 
   const { stats, review } = useMemo(() => {
     if (!data) return { stats: null, review: null };
@@ -61,24 +58,15 @@ export function QueuePage({ category }: { category: string }) {
             <CardContent className="space-y-3 py-16 text-center">
               <div className="text-foreground">我的题库还没有题</div>
               <div className="text-sm text-muted-foreground">手动写一道,或让 AI 生成(先进待审核,通过后出现在这里)。</div>
-              <div className="flex justify-center gap-2 pt-1">
-                <Button size="sm" onClick={() => setCreateOpen(true)}>
+              <div className="flex justify-center pt-1">
+                <Button size="sm" onClick={() => setAddOpen(true)}>
                   <Plus className="size-3.5" aria-hidden />
                   添加题目
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setGenOpen(true)}>
-                  <Sparkles className="size-3.5" aria-hidden />
-                  AI 生成题目
                 </Button>
               </div>
             </CardContent>
           </Card>
-          <QuestionCreateDialog
-            open={createOpen}
-            onOpenChange={setCreateOpen}
-            onCreated={(id) => toast.success('已加入我的题库', { description: id })}
-          />
-          <GenerateDialog open={genOpen} onOpenChange={setGenOpen} />
+          <AddQuestionDialog open={addOpen} onOpenChange={setAddOpen} />
         </div>
       );
     }
@@ -95,15 +83,9 @@ export function QueuePage({ category }: { category: string }) {
       <div className="flex items-center justify-between gap-2">
         <PageHeader title={cat?.name || category} />
         <div className="flex shrink-0 gap-2">
-          {isMy && (
-            <Button size="sm" variant="outline" onClick={() => setCreateOpen(true)}>
-              <Plus className="size-3.5" aria-hidden />
-              添加题目
-            </Button>
-          )}
-          <Button size="sm" variant={isMy ? 'default' : 'outline'} onClick={() => setGenOpen(true)}>
-            <Sparkles className="size-3.5" aria-hidden />
-            AI 生成题目
+          <Button size="sm" variant={isMy ? 'outline' : 'outline'} onClick={() => setAddOpen(true)}>
+            <Plus className="size-3.5" aria-hidden />
+            添加题目
           </Button>
         </div>
       </div>
@@ -122,7 +104,7 @@ export function QueuePage({ category }: { category: string }) {
           </>
         ) : (
           <>
-            {/* 两种刷法并列,用户自己选:复习到期题 or 学新题 */}
+            {/* 两种学法并列,用户自己选:先复习到期题 or 学待学习的题 */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1 rounded-lg border border-border p-3 text-center">
                 <div className={`text-2xl font-bold ${dueCount > 0 ? 'text-warning' : 'text-muted-foreground/60'}`}>{dueCount}</div>
@@ -158,7 +140,7 @@ export function QueuePage({ category }: { category: string }) {
             </div>
 
             <div className="text-center text-xs text-muted-foreground">
-              待复习 = 之前刷过、按记忆曲线(SM-2)今天到期该再看一遍的题;每次学 {limit === 0 ? '全部' : limit} 题(可在设置中调整)
+              待复习 = 之前学过、按记忆曲线(SM-2)今天该再看一遍的题;每次学 {limit === 0 ? '全部' : limit} 题(可在设置中调整)
             </div>
           </>
         )}
@@ -191,12 +173,7 @@ export function QueuePage({ category }: { category: string }) {
         </div>
       </div>
 
-      <QuestionCreateDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onCreated={(id) => toast.success('已加入我的题库', { description: id })}
-      />
-      <GenerateDialog open={genOpen} onOpenChange={setGenOpen} />
+      <AddQuestionDialog open={addOpen} onOpenChange={setAddOpen} />
     </div>
   );
 }
