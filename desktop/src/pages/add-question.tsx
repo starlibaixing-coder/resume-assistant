@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Pencil, Sparkles, Target, type LucideIcon } from 'lucide-react';
 import { generateQuestions, generateJdQuestions, type GeneratedQuestion } from '@/lib/generate';
 import { getProfile } from '@/lib/profile';
 import { getJds, type Jd } from '@/lib/jd';
@@ -314,8 +314,7 @@ export function AddQuestionPage() {
       </div>
 
       <section data-add-section="manual">
-        <h2 className="text-base font-semibold text-foreground">手动写题</h2>
-        <p className="mt-1 text-sm text-muted-foreground">人写即人审,保存直接进我的题库。</p>
+        <SectionHead icon={Pencil} title="手动写题" desc="人写即人审,保存直接进我的题库。" />
         <div className="mt-4">
           <ManualAddForm onSaved={(id) => {
             toast.success('已加入我的题库', { description: id });
@@ -324,26 +323,35 @@ export function AddQuestionPage() {
         </div>
       </section>
 
-      <div className="border-t border-border" />
-
       <section data-add-section="ai">
-        <h2 className="text-base font-semibold text-foreground">AI 生成</h2>
-        <p className="mt-1 text-sm text-muted-foreground">按知识点出一批题,先进待审核。</p>
+        <SectionHead icon={Sparkles} title="AI 生成" desc="按知识点出一批题,先进待审核。" />
         <div className="mt-4">
           <GenerateForm jd={null} onCancel={goBack} />
         </div>
       </section>
 
-      <div className="border-t border-border" />
-
       <section data-add-section="jd" ref={jdSectionRef}>
-        <h2 className="text-base font-semibold text-foreground">按 JD 生成</h2>
-        <p className="mt-1 text-sm text-muted-foreground">对着目标 JD 的技术要求出题,先进待审核。</p>
+        <SectionHead icon={Target} title="按 JD 生成" desc="对着目标 JD 的技术要求出题,先进待审核。" />
         <div className="mt-4 space-y-4">
           <JdPicker value={jdPick} onChange={setJdPick} />
           {jdPick && <GenerateForm jd={jdPick} onCancel={goBack} />}
         </div>
       </section>
+    </div>
+  );
+}
+
+// 小节标题行:图标章 + 标题 + 说明(与总览同一套语言)
+function SectionHead({ icon: Icon, title, desc }: { icon: LucideIcon; title: string; desc: string }) {
+  return (
+    <div>
+      <div className="flex items-center gap-2.5">
+        <span className="flex size-6 flex-none items-center justify-center rounded-md bg-primary/10 text-primary" aria-hidden>
+          <Icon className="size-3.5" />
+        </span>
+        <h2 className="text-base font-semibold text-foreground">{title}</h2>
+      </div>
+      <p className="mt-1 pl-8.5 text-sm text-muted-foreground">{desc}</p>
     </div>
   );
 }
