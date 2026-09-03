@@ -82,9 +82,9 @@ test('AI 生成:生成 → 提交审核 → 通过 → 我的题库可见 → �
   await page.goto('/#/my');
   await page.getByRole('link', { name: '添加题目' }).first().click();
   await expect(page.getByRole('heading', { name: '添加题目' })).toBeVisible();
-  await page.getByRole('tab', { name: 'AI 生成' }).click();
-  await page.getByPlaceholder(/React Hooks/).fill('React Hooks 深入');
-  await page.getByRole('button', { name: '生成', exact: true }).click();
+  const aiSection = page.locator('[data-add-section="ai"]');
+  await aiSection.getByPlaceholder(/React Hooks/).fill('React Hooks 深入');
+  await aiSection.getByRole('button', { name: '生成', exact: true }).click();
 
   // 2) 预览出现(mock 返回 2 题),展开一题看答案
   await expect(page.getByText('LLM 判断出 2 道题')).toBeVisible({ timeout: 10_000 });
@@ -120,9 +120,9 @@ test('AI 生成:生成 → 提交审核 → 通过 → 我的题库可见 → �
 test('待审核:逐题拒绝不进我的题库', async ({ page }) => {
   await page.goto('/#/my');
   await page.getByRole('link', { name: '添加题目' }).first().click();
-  await page.getByRole('tab', { name: 'AI 生成' }).click();
-  await page.getByPlaceholder(/React Hooks/).fill('Event Loop');
-  await page.getByRole('button', { name: '生成', exact: true }).click();
+  const aiSection = page.locator('[data-add-section="ai"]');
+  await aiSection.getByPlaceholder(/React Hooks/).fill('Event Loop');
+  await aiSection.getByRole('button', { name: '生成', exact: true }).click();
   await expect(page.getByText('LLM 判断出 2 道题')).toBeVisible({ timeout: 10_000 });
   await page.getByRole('button', { name: /提交审核/ }).click();
   await expect(page.getByText(/2 题待审/)).toBeVisible();
@@ -154,10 +154,12 @@ test('JD 管理:新增 JD → 行内「按 JD 生成」弹窗 → 提交审核(�
   await page.getByRole('button', { name: /按 JD 生成题目/ }).click();
   // 深链 /add?jd=<id>:锁定按 JD 模式
   await expect(page).toHaveURL(/add\?jd=/);
-  await expect(page.getByRole('heading', { name: /按 JD 生成题目 · AI 应用工程师/ })).toBeVisible();
+  // 按 JD 段已选中该 JD(下拉显示标题)
+  const jdSection = page.locator('[data-add-section="jd"]');
+  await expect(jdSection.getByRole('combobox', { name: '目标 JD' })).toContainText('AI 应用工程师');
 
   // 3) 定向生成(mock)并提交审核:批次名带 JD定向 · 公司
-  await page.getByRole('button', { name: '生成', exact: true }).click();
+  await jdSection.getByRole('button', { name: '生成', exact: true }).click();
   await expect(page.getByText('LLM 判断出 2 道题')).toBeVisible({ timeout: 10_000 });
   await page.getByRole('button', { name: /提交审核/ }).click();
   await expect(page.getByText(/批次 01 · JD定向 · 示例公司/)).toBeVisible();
