@@ -17,14 +17,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { PageHeader } from '@/components/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { GenerateDialog } from '@/components/generate-dialog';
+import { AddQuestionDialog } from '@/components/add-question-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,
 } from '@/components/ui/dialog';
 
 // 求职中枢(ADR-4):JD 管理 + 简历管理两个 tab,侧栏两个入口按 ?tab= 预选(2026-09-02)。
-// 「按 JD 生成题目」从 JD 条目行内发起(GenerateDialog 弹窗,来源标 'jd');简历多版本留二期。
+// 「按 JD 生成题目」从 JD 条目行内发起(AddQuestionDialog 锁定按 JD 页签,来源标 'jd');简历多版本留二期。
 
 const charCount = (s: string) => (s ? `${s.length} 字` : '未填');
 
@@ -179,7 +179,7 @@ function JdManager() {
       />
 
       {/* 按 JD 生成题目:弹窗承载,产物进待审核,来源标 'jd' */}
-      <GenerateDialog open={genJd != null} onOpenChange={(o) => !o && setGenJd(null)} jd={genJd} />
+      <AddQuestionDialog open={genJd != null} onOpenChange={(o) => !o && setGenJd(null)} jd={genJd} />
 
       <Dialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
         <DialogContent>

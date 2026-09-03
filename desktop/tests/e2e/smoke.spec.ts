@@ -45,6 +45,31 @@ test('首页含 AI Agent 题库入口', async ({ page }) => {
   await expect(page.getByText(/AI\s*Agent/i).first()).toBeVisible({ timeout: 10_000 });
 });
 
+test('工作台总览:问候区/指标/学习中/快捷入口/求职空态', async ({ page }) => {
+  await page.goto('/#/');
+  await page.waitForLoadState('networkidle');
+  // 问候区:日期行(回答「今天是哪天」)+ 三个指标
+  await expect(page.getByText(/今天是 \d+ 月 \d+ 日 周./)).toBeVisible();
+  await expect(page.getByText('待复习').first()).toBeVisible();
+  await expect(page.getByText('待学习').first()).toBeVisible();
+  await expect(page.getByText('待审核').first()).toBeVisible();
+  // 左主栏:学习中(含分类卡);最近动态空态(空库无事件)
+  await expect(page.getByRole('heading', { name: '学习中' })).toBeVisible();
+  await expect(page.getByText('还没有动态')).toBeVisible();
+  // 右侧栏:快捷入口——空库无待复习/待审核,不出现这两个按钮;添加题目恒在
+  await expect(page.getByRole('link', { name: '开始复习' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '添加题目' })).toBeVisible();
+  // 求职空态:一个动词
+  await expect(page.getByText('填写', { exact: true })).toBeVisible();
+  // 出题统一入口:弹窗三页签
+  await page.getByRole('button', { name: '添加题目' }).click();
+  const dlg = page.getByRole('dialog');
+  await expect(dlg.getByRole('tab', { name: '手动' })).toBeVisible();
+  await expect(dlg.getByRole('tab', { name: 'AI 生成' })).toBeVisible();
+  await expect(dlg.getByRole('tab', { name: '按 JD 生成' })).toBeVisible();
+  await page.keyboard.press('Escape');
+});
+
 test('控制台无未捕获错误(应用启动健康)', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
