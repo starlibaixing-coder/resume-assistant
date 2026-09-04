@@ -93,7 +93,7 @@ test('AI 生成:生成 → 提交审核 → 通过 → 我的题库可见 → �
 
   // 3) 提交审核(自动跳 #/drafts),批次名 = 知识点
   await page.getByRole('button', { name: /提交审核/ }).click();
-  await expect(page.getByText(/批次 01 · React Hooks 深入/)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'React Hooks 深入' })).toBeVisible();
   await expect(page.getByText(/2 题待审/)).toBeVisible();
 
   // 4) 本批全部通过 → 待审核清空
@@ -161,7 +161,7 @@ test('JD 管理:新增 JD → 行内「按 JD 生成」弹窗 → 提交审核(�
   await jdSection.getByRole('button', { name: '生成题目', exact: true }).click();
   await expect(page.getByText('AI 判断出 2 道题')).toBeVisible({ timeout: 10_000 });
   await page.getByRole('button', { name: /提交审核/ }).click();
-  await expect(page.getByText(/批次 01 · JD定向 · 示例公司/)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'JD定向 · 示例公司' })).toBeVisible();
 
   // 4) 通过后来源徽标 = 按 JD
   await page.getByRole('button', { name: '本批全部通过' }).click();
@@ -184,7 +184,7 @@ test('题库分类页:复习/学习双入口 + 是哪些题深链', async ({ pag
 
 test('官方题题目列表:添加到我的题库 → toast + 标识 + 副本进我的库(来源官方复制)', async ({ page }) => {
   await page.goto('/#/agent/browse');
-  const firstRow = page.locator('main .bg-card > div.border-b').first();
+  const firstRow = page.locator('main [data-browse-list] > div.border-b').first();
   const addBtn = firstRow.getByRole('button', { name: '添加到我的题库' });
 
   await addBtn.hover();

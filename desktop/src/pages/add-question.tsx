@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronRight, Pencil, Sparkles, Target } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { generateQuestions, generateJdQuestions, type GeneratedQuestion } from '@/lib/generate';
 import { getProfile } from '@/lib/profile';
 import { getJds, type Jd } from '@/lib/jd';
@@ -343,9 +343,9 @@ export function AddQuestionPage() {
         back={{ to: '/', label: '返回' }}
       />
 
-      <section data-add-section="manual">
-        <SectionHead icon={Pencil} title="手动写题" description="保存后直接进我的题库。" />
-        <div className="mt-4">
+      <section data-add-section="manual" className="pb-10">
+        <SectionHead index="01" title="手动写题" description="保存后直接进我的题库。" />
+        <div className="mt-5">
           <ManualAddForm onSaved={(id) => {
             toast.success('已保存到我的题库', { description: id });
             navigate('/my/browse');
@@ -353,16 +353,16 @@ export function AddQuestionPage() {
         </div>
       </section>
 
-      <section data-add-section="ai">
-        <SectionHead icon={Sparkles} title="AI 生成" description="按知识点出一批题,先进待审核。" />
-        <div className="mt-4">
+      <section data-add-section="ai" className="border-t border-border pb-10 pt-10">
+        <SectionHead index="02" title="AI 生成" description="按知识点出一批题,先进待审核。" />
+        <div className="mt-5">
           <GenerateForm jd={null} onCancel={goBack} />
         </div>
       </section>
 
-      <section data-add-section="jd" ref={jdSectionRef}>
-        <SectionHead icon={Target} title="按 JD 生成" description="对着目标 JD 的技术要求出题,先进待审核。" />
-        <div className="mt-4 space-y-4">
+      <section data-add-section="jd" ref={jdSectionRef} className="border-t border-border pt-10">
+        <SectionHead index="03" title="按 JD 生成" description="对着目标 JD 的技术要求出题,先进待审核。" />
+        <div className="mt-5 space-y-4">
           <JdPicker value={jdPick} onChange={setJdPick} />
           {jdPick && <GenerateForm jd={jdPick} onCancel={goBack} />}
         </div>

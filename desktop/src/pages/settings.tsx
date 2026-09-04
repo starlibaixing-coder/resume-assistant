@@ -10,7 +10,6 @@ import { getMyCategory } from '@/lib/mylib';
 import { loadLimit, saveLimit, LIMIT_OPTIONS } from '@/lib/prefs';
 import { chat } from '@/lib/provider';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/page-header';
@@ -149,9 +148,9 @@ export function SettingsPage() {
       <PageHeader title="设置" />
 
       {/* ── 学习 ─────────────────────────────────────── */}
-      <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-base">学习</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
+      <section className="border-t border-border pt-6">
+        <h2 className="text-sm font-semibold tracking-wide">学习</h2>
+        <div className="mt-4 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-muted-foreground">每次学习题量</span>
             {LIMIT_OPTIONS.map((opt) => (
@@ -170,13 +169,13 @@ export function SettingsPage() {
             ))}
           </div>
           <p className="text-xs text-muted-foreground">进入学习队列即按此数量取题;先取待复习,再取待学习。</p>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       {/* ── 外观 ────────────────────────────────────── */}
-      <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-base">外观</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
+      <section className="border-t border-border pt-6">
+        <h2 className="text-sm font-semibold tracking-wide">外观</h2>
+        <div className="mt-4 space-y-3">
           <div className="flex flex-wrap gap-2">
             {THEME_OPTIONS.map((o) => (
               <Button
@@ -190,13 +189,13 @@ export function SettingsPage() {
               </Button>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       {/* ── AI 生成 ─────────────────────────────────── */}
-      <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-base">AI 生成(LLM)</CardTitle></CardHeader>
-        <CardContent className="space-y-5">
+      <section className="border-t border-border pt-6">
+        <h2 className="text-sm font-semibold tracking-wide">AI 生成(LLM)</h2>
+        <div className="mt-4 space-y-5">
           <div className="text-xs text-muted-foreground">
             任何 OpenAI 兼容端点(智谱 / DeepSeek / 本地 Ollama 等)。
           </div>
@@ -243,14 +242,14 @@ export function SettingsPage() {
               </span>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       {/* ── 数据管理 ───────────────────────────────── */}
-      <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-base">数据管理</CardTitle></CardHeader>
-        {/* 行列表用分隔线,不再卡中卡(审计 E6):同层级信息不套边框 */}
-        <CardContent className="divide-y divide-border">
+      <section className="border-t border-border pt-6">
+        <h2 className="text-sm font-semibold tracking-wide">数据管理</h2>
+        {/* 行列表用分隔线:同层级信息不套边框 */}
+        <div className="mt-4 divide-y divide-border">
           {/* 官方题库同步:远端(GitHub Pages)→ 本地 SQLite 物化 */}
           <div className="flex flex-wrap items-center justify-between gap-2 py-3">
             <div className="min-w-0">
@@ -298,13 +297,13 @@ export function SettingsPage() {
           <div className="py-3 text-xs text-muted-foreground">
             清空按分类执行:清空进度会删除学习进度(题目和笔记保留);清空笔记只删笔记(进度保留)。均不可恢复。
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       {/* ── 关于 ───────────────────────────────────── */}
-      <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-base">关于</CardTitle></CardHeader>
-        <CardContent>
+      <section className="border-t border-border pt-6">
+        <h2 className="text-sm font-semibold tracking-wide">关于</h2>
+        <div className="mt-4">
           <a
             href="https://github.com/starlibaixing-coder/resume-assistant"
             target="_blank"
@@ -313,8 +312,8 @@ export function SettingsPage() {
           >
             GitHub 源码与官方题库
           </a>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       {/* 清空确认:不可逆操作统一 AlertDialog */}
       <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>

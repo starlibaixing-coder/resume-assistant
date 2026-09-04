@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef, type ReactNode } from 'react';
+import { useMemo, useState, useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import {
   CheckCircle2,
@@ -22,24 +22,33 @@ import CodeScratchpad from '@/components/code-scratchpad';
 import { ErrorState } from '@/components/error-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-// 学习页(2026-09-04 UI 重构):交互逻辑(队列/键盘流/撤销/跳过/吸底评分)不变,
-// 变化——评分与看答案按钮内置可见 kbd 提示(诊断 #12,不再只有 title);
-// 终态补「回到{分类}」出口、链接去文本箭头;加载/错误态走共享组件。
+// 学习页 v2「纸面编辑部」(2026-09-04):题目即版面主角——去卡片,题干大字排印,
+// 细线分区;交互逻辑(键盘流/撤销/跳过/吸底操作条)不变。
+// 吸底操作条:壳层内容区有 py-(--page-pad-y) 内边距,sticky 约束在 content-box,
+// bottom-0 会悬空露出底下滚动内容(v1 目检实锤)——用负 bottom + 自身 paddingBottom
+// 盖住内边距区,-mx-6 横向铺满,负 marginBottom 抵消布局高度。
+// 评分/看答案按钮内置可见 kbd 提示;终态补「回到{分类}」出口。
 
 // kbd 视觉:快捷键可见提示,样式全部走 token
 function Kbd({ children }: { children: ReactNode }) {
   return (
-    <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-normal leading-none text-muted-foreground">
+    <kbd className="rounded-sm border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-normal leading-none text-muted-foreground">
       {children}
     </kbd>
   );
 }
+
+// 与壳层内容区内边距对齐的吸底样式(变量由 app-shell 的页容器定义)
+const stickyBarStyle: CSSProperties = {
+  bottom: 'calc(-1 * var(--page-pad-y, 2.5rem))',
+  paddingBottom: 'var(--page-pad-y, 2.5rem)',
+  marginBottom: 'calc(-1 * var(--page-pad-y, 2.5rem))',
+};
 
 export function QuizPage({ category }: { category: string }) {
   const { data, error, retry } = useQuestions();
@@ -62,7 +71,7 @@ export function QuizPage({ category }: { category: string }) {
     const limitParam = searchParams.get('limit');
     const limit = limitParam != null ? parseInt(limitParam, 10) || 0 : loadLimit();
     const cap = (list: string[]) => (limit > 0 ? list.slice(0, limit) : list);
-    // 三种入队模式(2026-09-02:分类页「开始复习 / 开始学习 / 再过一遍」三按钮对应):
+    // 三种入队模式(2026-09-02:分类页「开始复习 / 开始学习 / 再过一遍」对应):
     //   focus=due 只出待复习;focus=new 只出待学习;force=all 全量(提前复习)。
     //   默认(无参数)= 到期优先、新题补位。选中的集合为空时回落默认,避免空会话。
     const r = getReviewQueue(category, ids, limit);
@@ -149,10 +158,9 @@ export function QuizPage({ category }: { category: string }) {
     setRatedHistory([]);
   };
 
-  // 键盘流:空格/回车翻答案,1/2/3 评分(审计 B2)。
-  // 输入控件/编辑器聚焦时不抢键(与沉浸 Esc 同思路);弹窗开着时不抢键。
-  // revealed 经 latest-ref 读:effect 重订阅是 passive 的,可能滞后于紧邻的下一击键,
-  // 闭包里的 revealed 还是旧值(空格翻开后立刻按 3 会丢)。
+  // 键盘流:空格/回车翻答案,1/2/3 评分。
+  // 输入控件/编辑器聚焦时不抢键;弹窗开着时不抢键。
+  // revealed 经 latest-ref 读:effect 重订阅是 passive 的,可能滞后于紧邻的下一击键。
   const revealedRef = useRef(revealed);
   revealedRef.current = revealed;
   useEffect(() => {
@@ -176,7 +184,7 @@ export function QuizPage({ category }: { category: string }) {
 
   if (error) {
     return (
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="mx-auto max-w-3xl">
         <ErrorState message={error} onRetry={retry} />
       </div>
     );
@@ -188,8 +196,8 @@ export function QuizPage({ category }: { category: string }) {
           <Skeleton className="h-5 w-16" />
           <Skeleton className="h-5 w-24" />
         </div>
-        <Skeleton className="h-64 rounded-xl" />
-        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-20 w-full" />
       </div>
     );
   }
@@ -222,27 +230,29 @@ export function QuizPage({ category }: { category: string }) {
 
   return (
     <div className={cn('mx-auto flex min-h-full w-full flex-col gap-6', widthClass)}>
-      <div className="space-y-2">
+      {/* 进度行:页眉细线 */}
+      <div className="border-b border-border pb-3">
         <div className="flex justify-between items-center text-sm text-muted-foreground">
           <span className="font-mono tabular-nums">
             {queueIdx + 1} / {queue.length}
           </span>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-3">
             <span>{current.moduleName}</span>
-            <AskAiIconButton />
-            <ImmersiveIconButton />
+            <span className="flex items-center gap-1">
+              <AskAiIconButton />
+              <ImmersiveIconButton />
+            </span>
           </div>
         </div>
         <Progress
           value={roundDone ? 100 : queue.length ? (queueIdx / queue.length) * 100 : 0}
-          className="h-1"
+          className="mt-3 h-0.5 bg-muted ring-0"
           aria-label="本轮进度"
         />
       </div>
 
-      <div className="flex flex-1 flex-col justify-center">
-      <Card>
-        <CardContent className="flex flex-col gap-3 p-6">
+      {/* 题面:大字排印,版面主角 */}
+      <div className="flex flex-1 flex-col justify-center py-6">
         <div className="flex flex-wrap gap-2">
           <Badge variant="outline">{current.difficulty}</Badge>
           {current.tags.map((t) => (
@@ -251,44 +261,43 @@ export function QuizPage({ category }: { category: string }) {
             </Badge>
           ))}
         </div>
+        <h1 className="mt-4 text-2xl font-bold leading-snug tracking-tight text-foreground">
+          {current.title}
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">{current.focus}</p>
 
-        <div className="text-lg font-semibold text-foreground leading-snug">{current.title}</div>
-        <div className="text-sm text-muted-foreground">{current.focus}</div>
-
-        {/* 题级工具入口:笔记(右侧抽屉)/ 代码草稿纸(大弹窗),卡片上只留 ghost 图标 */}
-        <div className="flex items-center gap-0.5">
+        {/* 题级工具入口:笔记(右侧抽屉)/ 代码草稿纸(大弹窗),只留 ghost 图标 */}
+        <div className="mt-3 flex items-center gap-0.5">
           <NotePanel category={category} questionId={current.id} />
           <CodeScratchpad category={category} questionId={current.id} question={current} />
         </div>
 
         {revealed && (
-          <>
+          <div className="mt-6">
             <AnswerPanel answer={current.answer} followups={current.followups} />
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setRevealed(false)}
-              className="mx-auto block text-muted-foreground"
+              className="mx-auto mt-2 block text-muted-foreground"
             >
               ↑ 收起答案
             </Button>
-          </>
+          </div>
         )}
-      </CardContent>
-      </Card>
       </div>
 
-      {/* 操作条:真吸底。滚动容器有 py-8 内边距,sticky 约束在 content-box,
-          bottom-0 会悬空 32px 露出底下滚动内容(目检实锤)——用 -bottom-8 + 自身
-          pb-8 向下扩展盖住内边距区,-mx-6 横向铺满,-mb-8 抵消布局高度;
-          快捷键以 kbd 徽标内置在按钮里(可见提示,不只靠 title) */}
-      <div className="sticky -bottom-8 z-10 mt-auto -mx-6 -mb-8 border-t border-border bg-background/95 px-6 pt-2.5 pb-8 backdrop-blur">
+      {/* 操作条:真吸底(见文件头说明),快捷键以 kbd 徽标内置在按钮里 */}
+      <div
+        className="sticky z-10 mt-auto -mx-6 border-t border-border bg-background/95 px-6 pt-2.5 backdrop-blur"
+        style={stickyBarStyle}
+      >
         {revealed ? (
           <div className="mx-auto grid max-w-3xl grid-cols-3 gap-2">
             <Button
               variant="outline"
               title="快捷键 1"
-              className="justify-between border-destructive/40 px-4 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              className="h-11 justify-between border-destructive/40 px-4 font-medium text-destructive hover:bg-destructive/10 hover:text-destructive"
               onClick={() => handleRate('不会')}
             >
               不会
@@ -297,7 +306,7 @@ export function QuizPage({ category }: { category: string }) {
             <Button
               variant="outline"
               title="快捷键 2"
-              className="justify-between border-warning/40 px-4 text-warning hover:bg-warning/10 hover:text-warning"
+              className="h-11 justify-between border-warning/40 px-4 font-medium text-warning hover:bg-warning/10 hover:text-warning"
               onClick={() => handleRate('模糊')}
             >
               模糊
@@ -306,7 +315,7 @@ export function QuizPage({ category }: { category: string }) {
             <Button
               variant="outline"
               title="快捷键 3"
-              className="justify-between border-success/40 px-4 text-success hover:bg-success/10 hover:text-success"
+              className="h-11 justify-between border-success/40 px-4 font-medium text-success hover:bg-success/10 hover:text-success"
               onClick={() => handleRate('掌握')}
             >
               掌握
@@ -315,7 +324,7 @@ export function QuizPage({ category }: { category: string }) {
           </div>
         ) : (
           <div className="mx-auto max-w-3xl space-y-1.5">
-            <Button onClick={() => setRevealed(true)} className="w-full justify-between px-4">
+            <Button onClick={() => setRevealed(true)} className="h-11 w-full justify-between px-4 font-medium">
               我想好了,看答案
               <Kbd>空格</Kbd>
             </Button>
@@ -351,7 +360,7 @@ export function QuizPage({ category }: { category: string }) {
 }
 
 // 问 AI:桌面壳内开 chat.qwen.ai 子 webview 窗口(已开则聚焦);
-// 浏览器/web 层降级为新标签页(渲染成外链,便于与桌面行为区分)
+// 浏览器/web 层降级为新标签页
 function AskAiIconButton() {
   if (!isTauri()) {
     return (
@@ -389,8 +398,7 @@ function AskAiIconButton() {
   );
 }
 
-// 沉浸式:隐藏侧栏/返回条(Tauri 壳内同时系统全屏),Esc 或本按钮退出;
-// 该行是沉浸中唯一保留的 chrome,按钮常驻兼作退出入口
+// 沉浸式:隐藏导航条/返回条(Tauri 壳内同时系统全屏),Esc 或本按钮退出
 function ImmersiveIconButton() {
   const { immersive, toggle } = useImmersive();
   return (
@@ -411,8 +419,7 @@ function ImmersiveIconButton() {
   );
 }
 
-// 终态两态同构成:CheckCircle2 图标 + 主按钮 + 次操作行(审计 B8)。
-// 2026-09-04:链接去文本箭头;完成态补「回到{分类}」出口(诊断 #4)。
+// 终态:居中刊尾式,细线上下;主按钮 + 次操作行
 function DoneState({ category, catName, total, onReviewAll }: {
   category: string;
   catName: string;
@@ -421,25 +428,23 @@ function DoneState({ category, catName, total, onReviewAll }: {
 }) {
   const { immersive } = useImmersive();
   return (
-    <div className={cn('mx-auto space-y-6', immersive ? 'max-w-4xl' : 'max-w-3xl')}>
-      <Card>
-        <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
-          <CheckCircle2 className="size-10 text-success" aria-hidden />
-          <div className="text-lg font-semibold text-foreground">今日队列已清空</div>
-          <p className="text-sm text-muted-foreground">没有待复习和待学习了。</p>
-          <div className="mt-2 flex flex-col items-center gap-2.5">
-            {total > 0 && <Button onClick={onReviewAll}>再过一遍(全部题)</Button>}
-            <div className="flex items-center gap-3 text-sm">
-              <Link to={`/${category}`} className="text-primary hover:underline">
-                回到{catName}
-              </Link>
-              <Link to={`/${category}/browse`} className="text-primary hover:underline">
-                浏览全部题目
-              </Link>
-            </div>
+    <div className={cn('mx-auto w-full', immersive ? 'max-w-4xl' : 'max-w-3xl')}>
+      <div className="flex flex-col items-center gap-3 border-y border-border py-24 text-center">
+        <CheckCircle2 className="size-10 text-success" aria-hidden />
+        <div className="text-2xl font-bold tracking-tight">今日队列已清空</div>
+        <p className="text-sm text-muted-foreground">没有待复习和待学习了。</p>
+        <div className="mt-3 flex flex-col items-center gap-3">
+          {total > 0 && <Button onClick={onReviewAll}>再过一遍(全部题)</Button>}
+          <div className="flex items-center gap-4 text-sm">
+            <Link to={`/${category}`} className="text-primary hover:underline">
+              回到{catName}
+            </Link>
+            <Link to={`/${category}/browse`} className="text-primary hover:underline">
+              浏览全部题目
+            </Link>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -463,34 +468,34 @@ function RoundDoneState({
 }) {
   const { immersive } = useImmersive();
   return (
-    <div className={cn('mx-auto space-y-6', immersive ? 'max-w-4xl' : 'max-w-3xl')}>
-      <Card>
-        <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
-          <CheckCircle2 className="size-10 text-success" aria-hidden />
-          <div className="text-lg font-semibold text-foreground">本轮完成,学了 {done} 道题{mastered > 0 ? `,掌握 ${mastered} 道` : ''}</div>
-          <div className="mt-2 flex flex-col items-center gap-2.5">
-            <Button onClick={onNextRound}>继续学下一轮</Button>
-            <div className="flex items-center gap-3 text-sm">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs text-muted-foreground"
-                disabled={!canUndo}
-                onClick={onUndo}
-              >
-                <Undo2 className="size-3.5" aria-hidden />
-                撤销最后一题
-              </Button>
-              <Link to={`/${category}`} className="text-primary hover:underline">
-                回到{catName}
-              </Link>
-              <Link to={`/${category}/browse`} className="text-primary hover:underline">
-                浏览全部题目
-              </Link>
-            </div>
+    <div className={cn('mx-auto w-full', immersive ? 'max-w-4xl' : 'max-w-3xl')}>
+      <div className="flex flex-col items-center gap-3 border-y border-border py-24 text-center">
+        <CheckCircle2 className="size-10 text-success" aria-hidden />
+        <div className="text-2xl font-bold tracking-tight">
+          本轮完成,学了 {done} 道题{mastered > 0 ? `,掌握 ${mastered} 道` : ''}
+        </div>
+        <div className="mt-3 flex flex-col items-center gap-3">
+          <Button onClick={onNextRound}>继续学下一轮</Button>
+          <div className="flex items-center gap-4 text-sm">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs text-muted-foreground"
+              disabled={!canUndo}
+              onClick={onUndo}
+            >
+              <Undo2 className="size-3.5" aria-hidden />
+              撤销最后一题
+            </Button>
+            <Link to={`/${category}`} className="text-primary hover:underline">
+              回到{catName}
+            </Link>
+            <Link to={`/${category}/browse`} className="text-primary hover:underline">
+              浏览全部题目
+            </Link>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

@@ -8,7 +8,6 @@ import { AnswerPanel } from '@/components/answer-panel';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/page-header';
 import { EmptyState } from '@/components/empty-state';
 import {
@@ -16,16 +15,15 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 
-// 待审核(ADR-10 草稿区):AI 出的题先进 pending,在这里人工过目,
-// 通过(approved)才进「我的题库」聚合学习;拒绝 = 永久删除,AlertDialog 确认。
-// 2026-09-04 UI 重构:空态收敛为一处动作;拒绝确认迁 AlertDialog。
+// 待审核 v2「纸面编辑部」(ADR-10 草稿区):批次小签 + 细线行目录,去卡片。
+// AI 出的题先进 pending,在这里人工过目,通过(approved)才进「我的题库」;
+// 拒绝 = 永久删除,AlertDialog 确认。
 
 export function DraftsPage() {
   const [version, setVersion] = useState(0);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   // 进行中的操作(按钮禁用防重入):'all:模块号' 或题 id
   const [busy, setBusy] = useState<string | null>(null);
-  // 拒绝确认(拒绝 = 删除,不可恢复)
   const [confirmReject, setConfirmReject] = useState<MyQuestion | null>(null);
   const [rejecting, setRejecting] = useState(false);
 
@@ -44,7 +42,7 @@ export function DraftsPage() {
     g.push(q);
   }
 
-  // 反馈统一 toast + try/catch(审计 C1:审核是 ADR-10 关键闸门,曾全程静默)
+  // 反馈统一 toast + try/catch(审核是 ADR-10 关键闸门)
   const handleApprove = async (id: string) => {
     setBusy(id);
     try {
@@ -85,7 +83,7 @@ export function DraftsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6" data-version={version}>
+    <div className="space-y-8" data-version={version}>
       <PageHeader
         title="待审核"
         description={pending.length > 0 ? `${pending.length} 题待审核` : 'AI 生成的题先进这里,逐题把关'}
@@ -114,13 +112,18 @@ export function DraftsPage() {
           }
         />
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-10">
           {[...groups.entries()].map(([moduleId, qs]) => (
-            <div key={moduleId} className="space-y-2">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="text-sm text-muted-foreground">
-                  批次 {String(moduleId).padStart(2, '0')} · {qs[0].moduleName}({qs.length} 题)
-                </div>
+            <section key={moduleId}>
+              <div className="flex items-baseline gap-3">
+                <span className="font-mono text-xs tabular-nums text-primary" aria-hidden>
+                  {String(moduleId).padStart(2, '0')}
+                </span>
+                <h2 className="text-sm font-semibold tracking-wide text-foreground">
+                  {qs[0].moduleName}
+                </h2>
+                <span className="text-xs text-muted-foreground">({qs.length} 题)</span>
+                <span className="h-px flex-1 bg-border" aria-hidden />
                 <Button
                   size="sm"
                   variant="outline"
@@ -131,18 +134,18 @@ export function DraftsPage() {
                 </Button>
               </div>
 
-              <Card className="overflow-hidden">
+              <div className="mt-3 border-t border-border">
                 {qs.map((q) => {
                   const isOpen = expandedId === q.id;
                   return (
-                    <div key={q.id} className="border-b border-border last:border-b-0">
-                      <div className="flex w-full items-center gap-3 p-3 transition-colors hover:bg-accent">
+                    <div key={q.id} className="border-b border-border">
+                      <div className="flex w-full items-center gap-3 py-3 transition-colors hover:bg-accent/40">
                         <button
                           type="button"
                           aria-expanded={isOpen}
                           aria-label={isOpen ? '收起题目详情' : '展开题目详情'}
                           title={isOpen ? '收起' : '展开看答案后决定'}
-                          className="flex min-w-0 flex-1 items-center gap-3 text-left cursor-pointer"
+                          className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 text-left"
                           onClick={() => setExpandedId(isOpen ? null : q.id)}
                         >
                           <span className="flex shrink-0 items-center gap-0.5 font-mono text-xs text-muted-foreground">
@@ -151,7 +154,7 @@ export function DraftsPage() {
                               : <ChevronRight className="size-3.5" aria-hidden />}
                             {q.id}
                           </span>
-                          <span className="min-w-0 flex-1 truncate text-sm text-foreground">{q.title}</span>
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{q.title}</span>
                           <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
                         </button>
                         <span className="flex shrink-0 items-center gap-0.5">
@@ -188,8 +191,8 @@ export function DraftsPage() {
                         </span>
                       </div>
                       {isOpen && (
-                        <div className="px-3.5 pb-4 space-y-3">
-                          <div className="text-sm text-muted-foreground pt-2">{q.focus}</div>
+                        <div className="space-y-3 px-1 pb-5">
+                          <div className="pt-1 text-sm text-muted-foreground">{q.focus}</div>
                           <AnswerPanel answer={q.answer} followups={q.followups} />
                           <div className="flex gap-2 pt-1">
                             <Button
@@ -221,13 +224,11 @@ export function DraftsPage() {
                     </div>
                   );
                 })}
-              </Card>
-            </div>
+              </div>
+            </section>
           ))}
-
         </div>
       )}
-
 
       {/* 拒绝 = 永久删除:AlertDialog 确认(不可逆操作统一防线) */}
       <AlertDialog open={!!confirmReject} onOpenChange={(o) => !o && setConfirmReject(null)}>
