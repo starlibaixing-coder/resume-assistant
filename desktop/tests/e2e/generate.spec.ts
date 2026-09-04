@@ -127,9 +127,8 @@ test('待审核:逐题拒绝不进我的题库', async ({ page }) => {
   await page.getByRole('button', { name: /提交审核/ }).click();
   await expect(page.getByText(/2 题待审/)).toBeVisible();
 
-  // 展开第一题拒绝(拒绝 = 删除,需确认)
-  await page.getByText('useEffect 的清理函数在哪些时机执行?').click();
-  await page.getByRole('button', { name: /拒绝/ }).click();
+  // 行内直接拒绝(拒绝 = 删除,需确认)
+  await page.getByRole('button', { name: '拒绝:useEffect 的清理函数在哪些时机执行?' }).click();
   await expect(page.getByText('拒绝这道题?')).toBeVisible();
   await page.getByRole('button', { name: '确认拒绝' }).click();
   await expect(page.getByText(/1 题待审/)).toBeVisible({ timeout: 10_000 });

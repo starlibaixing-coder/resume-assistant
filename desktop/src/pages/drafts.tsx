@@ -6,6 +6,7 @@ import { approveQuestion, getMyQuestions, rejectDraft, subscribeMyLib } from '@/
 import type { MyQuestion } from '@/types/question';
 import { AnswerPanel } from '@/components/answer-panel';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/page-header';
@@ -131,21 +132,57 @@ export function DraftsPage() {
                   const isOpen = expandedId === q.id;
                   return (
                     <div key={q.id} className="border-b border-border last:border-b-0">
-                      <button
-                        type="button"
-                        aria-expanded={isOpen}
-                        className="flex w-full items-center gap-3 p-3 text-left cursor-pointer hover:bg-accent transition-colors"
-                        onClick={() => setExpandedId(isOpen ? null : q.id)}
-                      >
-                        <span className="flex shrink-0 items-center gap-0.5 font-mono text-xs text-muted-foreground">
-                          {isOpen
-                            ? <ChevronDown className="size-3.5" aria-hidden />
-                            : <ChevronRight className="size-3.5" aria-hidden />}
-                          {q.id}
+                      <div className="flex w-full items-center gap-3 p-3 transition-colors hover:bg-accent">
+                        <button
+                          type="button"
+                          aria-expanded={isOpen}
+                          aria-label={isOpen ? '收起题目详情' : '展开题目详情'}
+                          title={isOpen ? '收起' : '展开看答案后决定'}
+                          className="flex min-w-0 flex-1 items-center gap-3 text-left cursor-pointer"
+                          onClick={() => setExpandedId(isOpen ? null : q.id)}
+                        >
+                          <span className="flex shrink-0 items-center gap-0.5 font-mono text-xs text-muted-foreground">
+                            {isOpen
+                              ? <ChevronDown className="size-3.5" aria-hidden />
+                              : <ChevronRight className="size-3.5" aria-hidden />}
+                            {q.id}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate text-sm text-foreground">{q.title}</span>
+                          <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
+                        </button>
+                        <span className="flex shrink-0 items-center gap-0.5">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7 text-success hover:bg-success/10 hover:text-success"
+                                aria-label={`通过:${q.title}`}
+                                disabled={busy != null}
+                                onClick={() => handleApprove(q.id)}
+                              >
+                                <Check className="size-4" aria-hidden />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>通过,进我的题库</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                                aria-label={`拒绝:${q.title}`}
+                                disabled={busy != null}
+                                onClick={() => setConfirmReject(q)}
+                              >
+                                <X className="size-4" aria-hidden />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>拒绝并删除</TooltipContent>
+                          </Tooltip>
                         </span>
-                        <span className="text-sm text-foreground flex-1">{q.title}</span>
-                        <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
-                      </button>
+                      </div>
                       {isOpen && (
                         <div className="px-3.5 pb-4 space-y-3">
                           <div className="text-sm text-muted-foreground pt-2">{q.focus}</div>
@@ -184,9 +221,6 @@ export function DraftsPage() {
             </div>
           ))}
 
-          <div className="text-xs text-muted-foreground text-center pt-2">
-            通过后的题在「我的题库」分类里学习(<Link to="/my" className="text-primary hover:underline">去学习</Link>),复习节奏同样自动安排。
-          </div>
         </div>
       )}
 

@@ -121,10 +121,17 @@ function NotePanelEditor({ category, questionId }: { category: string; questionI
             <SheetDescription className="sr-only">按题保存的笔记,输入自动保存</SheetDescription>
           </SheetHeader>
           <div className="min-h-0 flex-1 overflow-y-auto p-4">
-            <EditorContent
-              editor={editor}
-              className="rounded-md border border-border bg-popover overflow-hidden transition-colors focus-within:border-primary [&_.ProseMirror]:min-h-[240px] [&_.ProseMirror]:p-3 [&_.ProseMirror]:outline-none [&_.ProseMirror]:text-[13px] [&_.ProseMirror]:leading-relaxed [&_.ProseMirror]:text-foreground [&_.ProseMirror_ul]:my-1 [&_.ProseMirror_ol]:my-1 [&_.ProseMirror_li]:my-0 [&_.ProseMirror_p]:my-1 [&_.ProseMirror_h1]:text-[1.25rem] [&_.ProseMirror_h2]:text-[1.1rem] [&_.ProseMirror_h3]:text-[1rem] [&_.ProseMirror_h1]:my-2 [&_.ProseMirror_h2]:my-2 [&_.ProseMirror_h3]:my-2 [&_.ProseMirror_blockquote]:my-1 [&_.ProseMirror_pre]:my-2"
-            />
+            <div className="relative">
+              {editor?.isEmpty && (
+                <div className="pointer-events-none absolute left-3 top-3 z-10 text-[13px] leading-relaxed text-muted-foreground/50">
+                  记下解题思路、易错点、可能的追问……自动保存
+                </div>
+              )}
+              <EditorContent
+                editor={editor}
+                className="rounded-md border border-border bg-popover overflow-hidden transition-colors focus-within:border-primary [&_.ProseMirror]:min-h-[240px] [&_.ProseMirror]:p-3 [&_.ProseMirror]:outline-none [&_.ProseMirror]:text-[13px] [&_.ProseMirror]:leading-relaxed [&_.ProseMirror]:text-foreground [&_.ProseMirror_ul]:my-1 [&_.ProseMirror_ol]:my-1 [&_.ProseMirror_li]:my-0 [&_.ProseMirror_p]:my-1 [&_.ProseMirror_h1]:text-[1.25rem] [&_.ProseMirror_h2]:text-[1.1rem] [&_.ProseMirror_h3]:text-[1rem] [&_.ProseMirror_h1]:my-2 [&_.ProseMirror_h2]:my-2 [&_.ProseMirror_h3]:my-2 [&_.ProseMirror_blockquote]:my-1 [&_.ProseMirror_pre]:my-2"
+              />
+            </div>
           </div>
           <div className="flex-none border-t border-border px-4 py-2">
             <span className="text-[11px] text-muted-foreground">自动保存</span>
