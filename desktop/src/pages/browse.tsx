@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { BookmarkPlus, LibraryBig, Pencil, Plus, Trash2 } from 'lucide-react';
+import { BookmarkPlus, LibraryBig, Pencil, Plus, StickyNote, Trash2 } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getModuleStats, getQuestionStatus } from '@/lib/schedule';
 import { MY_CATEGORY_SLUG, getMyQuestion, getMyQuestions, copyOfficial, getCopiedSourceIds } from '@/lib/mylib';
+import { loadNotes } from '@/lib/storage';
 import type { Question, QuestionData, QuestionSource } from '@/types/question';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
@@ -92,6 +94,9 @@ export function BrowsePage({ category }: { category: string }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copyingId, setCopyingId] = useState<string | null>(null);
+  // v5 深化:关键词筛选(题干/考察点)+ 来源筛选(我的库)+ 笔记资产化(行标/详情预览)
+  const [textFilter, setTextFilter] = useState('');
+  const [sourceFilter, setSourceFilter] = useState<string>('all');
   const isMy = category === MY_CATEGORY_SLUG;
 
   const { cat, moduleStats, allQuestions, copiedSourceIds } = useMemo(() => {
@@ -108,7 +113,23 @@ export function BrowsePage({ category }: { category: string }) {
   useEffect(() => {
     setModuleFilter('all');
     setSelectedId(null);
+    setTextFilter('');
+    setSourceFilter('all');
   }, [category]);
+
+  // 笔记资产化:整表读一次,行标 + 详情预览共用
+  const notesMap = useMemo(() => (data ? loadNotes(category) : {}), [data, category]);
+  const noteTextOf = (id: string): string => {
+    const html = notesMap[id] ?? '';
+    return html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+  };
+  const hasNoteOf = (id: string): boolean => noteTextOf(id).length > 0;
+
+  // ⌘K 题目搜索深链:?qid= 直接选中该题
+  const qidParam = searchParams.get('qid');
+  useEffect(() => {
+    if (qidParam) setSelectedId(qidParam);
+  }, [qidParam]);
 
   if (error) {
     return (
@@ -156,10 +177,19 @@ export function BrowsePage({ category }: { category: string }) {
   const effectiveModule = moduleOptions.some((o) => o.key === moduleFilter) ? moduleFilter : 'all';
   const singleModule = effectiveModule !== 'all' ? modules.find((m) => String(m.id) === effectiveModule) : null;
 
+  // 我的题来源(聚合层剥掉了 source,这里从 mylib 缓存查)
+  const sourceOf = (id: string): QuestionSource | null => getMyQuestions().find((q) => q.id === id)?.source ?? null;
+
   const listQuestions = allQuestions.filter((q) => {
     if (singleModule && q.module !== singleModule.id) return false;
     if (diffFilter !== 'all' && q.difficulty !== diffFilter) return false;
     if (statusFilter !== 'all' && getQuestionStatus(category, q.id) !== statusFilter) return false;
+    if (sourceFilter !== 'all' && sourceOf(q.id) !== sourceFilter) return false;
+    if (textFilter.trim()) {
+      const kw = textFilter.trim().toLowerCase();
+      const hay = `${q.title} ${q.focus} ${q.tags.join(' ')}`.toLowerCase();
+      if (!hay.includes(kw)) return false;
+    }
     return true;
   });
   // 选中项跟随筛选结果(被筛掉则回落第一行)
@@ -176,10 +206,11 @@ export function BrowsePage({ category }: { category: string }) {
     setModuleFilter('all');
     setDiffFilter('all');
     setStatusFilter('all');
+    setTextFilter('');
+    setSourceFilter('all');
   };
-  const hasFilter = effectiveModule !== 'all' || diffFilter !== 'all' || statusFilter !== 'all';
-
-  const sourceOf = (id: string): QuestionSource | null => getMyQuestions().find((q) => q.id === id)?.source ?? null;
+  const hasFilter =
+    effectiveModule !== 'all' || diffFilter !== 'all' || statusFilter !== 'all' || sourceFilter !== 'all' || !!textFilter.trim();
 
   // 官方题 → 我的库副本(ADR-3)。成功 toast;行尾标识由 mylib notify 驱动自动出现。
   const handleAddToMy = async (q: Question) => {
@@ -225,6 +256,27 @@ export function BrowsePage({ category }: { category: string }) {
         <FilterSelect label="模块" value={effectiveModule} onChange={setModuleFilter} options={moduleOptions} />
         <FilterSelect label="难度" value={diffFilter} onChange={(v) => setDiffFilter(v as DiffFilter)} options={DIFF_OPTIONS} />
         <FilterSelect label="状态" value={statusFilter} onChange={(v) => setStatusFilter(v as StatusFilter)} options={STATUS_OPTIONS} />
+        {isMy && (
+          <FilterSelect
+            label="来源"
+            value={sourceFilter}
+            onChange={setSourceFilter}
+            options={[
+              { key: 'all', label: '全部来源' },
+              { key: 'manual', label: '手动' },
+              { key: 'ai', label: 'AI 生成' },
+              { key: 'jd', label: '按 JD' },
+              { key: 'copy', label: '官方复制' },
+            ]}
+          />
+        )}
+        <Input
+          value={textFilter}
+          onChange={(e) => setTextFilter(e.target.value)}
+          placeholder="搜索题干 / 考察点…"
+          aria-label="搜索题目"
+          className="h-8 w-48 text-xs"
+        />
         <span className="ml-auto text-xs tabular-nums text-muted-foreground">共 {listQuestions.length} 题</span>
         {hasFilter && (
           <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={handleReset}>
@@ -299,6 +351,9 @@ export function BrowsePage({ category }: { category: string }) {
                     </span>
                   )}
                   <span className="flex-1 truncate text-sm text-foreground">{q.title}</span>
+                  {hasNoteOf(q.id) && (
+                    <StickyNote className="size-3 shrink-0 text-primary/70" aria-label="有笔记" />
+                  )}
                   <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
                   {isMy ? (
                     <span className="flex shrink-0 items-center">
@@ -391,7 +446,7 @@ export function BrowsePage({ category }: { category: string }) {
         </div>
 
         {/* 详情面板:选中行即看,少跳页 */}
-        <div className="sticky top-0 hidden w-[22rem] shrink-0 lg:block">
+        <div className="sticky top-0 hidden max-h-[calc(100vh-2rem)] w-[22rem] shrink-0 overflow-y-auto lg:block">
           {selected ? (
             <div className="rounded-md border border-border bg-card">
               <div className="flex items-start justify-between gap-2 border-b border-border px-4 py-3">
@@ -447,6 +502,17 @@ export function BrowsePage({ category }: { category: string }) {
                   </Tooltip>
                 )}
               </div>
+              {hasNoteOf(selected.id) && (
+                <div className="border-b border-border bg-primary/5 px-4 py-2.5">
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                    <StickyNote className="size-3.5 text-primary/70" aria-hidden />
+                    我的笔记
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                    {noteTextOf(selected.id)}
+                  </p>
+                </div>
+              )}
               <div className="px-4 py-3">
                 <AnswerPanel answer={selected.answer} followups={selected.followups} />
               </div>

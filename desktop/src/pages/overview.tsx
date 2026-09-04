@@ -4,6 +4,8 @@ import { ChevronRight, Inbox } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getStats } from '@/lib/schedule';
 import { getMyCategory, getPendingCount, subscribeMyLib } from '@/lib/mylib';
+import { loadProgress } from '@/lib/storage';
+import type { CardState } from '@/lib/sm2';
 import { getProfile } from '@/lib/profile';
 import { getJds, subscribeJds } from '@/lib/jd';
 import { getRecentActivity, formatActivityTime, type Activity } from '@/lib/activity';
@@ -131,6 +133,34 @@ export function TodayPage() {
     ];
   }, [data, myCategory]);
 
+  // 深挖调度数据:连续天数 / 今日已练 / 7 天到期预测(全部来自本地 SM-2 进度)
+  const studyStats = useMemo(() => {
+    const dayStr = (ts: number) => new Date(ts).toDateString();
+    const today = new Date();
+    const startOfToday = new Date(today).setHours(0, 0, 0, 0);
+    const dates = new Set<string>();
+    let practicedToday = 0;
+    const buckets = [0, 0, 0, 0, 0, 0, 0]; // 今天..6 天后
+    for (const e of entries) {
+      for (const card of Object.values(loadProgress(e.slug)) as CardState[]) {
+        if (card.lastReview) {
+          dates.add(dayStr(card.lastReview));
+          if (dayStr(card.lastReview) === today.toDateString()) practicedToday += 1;
+        }
+        const day = Math.floor((card.due - startOfToday) / 86_400_000);
+        if (day >= 0 && day < 7) buckets[day] += 1;
+      }
+    }
+    let streak = 0;
+    const cursor = new Date();
+    if (!dates.has(cursor.toDateString())) cursor.setDate(cursor.getDate() - 1);
+    while (dates.has(cursor.toDateString())) {
+      streak += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return { streak, practicedToday, buckets, weekTotal: buckets.reduce((a, b) => a + b, 0) };
+  }, [entries]);
+
   const totalDue = entries.reduce((n, e) => n + e.dueToday, 0);
   const totalRemaining = entries.reduce((n, e) => n + e.remaining, 0);
   const learnedTotal = entries.reduce((n, e) => n + e.learned, 0);
@@ -164,7 +194,7 @@ export function TodayPage() {
     <div className="space-y-8">
       <PageHeader
         title="今日"
-        description={`${dateLabel(now)} · ${learnedTotal > 0 ? `已累计学习 ${learnedTotal} 道题` : '还没有学习记录'}`}
+        description={`${dateLabel(now)} · ${learnedTotal > 0 ? `已累计学习 ${learnedTotal} 道题` : '还没有学习记录'}${studyStats.streak > 1 ? ` · 连续学习 ${studyStats.streak} 天` : ''}${studyStats.practicedToday > 0 ? ` · 今天已练 ${studyStats.practicedToday} 题` : ''}`}
         actions={
           <>
             <Button asChild>
@@ -223,6 +253,34 @@ export function TodayPage() {
           />
         </div>
       </section>
+
+      {/* 复习预测:SM-2 未来 7 天的到期分布(有数据才出现) */}
+      {studyStats.weekTotal > 0 && (
+        <section>
+          <SectionHead
+            title="复习预测"
+            description="按每道题的记忆曲线到期时间统计,提前看到负荷。"
+            right={<span className="text-xs tabular-nums text-muted-foreground">未来 7 天 {studyStats.weekTotal} 题</span>}
+          />
+          <div className="mt-3 grid grid-cols-7 gap-2">
+            {studyStats.buckets.map((n, i) => {
+              const d = new Date();
+              d.setDate(d.getDate() + i);
+              const label = i === 0 ? '今天' : i === 1 ? '明天' : `周${'日一二三四五六'[d.getDay()]}`;
+              const max = Math.max(...studyStats.buckets, 1);
+              return (
+                <div key={i} className="flex flex-col items-center gap-1.5">
+                  <span className={`text-sm font-semibold tabular-nums ${n > 0 ? 'text-foreground' : 'text-foreground/30'}`}>{n}</span>
+                  <div className="flex h-12 w-full items-end rounded-sm bg-muted" aria-hidden>
+                    <div className="w-full rounded-sm bg-primary/70" style={{ height: `${Math.round((n / max) * 100)}%` }} />
+                  </div>
+                  <span className="text-[11px] text-muted-foreground">{label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* 题库进度:学习中/未开始 */}
       {learning.length > 0 && (
