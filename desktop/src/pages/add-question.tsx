@@ -314,7 +314,7 @@ export function AddQuestionPage() {
       </div>
 
       <section data-add-section="manual">
-        <SectionHead icon={Pencil} title="手动写题" desc="人写即人审,保存直接进我的题库。" />
+        <SectionHead icon={Pencil} title="手动写题" desc="保存后直接进我的题库。" />
         <div className="mt-4">
           <ManualAddForm onSaved={(id) => {
             toast.success('已加入我的题库', { description: id });

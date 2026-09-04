@@ -178,7 +178,7 @@ export function SettingsPage() {
 
       {/* ── LLM ─────────────────────────────────────── */}
       <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-base">LLM(AI 生题用)</CardTitle></CardHeader>
+        <CardHeader className="pb-3"><CardTitle className="text-base">AI 生成(LLM)</CardTitle></CardHeader>
         <CardContent className="space-y-5">
           <div className="text-xs text-muted-foreground">
             任何 OpenAI 兼容端点(智谱 / DeepSeek / 本地 Ollama 等)。
@@ -208,8 +208,8 @@ export function SettingsPage() {
           />
           <div className="text-xs text-muted-foreground">
             {isTauri()
-              ? 'key 存本地应用数据库(resume.db 的 secrets 表),退出不丢;保存后回显在此。'
-              : '当前是浏览器预览:key 仅存内存,刷新即失(输入框会变空;桌面版才落库)。'}
+              ? 'key 保存在本机应用数据中,退出不丢;保存后会回显在这里。'
+              : '浏览器预览:key 只存内存,刷新即丢;桌面版才会保存。'}
           </div>
         </div>
 
@@ -282,7 +282,7 @@ export function SettingsPage() {
           );
         })}
         <div className="py-3 text-xs text-muted-foreground">
-          清空操作按分类执行:清空进度删 SM-2 记录(题目和笔记保留);清空笔记只删笔记(进度保留)。均不可恢复。
+          清空按分类执行:清空进度会删除学习进度(题目和笔记保留);清空笔记只删笔记(进度保留)。均不可恢复。
         </div>
         </CardContent>
       </Card>
@@ -308,7 +308,7 @@ export function SettingsPage() {
           <DialogHeader>
             <DialogTitle>{confirm?.kind === 'progress' ? '清空复习进度?' : '清空笔记?'}</DialogTitle>
             <DialogDescription>
-              将删除「{confirm?.name}」的{confirm?.kind === 'progress' ? '全部学习进度(SM-2 记录)' : '全部笔记'}
+              将删除「{confirm?.name}」的{confirm?.kind === 'progress' ? '全部学习进度' : '全部笔记'}
               ,{confirm?.kind === 'progress' ? '笔记会保留' : '复习进度会保留'}。此操作不可恢复。
             </DialogDescription>
           </DialogHeader>

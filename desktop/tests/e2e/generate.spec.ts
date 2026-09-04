@@ -232,7 +232,7 @@ test('设置页渲染:预设与 key 表单', async ({ page }) => {
   // 五分区:刷题(题量)/外观/LLM/数据管理/关于
   await expect(page.getByText('每次学习题量')).toBeVisible();
   await expect(page.getByText('外观')).toBeVisible();
-  await expect(page.getByText('LLM(AI 生题用)')).toBeVisible();
+  await expect(page.getByText('AI 生成(LLM)')).toBeVisible();
   await expect(page.getByText('数据管理')).toBeVisible();
   await expect(page.getByText('关于')).toBeVisible();
   await expect(page.getByText('baseURL', { exact: true })).toBeVisible();

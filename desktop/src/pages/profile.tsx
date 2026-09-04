@@ -36,8 +36,8 @@ export function ProfilePage() {
         title={tab === 'resume' ? '简历管理' : 'JD 管理'}
         subtitle={
           tab === 'resume'
-            ? '简历全文与默认公司;JD 生成题目可选「结合简历」出深挖题,后续简历生成也读它。'
-            : '管理投递目标:从任意 JD 一键「按 JD 生成题目」,数量由 LLM 判断。'
+            ? '维护简历全文与默认公司,按 JD 生成时可结合简历出深挖题。'
+            : '维护目标岗位的职位描述,可从任意 JD 直接生成定向题。'
         }
       />
 
@@ -92,7 +92,7 @@ function JdManager() {
             <Inbox className="mx-auto size-10 text-muted-foreground" aria-hidden />
             <div className="text-foreground">还没有 JD</div>
             <div className="text-sm text-muted-foreground">
-              贴上目标岗位的职位描述,就能从它发起定向生题。
+              粘贴目标岗位的职位描述,从这条 JD 直接生成定向题。
             </div>
             <div>
               <Button size="sm" variant="outline" onClick={() => setCreating(true)}>
@@ -257,7 +257,7 @@ function JdEditDialog({ open, jd, onClose }: { open: boolean; jd: Jd | null; onC
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{jd ? '编辑 JD' : '新增 JD'}</DialogTitle>
-          <DialogDescription>标题可留空(默认取公司名);JD 全文粘贴,定向生题按它出题。</DialogDescription>
+          <DialogDescription>标题可留空,默认取公司名;生成时按 JD 全文的技术要求出题。</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
@@ -277,7 +277,7 @@ function JdEditDialog({ open, jd, onClose }: { open: boolean; jd: Jd | null; onC
               id="jd-content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="粘贴目标岗位的 JD 全文。定向生题按 JD 的技术要求出题,核心必备项优先。"
+              placeholder="粘贴目标岗位的 JD 全文"
               rows={12}
             />
           </div>
@@ -355,7 +355,7 @@ function ResumeCard() {
             id="resume-content"
             value={resume}
             onChange={(e) => setResume(e.target.value)}
-            placeholder="粘贴简历全文(markdown)。JD 定向生题可选「结合简历深挖」;留空则只按 JD 出题。"
+            placeholder="粘贴简历全文(markdown),按 JD 生成时可结合简历"
             rows={14}
           />
         </div>
