@@ -45,11 +45,11 @@ test('首页含 AI Agent 题库入口', async ({ page }) => {
   await expect(page.getByText(/AI\s*Agent/i).first()).toBeVisible({ timeout: 10_000 });
 });
 
-test('工作台总览:页头/计数条/学习中/求职空态', async ({ page }) => {
+test('今日页:页头/计划/学习中/求职空态', async ({ page }) => {
   await page.goto('/#/');
   await page.waitForLoadState('networkidle');
   // 页头:日期行(回答「今天是哪天」)+ 计数条(待办三格)
-  await expect(page.getByRole('heading', { name: '总览' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '今日' })).toBeVisible();
   await expect(page.getByText(/\d+ 月 \d+ 日 周./)).toBeVisible();
   await expect(page.getByText('待复习').first()).toBeVisible();
   await expect(page.getByText('待学习').first()).toBeVisible();
@@ -70,7 +70,7 @@ test('工作台总览:页头/计数条/学习中/求职空态', async ({ page })
   await expect(page.getByRole('heading', { name: 'AI 生成' })).toBeVisible();
   await expect(page.getByRole('heading', { name: '按 JD 生成' })).toBeVisible();
   await page.getByRole('link', { name: '返回' }).click();
-  await expect(page.getByRole('heading', { name: '总览' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '今日' })).toBeVisible();
 });
 
 test('控制台无未捕获错误(应用启动健康)', async ({ page }) => {

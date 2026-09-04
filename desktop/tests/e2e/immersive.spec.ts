@@ -13,13 +13,11 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('沉浸式:隐藏侧栏与返回条,Esc 退出恢复', async ({ page }) => {
-  await page.goto('/#/agent/quiz');
+  await page.goto('/#/session?category=agent');
   await expect(page.locator('[data-app-nav]')).toBeVisible();
-  await expect(page.locator('[data-breadcrumb]')).toBeVisible();
 
   await page.getByRole('button', { name: '沉浸模式' }).click();
   await expect(page.locator('[data-app-nav]')).toBeHidden();
-  await expect(page.locator('[data-breadcrumb]')).toBeHidden();
   // 题目仍在刷,退出按钮出现(aria-label 已切换,兼作 Esc 之外的退出入口)
   await expect(page.getByRole('button', { name: '退出沉浸模式' })).toBeVisible();
   await expect(page.getByRole('button', { name: /看答案/ })).toBeVisible();
@@ -27,12 +25,11 @@ test('沉浸式:隐藏侧栏与返回条,Esc 退出恢复', async ({ page }) => 
   // Esc 退出:chrome 恢复
   await page.keyboard.press('Escape');
   await expect(page.locator('[data-app-nav]')).toBeVisible();
-  await expect(page.locator('[data-breadcrumb]')).toBeVisible();
   await expect(page.getByRole('button', { name: '沉浸模式' })).toBeVisible();
 });
 
 test('沉浸式:离开刷题路由自动退出(含后退场景)', async ({ page }) => {
-  await page.goto('/#/agent/quiz');
+  await page.goto('/#/session?category=agent');
   await page.getByRole('button', { name: '沉浸模式' }).click();
   await expect(page.locator('[data-app-nav]')).toBeHidden();
 
@@ -44,7 +41,7 @@ test('沉浸式:离开刷题路由自动退出(含后退场景)', async ({ page 
 });
 
 test('沉浸式:弹窗打开时 Esc 只关弹窗,不退沉浸', async ({ page }) => {
-  await page.goto('/#/agent/quiz');
+  await page.goto('/#/session?category=agent');
   await page.getByRole('button', { name: '沉浸模式' }).click();
   await expect(page.locator('[data-app-nav]')).toBeHidden();
 
@@ -63,7 +60,7 @@ test('沉浸式:弹窗打开时 Esc 只关弹窗,不退沉浸', async ({ page })
 });
 
 test('问 AI:web 层降级为外部链接', async ({ page }) => {
-  await page.goto('/#/agent/quiz');
+  await page.goto('/#/session?category=agent');
   const link = page.getByRole('link', { name: '问 AI(浏览器打开)' });
   await expect(link).toBeVisible();
   await expect(link).toHaveAttribute('href', 'https://chat.qwen.ai/');

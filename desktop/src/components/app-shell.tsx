@@ -1,26 +1,24 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import {
-  ArrowLeft, ArrowRight, Bot, Code2, FileText, Inbox, LayoutDashboard, LibraryBig,
+  ArrowLeft, ArrowRight, FileText, LayoutDashboard, LibraryBig, Play,
   Search, Settings, Target, type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuestions } from '@/lib/questions';
 import { getStats } from '@/lib/schedule';
-import { getMyCategory, getPendingCount, subscribeMyLib } from '@/lib/mylib';
+import { getPendingCount, subscribeMyLib } from '@/lib/mylib';
 import { useImmersive } from '@/lib/immersive';
 import { CommandPalette } from '@/components/command-palette';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
-// 桌面壳 v3「桌面工作台」(2026-09-04 从 0 设计,specs/2026-09-04-ui-redesign.md §v3):
-// 按桌面应用操作习惯组织——
-//   源列表侧栏(分组/图标/右对齐计数/待审角标,Cmd+1..8 切换)
-//   工具栏(历史 ‹ › / 子页面包屑 / ⌘K 命令面板)
-//   内容区(main,页面自绘页头)
-//   状态栏(库计数 + 本地存储提示)
-// 沉浸式刷题时全部 chrome 不渲染(工具栏挂 data-app-nav,供 e2e 断言);
-// main 恒常渲染,沉浸切换不重挂页面(刷题/笔记状态不丢)。
+// 桌面壳(v4「今日驱动」IA):按桌面应用操作习惯组织——
+//   源列表侧栏:今日 / 练习 / 题库(待审角标)/【求职】JD 管理·简历管理 / 设置,
+//     Cmd/Ctrl+1..6 直达;分类不再平铺侧栏,收进题库空间的分类切换
+//   工具栏:历史 ‹ › + ⌘K 命令面板(data-app-nav 供沉浸断言)
+//   状态栏:库计数 + 本地存储提示
+// main 恒常渲染:沉浸切换只藏 chrome,刷题/笔记状态不丢。
 // Cmd/Ctrl+←/→ = 历史 Back/Forward(输入控件内不抢键)。
 
 interface NavItemProps {
@@ -37,7 +35,7 @@ function NavItem({ to, icon: Icon, label, active, count, badge, shortcut }: NavI
   return (
     <Link
       to={to}
-      title={shortcut ? `${label}  ⌘${shortcut}` : label}
+      title={shortcut ? `${label}  \u2318${shortcut}` : label}
       className={cn(
         'flex h-7 items-center gap-2 rounded-md px-2 text-[13px] transition-colors',
         active
@@ -75,20 +73,18 @@ export function AppShell({ children }: { children: ReactNode }) {
   const mainRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const parts = location.pathname.split('/').filter(Boolean);
+  const root = location.pathname.split('/').filter(Boolean)[0] ?? '';
   const { data } = useQuestions();
   const { immersive } = useImmersive();
   const [paletteOpen, setPaletteOpen] = useState(false);
-  // 前进可达性:记录见过的最大 history idx(react-router 在 history.state 里维护 idx)
   const maxIdxRef = useRef(0);
   const idx = historyIdx();
   if (idx > maxIdxRef.current) maxIdxRef.current = idx;
   const canBack = idx > 0;
   const canForward = idx < maxIdxRef.current;
 
-  const myCategory = getMyCategory();
   const pendingCount = getPendingCount();
-  // 待审角标/计数跟随 mylib 变化(审核动作发生在别的页面)
+  // 待审角标跟随 mylib 变化(审核动作发生在别的页面)
   const [, bump] = useState(0);
   useEffect(() => subscribeMyLib(() => bump((v) => v + 1)), []);
 
@@ -99,31 +95,19 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   // document.title 跟随路由
   useEffect(() => {
-    const root = parts[0] ?? '';
-    const sub = parts[1];
-    const topTitles: Record<string, string> = {
-      '': '总览',
-      drafts: '待审核',
-      settings: '设置',
+    const titles: Record<string, string> = {
+      '': '今日',
+      session: '练习',
+      library: '题库',
       add: '添加题目',
+      profile: new URLSearchParams(location.search).get('tab') === 'resume' ? '简历管理' : 'JD 管理',
+      settings: '设置',
+      drafts: '待审核',
     };
-    let title: string;
-    if (root === 'profile') {
-      title = new URLSearchParams(location.search).get('tab') === 'resume' ? '简历管理' : 'JD 管理';
-    } else if (topTitles[root] != null || root === '') {
-      title = topTitles[root] ?? '总览';
-    } else if (sub === 'quiz') {
-      title = '学习';
-    } else if (sub === 'browse') {
-      title = '题目列表';
-    } else {
-      title = catNameOf(root) ?? root;
-    }
-    document.title = `${title} · CommitCareer`;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, location.search]);
+    document.title = `${titles[root] ?? '今日'} · CommitCareer`;
+  }, [location.pathname, location.search, root]);
 
-  // 快捷键:Cmd/Ctrl+1..8 切分区;Cmd/Ctrl+K 命令面板(输入控件/弹窗打开时让键)
+  // 快捷键:Cmd/Ctrl+1..6 切空间;Cmd/Ctrl+K 命令面板(输入控件/弹窗打开时让键)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.metaKey || e.ctrlKey)) return;
@@ -136,8 +120,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         return;
       }
       const targets: Array<[string, string]> = [
-        ['1', '/'], ['2', '/fe'], ['3', '/agent'], ['4', '/my'],
-        ['5', '/profile'], ['6', '/profile?tab=resume'], ['7', '/drafts'], ['8', '/settings'],
+        ['1', '/'], ['2', '/session'], ['3', '/library'],
+        ['4', '/profile'], ['5', '/profile?tab=resume'], ['6', '/settings'],
       ];
       const hit = targets.find(([k]) => e.key === k);
       if (hit) {
@@ -148,14 +132,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [navigate]);
-
-  const root = parts[0] ?? '';
-  const cats = (data?.categories ?? []).filter((c) => c.slug !== 'my');
-  const profileTab = new URLSearchParams(location.search).get('tab') === 'resume' ? 'resume' : 'jds';
-  const catNameOf = (slug: string) =>
-    slug === 'my' ? myCategory.name : data?.categories.find((c) => c.slug === slug)?.name;
-  const isSubPage = parts.length >= 2;
-  const subPageName = parts[1] === 'quiz' ? '学习' : '题目列表';
 
   // 状态栏计数
   const totalQuestions = data?.questions.length ?? 0;
@@ -171,41 +147,24 @@ export function AppShell({ children }: { children: ReactNode }) {
     return { due, unseen };
   }, [data]);
 
+  // 空间高亮:题库涵盖 题库/审核(重定向)/添加题目 语境
+  const libraryActive = root === 'library' || root === 'drafts' || root === 'add';
+
   const sidebar = (
     <aside className="flex w-52 shrink-0 flex-col bg-sidebar px-2 pb-2">
       <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         <div className="pt-2">
-          <NavItem to="/" icon={LayoutDashboard} label="总览" active={root === ''} shortcut="1" />
+          <NavItem to="/" icon={LayoutDashboard} label="今日" active={root === ''} shortcut="1" />
+          <NavItem to="/session" icon={Play} label="练习" active={root === 'session'} shortcut="2" />
+          <NavItem to="/library" icon={LibraryBig} label="题库" active={libraryActive} badge={pendingCount} shortcut="3" />
         </div>
 
-        <SectionLabel>题库</SectionLabel>
-        {cats.map((c, i) => (
-          <NavItem
-            key={c.slug}
-            to={`/${c.slug}`}
-            icon={c.slug === 'fe' ? Code2 : c.slug === 'agent' ? Bot : LibraryBig}
-            label={c.name}
-            active={root === c.slug}
-            count={c.count}
-            shortcut={String(i + 2)}
-          />
-        ))}
-        <NavItem
-          to="/my"
-          icon={LibraryBig}
-          label="我的题库"
-          active={root === 'my'}
-          count={myCategory.count}
-          shortcut="4"
-        />
-
         <SectionLabel>求职</SectionLabel>
-        <NavItem to="/profile" icon={Target} label="JD 管理" active={root === 'profile' && profileTab === 'jds'} shortcut="5" />
-        <NavItem to="/profile?tab=resume" icon={FileText} label="简历管理" active={root === 'profile' && profileTab === 'resume'} shortcut="6" />
+        <NavItem to="/profile" icon={Target} label="JD 管理" active={root === 'profile' && !(new URLSearchParams(location.search).get('tab') === 'resume')} shortcut="4" />
+        <NavItem to="/profile?tab=resume" icon={FileText} label="简历管理" active={root === 'profile' && new URLSearchParams(location.search).get('tab') === 'resume'} shortcut="5" />
 
         <div className="min-h-4 flex-1" />
-        <NavItem to="/drafts" icon={Inbox} label="待审核" active={root === 'drafts'} badge={pendingCount} shortcut="7" />
-        <NavItem to="/settings" icon={Settings} label="设置" active={root === 'settings'} shortcut="8" />
+        <NavItem to="/settings" icon={Settings} label="设置" active={root === 'settings'} shortcut="6" />
       </nav>
     </aside>
   );
@@ -217,7 +176,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="flex min-w-0 flex-1 flex-col">
           {!immersive && (
             <div data-app-nav className="flex h-11 shrink-0 items-center gap-1 border-b border-border bg-background px-2">
-              {/* 工具栏:历史导航 + 子页面包屑 + 命令面板;data-app-nav 供沉浸断言 */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -248,11 +206,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </TooltipTrigger>
                 <TooltipContent>前进(Cmd+→)</TooltipContent>
               </Tooltip>
-              {isSubPage && (
-                <span data-breadcrumb className="ml-1.5 truncate text-[13px] text-muted-foreground">
-                  {catNameOf(parts[0] ?? '') ?? parts[0]} <span className="text-border">/</span> {subPageName}
-                </span>
-              )}
               <div className="ml-auto">
                 <Button
                   variant="ghost"
@@ -268,13 +221,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           )}
           <main ref={mainRef} className="min-h-0 flex-1 overflow-y-auto">
-            <div className="mx-auto max-w-5xl px-6 py-6">{children}</div>
+            <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col px-6 pb-6 pt-6 [--page-pad-y:1.5rem]">
+              {children}
+            </div>
           </main>
         </div>
       </div>
       {!immersive && (
         <footer className="flex h-7 shrink-0 items-center justify-between border-t border-border bg-background px-3 text-[11px] text-muted-foreground">
-          {/* 状态栏:全局计数 + 本地存储提示 */}
           <span className="tabular-nums">
             题库 {totalQuestions} · 待复习 {todoCounts.due} · 待学习 {todoCounts.unseen} · 待审核 {pendingCount}
           </span>

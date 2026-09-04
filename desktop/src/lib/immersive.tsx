@@ -79,7 +79,7 @@ export function ImmersiveProvider({ children }: { children: ReactNode }) {
 
   // 离开刷题路由自动退出(含 Cmd+← 后退场景),全屏由上面的跟随 effect 一并还原
   useEffect(() => {
-    if (immersive && !location.pathname.endsWith('/quiz')) setImmersive(false);
+    if (immersive && !location.pathname.endsWith('/session')) setImmersive(false);
   }, [location.pathname, immersive]);
 
   const value = useMemo(

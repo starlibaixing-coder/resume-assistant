@@ -15,7 +15,7 @@ import { loadLimit } from '@/lib/prefs';
 import { isTauri } from '@/lib/secrets';
 import { useImmersive } from '@/lib/immersive';
 import { AI_CHAT_URL, openAiAssistant } from '@/lib/ai-assistant';
-import type { Rating } from '@/types/question';
+import type { Rating, Question } from '@/types/question';
 import { AnswerPanel } from '@/components/answer-panel';
 import NotePanel from '@/components/note-panel';
 import CodeScratchpad from '@/components/code-scratchpad';
@@ -27,12 +27,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-// 学习页 v2「纸面编辑部」(2026-09-04):题目即版面主角——去卡片,题干大字排印,
-// 细线分区;交互逻辑(键盘流/撤销/跳过/吸底操作条)不变。
-// 吸底操作条:壳层内容区有 py-(--page-pad-y) 内边距,sticky 约束在 content-box,
-// bottom-0 会悬空露出底下滚动内容(v1 目检实锤)——用负 bottom + 自身 paddingBottom
-// 盖住内边距区,-mx-6 横向铺满,负 marginBottom 抵消布局高度。
-// 评分/看答案按钮内置可见 kbd 提示;终态补「回到{分类}」出口。
+// 练习会话(v4「今日驱动」):不再绑定单个分类——
+//   /session            跨全库混排(到期优先、新题补位),今日 CTA 的落点
+//   /session?category=x 只练某分类(题库深链,旧 /:category/quiz 重定向至此)
+//   ?focus=due|new|all  限定本会话范围;?limit= 覆盖每次题量
+// 键盘流(空格/1/2/3)、撤销、跳过、吸底操作条、调度反馈全部保留;
+// 进度/笔记/代码草稿按 (分类, 题id) 读写,混排会话同样正确落库。
 
 // kbd 视觉:快捷键可见提示,样式全部走 token
 function Kbd({ children }: { children: ReactNode }) {
@@ -45,57 +45,71 @@ function Kbd({ children }: { children: ReactNode }) {
 
 // 与壳层内容区内边距对齐的吸底样式(变量由 app-shell 的页容器定义)
 const stickyBarStyle: CSSProperties = {
-  bottom: 'calc(-1 * var(--page-pad-y, 2.5rem))',
-  paddingBottom: 'var(--page-pad-y, 2.5rem)',
-  marginBottom: 'calc(-1 * var(--page-pad-y, 2.5rem))',
+  bottom: 'calc(-1 * var(--page-pad-y, 1.5rem))',
+  paddingBottom: 'var(--page-pad-y, 1.5rem)',
+  marginBottom: 'calc(-1 * var(--page-pad-y, 1.5rem))',
 };
 
-export function QuizPage({ category }: { category: string }) {
+interface QueueEntry {
+  category: string;
+  id: string;
+}
+
+export function QuizPage({ category }: { category?: string }) {
   const { data, error, retry } = useQuestions();
   const { immersive } = useImmersive();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [queueIdx, setQueueIdx] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [roundDone, setRoundDone] = useState(false); // 本轮 N 题是否学完
   const [lastFeedback, setLastFeedback] = useState<string | null>(null); // 上一次评分的调度反馈
-  const [round, setRound] = useState(0); // 轮次,变化时重算队列
+  const [round, setRound] = useState(0); // 轮次,变化时重算队列(续学下一轮)
   // 评分历史:撤销用。prev=null 表示评之前无卡,撤销要删行而非回写
-  const [ratedHistory, setRatedHistory] = useState<Array<{ id: string; prev: CardState | null }>>([]);
+  const [ratedHistory, setRatedHistory] = useState<Array<{ entry: QueueEntry; prev: CardState | null }>>([]);
 
-  // 计算队列,round 变化时重算(续学下一轮时)
-  const { queue, catQuestions, catName } = useMemo(() => {
-    if (!data) return { queue: [], catQuestions: [], catName: category };
-    const catQuestions = data.questions.filter((q) => q.category === category);
-    const ids = catQuestions.map((q) => q.id);
-    // 每次题量:URL ?limit= 深链可覆盖,否则读全局设置(设置页「学习」分区)
+  // 会话队列:跨分类混排。到期优先、新题补位;focus 限定范围;limit 截断整场
+  const { queue, byCat, scopeName } = useMemo(() => {
+    if (!data) return { queue: [] as QueueEntry[], byCat: new Map<string, Question[]>(), scopeName: category ?? '全部题库' };
+    const scopeCats = category ? [category] : data.categories.map((c) => c.slug);
     const limitParam = searchParams.get('limit');
     const limit = limitParam != null ? parseInt(limitParam, 10) || 0 : loadLimit();
-    const cap = (list: string[]) => (limit > 0 ? list.slice(0, limit) : list);
-    // 三种入队模式(2026-09-02:分类页「开始复习 / 开始学习 / 再过一遍」对应):
-    //   focus=due 只出待复习;focus=new 只出待学习;force=all 全量(提前复习)。
-    //   默认(无参数)= 到期优先、新题补位。选中的集合为空时回落默认,避免空会话。
-    const r = getReviewQueue(category, ids, limit);
-    let queue = r.queue;
+    const byCat = new Map<string, Question[]>();
+    const due: QueueEntry[] = [];
+    const unseen: QueueEntry[] = [];
+    for (const c of scopeCats) {
+      const qs = data.questions.filter((q) => q.category === c);
+      if (qs.length === 0) continue;
+      byCat.set(c, qs);
+      const r = getReviewQueue(c, qs.map((q) => q.id), 0);
+      due.push(...r.dueIds.map((id) => ({ category: c, id })));
+      unseen.push(...r.unseen.map((id) => ({ category: c, id })));
+    }
     const focus = searchParams.get('focus');
     const force = searchParams.get('force');
-    if (force === 'all') queue = cap(ids);
-    else if (focus === 'due' && r.dueIds.length > 0) queue = cap(r.dueIds);
-    else if (focus === 'new' && r.unseen.length > 0) queue = cap(r.unseen);
-    return {
-      queue,
-      catQuestions,
-      catName: data.categories.find((c) => c.slug === category)?.name ?? category,
-    };
+    let queue: QueueEntry[];
+    if (force === 'all') {
+      queue = scopeCats.flatMap((c) => (byCat.get(c) ?? []).map((q) => ({ category: c, id: q.id })));
+    } else if (focus === 'due') {
+      queue = due;
+    } else if (focus === 'new') {
+      queue = unseen;
+    } else {
+      queue = [...due, ...unseen];
+    }
+    if (limit > 0) queue = queue.slice(0, limit);
+    return { queue, byCat, scopeName: category ?? '全部题库' };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, category, round, searchParams]);
 
-  const currentId = queue[queueIdx];
-  const current = catQuestions.find((q) => q.id === currentId);
+  const entry = queue[queueIdx];
+  const current: Question | undefined = entry ? byCat.get(entry.category)?.find((q) => q.id === entry.id) : undefined;
+  const catNameOf = (slug: string) =>
+    slug === 'my' ? '我的题库' : data?.categories.find((c) => c.slug === slug)?.name ?? slug;
 
   // 切题时重置展开状态
   useEffect(() => {
     setRevealed(false);
-  }, [queueIdx, currentId]);
+  }, [queueIdx, entry?.id]);
 
   const advance = () => {
     if (queueIdx < queue.length - 1) {
@@ -107,13 +121,14 @@ export function QuizPage({ category }: { category: string }) {
   };
 
   const handleRate = (rating: Rating) => {
-    if (!currentId) return;
-    const existing = loadProgress(category)[currentId] ?? null;
+    if (!entry) return;
+    const { category: cat, id } = entry;
+    const existing = loadProgress(cat)[id] ?? null;
     const next = review(existing || newCard(), rating);
-    saveCard(category, currentId, next);
+    saveCard(cat, id, next);
     // 闭环间隔重复的核心反馈:告诉用户这次评分让题目什么时候回来
     setLastFeedback(rating === '不会' ? '记住了,这道题明天再来' : next.interval <= 1 ? '明天再来' : next.interval === 2 ? '后天再来' : `${next.interval} 天后再见`);
-    setRatedHistory((h) => [...h, { id: currentId, prev: existing }]);
+    setRatedHistory((h) => [...h, { entry, prev: existing }]);
     advance();
   };
 
@@ -125,33 +140,22 @@ export function QuizPage({ category }: { category: string }) {
     const last = ratedHistory[ratedHistory.length - 1];
     if (!last) return;
     if (last.prev) {
-      saveCard(category, last.id, last.prev);
+      saveCard(last.entry.category, last.entry.id, last.prev);
     } else {
-      deleteCard(category, last.id);
+      deleteCard(last.entry.category, last.entry.id);
     }
     setRatedHistory((h) => h.slice(0, -1));
     setRevealed(false);
     if (roundDone) {
-      // 完成态撤销:queueIdx 停在末题,直接回到那题重评
       setRoundDone(false);
     } else {
       setQueueIdx((i) => Math.max(0, i - 1));
     }
   };
 
-  // 下一轮:mode='all' 时以全量模式重新入队(再过一遍);否则沿用 URL 里现有的 focus/force
-  const handleNextRound = (mode?: 'all') => {
-    if (mode === 'all') {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          next.set('force', 'all');
-          return next;
-        },
-        { replace: true },
-      );
-    }
-    setRound((r) => r + 1); // 触发队列重算
+  // 下一轮:沿用 URL 里现有的 focus/category 重新入队(新一轮调度)
+  const handleNextRound = () => {
+    setRound((r) => r + 1);
     setQueueIdx(0);
     setRoundDone(false);
     setRevealed(false);
@@ -159,12 +163,11 @@ export function QuizPage({ category }: { category: string }) {
   };
 
   // 键盘流:空格/回车翻答案,1/2/3 评分。
-  // 输入控件/编辑器聚焦时不抢键;弹窗开着时不抢键。
-  // revealed 经 latest-ref 读:effect 重订阅是 passive 的,可能滞后于紧邻的下一击键。
+  // 输入控件/编辑器聚焦时不抢键;弹窗开着时不抢键;revealed 经 latest-ref 读防丢帧。
   const revealedRef = useRef(revealed);
   revealedRef.current = revealed;
   useEffect(() => {
-    if (roundDone || !queue.length || !currentId) return;
+    if (roundDone || !queue.length || !entry) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const el = document.activeElement as HTMLElement | null;
@@ -202,42 +205,36 @@ export function QuizPage({ category }: { category: string }) {
     );
   }
   if (!queue.length)
-    return (
-      <DoneState
-        category={category}
-        catName={catName}
-        total={catQuestions.length}
-        onReviewAll={() => handleNextRound('all')}
-      />
-    );
+    return <SessionDoneState scopeName={scopeName} total={data.questions.filter((q) => !category || q.category === category).length} onReviewAll={handleNextRound} />;
   if (roundDone || !current)
     return (
       <RoundDoneState
-        category={category}
-        catName={catName}
         done={queue.length}
-        canUndo={ratedHistory.length > 0}
         mastered={ratedHistory.filter((h) => {
-          const c = getCard(category, h.id);
+          const c = getCard(h.entry.category, h.entry.id);
           return c && isMastered(c);
         }).length}
+        canUndo={ratedHistory.length > 0}
         onUndo={handleUndo}
-        onNextRound={() => handleNextRound()}
+        onNextRound={handleNextRound}
       />
     );
 
   const widthClass = immersive ? 'max-w-4xl' : 'max-w-3xl';
 
   return (
-    <div className={cn('mx-auto flex min-h-full w-full flex-col gap-6', widthClass)}>
-      {/* 进度行:页眉细线 */}
+    <div className={cn('mx-auto flex w-full flex-1 flex-col gap-5', widthClass)}>
+      {/* 会话进度行:页眉细线 */}
       <div className="border-b border-border pb-3">
         <div className="flex justify-between items-center text-sm text-muted-foreground">
           <span className="font-mono tabular-nums">
             {queueIdx + 1} / {queue.length}
           </span>
           <div className="flex items-center gap-3">
-            <span>{current.moduleName}</span>
+            <span>
+              {scopeName === '全部题库' ? `${catNameOf(current.category)} · ` : ''}
+              {current.moduleName}
+            </span>
             <span className="flex items-center gap-1">
               <AskAiIconButton />
               <ImmersiveIconButton />
@@ -251,8 +248,8 @@ export function QuizPage({ category }: { category: string }) {
         />
       </div>
 
-      {/* 题面:大字排印,版面主角 */}
-      <div className="flex flex-1 flex-col justify-center py-6">
+      {/* 题面 */}
+      <div className="flex flex-1 flex-col justify-center py-5">
         <div className="flex flex-wrap gap-2">
           <Badge variant="outline">{current.difficulty}</Badge>
           {current.tags.map((t) => (
@@ -268,8 +265,8 @@ export function QuizPage({ category }: { category: string }) {
 
         {/* 题级工具入口:笔记(右侧抽屉)/ 代码草稿纸(大弹窗),只留 ghost 图标 */}
         <div className="mt-3 flex items-center gap-0.5">
-          <NotePanel category={category} questionId={current.id} />
-          <CodeScratchpad category={category} questionId={current.id} question={current} />
+          <NotePanel category={current.category} questionId={current.id} />
+          <CodeScratchpad category={current.category} questionId={current.id} question={current} />
         </div>
 
         {revealed && (
@@ -287,11 +284,16 @@ export function QuizPage({ category }: { category: string }) {
         )}
       </div>
 
-      {/* 操作条:真吸底(见文件头说明),快捷键以 kbd 徽标内置在按钮里 */}
+      {/* 操作条:真吸底(变量对齐壳层内边距),快捷键 kbd 可见提示 */}
       <div
-        className="sticky z-10 mt-auto -mx-6 border-t border-border bg-background/95 px-6 pt-2.5 backdrop-blur"
+        className="sticky z-10 mt-auto -mx-6 border-t border-border bg-background px-6 pt-2.5"
         style={stickyBarStyle}
       >
+        {/* 顶缘向上渐隐:滚动内容在条上缘的半行自然溶解,无硬切感 */}
+        <div
+          className="pointer-events-none absolute -top-8 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent"
+          aria-hidden
+        />
         {revealed ? (
           <div className="mx-auto grid max-w-3xl grid-cols-3 gap-2">
             <Button
@@ -359,8 +361,7 @@ export function QuizPage({ category }: { category: string }) {
   );
 }
 
-// 问 AI:桌面壳内开 chat.qwen.ai 子 webview 窗口(已开则聚焦);
-// 浏览器/web 层降级为新标签页
+// 问 AI:桌面壳内开 chat.qwen.ai 子 webview 窗口(已开则聚焦);浏览器降级新标签页
 function AskAiIconButton() {
   if (!isTauri()) {
     return (
@@ -398,7 +399,7 @@ function AskAiIconButton() {
   );
 }
 
-// 沉浸式:隐藏导航条/返回条(Tauri 壳内同时系统全屏),Esc 或本按钮退出
+// 沉浸式:隐藏 chrome(Tauri 壳内同时系统全屏),Esc 或本按钮退出
 function ImmersiveIconButton() {
   const { immersive, toggle } = useImmersive();
   return (
@@ -419,10 +420,9 @@ function ImmersiveIconButton() {
   );
 }
 
-// 终态:居中刊尾式,细线上下;主按钮 + 次操作行
-function DoneState({ category, catName, total, onReviewAll }: {
-  category: string;
-  catName: string;
+// 终态:居中刊尾式;回今日 / 去题库
+function SessionDoneState({ scopeName, total, onReviewAll }: {
+  scopeName: string;
   total: number;
   onReviewAll: () => void;
 }) {
@@ -431,17 +431,13 @@ function DoneState({ category, catName, total, onReviewAll }: {
     <div className={cn('mx-auto w-full', immersive ? 'max-w-4xl' : 'max-w-3xl')}>
       <div className="flex flex-col items-center gap-3 border-y border-border py-24 text-center">
         <CheckCircle2 className="size-10 text-success" aria-hidden />
-        <div className="text-2xl font-bold tracking-tight">今日队列已清空</div>
-        <p className="text-sm text-muted-foreground">没有待复习和待学习了。</p>
+        <div className="text-2xl font-bold tracking-tight">今日练习已完成</div>
+        <p className="text-sm text-muted-foreground">{scopeName}没有待复习和待学习的题了。</p>
         <div className="mt-3 flex flex-col items-center gap-3">
           {total > 0 && <Button onClick={onReviewAll}>再过一遍(全部题)</Button>}
           <div className="flex items-center gap-4 text-sm">
-            <Link to={`/${category}`} className="text-primary hover:underline">
-              回到{catName}
-            </Link>
-            <Link to={`/${category}/browse`} className="text-primary hover:underline">
-              浏览全部题目
-            </Link>
+            <Link to="/" className="text-primary hover:underline">回到今日</Link>
+            <Link to="/library" className="text-primary hover:underline">去题库</Link>
           </div>
         </div>
       </div>
@@ -450,16 +446,12 @@ function DoneState({ category, catName, total, onReviewAll }: {
 }
 
 function RoundDoneState({
-  category,
-  catName,
   done,
   mastered,
   canUndo,
   onUndo,
   onNextRound,
 }: {
-  category: string;
-  catName: string;
   done: number;
   mastered: number;
   canUndo: boolean;
@@ -487,12 +479,8 @@ function RoundDoneState({
               <Undo2 className="size-3.5" aria-hidden />
               撤销最后一题
             </Button>
-            <Link to={`/${category}`} className="text-primary hover:underline">
-              回到{catName}
-            </Link>
-            <Link to={`/${category}/browse`} className="text-primary hover:underline">
-              浏览全部题目
-            </Link>
+            <Link to="/" className="text-primary hover:underline">回到今日</Link>
+            <Link to="/library" className="text-primary hover:underline">去题库</Link>
           </div>
         </div>
       </div>
