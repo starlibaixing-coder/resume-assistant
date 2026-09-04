@@ -9,8 +9,8 @@ import {
 } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getReviewQueue } from '@/lib/schedule';
-import { newCard, review, type CardState } from '@/lib/sm2';
-import { saveCard, deleteCard, loadProgress } from '@/lib/storage';
+import { isMastered, newCard, review, type CardState } from '@/lib/sm2';
+import { getCard, saveCard, deleteCard, loadProgress } from '@/lib/storage';
 import { loadLimit } from '@/lib/prefs';
 import { isTauri } from '@/lib/secrets';
 import { useImmersive } from '@/lib/immersive';
@@ -33,6 +33,7 @@ export function QuizPage({ category }: { category: string }) {
   const [queueIdx, setQueueIdx] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [roundDone, setRoundDone] = useState(false); // 本轮 N 题是否刷完
+  const [lastFeedback, setLastFeedback] = useState<string | null>(null); // 上一次评分的调度反馈
   const [round, setRound] = useState(0); // 轮次,变化时重算队列
   // 评分历史:撤销用。prev=null 表示评之前无卡,撤销要删行而非回写
   const [ratedHistory, setRatedHistory] = useState<Array<{ id: string; prev: CardState | null }>>([]);
@@ -80,7 +81,10 @@ export function QuizPage({ category }: { category: string }) {
   const handleRate = (rating: Rating) => {
     if (!currentId) return;
     const existing = loadProgress(category)[currentId] ?? null;
-    saveCard(category, currentId, review(existing || newCard(), rating));
+    const next = review(existing || newCard(), rating);
+    saveCard(category, currentId, next);
+    // 闭环间隔重复的核心反馈:告诉用户这次评分让题目什么时候回来
+    setLastFeedback(rating === '不会' ? '记住了，这道题明天再来' : next.interval <= 1 ? '明天再来' : next.interval === 2 ? '后天再来' : `${next.interval} 天后再见`);
     setRatedHistory((h) => [...h, { id: currentId, prev: existing }]);
     advance();
   };
@@ -173,6 +177,10 @@ export function QuizPage({ category }: { category: string }) {
         category={category}
         done={queue.length}
         canUndo={ratedHistory.length > 0}
+        mastered={ratedHistory.filter((h) => {
+          const c = getCard(category, h.id);
+          return c && isMastered(c);
+        }).length}
         onUndo={handleUndo}
         onNextRound={() => handleNextRound()}
       />
@@ -200,6 +208,7 @@ export function QuizPage({ category }: { category: string }) {
         />
       </div>
 
+      <div className="flex flex-1 flex-col justify-center">
       <Card>
         <CardContent className="flex flex-col gap-3 p-6">
         <div className="flex flex-wrap gap-2">
@@ -235,6 +244,7 @@ export function QuizPage({ category }: { category: string }) {
         )}
       </CardContent>
       </Card>
+      </div>
 
       {/* 操作条:真吸底(bottom-0,无悬空距离),长答案滚动时评分/跳过始终可达;
           快捷键仍可用但不打数字徽章,改挂按钮 title 提示(2026-08-31 用户反馈修正) */}
@@ -271,7 +281,9 @@ export function QuizPage({ category }: { category: string }) {
             <Button onClick={() => setRevealed(true)} className="w-full" title="快捷键:空格">
               我想好了，看答案
             </Button>
-            <div className="text-center text-[11px] text-muted-foreground">先在脑中想清楚，再对答案</div>
+            <div className={`text-center text-[11px] ${lastFeedback ? 'text-success' : 'text-muted-foreground'}`}>
+              {lastFeedback ?? '先在脑中想清楚，再对答案'}
+            </div>
           </div>
         )}
         <div className="mt-1.5 flex items-center justify-center gap-2">
@@ -386,12 +398,14 @@ function DoneState({ category, total, onReviewAll }: { category: string; total: 
 function RoundDoneState({
   category,
   done,
+  mastered,
   canUndo,
   onUndo,
   onNextRound,
 }: {
   category: string;
   done: number;
+  mastered: number;
   canUndo: boolean;
   onUndo: () => void;
   onNextRound: () => void;
@@ -402,7 +416,7 @@ function RoundDoneState({
       <Card>
         <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
           <CheckCircle2 className="size-10 text-success" aria-hidden />
-          <div className="text-lg font-semibold text-foreground">本轮完成,学了 {done} 题</div>
+          <div className="text-lg font-semibold text-foreground">本轮完成，学了 {done} 道题{mastered > 0 ? `，掌握 ${mastered} 道` : ''}</div>
           <div className="mt-2 flex flex-col items-center gap-2.5">
             <Button onClick={onNextRound}>继续学下一轮</Button>
             <div className="flex items-center gap-3 text-sm">
