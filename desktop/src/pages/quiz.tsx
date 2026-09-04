@@ -181,7 +181,7 @@ export function QuizPage({ category }: { category: string }) {
   const widthClass = immersive ? 'max-w-4xl' : 'max-w-3xl';
 
   return (
-    <div className={cn('mx-auto space-y-6', widthClass)}>
+    <div className={cn('mx-auto flex min-h-full w-full flex-col gap-6', widthClass)}>
       <div className="space-y-2">
         <div className="flex justify-between items-center text-sm text-muted-foreground">
           <span className="font-mono">
@@ -238,7 +238,7 @@ export function QuizPage({ category }: { category: string }) {
 
       {/* 操作条:真吸底(bottom-0,无悬空距离),长答案滚动时评分/跳过始终可达;
           快捷键仍可用但不打数字徽章,改挂按钮 title 提示(2026-08-31 用户反馈修正) */}
-      <div className="sticky bottom-0 z-10 border-t border-border bg-background/95 pt-2.5 pb-2 backdrop-blur">
+      <div className="sticky bottom-0 z-10 mt-auto border-t border-border bg-background/95 pt-2.5 pb-2 backdrop-blur">
         {revealed ? (
           <div className="grid grid-cols-3 gap-2">
             <Button
