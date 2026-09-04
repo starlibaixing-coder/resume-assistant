@@ -55,7 +55,7 @@ export function QueuePage({ category }: { category: string }) {
           <Card>
             <CardContent className="space-y-3 py-16 text-center">
               <div className="text-foreground">我的题库还没有题</div>
-              <div className="text-sm text-muted-foreground">手动写一道,或让 AI 生成(先进待审核,通过后出现在这里)。</div>
+              <div className="text-sm text-muted-foreground">手动添加直接入库;AI 生成的题通过审核后出现在这里。</div>
               <div className="flex justify-center pt-1">
                 <Button size="sm" asChild>
                   <Link to="/add">
@@ -97,7 +97,7 @@ export function QueuePage({ category }: { category: string }) {
           <>
             <div className="space-y-1 text-center">
               <CheckCircle2 className="mx-auto size-10 text-success" aria-hidden />
-              <div className="text-sm text-muted-foreground">全部学过,今日没有到期的</div>
+              <div className="text-sm text-muted-foreground">今天的都学完了,没有待复习的题</div>
             </div>
             <Button asChild size="lg" className="w-full">
               <Link to={`/${category}/quiz?force=all`}>再过一遍(全部题)</Link>
@@ -141,7 +141,7 @@ export function QueuePage({ category }: { category: string }) {
             </div>
 
             <div className="text-center text-xs text-muted-foreground">
-              待复习 = 之前学过、按记忆曲线(SM-2)今天该再看一遍的题;每次学 {limit === 0 ? '全部' : limit} 题(可在设置中调整)
+              待复习 = 之前学过、今天到该再看一遍的题;每次学 {limit === 0 ? '全部' : limit} 题,可在设置中调整
             </div>
           </>
         )}

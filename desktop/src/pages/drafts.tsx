@@ -185,7 +185,7 @@ export function DraftsPage() {
           ))}
 
           <div className="text-xs text-muted-foreground text-center pt-2">
-            通过后的题在「我的题库」分类里学习(<Link to="/my" className="text-primary hover:underline">去学习</Link>),进度走同一套 SM-2。
+            通过后的题在「我的题库」分类里学习(<Link to="/my" className="text-primary hover:underline">去学习</Link>),复习节奏同样自动安排。
           </div>
         </div>
       )}
