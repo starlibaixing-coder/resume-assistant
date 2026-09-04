@@ -15,12 +15,14 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/page-header';
+import { SectionHead } from '@/components/section-head';
+import { ErrorState } from '@/components/error-state';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// 总览 = 工作台(2026-09-03,对照 Ant Design Pro Workplace,方案经 HTML mock 确认):
+// 总览 = 工作台(2026-09-03 工作台结构经用户确认;2026-09-04 UI 重构做一致性收敛:
+// 共享 SectionHead、装饰收敛单层柔光、分类卡主行动常驻、数字 tabular-nums)。
 // 问候区(时段问候 + 日期/累计学习 + 右侧三个指标)→ 左主栏(「学习中」「未开始」
 // 「最近动态」平铺小节)→ 右侧「快捷入口」单卡(动作 + 求职两行)。
-// 视觉:品牌暖色渐变 + 时间线动态 + 悬停微动效,色相全部来自现有 token。
 // 术语按 specs/2026-09-02-terminology.md;出题统一走「添加题目」页(/add)。
 
 interface CatEntry {
@@ -69,20 +71,6 @@ function pickCat(list: CatEntry[]): CatEntry | null {
   return [...list].sort((a, b) => lastActiveOf(b.slug) - lastActiveOf(a.slug))[0];
 }
 
-// 小节标题行:图标章 + 标题 + 延伸 hairline
-function SectionHead({ icon: Icon, title, right }: { icon: LucideIcon; title: string; right?: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-2.5">
-      <span className="flex size-6 flex-none items-center justify-center rounded-md bg-primary/10 text-primary" aria-hidden>
-        <Icon className="size-3.5" />
-      </span>
-      <h2 className="text-sm font-semibold text-foreground">{title}</h2>
-      <span className="h-px flex-1 bg-border/70" aria-hidden />
-      {right}
-    </div>
-  );
-}
-
 // 问候区指标块:标签定高一字排开、数字 leading-none——三块同构,垂直居中不失配
 function HeroMetric({ label, value, tone, to, separated = false }: {
   label: string;
@@ -125,7 +113,7 @@ function ActivityRow({ item }: { item: Activity }) {
     return (
       <Link to="/drafts" className={cls}>
         {dot}
-        <span className="flex-1">生成了 <b className="font-semibold text-foreground">{item.moduleName}</b> {item.count} 道题，待审核</span>
+        <span className="flex-1">生成了 <b className="font-semibold text-foreground">{item.moduleName}</b> {item.count} 道题,待审核</span>
         {time}
       </Link>
     );
@@ -134,7 +122,7 @@ function ActivityRow({ item }: { item: Activity }) {
     return (
       <Link to="/my" className={cls}>
         {dot}
-        <span className="flex-1">通过了生成的 <b className="font-semibold text-foreground">{item.moduleName}</b> {item.count} 道题，已入我的题库</span>
+        <span className="flex-1">通过了生成的 <b className="font-semibold text-foreground">{item.moduleName}</b> {item.count} 道题,已入我的题库</span>
         {time}
       </Link>
     );
@@ -222,13 +210,7 @@ export function OverviewPage() {
     return (
       <div className="mx-auto max-w-6xl space-y-8">
         <PageHeader title="总览" />
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
-            <div className="text-foreground">题库加载失败</div>
-            <div className="text-sm text-muted-foreground">{error}</div>
-            <Button size="sm" variant="outline" onClick={retry}>重试</Button>
-          </CardContent>
-        </Card>
+        <ErrorState message={error} onRetry={retry} />
       </div>
     );
   }
@@ -237,10 +219,9 @@ export function OverviewPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-10">
-      {/* 问候区:品牌暖光氛围 + 大字问候 + 右侧三指标 */}
+      {/* 问候区:单层品牌柔光 + 大字问候 + 右侧三指标 */}
       <div className="relative overflow-hidden rounded-xl border border-border bg-card px-6 py-6">
         <div className="pointer-events-none absolute -right-16 -top-24 size-72 rounded-full bg-primary/10 blur-3xl" aria-hidden />
-        <div className="pointer-events-none absolute -left-20 -bottom-28 size-64 rounded-full bg-warning/5 blur-3xl" aria-hidden />
         <div className="relative flex flex-wrap items-center justify-between gap-x-6 gap-y-5">
           <div className="flex items-center gap-4">
             <div className="flex size-12 flex-none items-center justify-center rounded-xl bg-gradient-to-br from-primary to-warning text-primary-foreground shadow-lg shadow-primary/20" aria-hidden>
@@ -251,16 +232,14 @@ export function OverviewPage() {
                 今天是 {dateLabel(now)} · {learnedTotal > 0 ? `已累计学习 ${learnedTotal} 道题` : '还没有学习记录'}
               </div>
               <h1 className="mt-1 text-2xl font-bold tracking-tight">
-                {greetingOf(now.getHours())}，<span className="bg-gradient-to-r from-primary to-warning bg-clip-text text-transparent">祝你离 offer 近一步。</span>
+                {greetingOf(now.getHours())},<span className="text-primary">今天也离目标近一步。</span>
               </h1>
             </div>
           </div>
           <div className="flex items-stretch text-right">
             <HeroMetric label="待复习" value={totalDue} tone={totalDue > 0 ? 'warning' : undefined} />
             <HeroMetric label="待学习" value={totalRemaining} separated />
-            {pendingCount > 0
-              ? <HeroMetric label="待审核" value={pendingCount} tone="warning" to="/drafts" separated />
-              : <HeroMetric label="待审核" value={0} separated />}
+            <HeroMetric label="待审核" value={pendingCount} tone={pendingCount > 0 ? 'warning' : undefined} to={pendingCount > 0 ? '/drafts' : undefined} separated />
           </div>
         </div>
       </div>
@@ -291,7 +270,7 @@ export function OverviewPage() {
             {activity.length === 0 ? (
               <div className="mt-4 flex items-center gap-3 rounded-lg border border-dashed border-border/70 px-4 py-5 text-sm text-muted-foreground">
                 <Inbox className="size-5 text-muted-foreground/50" aria-hidden />
-                还没有动态。从「未开始」挑一个分类开始，或用快捷入口出题。
+                还没有动态。从「未开始」挑一个分类开始,或用快捷入口出题。
               </div>
             ) : (
               <div className="relative mt-2 before:absolute before:bottom-2 before:left-[6.5px] before:top-2 before:w-px before:bg-border/70" >
@@ -384,7 +363,8 @@ export function OverviewPage() {
   );
 }
 
-// 分类卡(学习中/未开始两节共用):图标章 + 渐变进度条 + 状态 chip,悬停浮起
+// 分类卡(学习中/未开始两节共用):图标章 + 渐变进度条 + 状态 chip,悬停浮起。
+// 主行动「进入」常驻弱显(诊断 #10:不再 hover 才浮现)。
 function renderCatCard(e: CatEntry) {
   const pct = e.total ? Math.round((e.learned / e.total) * 100) : 0;
   const empty = e.isMy && e.total === 0;
@@ -404,7 +384,7 @@ function renderCatCard(e: CatEntry) {
               <span className="font-mono text-xs text-muted-foreground">0/0</span>
             </div>
             <div className="text-xs text-muted-foreground">暂无题目</div>
-            <span className="mt-auto flex items-center gap-0.5 text-xs text-primary opacity-0 transition-all duration-200 group-hover:opacity-100">
+            <span className="mt-auto flex items-center gap-0.5 text-xs text-primary/80">
               进入 <ChevronRight className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5" />
             </span>
           </CardContent>
@@ -423,7 +403,7 @@ function renderCatCard(e: CatEntry) {
               </span>
               <span className="text-base font-semibold">{e.name}</span>
             </span>
-            <span className="font-mono text-xs text-muted-foreground">
+            <span className="font-mono text-xs tabular-nums text-muted-foreground">
               {e.learned}/{e.total}
             </span>
           </div>
@@ -443,8 +423,8 @@ function renderCatCard(e: CatEntry) {
                 </span>
               )}
             </div>
-            <span className="flex items-center gap-0.5 text-xs text-primary opacity-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:opacity-100">
-              进入 <ChevronRight className="h-3 w-3" />
+            <span className="flex items-center gap-0.5 text-xs text-primary/80">
+              进入 <ChevronRight className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5" />
             </span>
           </div>
         </CardContent>

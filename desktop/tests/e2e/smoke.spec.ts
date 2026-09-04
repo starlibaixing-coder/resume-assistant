@@ -68,8 +68,8 @@ test('工作台总览:问候区/指标/学习中/快捷入口/求职空态', asy
   await expect(page.getByRole('heading', { name: '手动写题' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'AI 生成' })).toBeVisible();
   await expect(page.getByRole('heading', { name: '按 JD 生成' })).toBeVisible();
-  await page.getByRole('button', { name: '返回' }).click();
-  await expect(page.getByRole('heading', { name: /祝你离 offer 近一步/ })).toBeVisible();
+  await page.getByRole('link', { name: '返回' }).click();
+  await expect(page.getByRole('heading', { name: /今天也离目标近一步/ })).toBeVisible();
 });
 
 test('控制台无未捕获错误(应用启动健康)', async ({ page }) => {

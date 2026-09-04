@@ -122,7 +122,7 @@ const ANSWER_50 = '闭包是函数与其词法环境的组合;每次触发前先
 async function fillQuestionForm(page: Page, title: string, focus: string, answer: string) {
   await page.getByLabel('题干').fill(title);
   await page.getByLabel('考察点(focus)').fill(focus);
-  await page.getByLabel('答案要点(一行一条,合计 ≥50 字)').fill(answer);
+  await page.getByLabel('答案要点').fill(answer);
 }
 
 test('添加题目页:手动保存 → 直接进我的题库(不经待审核),来源标手动', async ({ page }) => {
@@ -134,11 +134,11 @@ test('添加题目页:手动保存 → 直接进我的题库(不经待审核),�
   await expect(page.getByRole('heading', { name: '添加题目' })).toBeVisible();
   await page.getByLabel('新模块名').fill('面试手写');
   await fillQuestionForm(page, '手写一个防抖函数要注意什么?', '闭包与定时器清理', ANSWER_50);
-  await page.getByLabel('标签(逗号分隔)').fill('js, 手写');
-  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await page.getByLabel('标签').fill('js, 手写');
+  await page.getByRole('button', { name: '保存题目', exact: true }).click();
 
   // toast + 题出现在我的题库题目列表(无待审核步骤)+ 来源徽标
-  await expect(page.getByText('已加入我的题库')).toBeVisible();
+  await expect(page.getByText('已保存到我的题库')).toBeVisible();
   await page.goto('/#/my/browse');
   await expect(page.getByText('手写一个防抖函数要注意什么?')).toBeVisible({ timeout: 5_000 });
   await expect(page.getByText('面试手写').first()).toBeVisible();
@@ -152,8 +152,8 @@ test('侧栏「我的题库」落地页即有添加题目入口', async ({ page 
   await page.getByRole('link', { name: '添加题目' }).click();
   await page.getByLabel('新模块名').fill('面试手写');
   await fillQuestionForm(page, '落地页加的题?', '基础', ANSWER_50);
-  await page.getByRole('button', { name: '保存', exact: true }).click();
-  await expect(page.getByText('已加入我的题库')).toBeVisible();
+  await page.getByRole('button', { name: '保存题目', exact: true }).click();
+  await expect(page.getByText('已保存到我的题库')).toBeVisible();
 
   // 加完即入队:保存后自动落题目列表;分类页头部入口仍在(非空态)
   await expect(page).toHaveURL(/my\/browse/);
@@ -167,8 +167,8 @@ test('添加题目可进既有模块;校验失败拦截保存', async ({ page })
   await page.getByRole('link', { name: '添加题目' }).click();
   await page.getByLabel('新模块名').fill('面试手写');
   await fillQuestionForm(page, '第一题?', '基础', ANSWER_50);
-  await page.getByRole('button', { name: '保存', exact: true }).click();
-  await expect(page.getByText('已加入我的题库')).toBeVisible();
+  await page.getByRole('button', { name: '保存题目', exact: true }).click();
+  await expect(page.getByText('已保存到我的题库')).toBeVisible();
   // 保存后自动落题目列表
   await expect(page).toHaveURL(/my\/browse/);
 
@@ -177,11 +177,11 @@ test('添加题目可进既有模块;校验失败拦截保存', async ({ page })
   await page.getByRole('combobox', { name: '归属模块' }).click();
   await page.getByRole('option', { name: /01 · 面试手写/ }).click();
   await fillQuestionForm(page, '第二题?', '基础', '太短');
-  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await page.getByRole('button', { name: '保存题目', exact: true }).click();
   await expect(page.getByText(/过短/)).toBeVisible();
   // 不离页,补长重存:成功,同模块两题
-  await page.getByLabel('答案要点(一行一条,合计 ≥50 字)').fill(ANSWER_50);
-  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await page.getByLabel('答案要点').fill(ANSWER_50);
+  await page.getByRole('button', { name: '保存题目', exact: true }).click();
   await expect(page.getByText('第二题?')).toBeVisible({ timeout: 5_000 });
   await expect(page.getByText(/共 2 题/)).toBeVisible();
 });

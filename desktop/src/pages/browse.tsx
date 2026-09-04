@@ -1,21 +1,25 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { BookmarkPlus, Pencil, Plus, Trash2 } from 'lucide-react';
+import { BookmarkPlus, LibraryBig, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getModuleStats, getQuestionStatus } from '@/lib/schedule';
 import { MY_CATEGORY_SLUG, getMyQuestion, getMyQuestions, copyOfficial, getCopiedSourceIds } from '@/lib/mylib';
 import type { Question, QuestionData, QuestionSource } from '@/types/question';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Progress } from '@/components/ui/progress';
 import { PageHeader } from '@/components/page-header';
+import { EmptyState } from '@/components/empty-state';
+import { ErrorState } from '@/components/error-state';
+import { Skeleton } from '@/components/ui/skeleton';
 import { QuestionEditDialog, DeleteQuestionDialog } from '@/components/question-edit-dialog';
 
 // 题目列表 = 题库后台:一个列表 + 一条筛选栏(三个维度可组合,下拉而非按钮平铺)。
+// 2026-09-04 UI 重构:加载/空态/错误态走共享组件;删除确认已迁 AlertDialog(表单组件层)。
 
 // 我的题来源标签(2026-09-02:三类出题入口产物都进我的题库,来源可见)
 const SOURCE_LABELS: Record<QuestionSource, string> = {
@@ -29,7 +33,7 @@ const SOURCE_LABELS: Record<QuestionSource, string> = {
 // 行 = 全局序号 + 模块名小标签 + 题干 + focus 平铺 + 题目标签 + 难度 + 行尾动作区;
 // 行内动作用 ghost icon 按钮 + tooltip(不占行宽、不带文字噪音):
 // 官方题「添加到我的题库」(ADR-3 复制后改;已添加 = 同一按钮禁用态,hover 提示);我的题 编辑/删除。
-// 答题/评分/笔记在刷题页。?m= 深链定初始模块。
+// 答题/评分/笔记在学习页。?m= 深链定初始模块。
 
 type DiffFilter = 'all' | '初' | '中' | '高';
 type StatusFilter = 'all' | 'unseen' | 'due' | 'mastered';
@@ -80,7 +84,7 @@ function FilterSelect({
 
 export function BrowsePage({ category }: { category: string }) {
   const { data, error, retry } = useQuestions();
-  // 模块筛选:'all' 或模块号字符串;初始取 ?m= 深链;状态筛选取 ?status= 深链(队列页"是哪些题")
+  // 模块筛选:'all' 或模块号字符串;初始取 ?m= 深链;状态筛选取 ?status= 深链(分类页"是哪些题")
   const [searchParams] = useSearchParams();
   const [moduleFilter, setModuleFilter] = useState<string>(() => searchParams.get('m') ?? 'all');
   const [diffFilter, setDiffFilter] = useState<DiffFilter>('all');
@@ -114,37 +118,38 @@ export function BrowsePage({ category }: { category: string }) {
     return (
       <div className="mx-auto max-w-4xl space-y-6">
         <PageHeader title="题目列表" />
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
-            <div className="text-foreground">题库加载失败</div>
-            <div className="text-sm text-muted-foreground">{error}</div>
-            <Button size="sm" variant="outline" onClick={retry}>重试</Button>
-          </CardContent>
-        </Card>
+        <ErrorState message={error} onRetry={retry} />
       </div>
     );
   }
-  if (!data) return <div className="text-muted-foreground p-8 text-center">加载中…</div>;
+  if (!data) {
+    return (
+      <div className="mx-auto max-w-4xl space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-96 rounded-xl" />
+      </div>
+    );
+  }
   // my 分类无 approved 题时聚合里没有它(避免卡"加载中"),给空态引导
   if (!cat) {
     return (
       <div className="mx-auto max-w-4xl space-y-6">
         <PageHeader title="我的题库 · 题目列表" />
-        <Card>
-          <CardContent className="space-y-3 py-16 text-center">
-            <div className="text-foreground">我的题库还没有题</div>
-            <div className="text-sm text-muted-foreground">手动写一道,或让 AI 生成(先进待审核,通过后出现在这里)。</div>
-            <div className="flex justify-center gap-2 pt-1">
-              <Button size="sm" asChild>
-                <Link to="/add">
-                  <Plus className="size-3.5" aria-hidden />
-                  添加题目
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        </div>
+        <EmptyState
+          icon={LibraryBig}
+          title="我的题库还没有题"
+          description="手动写一道,或让 AI 生成(先进待审核,通过后出现在这里)。"
+          action={
+            <Button size="sm" asChild>
+              <Link to="/add">
+                <Plus className="size-3.5" aria-hidden />
+                添加题目
+              </Link>
+            </Button>
+          }
+        />
+      </div>
     );
   }
 
@@ -193,34 +198,32 @@ export function BrowsePage({ category }: { category: string }) {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <PageHeader
-          title={`${cat.name} · 题目列表`}
-          subtitle={
-            <>
-              管理与查阅:我的题可编辑删除;学习、评分、写笔记去
-              <Link to={`/${category}/quiz`} className="mx-0.5 text-primary hover:underline">学习页</Link>。
-            </>
-          }
-        />
-        {isMy && (
-          <div className="flex shrink-0 gap-2">
+      <PageHeader
+        title={`${cat.name} · 题目列表`}
+        description={
+          <>
+            管理与查阅:我的题可编辑删除;学习、评分、写笔记去
+            <Link to={`/${category}/quiz`} className="mx-0.5 text-primary hover:underline">学习页</Link>。
+          </>
+        }
+        actions={
+          isMy ? (
             <Button size="sm" variant="outline" asChild>
               <Link to="/add">
                 <Plus className="size-3.5" aria-hidden />
                 添加题目
               </Link>
             </Button>
-          </div>
-        )}
-      </div>
+          ) : undefined
+        }
+      />
 
       {/* 筛选栏:模块 / 难度 / 状态,可组合 */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
         <FilterSelect label="模块" value={effectiveModule} onChange={setModuleFilter} options={moduleOptions} />
         <FilterSelect label="难度" value={diffFilter} onChange={(v) => setDiffFilter(v as DiffFilter)} options={DIFF_OPTIONS} />
         <FilterSelect label="状态" value={statusFilter} onChange={(v) => setStatusFilter(v as StatusFilter)} options={STATUS_OPTIONS} />
-        <span className="ml-auto font-mono text-xs text-muted-foreground">共 {listQuestions.length} 题</span>
+        <span className="ml-auto text-xs tabular-nums text-muted-foreground">共 {listQuestions.length} 题</span>
         {hasFilter && (
           <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={handleReset}>
             重置
@@ -235,7 +238,7 @@ export function BrowsePage({ category }: { category: string }) {
             <div className="text-sm text-muted-foreground">
               {String(singleModule.id).padStart(2, '0')} · {singleModule.name}
             </div>
-            <div className="flex gap-3 text-xs">
+            <div className="flex gap-3 text-xs tabular-nums">
               <span className="text-muted-foreground">已学 {singleStats.learned}/{singleStats.total}</span>
               {singleStats.mastered > 0 && <span className="text-success">已掌握 {singleStats.mastered}</span>}
               {singleStats.dueToday > 0 && <span className="text-warning">待复习 {singleStats.dueToday}</span>}
@@ -252,7 +255,7 @@ export function BrowsePage({ category }: { category: string }) {
       <Card className="overflow-hidden">
         {listQuestions.length === 0 ? (
           <div className="flex items-center justify-center gap-3 p-4 text-sm text-muted-foreground">
-            无符合条件的题
+            没有符合筛选的题
             {hasFilter && (
               <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={handleReset}>
                 清除筛选
@@ -268,7 +271,7 @@ export function BrowsePage({ category }: { category: string }) {
               // content-visibility:屏外行跳过渲染(282 题全量 DOM 保留,e2e/DOM 查询不受影响)
               <div key={q.id} className="border-b border-border last:border-b-0 p-3 [contain-intrinsic-size:auto_88px] [content-visibility:auto]">
                 <div className="flex items-center gap-2.5">
-                  <span className="font-mono text-xs text-muted-foreground shrink-0">{i + 1}</span>
+                  <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">{i + 1}</span>
                   <span className="max-w-24 truncate shrink-0 rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                     {modName}
                   </span>

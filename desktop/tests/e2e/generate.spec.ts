@@ -73,7 +73,7 @@ test.beforeEach(async ({ page }) => {
   // key 存内存 secrets(SQLite 降级):走设置页真实保存入口种下,生成链路才配齐
   await page.goto('/#/settings');
   await page.getByPlaceholder('sk-…').fill('sk-e2e-test');
-  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await page.getByRole('button', { name: '保存 LLM 配置', exact: true }).click();
   await expect(page.getByText('LLM 配置已保存').first()).toBeVisible();
 });
 
@@ -84,10 +84,10 @@ test('AI 生成:生成 → 提交审核 → 通过 → 我的题库可见 → �
   await expect(page.getByRole('heading', { name: '添加题目' })).toBeVisible();
   const aiSection = page.locator('[data-add-section="ai"]');
   await aiSection.getByPlaceholder(/React Hooks/).fill('React Hooks 深入');
-  await aiSection.getByRole('button', { name: '生成', exact: true }).click();
+  await aiSection.getByRole('button', { name: '生成题目', exact: true }).click();
 
   // 2) 预览出现(mock 返回 2 题),展开一题看答案
-  await expect(page.getByText('LLM 判断出 2 道题')).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText('AI 判断出 2 道题')).toBeVisible({ timeout: 10_000 });
   await page.getByText('useEffect 的清理函数在哪些时机执行?').click();
   await expect(page.getByText('参考答案要点')).toBeVisible();
 
@@ -122,8 +122,8 @@ test('待审核:逐题拒绝不进我的题库', async ({ page }) => {
   await page.getByRole('link', { name: '添加题目' }).first().click();
   const aiSection = page.locator('[data-add-section="ai"]');
   await aiSection.getByPlaceholder(/React Hooks/).fill('Event Loop');
-  await aiSection.getByRole('button', { name: '生成', exact: true }).click();
-  await expect(page.getByText('LLM 判断出 2 道题')).toBeVisible({ timeout: 10_000 });
+  await aiSection.getByRole('button', { name: '生成题目', exact: true }).click();
+  await expect(page.getByText('AI 判断出 2 道题')).toBeVisible({ timeout: 10_000 });
   await page.getByRole('button', { name: /提交审核/ }).click();
   await expect(page.getByText(/2 题待审/)).toBeVisible();
 
@@ -146,7 +146,7 @@ test('JD 管理:新增 JD → 行内「按 JD 生成」弹窗 → 提交审核(�
   await page.getByRole('dialog').getByLabel('标题(可空)').fill('AI 应用工程师');
   await page.getByRole('dialog').getByLabel('公司').fill('示例公司');
   await page.getByRole('dialog').getByLabel('职位描述(JD)').fill('负责 RAG 检索系统的设计与优化,熟悉向量数据库与 embedding 调优,有 LLM 应用落地经验。');
-  await page.getByRole('dialog').getByRole('button', { name: '保存', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: '添加 JD', exact: true }).click();
 
   // 2) JD 列表出现该条;行内「按 JD 生成题目」开弹窗(jd 模式,标题带 JD 名)
   await expect(page.getByText('AI 应用工程师').first()).toBeVisible();
@@ -158,8 +158,8 @@ test('JD 管理:新增 JD → 行内「按 JD 生成」弹窗 → 提交审核(�
   await expect(jdSection.getByRole('combobox', { name: '目标 JD' })).toContainText('AI 应用工程师');
 
   // 3) 定向生成(mock)并提交审核:批次名带 JD定向 · 公司
-  await jdSection.getByRole('button', { name: '生成', exact: true }).click();
-  await expect(page.getByText('LLM 判断出 2 道题')).toBeVisible({ timeout: 10_000 });
+  await jdSection.getByRole('button', { name: '生成题目', exact: true }).click();
+  await expect(page.getByText('AI 判断出 2 道题')).toBeVisible({ timeout: 10_000 });
   await page.getByRole('button', { name: /提交审核/ }).click();
   await expect(page.getByText(/批次 01 · JD定向 · 示例公司/)).toBeVisible();
 
@@ -238,8 +238,8 @@ test('设置页渲染:预设与 key 表单', async ({ page }) => {
   await expect(page.getByText('OpenAI 兼容端点')).toBeVisible();
   const keyInput = page.getByPlaceholder('sk-…');
   await expect(keyInput).toBeVisible();
-  await keyInput.fill('sk-e2e-test');
-  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await keyInput.fill('sk-e2e-test-2'); // 与 beforeEach 已存值不同,触发 dirty 才可保存
+  await page.getByRole('button', { name: '保存 LLM 配置', exact: true }).click();
   await expect(page.getByText('LLM 配置已保存').first()).toBeVisible();
 });
 
