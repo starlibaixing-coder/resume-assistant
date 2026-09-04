@@ -91,3 +91,29 @@ test('键盘守卫:笔记抽屉编辑器聚焦时空格不翻答案', async ({ p
   await page.keyboard.type(' ');
   await expect(page.getByText('参考答案要点')).toBeHidden();
 });
+
+test('不会即时重排:评不会的题进入会话尾部,重练模糊后放行', async ({ page }) => {
+  // limit=1:基础队列只有 1 题,评「不会」后重排副本立即成为下一题
+  await page.goto('/#/session?category=agent&limit=1');
+  await expect(counter(page)).toHaveText(/^1 \/ 1$/);
+  await page.keyboard.press('Space');
+  await page.keyboard.press('1'); // 不会 → 重排副本入队,总数 1 → 2
+  await expect(counter(page)).toHaveText(/^2 \/ 2/); // 含重练标记文本
+  await expect(page.getByText(/含 1 题重练/)).toBeVisible();
+  // 重练副本评模糊 → 放行,进入会话小结(两道都计入:原评 + 重练评)
+  await page.keyboard.press('Space');
+  await page.keyboard.press('2');
+  await expect(page.getByText('本轮完成,学了 2 道题')).toBeVisible();
+  await expect(page.getByText(/含 1 题重练/)).toHaveCount(0);
+});
+
+test('会话小结:完成后逐题回顾(评分 + 下次复习日期)', async ({ page }) => {
+  await page.goto('/#/session?category=agent&limit=1');
+  await expect(counter(page)).toHaveText(/^1 \/ 1$/);
+  await page.keyboard.press('Space');
+  await page.keyboard.press('3'); // 掌握
+  await expect(page.getByText('本轮完成,学了 1 道题')).toBeVisible();
+  await expect(page.getByText('逐题回顾')).toBeVisible();
+  await expect(page.getByText(/\d+ 月 \d+ 日/).first()).toBeVisible();
+  await expect(page.getByRole('link', { name: '回到今日' })).toBeVisible();
+});

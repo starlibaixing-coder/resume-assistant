@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
   FileText, LayoutDashboard, LibraryBig, Plus, Settings, Target, BookOpen,
@@ -7,10 +8,12 @@ import { getStats } from '@/lib/schedule';
 import { getPendingCount } from '@/lib/mylib';
 import { loadProgress } from '@/lib/storage';
 import {
-  CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+  CommandDialog, CommandGroup, CommandInput, CommandItem, CommandList,
 } from '@/components/ui/command';
 
-// ⌘K 命令面板(桌面标配):分区直达 + 高频动作。Cmd/Ctrl+K 开关在 app-shell。
+// ⌘K 命令面板(桌面标配):题目直搜 + 分区直达 + 高频动作。Cmd/Ctrl+K 开关在 app-shell。
+// v5 深化:输入即搜全库题干/考察点/标签,选中直接定位到题库详情面板——
+// 搜索是题库的一等能力,不再只能按分类翻。
 
 interface PaletteEntry {
   label: string;
@@ -26,9 +29,23 @@ export function CommandPalette({ open, onOpenChange }: {
   const navigate = useNavigate();
   const { data } = useQuestions();
   const pendingCount = getPendingCount();
+  const [query, setQuery] = useState('');
+  const q = query.trim().toLowerCase();
+  const questionMatches =
+    q.length >= 1
+      ? (data?.questions ?? [])
+          .filter(
+            (x) =>
+              x.title.toLowerCase().includes(q) ||
+              x.focus.toLowerCase().includes(q) ||
+              x.tags.some((t) => t.toLowerCase().includes(q)),
+          )
+          .slice(0, 8)
+      : [];
 
   const go = (to: string) => {
     onOpenChange(false);
+    setQuery('');
     navigate(to);
   };
 
@@ -53,10 +70,37 @@ export function CommandPalette({ open, onOpenChange }: {
     .sort((a, b) => lastActiveOf(b.slug) - lastActiveOf(a.slug))[0];
 
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandInput placeholder="前往页面或执行动作…" />
+    <CommandDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      shouldFilter={false}
+      onInput={(e) => setQuery((e.target as HTMLInputElement).value)}
+    >
+      <CommandInput placeholder="搜题干 / 考察点 / 标签,前往页面或执行动作…" />
       <CommandList>
-        <CommandEmpty>没有匹配的条目</CommandEmpty>
+
+        {q.length >= 1 && questionMatches.length === 0 && (
+          <CommandGroup heading="题目">
+            <CommandItem disabled>没有匹配的题目</CommandItem>
+          </CommandGroup>
+        )}
+        {questionMatches.length > 0 && (
+          <CommandGroup heading={`题目(${questionMatches.length})`}>
+            {questionMatches.map((m) => (
+              <CommandItem
+                key={m.id}
+                value={`题目 ${m.title} ${m.focus} ${m.tags.join(' ')}`}
+                onSelect={() => go(`/library?category=${m.category}&qid=${encodeURIComponent(m.id)}`)}
+              >
+                <BookOpen className="text-muted-foreground" aria-hidden />
+                <span className="min-w-0 flex-1 truncate">{m.title}</span>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {m.category} · {m.difficulty}
+                </span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
         <CommandGroup heading="动作">
           {dueCat && (
             <CommandItem onSelect={() => go('/session?focus=due')}>

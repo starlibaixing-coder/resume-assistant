@@ -145,7 +145,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       unseen += s.remaining;
     }
     return { due, unseen };
-  }, [data]);
+    // 依赖 location:评分只写进度缓存,跨页导航时强制重算,避免陈旧计数
+  }, [data, location.pathname]);
 
   // 空间高亮:题库涵盖 题库/审核(重定向)/添加题目 语境
   const libraryActive = root === 'library' || root === 'drafts' || root === 'add';
