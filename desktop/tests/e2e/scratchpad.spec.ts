@@ -140,7 +140,7 @@ test('添加题目页:手动保存 → 直接进我的题库(不经待审核),�
   // toast + 题出现在我的题库题目列表(无待审核步骤)+ 来源徽标
   await expect(page.getByText('已保存到我的题库')).toBeVisible();
   await page.goto('/#/my/browse');
-  await expect(page.getByText('手写一个防抖函数要注意什么?')).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByText('手写一个防抖函数要注意什么?').first()).toBeVisible({ timeout: 5_000 });
   await expect(page.getByText('面试手写').first()).toBeVisible();
   await expect(page.getByText('手动', { exact: true }).first()).toBeVisible();
 });
@@ -182,6 +182,6 @@ test('添加题目可进既有模块;校验失败拦截保存', async ({ page })
   // 不离页,补长重存:成功,同模块两题
   await page.getByLabel('答案要点').fill(ANSWER_50);
   await page.getByRole('button', { name: '保存题目', exact: true }).click();
-  await expect(page.getByText('第二题?')).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByText('第二题?').first()).toBeVisible({ timeout: 5_000 });
   await expect(page.getByText(/共 2 题/)).toBeVisible();
 });

@@ -10,16 +10,20 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
+} from '@/components/ui/context-menu';
 import { PageHeader } from '@/components/page-header';
 import { EmptyState } from '@/components/empty-state';
 import { ErrorState } from '@/components/error-state';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AnswerPanel } from '@/components/answer-panel';
 import { QuestionEditDialog, DeleteQuestionDialog } from '@/components/question-edit-dialog';
 
-// 题目列表 v2「纸面编辑部」:筛选行 + 细线行目录,去卡片。
-// 行 = 序号 + 模块小签 + 来源签 + 题干 + 难度 + 行尾 ghost icon 动作;
-// 行内动作用 ghost icon 按钮 + tooltip。官方题「添加到我的题库」(ADR-3 复制后改)。
-// 答题/评分/笔记在学习页。?m= / ?status= 深链定初始筛选。
+// 题目列表 v3「桌面工作台」:主从分栏——左侧细线行目录(单选),右侧详情面板
+// (题面 + 答案要点 + 追问 + 操作),选中即看、少跳页。行内 ghost icon 动作与
+// 右键菜单并存(桌面操作习惯)。官方题「添加到我的题库」= ADR-3 复制后改。
+// ?m= / ?status= 深链定初始筛选;我的题库为空给引导空态。
 
 type DiffFilter = 'all' | '初' | '中' | '高';
 type StatusFilter = 'all' | 'unseen' | 'due' | 'mastered';
@@ -37,7 +41,14 @@ const STATUS_OPTIONS: Array<{ key: StatusFilter; label: string }> = [
   { key: 'mastered', label: '已掌握' },
 ];
 
-// 筛选下拉:shadcn Select(Radix 行为 + token 样式),不写原生 select
+const SOURCE_LABELS: Record<QuestionSource, string> = {
+  manual: '手动',
+  ai: 'AI 生成',
+  jd: '按 JD',
+  copy: '官方复制',
+};
+
+// 筛选下拉:shadcn Select(Radix 行为 + token 样式)
 function FilterSelect({
   label,
   value,
@@ -70,7 +81,6 @@ function FilterSelect({
 
 export function BrowsePage({ category }: { category: string }) {
   const { data, error, retry } = useQuestions();
-  // 模块筛选:'all' 或模块号字符串;初始取 ?m= 深链;状态筛选取 ?status= 深链(分类页"是哪些题")
   const [searchParams] = useSearchParams();
   const [moduleFilter, setModuleFilter] = useState<string>(() => searchParams.get('m') ?? 'all');
   const [diffFilter, setDiffFilter] = useState<DiffFilter>('all');
@@ -78,17 +88,17 @@ export function BrowsePage({ category }: { category: string }) {
     const s = searchParams.get('status');
     return s === 'due' || s === 'unseen' || s === 'mastered' ? s : 'all';
   });
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copyingId, setCopyingId] = useState<string | null>(null);
   const isMy = category === MY_CATEGORY_SLUG;
 
-  // copiedSourceIds 随 data 重算(copyOfficial notify → useQuestions setData)
   const { cat, moduleStats, allQuestions, copiedSourceIds } = useMemo(() => {
     if (!data) return { cat: null, moduleStats: {}, allQuestions: [] as QuestionData['questions'], copiedSourceIds: new Set<string>() };
     const catObj = data.categories.find((c) => c.slug === category);
     const catQuestions = data.questions.filter((q) => q.category === category);
-    // 题号取 id 第三段(agent.12.10 → 10)。index 字段是"模块.题号"小数,不能拿它排序
+    // 题号取 id 第三段(agent.12.10 → 10);index 字段是小数不能拿来排序
     const qnum = (q: typeof catQuestions[number]) => parseInt(q.id.split('.')[2] ?? '0', 10);
     const all = [...catQuestions].sort((a, b) => a.module - b.module || qnum(a) - qnum(b));
     return { cat: catObj, moduleStats: getModuleStats(category, catQuestions), allQuestions: all, copiedSourceIds: getCopiedSourceIds() };
@@ -97,11 +107,12 @@ export function BrowsePage({ category }: { category: string }) {
   // 切分类时重置
   useEffect(() => {
     setModuleFilter('all');
+    setSelectedId(null);
   }, [category]);
 
   if (error) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-6">
         <PageHeader title="题目列表" />
         <ErrorState message={error} onRetry={retry} />
       </div>
@@ -109,17 +120,16 @@ export function BrowsePage({ category }: { category: string }) {
   }
   if (!data) {
     return (
-      <div className="space-y-8">
-        <Skeleton className="h-12 w-64" />
+      <div className="space-y-6">
+        <Skeleton className="h-7 w-56" />
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-96 w-full" />
       </div>
     );
   }
-  // my 分类无 approved 题时聚合里没有它(避免卡"加载中"),给空态引导
   if (!cat) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-6">
         <PageHeader title="我的题库 · 题目列表" />
         <EmptyState
           icon={LibraryBig}
@@ -152,6 +162,13 @@ export function BrowsePage({ category }: { category: string }) {
     if (statusFilter !== 'all' && getQuestionStatus(category, q.id) !== statusFilter) return false;
     return true;
   });
+  // 选中项跟随筛选结果(被筛掉则回落第一行)
+  const effectiveSelectedId = listQuestions.some((q) => q.id === selectedId)
+    ? selectedId
+    : listQuestions[0]?.id ?? null;
+  const selected = effectiveSelectedId
+    ? allQuestions.find((q) => q.id === effectiveSelectedId) ?? null
+    : null;
 
   const singleStats = singleModule ? moduleStats[singleModule.id] : null;
 
@@ -162,7 +179,6 @@ export function BrowsePage({ category }: { category: string }) {
   };
   const hasFilter = effectiveModule !== 'all' || diffFilter !== 'all' || statusFilter !== 'all';
 
-  // 我的题来源(聚合层剥掉了 source,这里从 mylib 缓存查)
   const sourceOf = (id: string): QuestionSource | null => getMyQuestions().find((q) => q.id === id)?.source ?? null;
 
   // 官方题 → 我的库副本(ADR-3)。成功 toast;行尾标识由 mylib notify 驱动自动出现。
@@ -179,13 +195,16 @@ export function BrowsePage({ category }: { category: string }) {
     }
   };
 
+  const source = selected && isMy ? sourceOf(selected.id) : null;
+  const selectedCopied = selected != null && !isMy && copiedSourceIds.has(selected.id);
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <PageHeader
         title={`${cat.name} · 题目列表`}
         description={
           <>
-            管理与查阅:我的题可编辑删除;学习、评分、写笔记去
+            管理与查阅:选中行在右侧看题面与答案;学习、评分、写笔记去
             <Link to={`/${category}/quiz`} className="mx-0.5 text-primary hover:underline">学习页</Link>。
           </>
         }
@@ -201,7 +220,7 @@ export function BrowsePage({ category }: { category: string }) {
         }
       />
 
-      {/* 筛选行:模块 / 难度 / 状态,可组合 */}
+      {/* 筛选行 */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
         <FilterSelect label="模块" value={effectiveModule} onChange={setModuleFilter} options={moduleOptions} />
         <FilterSelect label="难度" value={diffFilter} onChange={(v) => setDiffFilter(v as DiffFilter)} options={DIFF_OPTIONS} />
@@ -234,42 +253,55 @@ export function BrowsePage({ category }: { category: string }) {
         </div>
       )}
 
-      {/* 题目细线目录 */}
-      <div data-browse-list className="border-t border-border">
-        {listQuestions.length === 0 ? (
-          <div className="flex items-center justify-center gap-3 border-b border-border py-8 text-sm text-muted-foreground">
-            没有符合筛选的题
-            {hasFilter && (
-              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={handleReset}>
-                清除筛选
-              </Button>
-            )}
-          </div>
-        ) : (
-          listQuestions.map((q, i) => {
-            const modName = modules.find((m) => m.id === q.module)?.name ?? String(q.module);
-            const copied = !isMy && copiedSourceIds.has(q.id);
-            const source = isMy ? sourceOf(q.id) : null;
-            return (
-              // content-visibility:屏外行跳过渲染(282 题全量 DOM 保留)
-              <div key={q.id} className="border-b border-border px-1 py-3 [contain-intrinsic-size:auto_88px] [content-visibility:auto]">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-7 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">{i + 1}</span>
-                  <span className="max-w-24 truncate shrink-0 rounded-sm bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+      {/* 主从分栏:左列表(单选)+ 右详情 */}
+      <div className="flex items-start gap-5">
+        <div data-browse-list className="min-w-0 flex-1 rounded-md border border-border bg-card">
+          {listQuestions.length === 0 ? (
+            <div className="flex items-center justify-center gap-3 p-6 text-sm text-muted-foreground">
+              没有符合筛选的题
+              {hasFilter && (
+                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={handleReset}>
+                  清除筛选
+                </Button>
+              )}
+            </div>
+          ) : (
+            listQuestions.map((q, i) => {
+              const modName = modules.find((m) => m.id === q.module)?.name ?? String(q.module);
+              const copied = !isMy && copiedSourceIds.has(q.id);
+              const rowSource = isMy ? sourceOf(q.id) : null;
+              const isSelected = q.id === effectiveSelectedId;
+              const row = (
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedId(q.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedId(q.id);
+                    }
+                  }}
+                  className={`flex cursor-pointer items-center gap-2.5 border-b px-3 py-2 text-left transition-colors last:border-b-0 ${
+                    isSelected ? 'bg-accent/70' : 'hover:bg-accent/40'
+                  }`}
+                >
+                  <span className="w-6 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">{i + 1}</span>
+                  <span className="max-w-20 truncate shrink-0 rounded-sm bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                     {modName}
                   </span>
-                  {source && (
+                  {rowSource && (
                     <span
-                      title={`来源:${SOURCE_LABELS[source]}`}
+                      title={`来源:${SOURCE_LABELS[rowSource]}`}
                       className="shrink-0 rounded-sm bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground"
                     >
-                      {SOURCE_LABELS[source]}
+                      {SOURCE_LABELS[rowSource]}
                     </span>
                   )}
-                  <span className="flex-1 truncate text-sm font-medium text-foreground">{q.title}</span>
+                  <span className="flex-1 truncate text-sm text-foreground">{q.title}</span>
                   <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
                   {isMy ? (
-                    <>
+                    <span className="flex shrink-0 items-center">
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
@@ -277,7 +309,10 @@ export function BrowsePage({ category }: { category: string }) {
                             variant="ghost"
                             className="h-7 w-7 shrink-0 text-muted-foreground"
                             aria-label="编辑"
-                            onClick={() => setEditingId(q.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingId(q.id);
+                            }}
                           >
                             <Pencil />
                           </Button>
@@ -291,18 +326,20 @@ export function BrowsePage({ category }: { category: string }) {
                             variant="ghost"
                             className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
                             aria-label="删除"
-                            onClick={() => setDeletingId(q.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeletingId(q.id);
+                            }}
                           >
                             <Trash2 />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>删除</TooltipContent>
                       </Tooltip>
-                    </>
+                    </span>
                   ) : (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        {/* 禁用的 button 不派发指针事件,tooltip 挂外层 span 才 hover 得出来 */}
                         <span className="inline-flex shrink-0">
                           <Button
                             size="icon"
@@ -310,7 +347,10 @@ export function BrowsePage({ category }: { category: string }) {
                             className="h-7 w-7 shrink-0 text-muted-foreground"
                             aria-label={copied ? '已在我的库' : '添加到我的题库'}
                             disabled={copied || copyingId === q.id}
-                            onClick={() => void handleAddToMy(q)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void handleAddToMy(q);
+                            }}
                           >
                             <BookmarkPlus />
                           </Button>
@@ -320,20 +360,103 @@ export function BrowsePage({ category }: { category: string }) {
                     </Tooltip>
                   )}
                 </div>
-                <div className="mt-1 pl-9 text-xs leading-relaxed text-muted-foreground">{q.focus}</div>
-                {q.tags.length > 0 && (
-                  <div className="mt-1.5 flex flex-wrap gap-1.5 pl-9">
-                    {q.tags.map((t) => (
-                      <span key={t} className="rounded-sm bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-                        {t}
+              );
+              return (
+                // content-visibility:屏外行跳过渲染(282 题全量 DOM 保留)
+                <ContextMenu key={q.id}>
+                  <ContextMenuTrigger asChild>
+                    <div className="[contain-intrinsic-size:auto_45px] [content-visibility:auto]">
+                      {row}
+                    </div>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    {isMy ? (
+                      <>
+                        <ContextMenuItem onSelect={() => setEditingId(q.id)}>编辑…</ContextMenuItem>
+                        <ContextMenuSeparator />
+                        <ContextMenuItem className="text-destructive focus:text-destructive" onSelect={() => setDeletingId(q.id)}>
+                          删除…
+                        </ContextMenuItem>
+                      </>
+                    ) : (
+                      <ContextMenuItem disabled={copied || copyingId === q.id} onSelect={() => void handleAddToMy(q)}>
+                        {copied ? '已在我的库' : '添加到我的题库'}
+                      </ContextMenuItem>
+                    )}
+                  </ContextMenuContent>
+                </ContextMenu>
+              );
+            })
+          )}
+        </div>
+
+        {/* 详情面板:选中行即看,少跳页 */}
+        <div className="sticky top-0 hidden w-[22rem] shrink-0 lg:block">
+          {selected ? (
+            <div className="rounded-md border border-border bg-card">
+              <div className="flex items-start justify-between gap-2 border-b border-border px-4 py-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="font-mono text-[11px] text-muted-foreground">{selected.id}</span>
+                    {source && (
+                      <span className="rounded-sm bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                        {SOURCE_LABELS[source]}
                       </span>
-                    ))}
+                    )}
+                    <Badge variant="outline">{selected.difficulty}</Badge>
                   </div>
+                  <h2 className="mt-1.5 text-sm font-semibold leading-snug text-foreground">{selected.title}</h2>
+                  <p className="mt-1 text-xs text-muted-foreground">{selected.focus}</p>
+                </div>
+                {isMy ? (
+                  <span className="flex shrink-0 items-center gap-0.5">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground" aria-label="编辑" onClick={() => setEditingId(selected.id)}>
+                          <Pencil />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>编辑</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive" aria-label="删除" onClick={() => setDeletingId(selected.id)}>
+                          <Trash2 />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>删除</TooltipContent>
+                    </Tooltip>
+                  </span>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex shrink-0">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 shrink-0 text-muted-foreground"
+                          aria-label={selectedCopied ? '已在我的库' : '添加到我的题库'}
+                          disabled={selectedCopied || copyingId === selected.id}
+                          onClick={() => void handleAddToMy(selected)}
+                        >
+                          <BookmarkPlus />
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>{selectedCopied ? '已在我的库' : '添加到我的题库'}</TooltipContent>
+                  </Tooltip>
                 )}
               </div>
-            );
-          })
-        )}
+              <div className="px-4 py-3">
+                <AnswerPanel answer={selected.answer} followups={selected.followups} />
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-md border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
+              选中左侧一行,在这里看题面与答案
+            </div>
+          )}
+        </div>
       </div>
 
       <QuestionEditDialog
@@ -349,11 +472,3 @@ export function BrowsePage({ category }: { category: string }) {
     </div>
   );
 }
-
-// 我的题来源标签(三类出题入口产物都进我的题库,来源可见)
-const SOURCE_LABELS: Record<QuestionSource, string> = {
-  manual: '手动',
-  ai: 'AI 生成',
-  jd: '按 JD',
-  copy: '官方复制',
-};

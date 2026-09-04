@@ -45,7 +45,7 @@ Workspace instructions for ZCode agents working in this repo.
 ### 桌面端(desktop/,主开发线)
 
 - **品牌与命名 = CommitCareer**(2026-08-31 规范,详见 `docs/superpowers/specs/2026-08-31-brand-naming.md`):窗口标题/productName/侧栏/document.title 四处统一;侧栏分【刷题】【求职】两组;**UI 术语以 `specs/2026-09-02-terminology.md` 为准**(待学习/待复习/待审核/学习队列,一词一义;代码与 ADR 文档仍用 drafts/pending/草稿区),子页标题 `{分类名} · 页面`。
-- **UI 组件照 shadcn 官方用法**:不写原生标签,不自创结构变体;缺组件按官方方式补源码进 `src/components/ui/`;有公共组件(PageHeader、SectionHead、EmptyState、ErrorState)就复用,不各写各的;布局类放内容层,不堆在容器上。**设计语言 v2「纸面编辑部」(2026-09-04,`specs/2026-09-04-ui-redesign.md` §v2)**:顶部导航(`data-app-nav`,当前项橙色底线)替代侧栏;暖纸白浅色优先(默认主题 light)、深色为暖炭墨;去卡片化,细线分区 + 留白,圆角 2px;数字大排印(总览指标/分类页 6xl 对开),橙色只点亮关键处;表单 Label+必填星号,小集合多选一用 RadioGroup,错误用 Alert,**不可逆操作一律 AlertDialog**。学习页吸底操作条按 `--page-pad-y`(壳层页容器定义)对齐,改壳层内边距必须联动。
+- **UI 组件照 shadcn 官方用法**:不写原生标签,不自创结构变体;缺组件按官方方式补源码进 `src/components/ui/`;有公共组件(PageHeader、SectionHead、EmptyState、ErrorState)就复用,不各写各的。**设计语言 v3「桌面工作台」(2026-09-04,`specs/2026-09-04-ui-redesign.md` §v3)**:按桌面应用操作习惯组织——源列表侧栏(Cmd+1..8 切换)+ 工具栏(历史 ‹ ›/面包屑/⌘K 命令面板,`data-app-nav`)+ 状态栏;中性配色、紧凑密度、品牌橙仅点缀;题目列表主从分栏,行内动作 + 右键菜单;表单 Label+必填星号,多选一用 RadioGroup,错误用 Alert,**不可逆操作一律 AlertDialog**。学习页吸底操作条按 `--page-pad-y`(壳层页容器定义)对齐,改壳层内边距必须联动。沉浸切换不重挂 main(只藏 chrome)。
 - **行内重复动作用 ghost icon 按钮**:列表行内的操作(添加/编辑/删除)用 Lucide 图标 + shadcn Tooltip + `aria-label`,不放常驻文本按钮,不用展开抽屉装动作,不写"可改可删"类说明文案;图标不用 emoji/文本字符。
 - **路由用 react-router**:页面组件放 `src/pages/`,路由表在 `App.tsx`(HashRouter);站内导航一律 `Link`/`useNavigate`,不写 `<a href="#/…">`(外部链接除外)。
 - **在 token 体系内工作**:颜色、边框、间距只用现有 CSS token 与既有层级,不引入魔法值和新色调。

@@ -184,7 +184,7 @@ test('题库分类页:复习/学习双入口 + 是哪些题深链', async ({ pag
 
 test('官方题题目列表:添加到我的题库 → toast + 标识 + 副本进我的库(来源官方复制)', async ({ page }) => {
   await page.goto('/#/agent/browse');
-  const firstRow = page.locator('main [data-browse-list] > div.border-b').first();
+  const firstRow = page.locator('main [data-browse-list] > div > div.border-b').first();
   const addBtn = firstRow.getByRole('button', { name: '添加到我的题库' });
 
   await addBtn.hover();
@@ -222,7 +222,7 @@ test('设置页:同步官方题库 → 远端新增题落地', async ({ page }) 
 
   // 同步进来的题进官方库聚合(题目列表可见)
   await page.goto('/#/agent/browse');
-  await expect(page.getByText('远端同步新增的验证题?')).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText('远端同步新增的验证题?').first()).toBeVisible({ timeout: 10_000 });
 });
 
 test('设置页渲染:预设与 key 表单', async ({ page }) => {

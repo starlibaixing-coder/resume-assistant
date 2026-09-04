@@ -15,11 +15,11 @@ test.beforeEach(async ({ page }) => {
 test('沉浸式:隐藏侧栏与返回条,Esc 退出恢复', async ({ page }) => {
   await page.goto('/#/agent/quiz');
   await expect(page.locator('[data-app-nav]')).toBeVisible();
-  await expect(page.getByRole('link', { name: /回到/ })).toBeVisible();
+  await expect(page.locator('[data-breadcrumb]')).toBeVisible();
 
   await page.getByRole('button', { name: '沉浸模式' }).click();
   await expect(page.locator('[data-app-nav]')).toBeHidden();
-  await expect(page.getByRole('link', { name: /回到/ })).toBeHidden();
+  await expect(page.locator('[data-breadcrumb]')).toBeHidden();
   // 题目仍在刷,退出按钮出现(aria-label 已切换,兼作 Esc 之外的退出入口)
   await expect(page.getByRole('button', { name: '退出沉浸模式' })).toBeVisible();
   await expect(page.getByRole('button', { name: /看答案/ })).toBeVisible();
@@ -27,7 +27,7 @@ test('沉浸式:隐藏侧栏与返回条,Esc 退出恢复', async ({ page }) => 
   // Esc 退出:chrome 恢复
   await page.keyboard.press('Escape');
   await expect(page.locator('[data-app-nav]')).toBeVisible();
-  await expect(page.getByRole('link', { name: /回到/ })).toBeVisible();
+  await expect(page.locator('[data-breadcrumb]')).toBeVisible();
   await expect(page.getByRole('button', { name: '沉浸模式' })).toBeVisible();
 });
 
