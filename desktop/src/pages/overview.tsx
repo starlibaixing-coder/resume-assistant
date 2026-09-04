@@ -427,7 +427,9 @@ function renderCatCard(e: CatEntry) {
               {e.learned}/{e.total}
             </span>
           </div>
-          <Progress value={pct} className="h-1.5 bg-muted ring-0 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-warning" />
+          {e.learned > 0 && (
+            <Progress value={pct} className="h-1.5 bg-muted ring-0 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-warning" />
+          )}
           <div className="flex items-center justify-between">
             <div className="flex gap-2 text-xs">
               {e.dueToday > 0 && (
