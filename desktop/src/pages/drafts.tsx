@@ -8,14 +8,17 @@ import { AnswerPanel } from '@/components/answer-panel';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/page-header';
+import { EmptyState } from '@/components/empty-state';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,
-} from '@/components/ui/dialog';
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 
 // 待审核(ADR-10 草稿区):AI 出的题先进 pending,在这里人工过目,
-// 通过(approved)才进「我的题库」聚合刷题;拒绝 = 永久删除,需确认(与删题同款防线)。
+// 通过(approved)才进「我的题库」聚合学习;拒绝 = 永久删除,AlertDialog 确认。
+// 2026-09-04 UI 重构:空态收敛为一处动作;拒绝确认迁 AlertDialog。
 
 export function DraftsPage() {
   const [version, setVersion] = useState(0);
@@ -24,6 +27,7 @@ export function DraftsPage() {
   const [busy, setBusy] = useState<string | null>(null);
   // 拒绝确认(拒绝 = 删除,不可恢复)
   const [confirmReject, setConfirmReject] = useState<MyQuestion | null>(null);
+  const [rejecting, setRejecting] = useState(false);
 
   useEffect(() => subscribeMyLib(() => setVersion((v) => v + 1)), []);
 
@@ -54,7 +58,7 @@ export function DraftsPage() {
     }
   };
   const handleReject = async (q: MyQuestion) => {
-    setBusy(q.id);
+    setRejecting(true);
     try {
       await rejectDraft(q.id);
       toast.success('已拒绝并删除');
@@ -62,7 +66,8 @@ export function DraftsPage() {
     } catch (e) {
       toast.error('拒绝失败', { description: e instanceof Error ? e.message : String(e) });
     } finally {
-      setBusy(null);
+      setRejecting(false);
+      setConfirmReject(null);
     }
   };
   const handleApproveAll = async (qs: MyQuestion[]) => {
@@ -81,34 +86,33 @@ export function DraftsPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6" data-version={version}>
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <PageHeader title="待审核" subtitle={pending.length > 0 ? `${pending.length} 题待审核` : undefined} />
-        <Button size="sm" variant="outline" className="mb-1" asChild>
-          <Link to="/add">
-            <Plus className="size-3.5" aria-hidden />
-            添加题目
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="待审核"
+        description={pending.length > 0 ? `${pending.length} 题待审核` : 'AI 生成的题先进这里,逐题把关'}
+        actions={
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/add">
+              <Plus className="size-3.5" aria-hidden />
+              添加题目
+            </Link>
+          </Button>
+        }
+      />
 
       {pending.length === 0 ? (
-        <Card>
-          <CardContent className="space-y-3 py-16 text-center">
-            <Inbox className="mx-auto size-10 text-muted-foreground" aria-hidden />
-            <div className="text-foreground">没有待审核的题</div>
-            <div className="text-sm text-muted-foreground">
-              AI 出的题先进这里,你逐题通过后才进学习队列。
-            </div>
-            <div>
-              <Button size="sm" variant="outline" asChild>
-                <Link to="/add">
-                  <Plus className="size-3.5" aria-hidden />
-                  添加题目
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Inbox}
+          title="没有待审核的题"
+          description="AI 出的题先进这里,你逐题通过后才进学习队列。"
+          action={
+            <Button size="sm" variant="outline" asChild>
+              <Link to="/add">
+                <Plus className="size-3.5" aria-hidden />
+                添加题目
+              </Link>
+            </Button>
+          }
+        />
       ) : (
         <div className="space-y-6">
           {[...groups.entries()].map(([moduleId, qs]) => (
@@ -225,27 +229,30 @@ export function DraftsPage() {
       )}
 
 
-      {/* 拒绝 = 永久删除:确认(审计 C2,与删题/清空进度同款防线) */}
-      <Dialog open={!!confirmReject} onOpenChange={(o) => !o && setConfirmReject(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>拒绝这道题?</DialogTitle>
-            <DialogDescription>
+      {/* 拒绝 = 永久删除:AlertDialog 确认(不可逆操作统一防线) */}
+      <AlertDialog open={!!confirmReject} onOpenChange={(o) => !o && setConfirmReject(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>拒绝这道题?</AlertDialogTitle>
+            <AlertDialogDescription>
               「{confirmReject?.title}」将被永久删除,不会进任何题库。此操作不可恢复。
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">取消</Button>
-            </DialogClose>
-            <DialogClose asChild>
-              <Button variant="destructive" onClick={() => confirmReject && handleReject(confirmReject)}>
-                确认拒绝
-              </Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={rejecting}
+              onClick={(e) => {
+                e.preventDefault(); // 失败时弹窗留在原地可重试
+                if (confirmReject) void handleReject(confirmReject);
+              }}
+            >
+              {rejecting ? '删除中…' : '确认拒绝'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

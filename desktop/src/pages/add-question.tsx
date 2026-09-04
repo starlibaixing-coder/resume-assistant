@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronRight, Pencil, Sparkles, Target, type LucideIcon } from 'lucide-react';
+import { ChevronDown, ChevronRight, Pencil, Sparkles, Target } from 'lucide-react';
 import { generateQuestions, generateJdQuestions, type GeneratedQuestion } from '@/lib/generate';
 import { getProfile } from '@/lib/profile';
 import { getJds, type Jd } from '@/lib/jd';
@@ -11,13 +11,19 @@ import { ManualAddForm } from '@/components/question-edit-dialog';
 import type { Difficulty } from '@/types/question';
 import { AnswerPanel } from '@/components/answer-panel';
 import { PageHeader } from '@/components/page-header';
+import { SectionHead } from '@/components/section-head';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-// 添加题目页(2026-09-03,弃弹窗改独立路由 /add):三种方式——手动(直接 approved,
+// 添加题目页(2026-09-03 弃弹窗改独立路由 /add):三种方式——手动(直接 approved,
 // 人写即人审)/ AI 生成 / 按 JD 生成(后两者先进待审核,ADR-10)。
+// 2026-09-04 表单重构:LLM 未配置引导与错误统一 Alert;难度统一 RadioGroup
+// (消灭按钮组/Select 混用);Label+必填星号;按钮全部表达结果(「生成题目」「提交审核」)。
 // ?jd=<id> 深链(JD 条目行内捷径)锁定按 JD 模式。生成可取消、计时、失败可重试、
 // 预览后才提交;AI/按 JD 提交后跳待审核,手动保存后落我的题库题目列表。
 
@@ -137,12 +143,22 @@ function GenerateForm({ jd, onCancel }: { jd: Jd | null; onCancel: () => void })
   return (
     <div className="space-y-4">
       {llmReady === false && !noKey && (
-        <div className="text-sm text-muted-foreground">
-          还没配置 LLM。先去设置页填 API key(智谱/DeepSeek/本地 Ollama 均可)。
-        </div>
+        <Alert>
+          <AlertDescription>
+            还没配置 AI 服务——先去
+            <Link to="/settings" className="mx-0.5 font-medium text-primary hover:underline">设置</Link>
+            填 API key(智谱 / DeepSeek / 本地 Ollama 均可)。
+          </AlertDescription>
+        </Alert>
       )}
       {noKey && (
-        <div className="text-sm text-muted-foreground">还没配置 LLM。先去设置页填 API key。</div>
+        <Alert variant="destructive">
+          <AlertDescription>
+            还没配置 AI 服务,无法生成——先去
+            <Link to="/settings" className="mx-0.5 font-medium text-primary hover:underline">设置</Link>
+            填 API key 再回来。
+          </AlertDescription>
+        </Alert>
       )}
 
       {jd ? (
@@ -165,8 +181,11 @@ function GenerateForm({ jd, onCancel }: { jd: Jd | null; onCancel: () => void })
         </div>
       ) : (
         <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground">知识点</label>
+          <Label htmlFor="gen-topic" className="text-xs text-muted-foreground">
+            知识点 <span className="text-destructive" aria-hidden>*</span>
+          </Label>
           <Input
+            id="gen-topic"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             onKeyDown={(e) => {
@@ -178,25 +197,36 @@ function GenerateForm({ jd, onCancel }: { jd: Jd | null; onCancel: () => void })
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-muted-foreground">难度</span>
-        {DIFFICULTIES.map((d) => (
-          <Button key={d} size="sm" variant={difficulty === d ? 'default' : 'outline'} onClick={() => setDifficulty(d)} disabled={loading}>
-            {d}
-          </Button>
-        ))}
+      <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground">难度</Label>
+        <RadioGroup
+          value={difficulty}
+          onValueChange={(v) => setDifficulty(v as Difficulty | '不限')}
+          aria-label="难度"
+          className="flex flex-row gap-5"
+          disabled={loading}
+        >
+          {DIFFICULTIES.map((d) => (
+            <div key={d} className="flex items-center gap-1.5">
+              <RadioGroupItem value={d} id={`gen-diff-${jd ? 'jd' : 'ai'}-${d}`} />
+              <Label htmlFor={`gen-diff-${jd ? 'jd' : 'ai'}-${d}`} className="cursor-pointer text-xs font-normal text-muted-foreground">
+                {d}
+              </Label>
+            </div>
+          ))}
+        </RadioGroup>
       </div>
 
       {error && (
-        <div className="text-sm text-destructive whitespace-pre-wrap rounded-md border border-destructive/40 bg-destructive/10 p-3">
-          {error}
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription>
+        </Alert>
       )}
 
       {result && (
         <div className="space-y-2 pt-1">
           <div className="text-sm text-muted-foreground">
-            LLM 判断出 {result.questions.length} 道题 · {result.retries === 0 ? '一次通过' : `自修正 ${result.retries} 次`}
+            AI 判断出 {result.questions.length} 道题 · {result.retries === 0 ? '一次通过' : `自修正 ${result.retries} 次`}
             <span className="ml-2 text-xs text-muted-foreground">先过目,确认质量后再提交审核</span>
           </div>
           {result.questions.map((q, i) => {
@@ -240,7 +270,7 @@ function GenerateForm({ jd, onCancel }: { jd: Jd | null; onCancel: () => void })
           <>
             <Button variant="outline" onClick={onCancel}>取消</Button>
             <Button onClick={handleGenerate} disabled={loading}>
-              {loading ? `生成中…已用 ${elapsed}s` : '生成'}
+              {loading ? `生成中…已用 ${elapsed}s` : '生成题目'}
             </Button>
           </>
         )}
@@ -257,14 +287,16 @@ function JdPicker({ value, onChange }: { value: Jd | null; onChange: (jd: Jd | n
   const jds = getJds();
   if (jds.length === 0) {
     return (
-      <div className="text-sm text-muted-foreground">
-        还没有 JD。先去「求职 → JD 管理」添加一份,再按 JD 生成题目。
-      </div>
+      <Alert>
+        <AlertDescription>
+          还没有 JD。先去「求职 → JD 管理」添加一份,再按 JD 生成题目。
+        </AlertDescription>
+      </Alert>
     );
   }
   return (
     <div className="space-y-1.5">
-      <label className="text-xs text-muted-foreground">目标 JD</label>
+      <Label className="text-xs text-muted-foreground">目标 JD</Label>
       <Select
         value={value ? String(value.id) : ''}
         onValueChange={(v) => onChange(jds.find((j) => String(j.id) === v) ?? null)}
@@ -305,53 +337,36 @@ export function AddQuestionPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-10">
-      <div className="flex items-end justify-between gap-2">
-        <PageHeader
-          title={fixedJd ? `按 JD 生成题目 · ${fixedJd.title.trim() || '(未填标题)'}` : '添加题目'}
-          subtitle="手动写题保存即进我的题库;AI 与按 JD 生成的题先进待审核,通过后入队。"
-        />
-        <Button variant="outline" size="sm" className="mb-1" onClick={goBack}>返回</Button>
-      </div>
+      <PageHeader
+        title={fixedJd ? `按 JD 生成题目 · ${fixedJd.title.trim() || '(未填标题)'}` : '添加题目'}
+        description="手动写题保存即进我的题库;AI 与按 JD 生成的题先进待审核,通过后入队。"
+        back={{ to: '/', label: '返回' }}
+      />
 
       <section data-add-section="manual">
-        <SectionHead icon={Pencil} title="手动写题" desc="保存后直接进我的题库。" />
+        <SectionHead icon={Pencil} title="手动写题" description="保存后直接进我的题库。" />
         <div className="mt-4">
           <ManualAddForm onSaved={(id) => {
-            toast.success('已加入我的题库', { description: id });
+            toast.success('已保存到我的题库', { description: id });
             navigate('/my/browse');
           }} />
         </div>
       </section>
 
       <section data-add-section="ai">
-        <SectionHead icon={Sparkles} title="AI 生成" desc="按知识点出一批题,先进待审核。" />
+        <SectionHead icon={Sparkles} title="AI 生成" description="按知识点出一批题,先进待审核。" />
         <div className="mt-4">
           <GenerateForm jd={null} onCancel={goBack} />
         </div>
       </section>
 
       <section data-add-section="jd" ref={jdSectionRef}>
-        <SectionHead icon={Target} title="按 JD 生成" desc="对着目标 JD 的技术要求出题,先进待审核。" />
+        <SectionHead icon={Target} title="按 JD 生成" description="对着目标 JD 的技术要求出题,先进待审核。" />
         <div className="mt-4 space-y-4">
           <JdPicker value={jdPick} onChange={setJdPick} />
           {jdPick && <GenerateForm jd={jdPick} onCancel={goBack} />}
         </div>
       </section>
-    </div>
-  );
-}
-
-// 小节标题行:图标章 + 标题 + 说明(与总览同一套语言)
-function SectionHead({ icon: Icon, title, desc }: { icon: LucideIcon; title: string; desc: string }) {
-  return (
-    <div>
-      <div className="flex items-center gap-2.5">
-        <span className="flex size-6 flex-none items-center justify-center rounded-md bg-primary/10 text-primary" aria-hidden>
-          <Icon className="size-3.5" />
-        </span>
-        <h2 className="text-base font-semibold text-foreground">{title}</h2>
-      </div>
-      <p className="mt-1 pl-8.5 text-sm text-muted-foreground">{desc}</p>
     </div>
   );
 }

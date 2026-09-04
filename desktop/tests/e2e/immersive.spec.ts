@@ -13,11 +13,11 @@ test.beforeEach(async ({ page }) => {
 
 test('沉浸式:隐藏侧栏与返回条,Esc 退出恢复', async ({ page }) => {
   await page.goto('/#/agent/quiz');
-  await expect(page.locator('aside')).toBeVisible();
+  await expect(page.locator('[data-sidebar="sidebar"]')).toBeVisible();
   await expect(page.getByRole('link', { name: /回到/ })).toBeVisible();
 
   await page.getByRole('button', { name: '沉浸模式' }).click();
-  await expect(page.locator('aside')).toBeHidden();
+  await expect(page.locator('[data-sidebar="sidebar"]')).toBeHidden();
   await expect(page.getByRole('link', { name: /回到/ })).toBeHidden();
   // 题目仍在刷,退出按钮出现(aria-label 已切换,兼作 Esc 之外的退出入口)
   await expect(page.getByRole('button', { name: '退出沉浸模式' })).toBeVisible();
@@ -25,7 +25,7 @@ test('沉浸式:隐藏侧栏与返回条,Esc 退出恢复', async ({ page }) => 
 
   // Esc 退出:chrome 恢复
   await page.keyboard.press('Escape');
-  await expect(page.locator('aside')).toBeVisible();
+  await expect(page.locator('[data-sidebar="sidebar"]')).toBeVisible();
   await expect(page.getByRole('link', { name: /回到/ })).toBeVisible();
   await expect(page.getByRole('button', { name: '沉浸模式' })).toBeVisible();
 });
@@ -33,19 +33,19 @@ test('沉浸式:隐藏侧栏与返回条,Esc 退出恢复', async ({ page }) => 
 test('沉浸式:离开刷题路由自动退出(含后退场景)', async ({ page }) => {
   await page.goto('/#/agent/quiz');
   await page.getByRole('button', { name: '沉浸模式' }).click();
-  await expect(page.locator('aside')).toBeHidden();
+  await expect(page.locator('[data-sidebar="sidebar"]')).toBeHidden();
 
   // 客户端 hash 导航(等价 Cmd+← / 点链接):不整页刷新,验证路由守卫本身
   await page.evaluate(() => {
     location.hash = '#/agent/browse';
   });
-  await expect(page.locator('aside')).toBeVisible();
+  await expect(page.locator('[data-sidebar="sidebar"]')).toBeVisible();
 });
 
 test('沉浸式:弹窗打开时 Esc 只关弹窗,不退沉浸', async ({ page }) => {
   await page.goto('/#/agent/quiz');
   await page.getByRole('button', { name: '沉浸模式' }).click();
-  await expect(page.locator('aside')).toBeHidden();
+  await expect(page.locator('[data-sidebar="sidebar"]')).toBeHidden();
 
   // 打开代码草稿纸弹窗
   await page.getByRole('button', { name: /代码草稿纸/ }).click();
@@ -54,11 +54,11 @@ test('沉浸式:弹窗打开时 Esc 只关弹窗,不退沉浸', async ({ page })
   // 第一次 Esc:弹窗关,沉浸保持
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toBeHidden();
-  await expect(page.locator('aside')).toBeHidden();
+  await expect(page.locator('[data-sidebar="sidebar"]')).toBeHidden();
 
   // 第二次 Esc:退出沉浸,chrome 恢复
   await page.keyboard.press('Escape');
-  await expect(page.locator('aside')).toBeVisible();
+  await expect(page.locator('[data-sidebar="sidebar"]')).toBeVisible();
 });
 
 test('问 AI:web 层降级为外部链接', async ({ page }) => {

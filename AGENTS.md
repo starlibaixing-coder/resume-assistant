@@ -11,6 +11,7 @@ Workspace instructions for ZCode agents working in this repo.
 | 想知道 | 去哪 |
 |---|---|
 | 桌面端定位与全部设计决策(ADR) | `docs/superpowers/specs/2026-08-13-quiz-app-agent-design.md` |
+| 桌面端 UI 重构设计交付物(IA/页面规格/组件与文案规范) | `docs/superpowers/specs/2026-09-04-ui-redesign.md` |
 | 各阶段施工计划与完成状态 | `docs/superpowers/plans/` |
 | 出题质量 5 原则(改题/生题必读) | `banks/audit/QUALITY.md` |
 | 简历红线 R1/R2/R3 与六阶段工作流 | `skill/SKILL.md` |
@@ -44,14 +45,14 @@ Workspace instructions for ZCode agents working in this repo.
 ### 桌面端(desktop/,主开发线)
 
 - **品牌与命名 = CommitCareer**(2026-08-31 规范,详见 `docs/superpowers/specs/2026-08-31-brand-naming.md`):窗口标题/productName/侧栏/document.title 四处统一;侧栏分【刷题】【求职】两组;**UI 术语以 `specs/2026-09-02-terminology.md` 为准**(待学习/待复习/待审核/学习队列,一词一义;代码与 ADR 文档仍用 drafts/pending/草稿区),子页标题 `{分类名} · 页面`。
-- **UI 组件照 shadcn 官方用法**:不写原生标签,不自创结构变体;缺组件按官方方式补源码进 `src/components/ui/`;有公共组件(PageHeader 等)就复用,不各写各的;布局类放 CardContent 等内容层,不堆在 Card 上。
+- **UI 组件照 shadcn 官方用法**:不写原生标签,不自创结构变体;缺组件按官方方式补源码进 `src/components/ui/`;有公共组件(PageHeader、SectionHead、EmptyState、ErrorState)就复用,不各写各的;布局类放 CardContent 等内容层,不堆在 Card 上。**侧栏 = 官方 Sidebar**(`collapsible="icon"`,Cmd/Ctrl+B 折叠,badge 挂 SidebarMenuBadge;sidebar token 在 index.css 里别名到既有色,不另立色值)。**不可逆操作一律 AlertDialog**(拒绝/删题/删 JD/清空进度),表单用 Label+必填星号,小集合多选一用 RadioGroup,表单错误用 Alert。设计规格与文案规范见 `specs/2026-09-04-ui-redesign.md`。
 - **行内重复动作用 ghost icon 按钮**:列表行内的操作(添加/编辑/删除)用 Lucide 图标 + shadcn Tooltip + `aria-label`,不放常驻文本按钮,不用展开抽屉装动作,不写"可改可删"类说明文案;图标不用 emoji/文本字符。
 - **路由用 react-router**:页面组件放 `src/pages/`,路由表在 `App.tsx`(HashRouter);站内导航一律 `Link`/`useNavigate`,不写 `<a href="#/…">`(外部链接除外)。
 - **在 token 体系内工作**:颜色、边框、间距只用现有 CSS token 与既有层级,不引入魔法值和新色调。
 - **AI 产物必经人工审核**(ADR-10):生成内容一律先进草稿区,approve 后才入正式库与 SM-2 队列。手动加题例外:人写即人审,`addManualQuestion` 直接 approved(2026-08-26 用户确认)。
 - **官方题库走 DB 物化**(`officialbank.ts`):首次启动播种包内 questions.json,之后启动自动 + 设置页手动同步 GitHub Pages 远端;远端下架的题连带清进度/笔记/代码草稿(id 作废不复用,ADR-9);YAML 仍是唯一真相源。
 - **刷题卡片有代码草稿纸**(`code-scratchpad.tsx`):按题存代码(code_drafts 表,与 notes 同模式),JS 走 Web Worker 沙箱运行(`js-runner.ts` + worker,超时强杀,异步输出转发);CodeMirror 的 closeBrackets 必须保持关闭(补全与手输闭括号叠加会出语法错误),编辑器主题只吃 CSS token;**basicSetup/onChange 必须稳定引用**(内联对象/未 memo 的函数会让 @uiw 每次按键都 reconfigure,补全提示刚弹出就被拆掉、选中层异常,2026-08-27 教训)。
-- **沉浸式刷题**(`lib/immersive.tsx`,2026-08-27):刷题页 meta 行入口进入,AppShell 不渲染侧栏/返回条,Tauri 壳内联动系统全屏;Esc/按钮/离开 quiz 路由三通道退出。Esc **不加**输入框/编辑器守卫——刷题时焦点常驻 CodeMirror/tiptap,守卫会让 Esc 永远够不到。
+- **沉浸式刷题**(`lib/immersive.tsx`,2026-08-27):刷题页 meta 行入口进入,AppShell 不渲染侧栏/返回条,Tauri 壳内联动系统全屏;Esc/按钮/离开 quiz 路由三通道退出。Esc **不加**输入框/编辑器守卫——刷题时焦点常驻 CodeMirror/tiptap,守卫会让 Esc 永远够不到。学习页吸底操作条注意:壳层滚动容器有 py-8,sticky 约束在 content-box,`bottom-0` 会悬空 32px 露出底下滚动内容(2026-09-04 目检实锤),须用 `-bottom-8` + 自身 `pb-8` 盖住内边距区。
 - **问 AI 走子 webview 窗口**(`lib/ai-assistant.ts`,2026-08-27):chat.qwen.ai 开独立 `WebviewWindow`(已开聚焦,登录态存应用数据);`ai-chat` 窗口不进 capabilities windows 列表——远端页面零 IPC,默认安全;浏览器层降级新标签页;不用 iframe(X-Frame-Options 拦截 + 第三方 iframe 登录态不可用)。
 - **功能 = 题库 + 求职两大块**(2026-09-02 IA 重构,命名规范 `specs/2026-08-31-brand-naming.md` §修订):菜单【题库】官方分类+我的题库(待审 badge)/【求职】JD 管理+简历管理(`/profile?tab=`,jds 表见 `lib/jd.ts`);**出题统一走「添加题目」页**(`/add`,2026-09-03 弃弹窗改页面;三段平铺:手动 approved / AI 生成 / 按 JD 生成,来源 ai/jd 落 questions.source 迁移 007;JD 行内「按 JD 生成」为深链 `/add?jd=<id>` 捷径);题库分类页「开始复习/学习新题」双入口(`quiz?focus=due|new`,全清态 `?force=all`),「是哪些题」深链 `browse?status=`;AI 产物仍必经待审核(ADR-10,/drafts 无菜单,总览指标「待审核>0」与快捷入口可达 + 我的题库 badge 可达);总览为工作台式(2026-09-03 用户确认,对照 Ant Design Pro Workplace):问候区(时段问候+日期+累计学习/右侧三指标 待复习·待学习·待审核)+ 左主栏「学习中」(learned>0)与「未开始」(learned=0)两组分类卡及「最近动态」(lib/activity.ts 本地推导,不落新表)+ 右侧栏「快捷入口」(零计数不出现)与「求职」(空态一个动词:添加/填写);简历多版本/简历优化/JD 匹配留后续阶段。
 

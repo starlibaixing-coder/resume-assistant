@@ -5,15 +5,22 @@ import type { Difficulty, MyQuestion } from '@/types/question';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from '@/components/ui/alert-dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-// 编辑我的题 + 添加题目弹窗 + 删除确认。官方题不可原地改(ADR-3),先复制再改。
-// 表单体抽成 QuestionFormFields 导出共用。
-// 添加题目(2026-09-02 回归弹窗形态):人写即人审直接 approved(ADR-10 只约束 AI 产物),
-// 来源标 'manual';打开时重算模块列表(上次创建的模块这次可选)。
+// 编辑我的题 + 手动加题表单 + 删除确认。官方题不可原地改(ADR-3),先复制再改。
+// 2026-09-04 表单重构:Label 组件 + 必填星号(第九步规范);难度按钮组 → RadioGroup
+// (消灭多选一控件混用);错误 → Alert;删除确认 → AlertDialog(不可逆操作统一);
+// 提交按钮表达结果(「保存题目」)。
 
 // 表单态:文本域形态(tags/answer/followups 是原始多行文本,提交时再拆)
 export interface QuestionFormState {
@@ -58,16 +65,26 @@ const EMPTY_FORM: QuestionFormState = {
 
 export { EMPTY_FORM };
 
+// 表单错误统一 Alert(destructive):结构化、可容纳多行与修法建议
 function FormError({ error }: { error: string | null }) {
   if (!error) return null;
   return (
-    <div className="text-xs text-destructive whitespace-pre-wrap rounded-md border border-destructive/40 bg-destructive/10 p-2">
-      {error}
-    </div>
+    <Alert variant="destructive">
+      <AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription>
+    </Alert>
   );
 }
 
-// 共享表单字段(编辑弹窗/生题页手动表单同一套);label 经 htmlFor/id 关联输入(a11y + 测试钩子)
+// 必填标记:视觉上星号 + 读屏"必填"
+function RequiredMark() {
+  return (
+    <span className="text-destructive" aria-hidden>
+      *
+    </span>
+  );
+}
+
+// 共享表单字段(编辑弹窗/添加题目页手动表单同一套);Label 经 htmlFor/id 关联输入
 export function QuestionFormFields({
   value,
   onChange,
@@ -80,31 +97,52 @@ export function QuestionFormFields({
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">
-        <label htmlFor={id('title')} className="text-xs text-muted-foreground">题干</label>
+        <Label htmlFor={id('title')} className="text-xs text-muted-foreground">
+          题干 <RequiredMark />
+        </Label>
         <Input id={id('title')} value={value.title} onChange={(e) => onChange({ title: e.target.value })} />
       </div>
       <div className="space-y-1.5">
-        <label htmlFor={id('focus')} className="text-xs text-muted-foreground">考察点(focus)</label>
+        <Label htmlFor={id('focus')} className="text-xs text-muted-foreground">
+          考察点(focus)
+        </Label>
         <Input id={id('focus')} value={value.focus} onChange={(e) => onChange({ focus: e.target.value })} />
       </div>
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground">难度</span>
-        {(['初', '中', '高'] as const).map((d) => (
-          <Button key={d} size="sm" variant={value.difficulty === d ? 'default' : 'outline'} onClick={() => onChange({ difficulty: d })}>
-            {d}
-          </Button>
-        ))}
+      <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground">难度</Label>
+        <RadioGroup
+          value={value.difficulty}
+          onValueChange={(v) => onChange({ difficulty: v as Difficulty })}
+          aria-label="难度"
+          className="flex flex-row gap-5"
+        >
+          {(['初', '中', '高'] as const).map((d) => (
+            <div key={d} className="flex items-center gap-1.5">
+              <RadioGroupItem value={d} id={id(`diff-${d}`)} />
+              <Label htmlFor={id(`diff-${d}`)} className="cursor-pointer text-xs font-normal text-muted-foreground">
+                {d}
+              </Label>
+            </div>
+          ))}
+        </RadioGroup>
       </div>
       <div className="space-y-1.5">
-        <label htmlFor={id('answer')} className="text-xs text-muted-foreground">答案要点(一行一条,合计 ≥50 字)</label>
+        <Label htmlFor={id('answer')} className="text-xs text-muted-foreground">
+          答案要点 <RequiredMark />
+          <span className="ml-1 font-normal">(一行一条,合计 ≥50 字)</span>
+        </Label>
         <Textarea id={id('answer')} className="min-h-32 font-mono text-xs" value={value.answer} onChange={(e) => onChange({ answer: e.target.value })} />
       </div>
       <div className="space-y-1.5">
-        <label htmlFor={id('followups')} className="text-xs text-muted-foreground">追问(一行一条,可空)</label>
+        <Label htmlFor={id('followups')} className="text-xs text-muted-foreground">
+          追问(一行一条,可空)
+        </Label>
         <Textarea id={id('followups')} className="min-h-16 font-mono text-xs" value={value.followups} onChange={(e) => onChange({ followups: e.target.value })} />
       </div>
       <div className="space-y-1.5">
-        <label htmlFor={id('tags')} className="text-xs text-muted-foreground">标签(逗号分隔)</label>
+        <Label htmlFor={id('tags')} className="text-xs text-muted-foreground">
+          标签(逗号分隔,可空)
+        </Label>
         <Input id={id('tags')} value={value.tags} onChange={(e) => onChange({ tags: e.target.value })} placeholder="react, hooks" />
       </div>
     </div>
@@ -140,7 +178,7 @@ export function QuestionEditDialog({
     setError(null);
     try {
       await updateQuestion(question.id, formToDraft(form));
-      toast.success('已保存');
+      toast.success('修改已保存');
       onOpenChange(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -162,7 +200,7 @@ export function QuestionEditDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
-          <Button onClick={handleSave} disabled={saving}>{saving ? '保存中…' : '保存'}</Button>
+          <Button onClick={handleSave} disabled={saving}>{saving ? '保存中…' : '保存修改'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -172,8 +210,8 @@ export function QuestionEditDialog({
 // 模块归属:'new' = 新建模块,否则为模块号字符串
 const NEW_MODULE = '__new__';
 
-// 手动加题表单体(2026-09-03 收敛进 AddQuestionDialog 的「手动」页签;人写即人审
-// 直接 approved,ADR-10 只约束 AI 产物)。保存成功后回调 onSaved(id),关闭由宿主管。
+// 手动加题表单体(添加题目页「手动写题」段;人写即人审直接 approved,
+// ADR-10 只约束 AI 产物)。保存成功后回调 onSaved(id),跳转由宿主管。
 export function ManualAddForm({ onSaved }: { onSaved: (id: string) => void }) {
   const [form, setForm] = useState<QuestionFormState>(EMPTY_FORM);
   const [modules, setModules] = useState<Array<{ id: number; name: string }>>([]);
@@ -182,7 +220,7 @@ export function ManualAddForm({ onSaved }: { onSaved: (id: string) => void }) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // 挂载即重算模块列表(上次创建的模块这次可选);弹窗关闭会卸载本组件,重开即重置
+  // 挂载即重算模块列表(上次创建的模块这次可选);页面卸载重进即重置
   useEffect(() => {
     setModules(getMyCategory().modules.map((m) => ({ id: m.id, name: m.name })));
   }, []);
@@ -206,7 +244,7 @@ export function ManualAddForm({ onSaved }: { onSaved: (id: string) => void }) {
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">
-        <label className="text-xs text-muted-foreground">归属模块</label>
+        <Label className="text-xs text-muted-foreground">归属模块</Label>
         <div className="flex items-center gap-2">
           <Select value={moduleTarget} onValueChange={setModuleTarget}>
             <SelectTrigger aria-label="归属模块" className="h-9 flex-1 text-xs">
@@ -237,13 +275,13 @@ export function ManualAddForm({ onSaved }: { onSaved: (id: string) => void }) {
       <FormError error={error} />
 
       <div className="flex justify-end gap-2 pt-1">
-        <Button onClick={handleSave} disabled={saving}>{saving ? '保存中…' : '保存'}</Button>
+        <Button onClick={handleSave} disabled={saving}>{saving ? '保存中…' : '保存题目'}</Button>
       </div>
     </div>
   );
 }
 
-// 删除确认(级联清该题进度/笔记/代码草稿)
+// 删除确认(级联清该题进度/笔记/代码草稿):不可逆操作统一 AlertDialog
 export function DeleteQuestionDialog({
   question,
   open,
@@ -253,31 +291,45 @@ export function DeleteQuestionDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const [deleting, setDeleting] = useState(false);
+
   const handleDelete = async () => {
     if (!question) return;
+    setDeleting(true);
     try {
       await deleteQuestion(question.id);
       toast.success('已删除');
+      onOpenChange(false);
     } catch (e) {
       toast.error('删除失败', { description: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setDeleting(false);
     }
-    onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>删除这道题?</DialogTitle>
-          <DialogDescription>
+    <AlertDialog open={open} onOpenChange={(o) => !o && onOpenChange(o)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>删除这道题?</AlertDialogTitle>
+          <AlertDialogDescription>
             「{question?.title}」将从我的题库删除,该题的复习进度、笔记和代码草稿一并清除。此操作不可恢复。
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
-          <Button variant="destructive" onClick={handleDelete}>确认删除</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>取消</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            disabled={deleting}
+            onClick={(e) => {
+              e.preventDefault(); // 阻止默认关闭:失败时弹窗留在原地可重试
+              void handleDelete();
+            }}
+          >
+            {deleting ? '删除中…' : '确认删除'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

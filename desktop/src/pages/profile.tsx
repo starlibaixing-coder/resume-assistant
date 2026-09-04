@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { Inbox, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { getProfile, saveProfile, type JobProfile } from '@/lib/profile';
@@ -11,30 +11,69 @@ import {
   subscribeJds,
   type Jd,
 } from '@/lib/jd';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { PageHeader } from '@/components/page-header';
+import { EmptyState } from '@/components/empty-state';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,
 } from '@/components/ui/dialog';
 
 // 求职中枢(ADR-4):JD 管理 + 简历管理两个 tab,侧栏两个入口按 ?tab= 预选(2026-09-02)。
-// 「按 JD 生成题目」从 JD 条目行内发起(深链 /add?jd=<id>,锁定按 JD 模式,来源标 'jd');简历多版本留二期。
+// 2026-09-04 UI 重构:删除 JD 迁 AlertDialog;表单 Label+必填标记+Alert 错误;
+// 简历 dirty 时拦截站内离开(tab 切换/侧栏导航),确认后放行(诊断 #8)。
+// 「按 JD 生成题目」从 JD 条目行内发起(深链 /add?jd=<id>)。
 
 const charCount = (s: string) => (s ? `${s.length} 字` : '未填');
 
 export function ProfilePage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const location = useLocation();
   const tab = searchParams.get('tab') === 'resume' ? 'resume' : 'jds';
+  // 简历 dirty 由 ResumeCard 上报;dirty 时拦截一切站内离开(tab 切换/侧栏/页内链接)
+  const [resumeDirty, setResumeDirty] = useState(false);
+  const [leaveTo, setLeaveTo] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!resumeDirty) return;
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as HTMLElement | null)?.closest('a');
+      if (!a) return;
+      const href = a.getAttribute('href') ?? '';
+      if (!href.startsWith('#/') && !href.startsWith('/')) return;
+      const target = href.replace(/^#/, '');
+      if (target === location.pathname + location.search) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setLeaveTo(target);
+    };
+    document.addEventListener('click', onClick, true);
+    return () => document.removeEventListener('click', onClick, true);
+  }, [resumeDirty, location]);
+
+  const confirmLeave = () => {
+    const target = leaveTo;
+    setLeaveTo(null);
+    setResumeDirty(false); // 放行后即放弃,别让守卫拦住接下来的跳转
+    if (target != null) navigate(target);
+  };
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeader
         title={tab === 'resume' ? '简历管理' : 'JD 管理'}
-        subtitle={
+        description={
           tab === 'resume'
             ? '维护简历全文与默认公司,按 JD 生成时可结合简历出深挖题。'
             : '维护目标岗位的职位描述,可从任意 JD 直接生成定向题。'
@@ -43,7 +82,14 @@ export function ProfilePage() {
 
       <Tabs
         value={tab}
-        onValueChange={(v) => setSearchParams(v === 'resume' ? { tab: 'resume' } : {}, { replace: true })}
+        onValueChange={(v) => {
+          const next = v === 'resume' ? '/profile?tab=resume' : '/profile';
+          if (resumeDirty && next !== location.pathname + location.search) {
+            setLeaveTo(next);
+            return;
+          }
+          setSearchParams(v === 'resume' ? { tab: 'resume' } : {}, { replace: true });
+        }}
       >
         <TabsList>
           <TabsTrigger value="jds">JD 管理</TabsTrigger>
@@ -55,9 +101,25 @@ export function ProfilePage() {
         </TabsContent>
 
         <TabsContent value="resume" className="mt-6">
-          <ResumeCard />
+          <ResumeCard onDirtyChange={setResumeDirty} />
         </TabsContent>
       </Tabs>
+
+      {/* 未保存离开确认:取消=留在本页(Radix 默认焦点在取消,安全),确认=放弃修改并离开 */}
+      <AlertDialog open={!!leaveTo} onOpenChange={(o) => !o && setLeaveTo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>有未保存的修改</AlertDialogTitle>
+            <AlertDialogDescription>离开后这些修改不会保存。要先保存再离开吗?</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>留在本页</AlertDialogCancel>
+            <Button variant="outline" onClick={confirmLeave}>
+              不保存,离开
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -73,6 +135,7 @@ function JdManager() {
   const [editing, setEditing] = useState<Jd | null>(null); // null = 关闭;有值为编辑
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<Jd | null>(null);
+  const [deletingBusy, setDeletingBusy] = useState(false);
 
   return (
     <>
@@ -87,21 +150,17 @@ function JdManager() {
       </div>
 
       {jds.length === 0 ? (
-        <Card>
-          <CardContent className="space-y-3 py-14 text-center">
-            <Inbox className="mx-auto size-10 text-muted-foreground" aria-hidden />
-            <div className="text-foreground">还没有 JD</div>
-            <div className="text-sm text-muted-foreground">
-              粘贴目标岗位的职位描述,从这条 JD 直接生成定向题。
-            </div>
-            <div>
-              <Button size="sm" variant="outline" onClick={() => setCreating(true)}>
-                <Plus className="size-3.5" aria-hidden />
-                新增 JD
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Inbox}
+          title="还没有 JD"
+          description="粘贴目标岗位的职位描述,从这条 JD 直接生成定向题。"
+          action={
+            <Button size="sm" variant="outline" onClick={() => setCreating(true)}>
+              <Plus className="size-3.5" aria-hidden />
+              新增 JD
+            </Button>
+          }
+        />
       ) : (
         <Card>
           <CardContent className="divide-y divide-border p-0">
@@ -177,34 +236,40 @@ function JdManager() {
         }}
       />
 
-      {/* 按 JD 生成题目:弹窗承载,产物进待审核,来源标 'jd' */}
-
-      <Dialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>删除这份 JD?</DialogTitle>
-            <DialogDescription>
+      {/* 删除 JD:已生成题不受影响,但 JD 本身不可恢复 → AlertDialog */}
+      <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>删除这份 JD?</AlertDialogTitle>
+            <AlertDialogDescription>
               「{deleting?.title}」将被删除。已用它生成的题不受影响(题目在待审核/我的题库,与 JD 不再关联)。此操作不可恢复。
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">取消</Button>
-            </DialogClose>
-            <DialogClose asChild>
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  if (deleting) void deleteJd(deleting.id);
-                  toast.success('已删除');
-                }}
-              >
-                确认删除
-              </Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deletingBusy}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!deleting) return;
+                setDeletingBusy(true);
+                try {
+                  await deleteJd(deleting.id);
+                  toast.success('JD 已删除');
+                  setDeleting(null);
+                } catch (err) {
+                  toast.error('删除失败', { description: err instanceof Error ? err.message : String(err) });
+                } finally {
+                  setDeletingBusy(false);
+                }
+              }}
+            >
+              {deletingBusy ? '删除中…' : '确认删除'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
@@ -263,16 +328,18 @@ function JdEditDialog({ open, jd, onClose }: { open: boolean; jd: Jd | null; onC
         <div className="space-y-3">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <label htmlFor="jd-title" className="text-xs text-muted-foreground">标题(可空)</label>
+              <Label htmlFor="jd-title" className="text-xs text-muted-foreground">标题(可空)</Label>
               <Input id="jd-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="如:AI 应用工程师" />
             </div>
             <div className="space-y-1.5">
-              <label htmlFor="jd-company" className="text-xs text-muted-foreground">公司</label>
+              <Label htmlFor="jd-company" className="text-xs text-muted-foreground">公司</Label>
               <Input id="jd-company" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="如:示例公司" />
             </div>
           </div>
           <div className="space-y-1.5">
-            <label htmlFor="jd-content" className="text-xs text-muted-foreground">职位描述(JD)</label>
+            <Label htmlFor="jd-content" className="text-xs text-muted-foreground">
+              职位描述(JD) <span className="text-destructive" aria-hidden>*</span>
+            </Label>
             <Textarea
               id="jd-content"
               value={content}
@@ -282,9 +349,9 @@ function JdEditDialog({ open, jd, onClose }: { open: boolean; jd: Jd | null; onC
             />
           </div>
           {error && (
-            <div className="text-sm text-destructive whitespace-pre-wrap rounded-md border border-destructive/40 bg-destructive/10 p-3">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription>
+            </Alert>
           )}
         </div>
 
@@ -292,7 +359,7 @@ function JdEditDialog({ open, jd, onClose }: { open: boolean; jd: Jd | null; onC
           <DialogClose asChild>
             <Button variant="outline">取消</Button>
           </DialogClose>
-          <Button onClick={handleSave} disabled={saving}>{saving ? '保存中…' : '保存'}</Button>
+          <Button onClick={handleSave} disabled={saving}>{saving ? '保存中…' : jd ? '保存修改' : '添加 JD'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -301,7 +368,7 @@ function JdEditDialog({ open, jd, onClose }: { open: boolean; jd: Jd | null; onC
 
 // ── 简历与公司:单份简历 + 默认公司(多版本留二期)──
 
-function ResumeCard() {
+function ResumeCard({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void }) {
   const saved = getProfile();
   const [company, setCompany] = useState(saved?.company ?? '');
   const [resume, setResume] = useState(saved?.resume ?? '');
@@ -311,7 +378,13 @@ function ResumeCard() {
     ? saved.company !== company || saved.resume !== resume
     : !!(company || resume);
 
-  // 未保存就关窗/刷新:浏览器原生确认兜底(站内拦截需 data router,已知限制)
+  // dirty 上报给页面层做站内离开拦截;卸载(切 tab/离页)复位
+  useEffect(() => {
+    onDirtyChange(dirty);
+    return () => onDirtyChange(false);
+  }, [dirty, onDirtyChange]);
+
+  // 浏览器级兜底:刷新/关窗弹原生确认
   useEffect(() => {
     if (!dirty) return;
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -325,7 +398,7 @@ function ResumeCard() {
     setSaving(true);
     try {
       await saveProfile({ company: company.trim(), resume: resume.trim() });
-      toast.success('已保存');
+      toast.success('简历已保存');
     } catch (e) {
       toast.error('保存失败', { description: e instanceof Error ? e.message : String(e) });
     } finally {
@@ -337,7 +410,7 @@ function ResumeCard() {
     <Card>
       <CardContent className="flex flex-col gap-5 p-6">
         <div className="space-y-1.5">
-          <label htmlFor="resume-company" className="text-xs text-muted-foreground">默认公司 / 岗位</label>
+          <Label htmlFor="resume-company" className="text-xs text-muted-foreground">默认公司 / 岗位</Label>
           <Input
             id="resume-company"
             value={company}
@@ -348,8 +421,8 @@ function ResumeCard() {
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label htmlFor="resume-content" className="text-xs text-muted-foreground">我的简历</label>
-            <span className="text-[10px] text-muted-foreground">{charCount(resume)}</span>
+            <Label htmlFor="resume-content" className="text-xs text-muted-foreground">我的简历</Label>
+            <span className="text-[10px] tabular-nums text-muted-foreground">{charCount(resume)}</span>
           </div>
           <Textarea
             id="resume-content"
@@ -361,11 +434,9 @@ function ResumeCard() {
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
-            {dirty ? '有未保存的修改' : '已保存'}
-          </span>
+          <span className="text-xs text-warning">{dirty ? '有未保存的修改' : ''}</span>
           <Button onClick={handleSave} disabled={!dirty || saving}>
-            {saving ? '保存中…' : '保存'}
+            {saving ? '保存中…' : '保存简历'}
           </Button>
         </div>
       </CardContent>
