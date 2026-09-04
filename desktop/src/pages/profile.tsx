@@ -25,6 +25,9 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import {
+  ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
+} from '@/components/ui/context-menu';
+import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,
 } from '@/components/ui/dialog';
 
@@ -163,7 +166,9 @@ function JdManager() {
       ) : (
         <div className="border-t border-border">
           {jds.map((j) => (
-            <div key={j.id} className="flex items-start gap-3 border-b border-border py-4">
+            <ContextMenu key={j.id}>
+            <ContextMenuTrigger asChild>
+            <div className="flex items-start gap-3 border-b border-border py-3">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-baseline gap-x-2">
                   <span className="text-sm font-semibold text-foreground">{j.title}</span>
@@ -220,7 +225,17 @@ function JdManager() {
                   </Tooltip>
                 </div>
               </div>
-            ))}
+            </ContextMenuTrigger>
+            <ContextMenuContent>
+              <ContextMenuItem onSelect={() => navigate(`/add?jd=${j.id}`)}>按 JD 生成题目…</ContextMenuItem>
+              <ContextMenuItem onSelect={() => setEditing(j)}>编辑…</ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuItem className="text-destructive focus:text-destructive" onSelect={() => setDeleting(j)}>
+                删除…
+              </ContextMenuItem>
+            </ContextMenuContent>
+            </ContextMenu>
+          ))}
         </div>
       )}
 

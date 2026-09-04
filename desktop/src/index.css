@@ -5,84 +5,92 @@
    否则 ModeToggle 的 sun/moon 图标动画会跟随 OS 偏好而非用户选择的主题。 */
 @custom-variant dark (&:is(.dark *));
 
-/* ── 设计语言 v2「纸面编辑部」(2026-09-04,specs/2026-09-04-ui-redesign.md §v2)──
-   浅色优先:暖纸白底 + 墨黑字,橙色只点亮关键动作与数字;去卡片化,细线分区;
-   小圆角(印刷感);深色模式 = 暖炭墨纸,同一套细线语言。 */
+/* ── 设计语言 v3「桌面工作台」(2026-09-04,specs/2026-09-04-ui-redesign.md §v3)──
+   按桌面应用操作习惯从 0 设计:源列表侧栏 + 工具栏 + 主从分栏 + 状态栏,
+   紧凑密度、中性色、单一品牌橙点缀。浅色 = 浅灰窗面 + 白色内容区;
+   深色 = 炭黑窗面 + 略亮内容区。 */
 
 /* Step 1: 浅色 token(:root) - 值用 hsl() 包装 */
 :root {
-  --background: hsl(42 30% 97%);
-  --foreground: hsl(30 12% 14%);
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(240 6% 12%);
 
-  --card: hsl(40 28% 99%);
-  --card-foreground: hsl(30 12% 14%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(240 6% 12%);
 
-  --popover: hsl(40 28% 99%);
-  --popover-foreground: hsl(30 12% 14%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(240 6% 12%);
 
-  --primary: hsl(20 75% 42%);
+  /* 侧栏(源列表):比内容区深一档的窗面 */
+  --sidebar: hsl(240 6% 96%);
+  --sidebar-foreground: hsl(240 6% 20%);
+
+  --primary: hsl(24 70% 46%);
   --primary-foreground: hsl(0 0% 100%);
 
-  --secondary: hsl(40 20% 92%);
-  --secondary-foreground: hsl(30 12% 14%);
+  --secondary: hsl(240 5% 95%);
+  --secondary-foreground: hsl(240 6% 12%);
 
-  --muted: hsl(40 22% 93%);
-  --muted-foreground: hsl(30 8% 42%);
+  --muted: hsl(240 5% 95%);
+  --muted-foreground: hsl(240 4% 44%);
 
-  --accent: hsl(38 26% 91%);
-  --accent-foreground: hsl(30 12% 14%);
+  --accent: hsl(240 6% 93%);
+  --accent-foreground: hsl(240 6% 12%);
 
-  --destructive: hsl(0 68% 48%);
+  --destructive: hsl(0 65% 50%);
   --destructive-foreground: hsl(0 0% 100%);
 
-  --success: hsl(152 60% 32%);
+  --success: hsl(150 55% 34%);
   --success-foreground: hsl(0 0% 100%);
 
-  --warning: hsl(35 84% 40%);
+  --warning: hsl(35 85% 42%);
   --warning-foreground: hsl(0 0% 100%);
 
-  --border: hsl(35 16% 85%);
-  --input: hsl(35 16% 85%);
-  --ring: hsl(20 75% 42%);
+  --border: hsl(240 6% 89%);
+  --input: hsl(240 6% 85%);
+  --ring: hsl(24 70% 46%);
 
-  --radius: 0.125rem;
+  --radius: 0.375rem;
 }
 
 .dark {
-  --background: hsl(30 9% 8%);
-  --foreground: hsl(40 22% 90%);
+  --background: hsl(240 5% 9%);
+  --foreground: hsl(240 5% 88%);
 
-  --card: hsl(30 8% 11%);
-  --card-foreground: hsl(40 22% 90%);
+  --card: hsl(240 5% 12%);
+  --card-foreground: hsl(240 5% 88%);
 
-  --popover: hsl(30 8% 12%);
-  --popover-foreground: hsl(40 22% 90%);
+  --popover: hsl(240 5% 12%);
+  --popover-foreground: hsl(240 5% 88%);
 
-  --primary: hsl(22 84% 58%);
-  --primary-foreground: hsl(30 20% 8%);
+  --sidebar: hsl(240 5% 12%);
+  --sidebar-foreground: hsl(240 5% 70%);
 
-  --secondary: hsl(30 7% 15%);
-  --secondary-foreground: hsl(40 22% 90%);
+  --primary: hsl(26 85% 60%);
+  --primary-foreground: hsl(240 6% 10%);
 
-  --muted: hsl(30 7% 15%);
-  --muted-foreground: hsl(35 10% 62%);
+  --secondary: hsl(240 5% 15%);
+  --secondary-foreground: hsl(240 5% 88%);
 
-  --accent: hsl(30 8% 19%);
-  --accent-foreground: hsl(40 22% 90%);
+  --muted: hsl(240 5% 15%);
+  --muted-foreground: hsl(240 4% 60%);
 
-  --destructive: hsl(0 72% 56%);
-  --destructive-foreground: hsl(0 0% 100%);
+  --accent: hsl(240 5% 18%);
+  --accent-foreground: hsl(240 5% 88%);
 
-  --success: hsl(150 52% 46%);
-  --success-foreground: hsl(30 20% 8%);
+  --destructive: hsl(0 70% 58%);
+  --destructive-foreground: hsl(240 6% 10%);
 
-  --warning: hsl(38 92% 55%);
-  --warning-foreground: hsl(30 20% 8%);
+  --success: hsl(150 50% 48%);
+  --success-foreground: hsl(240 6% 10%);
+
+  --warning: hsl(38 92% 56%);
+  --warning-foreground: hsl(240 6% 10%);
 
   /* 暗色边框:低透明度发丝线,不做深色描边——深色描边在暗底上读作"黑框" */
-  --border: hsl(40 22% 90% / 0.14);
-  --input: hsl(40 22% 90% / 0.14);
-  --ring: hsl(22 84% 58%);
+  --border: hsl(240 5% 88% / 0.12);
+  --input: hsl(240 5% 88% / 0.16);
+  --ring: hsl(26 85% 60%);
 }
 
 @theme inline {
@@ -92,6 +100,8 @@
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
@@ -110,12 +120,12 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 1px);
-  --radius-sm: calc(var(--radius) - 0.5px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
   --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
     "Microsoft YaHei", "Segoe UI", Helvetica, Arial, sans-serif;
-  /* mono 栈必须以 ui-monospace 开头 + 带 CJK 回退(2026-08-28 审计 E1):
-     ui-monospace 跟随系统等宽;中文回退 PingFang/雅黑。只用于代码/ID/纯数字。 */
+  /* mono 栈必须以 ui-monospace 开头 + 带 CJK 回退(2026-08-28 审计 E1)。
+     只用于代码/ID/纯数字。 */
   --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", "Fira Code", Consolas, "PingFang SC", "Microsoft YaHei", monospace;
 }
 
