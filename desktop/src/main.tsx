@@ -46,7 +46,7 @@ async function boot(): Promise<void> {
     ) : null;
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <ThemeProvider defaultTheme="dark" storageKey="quiz-theme">
+      <ThemeProvider defaultTheme="light" storageKey="quiz-theme">
         {banner}
         <App />
       </ThemeProvider>

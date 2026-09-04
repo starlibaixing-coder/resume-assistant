@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { BookmarkPlus, LibraryBig, Pencil, Plus, Trash2 } from 'lucide-react';
@@ -8,32 +8,18 @@ import { MY_CATEGORY_SLUG, getMyQuestion, getMyQuestions, copyOfficial, getCopie
 import type { Question, QuestionData, QuestionSource } from '@/types/question';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Progress } from '@/components/ui/progress';
 import { PageHeader } from '@/components/page-header';
 import { EmptyState } from '@/components/empty-state';
 import { ErrorState } from '@/components/error-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { QuestionEditDialog, DeleteQuestionDialog } from '@/components/question-edit-dialog';
 
-// 题目列表 = 题库后台:一个列表 + 一条筛选栏(三个维度可组合,下拉而非按钮平铺)。
-// 2026-09-04 UI 重构:加载/空态/错误态走共享组件;删除确认已迁 AlertDialog(表单组件层)。
-
-// 我的题来源标签(2026-09-02:三类出题入口产物都进我的题库,来源可见)
-const SOURCE_LABELS: Record<QuestionSource, string> = {
-  manual: '手动',
-  ai: 'AI 生成',
-  jd: '按 JD',
-  copy: '官方复制',
-};
-// - 模块:默认全部;筛到单个模块时,列表上方显示该模块统计 + 进度条
-// - 难度:全部/初/中/高;状态:全部/待学习/待复习/已掌握(术语表 specs/2026-09-02-terminology.md)
-// 行 = 全局序号 + 模块名小标签 + 题干 + focus 平铺 + 题目标签 + 难度 + 行尾动作区;
-// 行内动作用 ghost icon 按钮 + tooltip(不占行宽、不带文字噪音):
-// 官方题「添加到我的题库」(ADR-3 复制后改;已添加 = 同一按钮禁用态,hover 提示);我的题 编辑/删除。
-// 答题/评分/笔记在学习页。?m= 深链定初始模块。
+// 题目列表 v2「纸面编辑部」:筛选行 + 细线行目录,去卡片。
+// 行 = 序号 + 模块小签 + 来源签 + 题干 + 难度 + 行尾 ghost icon 动作;
+// 行内动作用 ghost icon 按钮 + tooltip。官方题「添加到我的题库」(ADR-3 复制后改)。
+// 答题/评分/笔记在学习页。?m= / ?status= 深链定初始筛选。
 
 type DiffFilter = 'all' | '初' | '中' | '高';
 type StatusFilter = 'all' | 'unseen' | 'due' | 'mastered';
@@ -92,7 +78,6 @@ export function BrowsePage({ category }: { category: string }) {
     const s = searchParams.get('status');
     return s === 'due' || s === 'unseen' || s === 'mastered' ? s : 'all';
   });
-  // 编辑/删除/创建/生成 dialog 目标;官方题添加中标记
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copyingId, setCopyingId] = useState<string | null>(null);
@@ -103,7 +88,7 @@ export function BrowsePage({ category }: { category: string }) {
     if (!data) return { cat: null, moduleStats: {}, allQuestions: [] as QuestionData['questions'], copiedSourceIds: new Set<string>() };
     const catObj = data.categories.find((c) => c.slug === category);
     const catQuestions = data.questions.filter((q) => q.category === category);
-    // 题号取 id 第三段(agent.12.10 → 10)。index 字段是"模块.题号"小数(12.10≡12.1 会撞值),不能拿它排序
+    // 题号取 id 第三段(agent.12.10 → 10)。index 字段是"模块.题号"小数,不能拿它排序
     const qnum = (q: typeof catQuestions[number]) => parseInt(q.id.split('.')[2] ?? '0', 10);
     const all = [...catQuestions].sort((a, b) => a.module - b.module || qnum(a) - qnum(b));
     return { cat: catObj, moduleStats: getModuleStats(category, catQuestions), allQuestions: all, copiedSourceIds: getCopiedSourceIds() };
@@ -116,7 +101,7 @@ export function BrowsePage({ category }: { category: string }) {
 
   if (error) {
     return (
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="space-y-8">
         <PageHeader title="题目列表" />
         <ErrorState message={error} onRetry={retry} />
       </div>
@@ -124,17 +109,17 @@ export function BrowsePage({ category }: { category: string }) {
   }
   if (!data) {
     return (
-      <div className="mx-auto max-w-4xl space-y-6">
-        <Skeleton className="h-8 w-48" />
+      <div className="space-y-8">
+        <Skeleton className="h-12 w-64" />
         <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-96 rounded-xl" />
+        <Skeleton className="h-96 w-full" />
       </div>
     );
   }
   // my 分类无 approved 题时聚合里没有它(避免卡"加载中"),给空态引导
   if (!cat) {
     return (
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="space-y-8">
         <PageHeader title="我的题库 · 题目列表" />
         <EmptyState
           icon={LibraryBig}
@@ -154,12 +139,10 @@ export function BrowsePage({ category }: { category: string }) {
   }
 
   const modules = cat.modules;
-  // 模块筛选项(题库 meta 顺序)
   const moduleOptions = [
     { key: 'all', label: '全部模块' },
     ...modules.map((m) => ({ key: String(m.id), label: `${String(m.id).padStart(2, '0')} · ${m.name}` })),
   ];
-  // 筛选值可能因数据变化失效,回退 all
   const effectiveModule = moduleOptions.some((o) => o.key === moduleFilter) ? moduleFilter : 'all';
   const singleModule = effectiveModule !== 'all' ? modules.find((m) => String(m.id) === effectiveModule) : null;
 
@@ -197,7 +180,7 @@ export function BrowsePage({ category }: { category: string }) {
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="space-y-8">
       <PageHeader
         title={`${cat.name} · 题目列表`}
         description={
@@ -218,7 +201,7 @@ export function BrowsePage({ category }: { category: string }) {
         }
       />
 
-      {/* 筛选栏:模块 / 难度 / 状态,可组合 */}
+      {/* 筛选行:模块 / 难度 / 状态,可组合 */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
         <FilterSelect label="模块" value={effectiveModule} onChange={setModuleFilter} options={moduleOptions} />
         <FilterSelect label="难度" value={diffFilter} onChange={(v) => setDiffFilter(v as DiffFilter)} options={DIFF_OPTIONS} />
@@ -231,30 +214,30 @@ export function BrowsePage({ category }: { category: string }) {
         )}
       </div>
 
-      {/* 单模块上下文:统计 + 进度 */}
+      {/* 单模块上下文:统计行 */}
       {singleModule && singleStats && (
-        <div className="space-y-2">
-          <div className="flex justify-between items-center flex-wrap gap-2">
-            <div className="text-sm text-muted-foreground">
-              {String(singleModule.id).padStart(2, '0')} · {singleModule.name}
-            </div>
-            <div className="flex gap-3 text-xs tabular-nums">
-              <span className="text-muted-foreground">已学 {singleStats.learned}/{singleStats.total}</span>
-              {singleStats.mastered > 0 && <span className="text-success">已掌握 {singleStats.mastered}</span>}
-              {singleStats.dueToday > 0 && <span className="text-warning">待复习 {singleStats.dueToday}</span>}
-            </div>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-muted-foreground">
+            {String(singleModule.id).padStart(2, '0')} · {singleModule.name}
+          </span>
+          <div className="h-0.5 flex-1 bg-muted">
+            <div
+              className="h-0.5 bg-primary/70"
+              style={{ width: `${singleStats.total ? Math.round((singleStats.learned / singleStats.total) * 100) : 0}%` }}
+            />
           </div>
-          <Progress
-            value={singleStats.total ? Math.round((singleStats.learned / singleStats.total) * 100) : 0}
-            className="h-1.5 ring-1 ring-border"
-          />
+          <span className="flex gap-3 text-xs tabular-nums">
+            <span className="text-muted-foreground">已学 {singleStats.learned}/{singleStats.total}</span>
+            {singleStats.mastered > 0 && <span className="text-success">已掌握 {singleStats.mastered}</span>}
+            {singleStats.dueToday > 0 && <span className="text-warning">待复习 {singleStats.dueToday}</span>}
+          </span>
         </div>
       )}
 
-      {/* 题目列表 */}
-      <Card className="overflow-hidden">
+      {/* 题目细线目录 */}
+      <div data-browse-list className="border-t border-border">
         {listQuestions.length === 0 ? (
-          <div className="flex items-center justify-center gap-3 p-4 text-sm text-muted-foreground">
+          <div className="flex items-center justify-center gap-3 border-b border-border py-8 text-sm text-muted-foreground">
             没有符合筛选的题
             {hasFilter && (
               <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={handleReset}>
@@ -268,22 +251,22 @@ export function BrowsePage({ category }: { category: string }) {
             const copied = !isMy && copiedSourceIds.has(q.id);
             const source = isMy ? sourceOf(q.id) : null;
             return (
-              // content-visibility:屏外行跳过渲染(282 题全量 DOM 保留,e2e/DOM 查询不受影响)
-              <div key={q.id} className="border-b border-border last:border-b-0 p-3 [contain-intrinsic-size:auto_88px] [content-visibility:auto]">
+              // content-visibility:屏外行跳过渲染(282 题全量 DOM 保留)
+              <div key={q.id} className="border-b border-border px-1 py-3 [contain-intrinsic-size:auto_88px] [content-visibility:auto]">
                 <div className="flex items-center gap-2.5">
-                  <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">{i + 1}</span>
-                  <span className="max-w-24 truncate shrink-0 rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                  <span className="w-7 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">{i + 1}</span>
+                  <span className="max-w-24 truncate shrink-0 rounded-sm bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                     {modName}
                   </span>
                   {source && (
                     <span
                       title={`来源:${SOURCE_LABELS[source]}`}
-                      className="shrink-0 rounded bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                      className="shrink-0 rounded-sm bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground"
                     >
                       {SOURCE_LABELS[source]}
                     </span>
                   )}
-                  <span className="text-sm text-foreground flex-1">{q.title}</span>
+                  <span className="flex-1 truncate text-sm font-medium text-foreground">{q.title}</span>
                   <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
                   {isMy ? (
                     <>
@@ -337,11 +320,11 @@ export function BrowsePage({ category }: { category: string }) {
                     </Tooltip>
                   )}
                 </div>
-                <div className="mt-1 pl-1 text-xs leading-relaxed text-muted-foreground">{q.focus}</div>
+                <div className="mt-1 pl-9 text-xs leading-relaxed text-muted-foreground">{q.focus}</div>
                 {q.tags.length > 0 && (
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  <div className="mt-1.5 flex flex-wrap gap-1.5 pl-9">
                     {q.tags.map((t) => (
-                      <span key={t} className="rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                      <span key={t} className="rounded-sm bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                         {t}
                       </span>
                     ))}
@@ -351,7 +334,7 @@ export function BrowsePage({ category }: { category: string }) {
             );
           })
         )}
-      </Card>
+      </div>
 
       <QuestionEditDialog
         question={editingId ? getMyQuestion(editingId) : null}
@@ -366,3 +349,11 @@ export function BrowsePage({ category }: { category: string }) {
     </div>
   );
 }
+
+// 我的题来源标签(三类出题入口产物都进我的题库,来源可见)
+const SOURCE_LABELS: Record<QuestionSource, string> = {
+  manual: '手动',
+  ai: 'AI 生成',
+  jd: '按 JD',
+  copy: '官方复制',
+};

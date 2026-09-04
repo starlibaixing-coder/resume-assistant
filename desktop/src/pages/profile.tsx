@@ -13,7 +13,6 @@ import {
 } from '@/lib/jd';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -139,7 +138,7 @@ function JdManager() {
 
   return (
     <>
-      <div className="flex items-center justify-between gap-2">
+      <div className="mb-3 flex items-center justify-between gap-2">
         <div className="text-sm text-muted-foreground">
           {jds.length > 0 ? `${jds.length} 个 JD,最近使用的在前` : '从一份 JD 开始'}
         </div>
@@ -162,21 +161,20 @@ function JdManager() {
           }
         />
       ) : (
-        <Card>
-          <CardContent className="divide-y divide-border p-0">
-            {jds.map((j) => (
-              <div key={j.id} className="flex items-start gap-3 p-4">
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-baseline gap-x-2">
-                    <span className="text-sm font-medium text-foreground">{j.title}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {j.company || '未填公司'} · {j.content.length} 字
-                    </span>
-                  </div>
-                  <div className="mt-1 truncate text-xs leading-relaxed text-muted-foreground">
-                    {j.content}
-                  </div>
+        <div className="border-t border-border">
+          {jds.map((j) => (
+            <div key={j.id} className="flex items-start gap-3 border-b border-border py-4">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-baseline gap-x-2">
+                  <span className="text-sm font-semibold text-foreground">{j.title}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {j.company || '未填公司'} · {j.content.length} 字
+                  </span>
                 </div>
+                <div className="mt-1 truncate text-xs leading-relaxed text-muted-foreground">
+                  {j.content}
+                </div>
+              </div>
                 <div className="flex shrink-0 items-center gap-0.5">
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -223,8 +221,7 @@ function JdManager() {
                 </div>
               </div>
             ))}
-          </CardContent>
-        </Card>
+        </div>
       )}
 
       <JdEditDialog
@@ -407,8 +404,7 @@ function ResumeCard({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void
   };
 
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-5 p-6">
+    <div className="flex flex-col gap-5 border-t border-border pt-6">
         <div className="space-y-1.5">
           <Label htmlFor="resume-company" className="text-xs text-muted-foreground">默认公司 / 岗位</Label>
           <Input
@@ -439,8 +435,7 @@ function ResumeCard({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void
             {saving ? '保存中…' : '保存简历'}
           </Button>
         </div>
-      </CardContent>
-    </Card>
+    </div>
   );
 }
 

@@ -5,80 +5,84 @@
    否则 ModeToggle 的 sun/moon 图标动画会跟随 OS 偏好而非用户选择的主题。 */
 @custom-variant dark (&:is(.dark *));
 
+/* ── 设计语言 v2「纸面编辑部」(2026-09-04,specs/2026-09-04-ui-redesign.md §v2)──
+   浅色优先:暖纸白底 + 墨黑字,橙色只点亮关键动作与数字;去卡片化,细线分区;
+   小圆角(印刷感);深色模式 = 暖炭墨纸,同一套细线语言。 */
+
 /* Step 1: 浅色 token(:root) - 值用 hsl() 包装 */
 :root {
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(222 47% 11%);
+  --background: hsl(42 30% 97%);
+  --foreground: hsl(30 12% 14%);
 
-  --card: hsl(0 0% 100%);
-  --card-foreground: hsl(222 47% 11%);
+  --card: hsl(40 28% 99%);
+  --card-foreground: hsl(30 12% 14%);
 
-  --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(222 47% 11%);
+  --popover: hsl(40 28% 99%);
+  --popover-foreground: hsl(30 12% 14%);
 
-  --primary: hsl(18 78% 52%);
+  --primary: hsl(20 75% 42%);
   --primary-foreground: hsl(0 0% 100%);
 
-  --secondary: hsl(210 40% 96%);
-  --secondary-foreground: hsl(222 47% 11%);
+  --secondary: hsl(40 20% 92%);
+  --secondary-foreground: hsl(30 12% 14%);
 
-  --muted: hsl(210 40% 96%);
-  --muted-foreground: hsl(215 16% 47%);
+  --muted: hsl(40 22% 93%);
+  --muted-foreground: hsl(30 8% 42%);
 
-  --accent: hsl(210 40% 96%);
-  --accent-foreground: hsl(222 47% 11%);
+  --accent: hsl(38 26% 91%);
+  --accent-foreground: hsl(30 12% 14%);
 
-  --destructive: hsl(0 84% 60%);
+  --destructive: hsl(0 68% 48%);
   --destructive-foreground: hsl(0 0% 100%);
 
-  --success: hsl(142 71% 45%);
+  --success: hsl(152 60% 32%);
   --success-foreground: hsl(0 0% 100%);
 
-  --warning: hsl(38 92% 50%);
+  --warning: hsl(35 84% 40%);
   --warning-foreground: hsl(0 0% 100%);
 
-  --border: hsl(214 32% 91%);
-  --input: hsl(214 32% 91%);
-  --ring: hsl(18 78% 52%);
+  --border: hsl(35 16% 85%);
+  --input: hsl(35 16% 85%);
+  --ring: hsl(20 75% 42%);
 
-  --radius: 0.625rem;
+  --radius: 0.125rem;
 }
 
 .dark {
-  --background: hsl(222 47% 7%);
-  --foreground: hsl(220 14% 91%);
+  --background: hsl(30 9% 8%);
+  --foreground: hsl(40 22% 90%);
 
-  --card: hsl(222 30% 12%);
-  --card-foreground: hsl(220 14% 91%);
+  --card: hsl(30 8% 11%);
+  --card-foreground: hsl(40 22% 90%);
 
-  --popover: hsl(222 33% 15%);
-  --popover-foreground: hsl(220 14% 91%);
+  --popover: hsl(30 8% 12%);
+  --popover-foreground: hsl(40 22% 90%);
 
-  --primary: hsl(18 78% 64%);
-  --primary-foreground: hsl(0 0% 100%);
+  --primary: hsl(22 84% 58%);
+  --primary-foreground: hsl(30 20% 8%);
 
-  --secondary: hsl(222 30% 15%);
-  --secondary-foreground: hsl(220 14% 91%);
+  --secondary: hsl(30 7% 15%);
+  --secondary-foreground: hsl(40 22% 90%);
 
-  --muted: hsl(222 30% 15%);
-  --muted-foreground: hsl(217 10% 65%);
+  --muted: hsl(30 7% 15%);
+  --muted-foreground: hsl(35 10% 62%);
 
-  --accent: hsl(222 30% 18%);
-  --accent-foreground: hsl(220 14% 91%);
+  --accent: hsl(30 8% 19%);
+  --accent-foreground: hsl(40 22% 90%);
 
-  --destructive: hsl(0 84% 60%);
+  --destructive: hsl(0 72% 56%);
   --destructive-foreground: hsl(0 0% 100%);
 
-  --success: hsl(142 60% 50%);
-  --success-foreground: hsl(0 0% 100%);
+  --success: hsl(150 52% 46%);
+  --success-foreground: hsl(30 20% 8%);
 
-  --warning: hsl(38 92% 57%);
-  --warning-foreground: hsl(222 47% 11%);
+  --warning: hsl(38 92% 55%);
+  --warning-foreground: hsl(30 20% 8%);
 
-  /* 暗色边框:低透明度发丝线(浅色 14%),不做深色描边——深色描边在暗底上读作"黑框" */
-  --border: hsl(220 14% 91% / 0.14);
-  --input: hsl(220 14% 91% / 0.14);
-  --ring: hsl(18 78% 64%);
+  /* 暗色边框:低透明度发丝线,不做深色描边——深色描边在暗底上读作"黑框" */
+  --border: hsl(40 22% 90% / 0.14);
+  --input: hsl(40 22% 90% / 0.14);
+  --ring: hsl(22 84% 58%);
 }
 
 @theme inline {
@@ -105,23 +109,13 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  /* Sidebar 官方组件所需 token:直接别名到既有 token(单一真相源,不另立色值) */
-  --color-sidebar: var(--card);
-  --color-sidebar-foreground: var(--foreground);
-  --color-sidebar-primary: var(--primary);
-  --color-sidebar-primary-foreground: var(--primary-foreground);
-  --color-sidebar-accent: var(--accent);
-  --color-sidebar-accent-foreground: var(--accent-foreground);
-  --color-sidebar-border: var(--border);
-  --color-sidebar-ring: var(--ring);
   --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 1px);
+  --radius-sm: calc(var(--radius) - 0.5px);
   --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
     "Microsoft YaHei", "Segoe UI", Helvetica, Arial, sans-serif;
   /* mono 栈必须以 ui-monospace 开头 + 带 CJK 回退(2026-08-28 审计 E1):
-     旧栈五款字体本机全未命中,且无中文回退——中文全部掉进浏览器默认衬线(宋体)。
-     ui-monospace 跟随系统等宽;装了 JetBrains Mono 的机器英文/数字仍优先;中文回退 PingFang/雅黑。 */
+     ui-monospace 跟随系统等宽;中文回退 PingFang/雅黑。只用于代码/ID/纯数字。 */
   --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", "Fira Code", Consolas, "PingFang SC", "Microsoft YaHei", monospace;
 }
 
