@@ -1,11 +1,10 @@
 import { useNavigate } from 'react-router';
 import {
-  FileText, Inbox, LayoutDashboard, LibraryBig, Plus, Settings, Target, Code2, Bot,
-  BookOpen,
+  FileText, LayoutDashboard, LibraryBig, Plus, Settings, Target, BookOpen,
 } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getStats } from '@/lib/schedule';
-import { getMyCategory, getPendingCount } from '@/lib/mylib';
+import { getPendingCount } from '@/lib/mylib';
 import { loadProgress } from '@/lib/storage';
 import {
   CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
@@ -26,7 +25,6 @@ export function CommandPalette({ open, onOpenChange }: {
 }) {
   const navigate = useNavigate();
   const { data } = useQuestions();
-  const myCategory = getMyCategory();
   const pendingCount = getPendingCount();
 
   const go = (to: string) => {
@@ -35,20 +33,12 @@ export function CommandPalette({ open, onOpenChange }: {
   };
 
   const navEntries: PaletteEntry[] = [
-    { label: '总览', icon: LayoutDashboard, to: '/', shortcut: '⌘1' },
-    ...(data?.categories ?? [])
-      .filter((c) => c.slug !== 'my')
-      .map((c, i) => ({
-        label: c.name,
-        icon: (c.slug === 'fe' ? Code2 : c.slug === 'agent' ? Bot : LibraryBig) as typeof LayoutDashboard,
-        to: `/${c.slug}`,
-        shortcut: `⌘${i + 2}`,
-      })),
-    { label: myCategory.name, icon: LibraryBig, to: '/my', shortcut: '⌘4' },
-    { label: 'JD 管理', icon: Target, to: '/profile', shortcut: '⌘5' },
-    { label: '简历管理', icon: FileText, to: '/profile?tab=resume', shortcut: '⌘6' },
-    { label: pendingCount > 0 ? `待审核(${pendingCount})` : '待审核', icon: Inbox, to: '/drafts', shortcut: '⌘7' },
-    { label: '设置', icon: Settings, to: '/settings', shortcut: '⌘8' },
+    { label: '今日', icon: LayoutDashboard, to: '/', shortcut: '⌘1' },
+    { label: '练习(全库混排)', icon: BookOpen, to: '/session', shortcut: '⌘2' },
+    { label: pendingCount > 0 ? `题库(${pendingCount} 题待审核)` : '题库', icon: LibraryBig, to: '/library', shortcut: '⌘3' },
+    { label: 'JD 管理', icon: Target, to: '/profile', shortcut: '⌘4' },
+    { label: '简历管理', icon: FileText, to: '/profile?tab=resume', shortcut: '⌘5' },
+    { label: '设置', icon: Settings, to: '/settings', shortcut: '⌘6' },
   ];
 
   // 高频动作:挑最近学过的分类作为复习/学习目标(与总览快捷行动同逻辑)
@@ -67,6 +57,24 @@ export function CommandPalette({ open, onOpenChange }: {
       <CommandInput placeholder="前往页面或执行动作…" />
       <CommandList>
         <CommandEmpty>没有匹配的条目</CommandEmpty>
+        <CommandGroup heading="动作">
+          {dueCat && (
+            <CommandItem onSelect={() => go('/session?focus=due')}>
+              <BookOpen className="text-muted-foreground" aria-hidden />
+              开始复习
+            </CommandItem>
+          )}
+          {newCat && (
+            <CommandItem onSelect={() => go('/session?focus=new')}>
+              <BookOpen className="text-muted-foreground" aria-hidden />
+              开始学习
+            </CommandItem>
+          )}
+          <CommandItem onSelect={() => go('/add')}>
+            <Plus className="text-muted-foreground" aria-hidden />
+            添加题目
+          </CommandItem>
+        </CommandGroup>
         <CommandGroup heading="前往">
           {navEntries.map((e) => (
             <CommandItem key={e.to + e.label} onSelect={() => go(e.to)}>
@@ -77,24 +85,6 @@ export function CommandPalette({ open, onOpenChange }: {
               )}
             </CommandItem>
           ))}
-        </CommandGroup>
-        <CommandGroup heading="动作">
-          {dueCat && (
-            <CommandItem onSelect={() => go(`/${dueCat.slug}/quiz?focus=due`)}>
-              <BookOpen className="text-muted-foreground" aria-hidden />
-              开始复习
-            </CommandItem>
-          )}
-          {newCat && (
-            <CommandItem onSelect={() => go(`/${newCat.slug}/quiz?focus=new`)}>
-              <BookOpen className="text-muted-foreground" aria-hidden />
-              开始学习
-            </CommandItem>
-          )}
-          <CommandItem onSelect={() => go('/add')}>
-            <Plus className="text-muted-foreground" aria-hidden />
-            添加题目
-          </CommandItem>
         </CommandGroup>
       </CommandList>
     </CommandDialog>

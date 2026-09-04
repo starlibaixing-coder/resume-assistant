@@ -106,9 +106,10 @@ test('AI 生成:生成 → 提交审核 → 通过 → 我的题库可见 → �
   await expect(myCard).toBeVisible();
   await expect(myCard.getByText('0/2')).toBeVisible();
 
-  // 6) 进我的题库:可开始刷题
+  // 6) 进我的题库(题库空间):2 题在列
   await myCard.click();
-  await expect(page.getByRole('heading', { name: '我的题库' })).toBeVisible();
+  await expect(page).toHaveURL(/library\?category=my/);
+  await expect(page.getByText('共 2 题')).toBeVisible();
 
   // 7) 我的题库题目列表:行尾 icon 编辑/删除直接可见;来源徽标可见(AI 生成)
   await page.goto('/#/my/browse');
@@ -169,17 +170,19 @@ test('JD 管理:新增 JD → 行内「按 JD 生成」弹窗 → 提交审核(�
   await expect(page.getByText('按 JD', { exact: true }).first()).toBeVisible();
 });
 
-test('题库分类页:复习/学习双入口 + 是哪些题深链', async ({ page }) => {
-  await page.goto('/#/agent');
-  // 两张数字卡:待复习 / 待学习;有待学习 → 开始学习按钮
-  await expect(page.getByText('题待复习')).toBeVisible();
-  await expect(page.getByText('题待学习')).toBeVisible();
-  await expect(page.getByRole('link', { name: /开始学习 \d+ 题/ })).toBeVisible();
-  // 新库无进度:待复习为 0 时不渲染「开始复习」(有到期题才出现——模式用户自选)
-  await expect(page.getByRole('link', { name: /开始复习/ })).toHaveCount(0);
-  await page.getByRole('link', { name: '是哪些题' }).first().click();
-  await expect(page).toHaveURL(/browse\?status=/);
-  await expect(page.getByRole('combobox', { name: '状态' })).not.toContainText('全部状态');
+test('今日页:计划条目 + 学习新题深链到混排会话', async ({ page }) => {
+  await page.goto('/#/');
+  await expect(page.getByRole('heading', { name: '今日' })).toBeVisible();
+  // 计划四行:复习 / 学习新题 / 审核 / 求职材料(描述含 SM-2 说明)
+  await expect(page.getByText('SM-2 到期')).toBeVisible();
+  const learnRow = page.getByRole('link', { name: /学习新题/ });
+  await expect(learnRow).toBeVisible();
+  await expect(page.getByRole('link', { name: /审核/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /求职材料/ })).toBeVisible();
+  // 学习新题行 → 全库混排会话(focus=new)
+  await learnRow.click();
+  await expect(page).toHaveURL(/session\?focus=new/);
+  await expect(page.locator('main span.font-mono').first()).toHaveText(/^1 \/ \d+$/);
 });
 
 test('官方题题目列表:添加到我的题库 → toast + 标识 + 副本进我的库(来源官方复制)', async ({ page }) => {

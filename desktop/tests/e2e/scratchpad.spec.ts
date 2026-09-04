@@ -130,7 +130,7 @@ test('添加题目页:手动保存 → 直接进我的题库(不经待审核),�
   await expect(page.getByText('我的题库还没有题')).toBeVisible();
 
   // 空态入口进「添加题目」页
-  await page.getByRole('link', { name: '添加题目' }).click();
+  await page.getByRole('link', { name: '添加题目' }).first().click();
   await expect(page.getByRole('heading', { name: '添加题目' })).toBeVisible();
   await page.getByLabel('新模块名').fill('面试手写');
   await fillQuestionForm(page, '手写一个防抖函数要注意什么?', '闭包与定时器清理', ANSWER_50);
@@ -149,31 +149,31 @@ test('侧栏「我的题库」落地页即有添加题目入口', async ({ page 
   await page.goto('/#/my');
   // 空库:分类页(侧栏落地页)直接给出入口,不用先找到题目列表
   await expect(page.getByText('我的题库还没有题')).toBeVisible();
-  await page.getByRole('link', { name: '添加题目' }).click();
+  await page.getByRole('link', { name: '添加题目' }).first().click();
   await page.getByLabel('新模块名').fill('面试手写');
   await fillQuestionForm(page, '落地页加的题?', '基础', ANSWER_50);
   await page.getByRole('button', { name: '保存题目', exact: true }).click();
   await expect(page.getByText('已保存到我的题库')).toBeVisible();
 
-  // 加完即入队:保存后自动落题目列表;分类页头部入口仍在(非空态)
-  await expect(page).toHaveURL(/my\/browse/);
+  // 加完即入队:保存后落题库空间;计数与入口可见
+  await expect(page).toHaveURL(/library\?category=my/);
   await page.goto('/#/my');
-  await expect(page.getByText(/已学 0 \/ 1/)).toBeVisible({ timeout: 5_000 });
-  await expect(page.getByRole('link', { name: '添加题目' })).toBeVisible();
+  await expect(page.getByText('共 1 题')).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByRole('link', { name: '添加题目' }).first()).toBeVisible();
 });
 
 test('添加题目可进既有模块;校验失败拦截保存', async ({ page }) => {
   await page.goto('/#/my');
-  await page.getByRole('link', { name: '添加题目' }).click();
+  await page.getByRole('link', { name: '添加题目' }).first().click();
   await page.getByLabel('新模块名').fill('面试手写');
   await fillQuestionForm(page, '第一题?', '基础', ANSWER_50);
   await page.getByRole('button', { name: '保存题目', exact: true }).click();
   await expect(page.getByText('已保存到我的题库')).toBeVisible();
   // 保存后自动落题目列表
-  await expect(page).toHaveURL(/my\/browse/);
+  await expect(page).toHaveURL(/library\?category=my/);
 
   // 第二题:再进 /add,模块下拉指到刚建的模块(01 · 面试手写),校验失败拦截
-  await page.getByRole('link', { name: '添加题目' }).click();
+  await page.getByRole('link', { name: '添加题目' }).first().click();
   await page.getByRole('combobox', { name: '归属模块' }).click();
   await page.getByRole('option', { name: /01 · 面试手写/ }).click();
   await fillQuestionForm(page, '第二题?', '基础', '太短');

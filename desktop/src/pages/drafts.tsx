@@ -15,11 +15,12 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 
-// 待审核 v2「纸面编辑部」(ADR-10 草稿区):批次小签 + 细线行目录,去卡片。
+// 待审核看板(ADR-10 草稿区;v4 收编进题库空间的「审核」模式,由 /library 渲染):
+// 批次小签 + 细线行目录;拒绝 = 永久删除,AlertDialog 确认。
 // AI 出的题先进 pending,在这里人工过目,通过(approved)才进「我的题库」;
 // 拒绝 = 永久删除,AlertDialog 确认。
 
-export function DraftsPage() {
+export function DraftsBoard() {
   const [version, setVersion] = useState(0);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   // 进行中的操作(按钮禁用防重入):'all:模块号' 或题 id
@@ -87,14 +88,6 @@ export function DraftsPage() {
       <PageHeader
         title="待审核"
         description={pending.length > 0 ? `${pending.length} 题待审核` : 'AI 生成的题先进这里,逐题把关'}
-        actions={
-          <Button size="sm" variant="outline" asChild>
-            <Link to="/add">
-              <Plus className="size-3.5" aria-hidden />
-              添加题目
-            </Link>
-          </Button>
-        }
       />
 
       {pending.length === 0 ? (
