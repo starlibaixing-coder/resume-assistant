@@ -15,9 +15,9 @@ import { SectionHead } from '@/components/section-head';
 import { ErrorState } from '@/components/error-state';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// 今日(v4「今日驱动」IA):产品主入口不再是分类,而是"今天的计划"——
-// 复习 → 新学 → 审核 → 材料,四条计划行 + 唯一主 CTA「开始练习」
-// (跨全库混排会话)。调度决策由应用做好;分类细节收进题库空间。
+// 今日(v4「今日驱动」IA + v10 交接式排程):调度决策由应用做好——
+// 第一件未完成的事放大为「现在」卡(唯一主 CTA),其余未完成项弱化为「接下来」,
+// 已完成项不再出现;全部完成给完成态。分类细节收进题库空间。
 
 interface CatEntry {
   slug: string;
@@ -34,36 +34,63 @@ function dateLabel(now: Date): string {
   return `${now.getMonth() + 1} 月 ${now.getDate()} 日 周${WEEKDAYS[now.getDay()]}`;
 }
 
-// 计划行:步骤序号 + 名称/说明 + 右侧数量;整行可点;零值灰显但仍可见
-function PlanRow({ index, title, description, count, countTone, to, right }: {
+interface PlanTask {
+  key: 'review' | 'learn' | 'audit' | 'job';
   index: string;
   title: string;
   description: string;
+  active: boolean;
   count: number | null;
   countTone?: 'warning' | 'primary';
   to: string;
+  cta?: string;
   right?: ReactNode;
-}) {
-  const zero = count === 0;
+}
+
+// 「现在」卡:当前任务的唯一主行动,数字是版面主角
+function CurrentTaskCard({ task }: { task: PlanTask }) {
   return (
-    <Link
-      to={to}
-      className={`group flex items-center gap-4 px-3 py-3 transition-colors hover:bg-accent/60 ${zero ? 'opacity-60' : ''}`}
-    >
-      <span className="w-6 flex-none text-center font-display text-sm tabular-nums text-primary" aria-hidden>
-        {index}
+    <div className="flex items-center gap-5 p-5">
+      <span className="w-8 flex-none text-center font-display text-3xl font-semibold tabular-nums text-primary" aria-hidden>
+        {task.index}
       </span>
       <div className="min-w-0 flex-1">
-        <div className={`text-sm font-semibold ${zero ? 'text-muted-foreground' : 'text-foreground'}`}>{title}</div>
-        <div className="mt-0.5 text-xs text-muted-foreground">{description}</div>
+        <div className="flex items-baseline gap-2">
+          <span className="text-[11px] font-semibold tracking-widest text-primary">现在</span>
+          <span className="text-xs text-muted-foreground/70">先做这件事</span>
+        </div>
+        <div className="mt-0.5 font-display text-xl font-semibold text-foreground">{task.title}</div>
+        <div className="mt-1 text-xs text-muted-foreground">{task.description}</div>
       </div>
-      {count != null && (
-        <span className={`font-display text-2xl font-semibold tabular-nums ${countTone === 'warning' && count > 0 ? 'text-warning' : countTone === 'primary' && count > 0 ? 'text-primary' : 'text-foreground/45'}`}>
-          {count}
+      {task.count != null && (
+        <span className={`font-display text-5xl font-semibold tabular-nums ${task.countTone === 'warning' ? 'text-warning' : task.countTone === 'primary' ? 'text-primary' : 'text-foreground'}`}>
+          {task.count}
         </span>
       )}
-      {right}
-      <ChevronRight className={`size-4 transition-transform group-hover:translate-x-0.5 ${zero ? 'text-muted-foreground/50' : 'text-primary'}`} aria-hidden />
+      {task.right}
+      <Button asChild className="shrink-0">
+        <Link to={task.to}>{task.cta}</Link>
+      </Button>
+    </div>
+  );
+}
+
+// 「接下来」行:弱化的后续任务,仍可单独进入
+function NextTaskRow({ task }: { task: PlanTask }) {
+  return (
+    <Link
+      to={task.to}
+      className="group flex items-center gap-4 px-5 py-2.5 transition-colors hover:bg-accent/60"
+    >
+      <span className="w-8 flex-none text-center font-display text-sm tabular-nums text-muted-foreground/70" aria-hidden>
+        {task.index}
+      </span>
+      <div className="min-w-0 flex-1 text-sm text-muted-foreground">
+        {task.title}
+        {task.count != null && <span className="ml-2 tabular-nums">{task.count}</span>}
+      </div>
+      {task.right}
+      <ChevronRight className="size-4 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5" aria-hidden />
     </Link>
   );
 }
@@ -73,7 +100,7 @@ function ActivityRow({ item }: { item: Activity }) {
   const cls = 'flex items-center gap-3 px-3 py-2 text-sm transition-colors hover:bg-accent/60';
   if (item.kind === 'study') {
     return (
-      <Link to={`/${item.categorySlug}`} className={cls}>
+      <Link to={`/library?category=${item.categorySlug}`} className={cls}>
         <span className="flex-1">学习了 <b className="font-semibold text-foreground">{item.categoryName}</b> {item.count} 道题{item.masteredCount > 0 && <span className="text-muted-foreground"> · 掌握 {item.masteredCount} 道</span>}</span>
         {time}
       </Link>
@@ -81,7 +108,7 @@ function ActivityRow({ item }: { item: Activity }) {
   }
   if (item.kind === 'generated') {
     return (
-      <Link to="/drafts" className={cls}>
+      <Link to="/library?tab=review" className={cls}>
         <span className="flex-1">生成了 <b className="font-semibold text-foreground">{item.moduleName}</b> {item.count} 道题,待审核</span>
         {time}
       </Link>
@@ -89,7 +116,7 @@ function ActivityRow({ item }: { item: Activity }) {
   }
   if (item.kind === 'approved') {
     return (
-      <Link to="/my" className={cls}>
+      <Link to="/library?category=my" className={cls}>
         <span className="flex-1">通过了生成的 <b className="font-semibold text-foreground">{item.moduleName}</b> {item.count} 道题,已入我的题库</span>
         {time}
       </Link>
@@ -172,6 +199,39 @@ export function TodayPage() {
     [data, myCategory, pendingCount, jds],
   );
 
+  // 交接式排程:复习 → 学习新题 → 审核 → 求职材料,第一个未完成项是「现在」
+  const jobMissing = !profile?.resume.trim() || jds.length === 0;
+  const tasks: PlanTask[] = [
+    {
+      key: 'review', index: '01', title: '复习', active: totalDue > 0,
+      description: '之前学过、今天到该再看一遍的题(SM-2 到期)',
+      count: totalDue, countTone: 'warning', to: '/session?focus=due', cta: '开始复习',
+    },
+    {
+      key: 'learn', index: '02', title: '学习新题', active: totalRemaining > 0,
+      description: '从没学过的题,按分类顺序补位',
+      count: totalRemaining, countTone: 'primary', to: '/session?focus=new', cta: '开始学习',
+    },
+    {
+      key: 'audit', index: '03', title: '审核', active: pendingCount > 0,
+      description: 'AI 生成的题,人工把关后才进练习队列',
+      count: pendingCount, countTone: 'warning', to: '/library?tab=review', cta: '去审核',
+    },
+    {
+      key: 'job', index: '04', title: '求职材料', active: jobMissing,
+      description: 'JD 与简历,按 JD 生成深挖题的前提',
+      count: null, to: '/profile', cta: jobMissing ? '去完善' : '查看',
+      right: (
+        <span className="hidden shrink-0 text-sm tabular-nums text-muted-foreground sm:inline">
+          JD {jds.length}{profile?.resume.trim() ? ` · 简历 ${profile.resume.trim().length} 字` : ' · 简历未填'}
+        </span>
+      ),
+    },
+  ];
+  const currentTask = tasks.find((t) => t.active) ?? null;
+  const nextTasks = tasks.filter((t) => t.active && t !== currentTask);
+  const allDone = !currentTask;
+
   if (!data && !error) {
     return (
       <div className="space-y-6">
@@ -196,61 +256,30 @@ export function TodayPage() {
         title="今日"
         description={`${dateLabel(now)} · ${learnedTotal > 0 ? `已累计学习 ${learnedTotal} 道题` : '还没有学习记录'}${studyStats.streak > 1 ? ` · 连续学习 ${studyStats.streak} 天` : ''}${studyStats.practicedToday > 0 ? ` · 今天已练 ${studyStats.practicedToday} 题` : ''}`}
         actions={
-          <>
-            <Button asChild>
-              <Link to="/session">开始练习</Link>
-            </Button>
-            <Button variant="secondary" asChild>
-              <Link to="/add">添加题目</Link>
-            </Button>
-          </>
+          <Button variant="secondary" asChild>
+            <Link to="/add">添加题目</Link>
+          </Button>
         }
       />
 
-      {/* 今天的计划:调度决策由应用做好,用户按序执行 */}
+      {/* 今天的计划:交接式——「现在」卡是唯一主行动,其余弱化;全部完成给完成态 */}
       <section>
-        <SectionHead title="计划" description="按序执行即可;每项也可单独进入。" />
-        <div className="stagger mt-2 rounded-lg bg-card divide-y divide-border">
-          <PlanRow
-            index="01"
-            title="复习"
-            description="之前学过、今天到该再看一遍的题(SM-2 到期)"
-            count={totalDue}
-            countTone="warning"
-            to="/session?focus=due"
-          />
-          <PlanRow
-            index="02"
-            title="学习新题"
-            description="从没学过的题,按分类顺序补位"
-            count={totalRemaining}
-            countTone="primary"
-            to="/session?focus=new"
-          />
-          <PlanRow
-            index="03"
-            title="审核"
-            description="AI 生成的题,人工把关后才进练习队列"
-            count={pendingCount}
-            countTone="warning"
-            to="/library?tab=review"
-          />
-          <PlanRow
-            index="04"
-            title="求职材料"
-            description="JD 与简历,按 JD 生成深挖题的前提"
-            count={null}
-            to="/profile"
-            right={
-              profile?.resume.trim() || jds.length > 0 ? (
-                <span className="text-sm font-medium tabular-nums text-foreground">
-                  JD {jds.length} · 简历 {profile?.resume.trim() ? `${profile.resume.trim().length} 字` : '未填'}
-                </span>
-              ) : (
-                <span className="text-sm font-medium text-primary">填写</span>
-              )
-            }
-          />
+        <SectionHead title="计划" description="应用已按序排好,从第一件事开始;其余项可单独进入。" />
+        <div className="mt-2 divide-y divide-border rounded-lg bg-card">
+          {allDone ? (
+            <div className="flex flex-col items-center gap-2 px-5 py-10 text-center">
+              <div className="font-display text-xl font-semibold text-foreground">今天的计划已全部完成</div>
+              <p className="text-sm text-muted-foreground">休息一下,或者把学过的题再过一遍。</p>
+              <Button variant="secondary" size="sm" asChild className="mt-1">
+                <Link to="/session?force=all">再过一遍(全部题)</Link>
+              </Button>
+            </div>
+          ) : (
+            <>
+              {currentTask && <CurrentTaskCard task={currentTask} />}
+              {nextTasks.map((t) => <NextTaskRow key={t.key} task={t} />)}
+            </>
+          )}
         </div>
       </section>
 
@@ -307,7 +336,7 @@ export function TodayPage() {
         {activity.length === 0 ? (
           <div className="mt-1 flex items-center gap-3 rounded-md bg-secondary/60 px-4 py-4 text-sm text-muted-foreground">
             <Inbox className="size-4 text-muted-foreground/50" aria-hidden />
-            还没有动态。点右上角「开始练习」学第一道题。
+            还没有动态。从上面的「计划」开始第一道题。
           </div>
         ) : (
           <div className="mt-2 rounded-lg bg-card divide-y divide-border">

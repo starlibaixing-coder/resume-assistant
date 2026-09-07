@@ -61,8 +61,8 @@ test('今日页:页头/计划/学习中/求职空态', async ({ page }) => {
   // 右侧栏:快捷入口——空库无待复习/待审核,不出现这两个按钮;添加题目恒在
   await expect(page.getByRole('link', { name: '开始复习' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: '添加题目' })).toBeVisible();
-  // 求职空态:一个动词
-  await expect(page.getByText('填写', { exact: true })).toBeVisible();
+  // 求职零成本项:作为「接下来」弱化行出现(v10 交接式计划;此库里「现在」=学习新题)
+  await expect(page.getByRole('link', { name: /求职材料/ })).toBeVisible();
   // 出题统一入口 /add:三页签,返回可回总览
   await page.getByRole('link', { name: '添加题目' }).click();
   await expect(page.getByRole('heading', { name: '添加题目' })).toBeVisible();

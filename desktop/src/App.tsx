@@ -20,7 +20,8 @@ import { AddQuestionPage } from '@/pages/add-question';
 
 function CategoryRedirect({ kind }: { kind: 'home' | 'quiz' | 'browse' }) {
   const { category } = useParams();
-  const to = kind === 'quiz' ? `/session?category=${category}` : `/library?category=${category}`;
+  const slug = encodeURIComponent(category ?? '');
+  const to = kind === 'quiz' ? `/session?category=${slug}` : `/library?category=${slug}`;
   return <Navigate to={to} replace />;
 }
 

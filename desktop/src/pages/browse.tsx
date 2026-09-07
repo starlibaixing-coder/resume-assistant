@@ -1,31 +1,36 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { BookmarkPlus, LibraryBig, Pencil, Plus, StickyNote, Trash2 } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getModuleStats, getQuestionStatus } from '@/lib/schedule';
-import { MY_CATEGORY_SLUG, getMyQuestion, getMyQuestions, copyOfficial, getCopiedSourceIds } from '@/lib/mylib';
+import { MY_CATEGORY_SLUG, getMyQuestion, getMyQuestions, copyOfficial, getCopiedSourceIds, updateQuestion } from '@/lib/mylib';
 import { loadNotes } from '@/lib/storage';
+import { usePageKeys } from '@/lib/use-page-keys';
 import type { Question, QuestionData, QuestionSource } from '@/types/question';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import {
-  ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
-} from '@/components/ui/context-menu';
-import { PageHeader } from '@/components/page-header';
 import { EmptyState } from '@/components/empty-state';
 import { ErrorState } from '@/components/error-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnswerPanel } from '@/components/answer-panel';
-import { QuestionEditDialog, DeleteQuestionDialog } from '@/components/question-edit-dialog';
+import { TwoPane } from '@/components/two-pane';
+import {
+  DeleteQuestionDialog,
+  QuestionFormFields,
+  formStateFromQuestion,
+  formToDraft,
+  type QuestionFormState,
+} from '@/components/question-edit-dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
-// 题目列表 v3「桌面工作台」:主从分栏——左侧细线行目录(单选),右侧详情面板
-// (题面 + 答案要点 + 追问 + 操作),选中即看、少跳页。行内 ghost icon 动作与
-// 右键菜单并存(桌面操作习惯)。官方题「添加到我的题库」= ADR-3 复制后改。
-// ?m= / ?status= 深链定初始筛选;我的题库为空给引导空态。
+// 题目列表(v10 交互重做「三栏工作台」):选行 → 右侧详情就地操作。
+//   一套语法:点击/↑↓ 选中行,详情栏看题面与答案;编辑=详情栏就地变表单;
+//   删除=AlertDialog(不可逆统一防线);练习此题=带 ?qid= 深链进会话。
+//   此前行内 ghost icon + 右键菜单 + 键盘字母三套动作并行,收敛为「选中 + 详情动作」一套。
+// ?m= / ?status= / ?qid= 深链;官方题「添加到我的题库」= ADR-3 复制后改。
 
 type DiffFilter = 'all' | '初' | '中' | '高';
 type StatusFilter = 'all' | 'unseen' | 'due' | 'mastered';
@@ -81,7 +86,7 @@ function FilterSelect({
   );
 }
 
-// 芯片筛选:可切换小圆片,替代下拉(交互重做:一次点击直达、状态一目了然)
+// 芯片筛选:可切换小圆片,一次点击直达、状态一目了然
 function ChipGroup({
   label,
   value,
@@ -117,8 +122,60 @@ function ChipGroup({
   );
 }
 
+// 详情栏就地编辑(替代编辑弹窗):保存走共享校验,取消即回详情
+function QuestionInlineEdit({ questionId, onSaved, onCancel }: {
+  questionId: string;
+  onSaved: () => void;
+  onCancel: () => void;
+}) {
+  const question = getMyQuestion(questionId);
+  const [form, setForm] = useState<QuestionFormState>(() =>
+    question ? formStateFromQuestion(question) : { title: '', focus: '', difficulty: '中', tags: '', answer: '', followups: '' },
+  );
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  if (!question) return null;
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      await updateQuestion(question.id, formToDraft(form));
+      toast.success('修改已保存');
+      onSaved();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="rounded-md bg-card p-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-foreground">编辑我的题</h2>
+        <span className="font-mono text-[11px] text-muted-foreground">{question.id}</span>
+      </div>
+      <div className="mt-3">
+        <QuestionFormFields value={form} onChange={(patch) => setForm((f) => ({ ...f, ...patch }))} />
+      </div>
+      {error && (
+        <Alert variant="destructive" className="mt-3">
+          <AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription>
+        </Alert>
+      )}
+      <div className="mt-4 flex justify-end gap-2">
+        <Button variant="secondary" size="sm" onClick={onCancel}>取消</Button>
+        <Button size="sm" onClick={handleSave} disabled={saving}>{saving ? '保存中…' : '保存修改'}</Button>
+      </div>
+    </div>
+  );
+}
+
 export function BrowsePage({ category }: { category: string }) {
   const { data, error, retry } = useQuestions();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [moduleFilter, setModuleFilter] = useState<string>(() => searchParams.get('m') ?? 'all');
   const [diffFilter, setDiffFilter] = useState<DiffFilter>('all');
@@ -130,6 +187,8 @@ export function BrowsePage({ category }: { category: string }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copyingId, setCopyingId] = useState<string | null>(null);
+  // <lg 详情覆盖层:行点击展开(桌面端常驻详情栏,不受影响)
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   // v5 深化:关键词筛选(题干/考察点)+ 来源筛选(我的库)+ 笔记资产化(行标/详情预览)
   const [textFilter, setTextFilter] = useState('');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
@@ -151,6 +210,8 @@ export function BrowsePage({ category }: { category: string }) {
     setSelectedId(null);
     setTextFilter('');
     setSourceFilter('all');
+    setEditingId(null);
+    setMobileDetailOpen(false);
   }, [category]);
 
   // 笔记资产化:整表读一次,行标 + 详情预览共用
@@ -161,56 +222,12 @@ export function BrowsePage({ category }: { category: string }) {
   };
   const hasNoteOf = (id: string): boolean => noteTextOf(id).length > 0;
 
-  // 键盘导航(v9 交互重做):↑↓ 移动选中行,E 编辑 / D 删除 / C 复制(官方题)
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
-      const el = document.activeElement as HTMLElement | null;
-      if (el?.closest('input, textarea, select, [contenteditable="true"], .cm-editor, .ProseMirror')) return;
-      if (document.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]')) return;
-      if (listQuestions.length === 0) return;
-      const idx = listQuestions.findIndex((x) => x.id === effectiveSelectedId);
-      const move = (d: number) => {
-        e.preventDefault();
-        const next = listQuestions[Math.min(Math.max(idx + d, 0), listQuestions.length - 1)];
-        setSelectedId(next.id);
-      };
-      if (e.key === 'ArrowDown') return move(1);
-      if (e.key === 'ArrowUp') return move(-1);
-      if (!effectiveSelectedId) return;
-      if ((e.key === 'e' || e.key === 'E') && isMy) {
-        e.preventDefault();
-        setEditingId(effectiveSelectedId);
-      } else if ((e.key === 'd' || e.key === 'D') && isMy) {
-        e.preventDefault();
-        setDeletingId(effectiveSelectedId);
-      } else if ((e.key === 'c' || e.key === 'C') && !isMy) {
-        const target = listQuestions.find((x) => x.id === effectiveSelectedId);
-        if (target && !copiedSourceIds.has(target.id)) void handleAddToMy(target);
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  });
-
-  // ⌘K 题目搜索深链:?qid= 直接选中该题
-  const qidParam = searchParams.get('qid');
-  useEffect(() => {
-    if (qidParam) setSelectedId(qidParam);
-  }, [qidParam]);
-
   if (error) {
-    return (
-      <div className="space-y-6">
-        <PageHeader title="题目列表" />
-        <ErrorState message={error} onRetry={retry} />
-      </div>
-    );
+    return <ErrorState message={error} onRetry={retry} />;
   }
   if (!data) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-7 w-56" />
+      <div className="space-y-4">
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-96 w-full" />
       </div>
@@ -218,22 +235,19 @@ export function BrowsePage({ category }: { category: string }) {
   }
   if (!cat) {
     return (
-      <div className="space-y-6">
-        <PageHeader title="我的题库 · 题目列表" />
-        <EmptyState
-          icon={LibraryBig}
-          title="我的题库还没有题"
-          description="手动写一道,或让 AI 生成(先进待审核,通过后出现在这里)。"
-          action={
-            <Button size="sm" asChild>
-              <Link to="/add">
-                <Plus className="size-3.5" aria-hidden />
-                添加题目
-              </Link>
-            </Button>
-          }
-        />
-      </div>
+      <EmptyState
+        icon={LibraryBig}
+        title="我的题库还没有题"
+        description="手动写一道,或让 AI 生成(先进待审核,通过后出现在这里)。"
+        action={
+          <Button size="sm" asChild>
+            <Link to="/add">
+              <Plus className="size-3.5" aria-hidden />
+              添加题目
+            </Link>
+          </Button>
+        }
+      />
     );
   }
 
@@ -294,31 +308,131 @@ export function BrowsePage({ category }: { category: string }) {
     }
   };
 
+  const selectRow = (id: string) => {
+    setSelectedId(id);
+    setEditingId(null);
+    setMobileDetailOpen(true);
+  };
+
+  // 键盘导航(v10 经 usePageKeys:守卫集中、监听稳定):↑↓ 选择,Enter 练习,
+  // E 编辑 / D 删除(我的库)/ C 复制(官方题)
+  const keyboardList = listQuestions;
+  usePageKeys((e) => {
+    if (keyboardList.length === 0) return;
+    const idx = keyboardList.findIndex((x) => x.id === effectiveSelectedId);
+    const move = (d: number) => {
+      e.preventDefault();
+      const next = keyboardList[Math.min(Math.max(idx + d, 0), keyboardList.length - 1)];
+      setSelectedId(next.id);
+    };
+    if (e.key === 'ArrowDown') return move(1);
+    if (e.key === 'ArrowUp') return move(-1);
+    if (!effectiveSelectedId) return;
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      navigate(`/session?category=${category}&qid=${encodeURIComponent(effectiveSelectedId)}`);
+    } else if ((e.key === 'e' || e.key === 'E') && isMy) {
+      e.preventDefault();
+      setEditingId(effectiveSelectedId);
+    } else if ((e.key === 'd' || e.key === 'D') && isMy) {
+      e.preventDefault();
+      setDeletingId(effectiveSelectedId);
+    } else if ((e.key === 'c' || e.key === 'C') && !isMy) {
+      const target = keyboardList.find((x) => x.id === effectiveSelectedId);
+      if (target && !copiedSourceIds.has(target.id)) void handleAddToMy(target);
+    }
+  });
+
+  // ⌘K 题目搜索深链:?qid= 直接选中该题
+  const qidParam = searchParams.get('qid');
+  useEffect(() => {
+    if (qidParam) setSelectedId(qidParam);
+  }, [qidParam]);
+
   const source = selected && isMy ? sourceOf(selected.id) : null;
   const selectedCopied = selected != null && !isMy && copiedSourceIds.has(selected.id);
+  const isEditing = editingId != null;
+
+  // 详情内容(桌面详情栏与 <lg 覆盖层共用)
+  const detailContent = isEditing && editingId ? (
+    <QuestionInlineEdit
+      questionId={editingId}
+      onSaved={() => setEditingId(null)}
+      onCancel={() => setEditingId(null)}
+    />
+  ) : selected ? (
+    <div className="rounded-md bg-card">
+      <div className="flex items-start justify-between gap-2 px-4 pt-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="font-mono text-[11px] text-muted-foreground">{selected.id}</span>
+            {source && (
+              <span className="rounded-sm bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                {SOURCE_LABELS[source]}
+              </span>
+            )}
+            <Badge variant="secondary">{selected.difficulty}</Badge>
+          </div>
+          <h2 className="mt-1.5 text-sm font-semibold leading-snug text-foreground">{selected.title}</h2>
+          <p className="mt-1 text-xs text-muted-foreground">{selected.focus}</p>
+        </div>
+      </div>
+
+      {/* 就地操作:详情栏即动作位(练习此题 = 深链单题会话) */}
+      <div className="flex flex-wrap items-center gap-2 px-4 pt-3">
+        <Button
+          size="sm"
+          onClick={() => navigate(`/session?category=${category}&qid=${encodeURIComponent(selected.id)}`)}
+        >
+          练习此题
+        </Button>
+        {isMy ? (
+          <>
+            <Button size="sm" variant="secondary" onClick={() => setEditingId(selected.id)}>
+              <Pencil className="size-3.5" aria-hidden />
+              编辑
+            </Button>
+            <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => setDeletingId(selected.id)}>
+              <Trash2 className="size-3.5" aria-hidden />
+              删除
+            </Button>
+          </>
+        ) : (
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={selectedCopied || copyingId === selected.id}
+            onClick={() => void handleAddToMy(selected)}
+          >
+            <BookmarkPlus className="size-3.5" aria-hidden />
+            {selectedCopied ? '已在我的库' : '添加到我的题库'}
+          </Button>
+        )}
+      </div>
+
+      {hasNoteOf(selected.id) && (
+        <div className="mt-3 bg-primary/5 px-4 py-2.5">
+          <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <StickyNote className="size-3.5 text-primary/70" aria-hidden />
+            我的笔记
+          </div>
+          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+            {noteTextOf(selected.id)}
+          </p>
+        </div>
+      )}
+      <div className="px-4 pb-4 pt-3">
+        <AnswerPanel answer={selected.answer} followups={selected.followups} />
+      </div>
+    </div>
+  ) : (
+    <div className="rounded-md bg-secondary/60 px-4 py-10 text-center text-sm text-muted-foreground">
+      选中左侧一行,在这里看题面与答案
+    </div>
+  );
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title={`${cat.name} · 题目列表`}
-        description={
-          <>
-            管理与查阅:选中行在右侧看题面与答案;学习、评分、写笔记去
-            <Link to={`/${category}/quiz`} className="mx-0.5 text-primary hover:opacity-80">学习页</Link>。
-          </>
-        }
-        actions={
-          isMy ? (
-            <Button size="sm" variant="secondary" asChild>
-              <Link to="/add">
-                <Plus className="size-3.5" aria-hidden />
-                添加题目
-              </Link>
-            </Button>
-          ) : undefined
-        }
-      />
-
       {/* 筛选行:模块下拉 + 难度/状态/来源芯片 + 关键词 */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
         <FilterSelect label="模块" value={effectiveModule} onChange={setModuleFilter} options={moduleOptions} />
@@ -373,231 +487,71 @@ export function BrowsePage({ category }: { category: string }) {
         </div>
       )}
 
-      {/* 主从分栏:左列表(单选)+ 右详情 */}
-      <div className="flex items-start gap-5">
-        <div data-browse-list className="min-w-0 flex-1 rounded-md bg-card">
-          {listQuestions.length === 0 ? (
-            <div className="flex items-center justify-center gap-3 p-6 text-sm text-muted-foreground">
-              没有符合筛选的题
-              {hasFilter && (
-                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={handleReset}>
-                  清除筛选
-                </Button>
-              )}
-            </div>
-          ) : (
-            listQuestions.map((q, i) => {
-              const modName = modules.find((m) => m.id === q.module)?.name ?? String(q.module);
-              const copied = !isMy && copiedSourceIds.has(q.id);
-              const rowSource = isMy ? sourceOf(q.id) : null;
-              const isSelected = q.id === effectiveSelectedId;
-              const row = (
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setSelectedId(q.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setSelectedId(q.id);
-                    }
-                  }}
-                  className={`flex cursor-pointer items-center gap-2.5 border-b px-3 py-2 text-left transition-colors last:border-b-0 ${
-                    isSelected ? 'bg-accent/70' : 'hover:bg-accent/60'
-                  }`}
-                >
-                  <span className="w-6 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">{i + 1}</span>
-                  <span className="max-w-28 truncate shrink-0 rounded-sm bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-                    {modName}
-                  </span>
-                  {rowSource && (
-                    <span
-                      title={`来源:${SOURCE_LABELS[rowSource]}`}
-                      className="shrink-0 rounded-sm bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground"
-                    >
-                      {SOURCE_LABELS[rowSource]}
-                    </span>
-                  )}
-                  <span className="flex-1 truncate text-sm text-foreground">{q.title}</span>
-                  {hasNoteOf(q.id) && (
-                    <StickyNote className="size-3 shrink-0 text-primary/70" aria-label="有笔记" />
-                  )}
-                  <Badge variant="secondary" className="shrink-0">{q.difficulty}</Badge>
-                  {isMy ? (
-                    <span className="flex shrink-0 items-center">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7 shrink-0 text-muted-foreground"
-                            aria-label="编辑"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingId(q.id);
-                            }}
-                          >
-                            <Pencil />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>编辑</TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                            aria-label="删除"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeletingId(q.id);
-                            }}
-                          >
-                            <Trash2 />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>删除</TooltipContent>
-                      </Tooltip>
-                    </span>
-                  ) : (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="inline-flex shrink-0">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7 shrink-0 text-muted-foreground"
-                            aria-label={copied ? '已在我的库' : '添加到我的题库'}
-                            disabled={copied || copyingId === q.id}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              void handleAddToMy(q);
-                            }}
-                          >
-                            <BookmarkPlus />
-                          </Button>
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>{copied ? '已在我的库' : '添加到我的题库'}</TooltipContent>
-                    </Tooltip>
-                  )}
-                </div>
-              );
-              return (
-                // content-visibility:屏外行跳过渲染(282 题全量 DOM 保留)
-                <ContextMenu key={q.id}>
-                  <ContextMenuTrigger asChild>
-                    <div className="[contain-intrinsic-size:auto_45px] [content-visibility:auto]">
-                      {row}
-                    </div>
-                  </ContextMenuTrigger>
-                  <ContextMenuContent>
-                    {isMy ? (
-                      <>
-                        <ContextMenuItem onSelect={() => setEditingId(q.id)}>编辑…</ContextMenuItem>
-                        <ContextMenuSeparator />
-                        <ContextMenuItem className="text-destructive focus:text-destructive" onSelect={() => setDeletingId(q.id)}>
-                          删除…
-                        </ContextMenuItem>
-                      </>
-                    ) : (
-                      <ContextMenuItem disabled={copied || copyingId === q.id} onSelect={() => void handleAddToMy(q)}>
-                        {copied ? '已在我的库' : '添加到我的题库'}
-                      </ContextMenuItem>
-                    )}
-                  </ContextMenuContent>
-                </ContextMenu>
-              );
-            })
-          )}
-        </div>
-
-        {/* 详情面板:选中行即看,少跳页 */}
-        <div className="sticky top-0 hidden max-h-[calc(100vh-2rem)] w-[22rem] shrink-0 overflow-y-auto lg:block">
-          {selected ? (
-            <div className="rounded-md bg-card">
-              <div className="flex items-start justify-between gap-2 border-b border-border px-4 py-3">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="font-mono text-[11px] text-muted-foreground">{selected.id}</span>
-                    {source && (
-                      <span className="rounded-sm bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                        {SOURCE_LABELS[source]}
-                      </span>
-                    )}
-                    <Badge variant="secondary">{selected.difficulty}</Badge>
-                  </div>
-                  <h2 className="mt-1.5 text-sm font-semibold leading-snug text-foreground">{selected.title}</h2>
-                  <p className="mt-1 text-xs text-muted-foreground">{selected.focus}</p>
-                </div>
-                {isMy ? (
-                  <span className="flex shrink-0 items-center gap-0.5">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground" aria-label="编辑" onClick={() => setEditingId(selected.id)}>
-                          <Pencil />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>编辑</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive" aria-label="删除" onClick={() => setDeletingId(selected.id)}>
-                          <Trash2 />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>删除</TooltipContent>
-                    </Tooltip>
-                  </span>
-                ) : (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex shrink-0">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7 shrink-0 text-muted-foreground"
-                          aria-label={selectedCopied ? '已在我的库' : '添加到我的题库'}
-                          disabled={selectedCopied || copyingId === selected.id}
-                          onClick={() => void handleAddToMy(selected)}
-                        >
-                          <BookmarkPlus />
-                        </Button>
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>{selectedCopied ? '已在我的库' : '添加到我的题库'}</TooltipContent>
-                  </Tooltip>
+      {/* 双栏工作台:左列表(单选)+ 右详情(就地操作) */}
+      <TwoPane
+        listTestId="browse-list"
+        mobileOpen={mobileDetailOpen && !!selected}
+        onCloseMobile={() => setMobileDetailOpen(false)}
+        list={
+          <div className="rounded-md bg-card">
+            {listQuestions.length === 0 ? (
+              <div className="flex items-center justify-center gap-3 p-6 text-sm text-muted-foreground">
+                没有符合筛选的题
+                {hasFilter && (
+                  <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={handleReset}>
+                    清除筛选
+                  </Button>
                 )}
               </div>
-              {hasNoteOf(selected.id) && (
-                <div className="border-b border-border bg-primary/5 px-4 py-2.5">
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                    <StickyNote className="size-3.5 text-primary/70" aria-hidden />
-                    我的笔记
+            ) : (
+              listQuestions.map((q, i) => {
+                const modName = modules.find((m) => m.id === q.module)?.name ?? String(q.module);
+                const rowSource = isMy ? sourceOf(q.id) : null;
+                const isSelected = q.id === effectiveSelectedId;
+                return (
+                  <div
+                    key={q.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isSelected}
+                    onClick={() => selectRow(q.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        selectRow(q.id);
+                      }
+                    }}
+                    className={`flex cursor-pointer items-center gap-2.5 border-b px-3 py-2 text-left transition-colors last:border-b-0 ${
+                      isSelected ? 'bg-accent/70' : 'hover:bg-accent/60'
+                    }`}
+                  >
+                    <span className="w-6 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">{i + 1}</span>
+                    <span className="max-w-28 truncate shrink-0 rounded-sm bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                      {modName}
+                    </span>
+                    {rowSource && (
+                      <span
+                        title={`来源:${SOURCE_LABELS[rowSource]}`}
+                        className="shrink-0 rounded-sm bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                      >
+                        {SOURCE_LABELS[rowSource]}
+                      </span>
+                    )}
+                    <span className="flex-1 truncate text-sm text-foreground">{q.title}</span>
+                    {hasNoteOf(q.id) && (
+                      <StickyNote className="size-3 shrink-0 text-primary/70" aria-label="有笔记" />
+                    )}
+                    <Badge variant="secondary" className="shrink-0">{q.difficulty}</Badge>
                   </div>
-                  <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-                    {noteTextOf(selected.id)}
-                  </p>
-                </div>
-              )}
-              <div className="px-4 py-3">
-                <AnswerPanel answer={selected.answer} followups={selected.followups} />
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-md bg-secondary/60 px-4 py-10 text-center text-sm text-muted-foreground">
-              选中左侧一行,在这里看题面与答案
-            </div>
-          )}
-        </div>
-      </div>
-
-      <QuestionEditDialog
-        question={editingId ? getMyQuestion(editingId) : null}
-        open={!!editingId}
-        onOpenChange={(o) => !o && setEditingId(null)}
+                );
+              })
+            )}
+          </div>
+        }
+        detail={detailContent}
       />
+
+      {/* 删除确认:级联清该题进度/笔记/代码草稿;不可逆统一 AlertDialog */}
       <DeleteQuestionDialog
         question={deletingId ? getMyQuestion(deletingId) : null}
         open={!!deletingId}

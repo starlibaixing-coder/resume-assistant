@@ -131,8 +131,8 @@ test('待审核:逐题拒绝不进我的题库', async ({ page }) => {
   await page.getByRole('button', { name: /提交审核/ }).click();
   await expect(page.getByText(/2 题待审/)).toBeVisible();
 
-  // 行内直接拒绝(拒绝 = 删除,需确认)
-  await page.getByRole('button', { name: '拒绝:useEffect 的清理函数在哪些时机执行?' }).click();
+  // 详情栏就地拒绝(v10:第一题默认选中;拒绝 = 删除,需确认)
+  await page.getByRole('button', { name: '拒绝', exact: true }).click();
   await expect(page.getByText('拒绝这道题?')).toBeVisible();
   await page.getByRole('button', { name: '确认拒绝' }).click();
   await expect(page.getByText(/1 题待审/)).toBeVisible({ timeout: 10_000 });
@@ -173,36 +173,31 @@ test('JD 管理:内联新增 JD → 行内「按 JD 生成」→ 提交审核(�
   await expect(page.getByText('按 JD', { exact: true }).first()).toBeVisible();
 });
 
-test('今日页:计划条目 + 学习新题深链到混排会话', async ({ page }) => {
+test('今日页:交接式计划(现在卡)+ 学习新题深链到混排会话', async ({ page }) => {
   await page.goto('/#/');
   await expect(page.getByRole('heading', { name: '今日' })).toBeVisible();
-  // 计划四行:复习 / 学习新题 / 审核 / 求职材料(描述含 SM-2 说明)
-  await expect(page.getByText('SM-2 到期')).toBeVisible();
-  const learnRow = page.getByRole('link', { name: /学习新题/ });
-  await expect(learnRow).toBeVisible();
-  await expect(page.getByRole('link', { name: /审核/ })).toBeVisible();
+  // 官方库已播种、零进度:第一件事 = 学习新题,「现在」卡是唯一主行动;
+  // 审核零值不出现(交接式只显示未完成项)
+  await expect(page.getByText('现在', { exact: true })).toBeVisible();
+  const learnCta = page.getByRole('link', { name: '开始学习' });
+  await expect(learnCta).toBeVisible();
   await expect(page.getByRole('link', { name: /求职材料/ })).toBeVisible();
-  // 学习新题行 → 全库混排会话(focus=new)
-  await learnRow.click();
+  await expect(page.getByRole('link', { name: '去审核' })).toHaveCount(0);
+  // 「现在」卡 CTA → 全库混排会话(focus=new)
+  await learnCta.click();
   await expect(page).toHaveURL(/session\?focus=new/);
   await expect(page.locator('main span.font-display').first()).toHaveText(/^1 \/ \d+$/);
 });
 
-test('官方题题目列表:添加到我的题库 → toast + 标识 + 副本进我的库(来源官方复制)', async ({ page }) => {
+test('官方题题目列表:详情栏添加到我的题库 → toast + 置灰 + 副本进我的库(来源官方复制)', async ({ page }) => {
   await page.goto('/#/agent/browse');
-  const firstRow = page.locator('main [data-browse-list] > div > div.border-b').first();
-  const addBtn = firstRow.getByRole('button', { name: '添加到我的题库' });
-
-  await addBtn.hover();
-  await expect(page.getByText('添加到我的题库')).toBeVisible();
+  // v10:第一行默认选中,「添加到我的题库」在右侧详情栏就地完成
+  const addBtn = page.getByRole('button', { name: '添加到我的题库' });
+  await expect(addBtn).toBeVisible();
   await addBtn.click();
 
   await expect(page.getByText('已添加到我的题库')).toBeVisible();
-  const addedBtn = firstRow.getByRole('button', { name: '已在我的库' });
-  await expect(addedBtn).toBeDisabled();
-  await page.mouse.move(5, 5);
-  await addedBtn.locator('..').hover();
-  await expect(page.getByText('已在我的库')).toBeVisible();
+  await expect(page.getByRole('button', { name: '已在我的库' })).toBeDisabled();
 
   // 副本落我的库模块 0(官方题副本),来源徽标 = 官方复制
   await page.goto('/#/my/browse');
@@ -234,9 +229,9 @@ test('设置页:同步官方题库 → 远端新增题落地', async ({ page }) 
 test('设置页渲染:预设与 key 表单', async ({ page }) => {
   await page.goto('/#/settings');
   await expect(page.getByRole('heading', { name: '设置' })).toBeVisible();
-  // 五分区:刷题(题量)/外观/LLM/数据管理/关于
-  await expect(page.getByText('每次学习题量')).toBeVisible();
-  await expect(page.getByText('外观')).toBeVisible();
+  // 五分区:学习(题量)/外观/LLM/数据管理/关于;v10:多选一统一 RadioGroup
+  await expect(page.getByRole('radiogroup', { name: '每次学习题量' })).toBeVisible();
+  await expect(page.getByRole('radiogroup', { name: '外观主题' })).toBeVisible();
   await expect(page.getByText('AI 生成(LLM)')).toBeVisible();
   await expect(page.getByText('数据管理')).toBeVisible();
   await expect(page.getByText('关于')).toBeVisible();

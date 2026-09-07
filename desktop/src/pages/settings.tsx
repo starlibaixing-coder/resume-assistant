@@ -12,6 +12,7 @@ import { chat } from '@/lib/provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { PageHeader } from '@/components/page-header';
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
@@ -19,8 +20,9 @@ import {
 } from '@/components/ui/alert-dialog';
 
 // 设置页五分区:学习(全局偏好)→ 外观 → AI 生成(LLM)→ 数据管理 → 关于。
-// 2026-09-04 UI 重构:LLM 表单 dirty 跟踪(无改动时「保存 LLM 配置」禁用,
-// 诊断 #6);清空确认迁 AlertDialog;测试连接结果去 mono 字体走语义色状态行。
+// 2026-09-04 UI 重构:LLM 表单 dirty 跟踪;清空确认迁 AlertDialog。
+// v10:多选一控件统一 RadioGroup(每次学习题量 / 外观主题此前是按钮组,
+// 与全站「多选一 = RadioGroup」规范相悖)。
 
 const THEME_OPTIONS: Array<{ value: Theme; label: string; icon: LucideIcon }> = [
   { value: 'light', label: '浅色', icon: Sun },
@@ -151,23 +153,25 @@ export function SettingsPage() {
       <section className="border-t border-border pt-6">
         <h2 className="text-sm font-semibold tracking-wide">学习</h2>
         <div className="mt-4 space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-muted-foreground">每次学习题量</span>
+          <RadioGroup
+            value={String(limit)}
+            onValueChange={(v) => {
+              const opt = Number(v);
+              setLimit(opt);
+              saveLimit(opt);
+            }}
+            aria-label="每次学习题量"
+            className="flex flex-wrap gap-x-5 gap-y-2"
+          >
             {LIMIT_OPTIONS.map((opt) => (
-              <Button
-                key={opt}
-                size="sm"
-                variant={limit === opt ? 'default' : 'outline'}
-                className="font-mono"
-                onClick={() => {
-                  setLimit(opt);
-                  saveLimit(opt);
-                }}
-              >
-                {opt === 0 ? '全部' : opt}
-              </Button>
+              <div key={opt} className="flex items-center gap-1.5">
+                <RadioGroupItem value={String(opt)} id={`limit-${opt}`} />
+                <Label htmlFor={`limit-${opt}`} className="cursor-pointer font-mono text-xs font-normal text-muted-foreground">
+                  {opt === 0 ? '全部' : opt}
+                </Label>
+              </div>
             ))}
-          </div>
+          </RadioGroup>
           <p className="text-xs text-muted-foreground">进入学习队列即按此数量取题;先取待复习,再取待学习。</p>
         </div>
       </section>
@@ -175,20 +179,18 @@ export function SettingsPage() {
       {/* ── 外观 ────────────────────────────────────── */}
       <section className="border-t border-border pt-6">
         <h2 className="text-sm font-semibold tracking-wide">外观</h2>
-        <div className="mt-4 space-y-3">
-          <div className="flex flex-wrap gap-2">
+        <div className="mt-4">
+          <RadioGroup value={theme} onValueChange={(v) => setTheme(v as Theme)} aria-label="外观主题" className="flex flex-wrap gap-x-5 gap-y-2">
             {THEME_OPTIONS.map((o) => (
-              <Button
-                key={o.value}
-                size="sm"
-                variant={theme === o.value ? 'default' : 'outline'}
-                onClick={() => setTheme(o.value)}
-              >
-                <o.icon className="mr-1.5 h-3.5 w-3.5" />
-                {o.label}
-              </Button>
+              <div key={o.value} className="flex items-center gap-1.5">
+                <RadioGroupItem value={o.value} id={`theme-${o.value}`} />
+                <Label htmlFor={`theme-${o.value}`} className="cursor-pointer text-xs font-normal text-muted-foreground">
+                  <o.icon className="mr-1 inline h-3.5 w-3.5" aria-hidden />
+                  {o.label}
+                </Label>
+              </div>
             ))}
-          </div>
+          </RadioGroup>
         </div>
       </section>
 

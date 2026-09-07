@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { Inbox, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { getProfile, saveProfile, type JobProfile } from '@/lib/profile';
@@ -11,68 +11,47 @@ import {
   subscribeJds,
   type Jd,
 } from '@/lib/jd';
+import { addNavBlocker } from '@/lib/nav-guard';
+import { usePageKeys } from '@/lib/use-page-keys';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { PageHeader } from '@/components/page-header';
 import { EmptyState } from '@/components/empty-state';
+import { TwoPane } from '@/components/two-pane';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
 } from '@/components/ui/alert-dialog';
-import {
-  ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
-} from '@/components/ui/context-menu';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,
-} from '@/components/ui/dialog';
 
-// 求职中枢(v7 重设计):
-//   JD 管理 = 双列卡片栅格,每张卡即一个目标岗位——题干信息一眼可读,
-//   「按 JD 生成题目」是卡片主按钮,编辑/删除收进图标位与右键菜单。
-//   简历管理 = 编辑器版式:标题栏(字数/保存)+ 大输入区 + 用途提示。
-// 简历 dirty 时拦截站内离开(tab 切换/侧栏导航),确认后放行;beforeunload 兜底。
-// 「按 JD 生成题目」深链 /add?jd=<id>,添加题目页自动定位到该模式。
-
+// 求职中枢(v10 交互重做):
+//   JD 管理 = 「选行 → 详情就地操作」工作台(与题库/审核同一套语法):
+//     左列 JD 行目录,右侧详情看全文;编辑 = 详情就地变表单(不再弹窗);
+//     「按 JD 生成题目」是详情主按钮(深链 /add?jd=);删除 AlertDialog。
+//     新增 JD 仍是列表顶部内联创建卡(v9);修 bug:关闭编辑弹层不再连带清空内联创建卡。
+//   简历管理 = 编辑器版式不变;dirty 上报全局导航守卫(⌘K / Cmd+数字 / 历史键也会拦截,
+//     此前只拦 <a> 点击,键盘路径静默丢改动)。
 const charCount = (s: string) => (s ? `${s.length} 字` : '未填');
 
 export function ProfilePage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const location = useLocation();
   const tab = searchParams.get('tab') === 'resume' ? 'resume' : 'jds';
-  // 简历 dirty 由 ResumeCard 上报;dirty 时拦截一切站内离开(tab 切换/侧栏/页内链接)
+  // 简历 dirty 由 ResumeCard 上报;同时注册全局导航守卫拦键盘路径
   const [resumeDirty, setResumeDirty] = useState(false);
   const [leaveTo, setLeaveTo] = useState<string | null>(null);
+  const dirtyRef = useRef(false);
+  dirtyRef.current = resumeDirty;
 
   useEffect(() => {
-    if (!resumeDirty) return;
-    const onClick = (e: MouseEvent) => {
-      const a = (e.target as HTMLElement | null)?.closest('a');
-      if (!a) return;
-      const href = a.getAttribute('href') ?? '';
-      if (!href.startsWith('#/') && !href.startsWith('/')) return;
-      const target = href.replace(/^#/, '');
-      if (target === location.pathname + location.search) return;
-      e.preventDefault();
-      e.stopPropagation();
-      setLeaveTo(target);
-    };
-    document.addEventListener('click', onClick, true);
-    return () => document.removeEventListener('click', onClick, true);
-  }, [resumeDirty, location]);
-
-  const confirmLeave = () => {
-    const target = leaveTo;
-    setLeaveTo(null);
-    setResumeDirty(false); // 放行后即放弃,别让守卫拦住接下来的跳转
-    if (target != null) navigate(target);
-  };
+    if (tab !== 'resume') return;
+    return addNavBlocker({
+      isDirty: () => dirtyRef.current,
+      release: () => setResumeDirty(false),
+    });
+  }, [tab]);
 
   return (
     <div className="space-y-6">
@@ -81,16 +60,15 @@ export function ProfilePage() {
         description={
           tab === 'resume'
             ? '维护简历全文与默认公司,按 JD 生成时可结合简历出深挖题。'
-            : '维护目标岗位的职位描述,可从任意 JD 直接生成定向题。'
+            : '维护目标岗位的职位描述,选中左侧 JD 在右侧查看全文、生成定向题。'
         }
       />
 
       <Tabs
         value={tab}
         onValueChange={(v) => {
-          const next = v === 'resume' ? '/profile?tab=resume' : '/profile';
-          if (resumeDirty && next !== location.pathname + location.search) {
-            setLeaveTo(next);
+          if (resumeDirty) {
+            setLeaveTo(v);
             return;
           }
           setSearchParams(v === 'resume' ? { tab: 'resume' } : {}, { replace: true });
@@ -110,7 +88,7 @@ export function ProfilePage() {
         </TabsContent>
       </Tabs>
 
-      {/* 未保存离开确认:取消=留在本页(Radix 默认焦点在取消,安全),确认=放弃修改并离开 */}
+      {/* 未保存离开确认(页内切 tab):取消=留在本页,确认=放弃修改并切换 */}
       <AlertDialog open={!!leaveTo} onOpenChange={(o) => !o && setLeaveTo(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -119,8 +97,14 @@ export function ProfilePage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>留在本页</AlertDialogCancel>
-            <Button variant="secondary" onClick={confirmLeave}>
-              不保存,离开
+            <Button variant="secondary" onClick={() => {
+              setResumeDirty(false);
+              const target = leaveTo;
+              setLeaveTo(null);
+              if (target === 'resume') setSearchParams({}, { replace: true });
+              else setSearchParams({ tab: 'resume' }, { replace: true });
+            }}>
+              不保存,切换
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -129,7 +113,7 @@ export function ProfilePage() {
   );
 }
 
-// ── JD 管理:双列卡片栅格(每卡 = 一个目标岗位)+ 新增/编辑弹窗 ──
+// ── JD 管理:选行 → 详情就地操作工作台 ──
 
 function JdManager() {
   const navigate = useNavigate();
@@ -137,12 +121,14 @@ function JdManager() {
   useEffect(() => subscribeJds(() => bump((v) => v + 1)), []);
   const jds = getJds();
 
-  const [editing, setEditing] = useState<Jd | null>(null); // null = 关闭;有值为编辑
-  const [creating, setCreating] = useState(false);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState<Jd | null>(null);
   const [deletingBusy, setDeletingBusy] = useState(false);
-  // 内联创建(v9 交互重做):新 JD 直接在列表顶部一张卡里写,不再弹窗
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
+  // 内联创建(v9):新 JD 直接在列表顶部一张卡里写;编辑不再连带清空它(v10 修复)
   const saved = getProfile();
+  const [creating, setCreating] = useState(false);
   const [inlineTitle, setInlineTitle] = useState('');
   const [inlineCompany, setInlineCompany] = useState('');
   const [inlineContent, setInlineContent] = useState('');
@@ -178,28 +164,100 @@ function JdManager() {
     }
   };
 
-  return (
-    <>
-      {jds.length > 0 && !creating && (
-        <div className="mb-4 flex items-center justify-between gap-2">
-          <div className="text-sm text-muted-foreground">{jds.length} 个 JD,最近使用的在前</div>
-          <Button size="sm" onClick={openCreate}>
+  // 选中项跟随列表(删除/新增后自动回落)
+  const effectiveSelectedId = jds.some((j) => j.id === selectedId)
+    ? selectedId
+    : jds[0]?.id ?? null;
+  const selected = jds.find((j) => j.id === effectiveSelectedId) ?? null;
+
+  // 键盘:↑↓ 选择行(动作在详情栏,避免误触发生成)
+  usePageKeys((e) => {
+    if (jds.length === 0) return;
+    const idx = jds.findIndex((j) => j.id === effectiveSelectedId);
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedId(jds[Math.min(idx + 1, jds.length - 1)].id);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedId(jds[Math.max(idx - 1, 0)].id);
+    }
+  });
+
+  const detailContent = editingId != null ? (
+    <JdInlineEdit jd={jds.find((j) => j.id === editingId) ?? null} onDone={() => setEditingId(null)} />
+  ) : selected ? (
+    <div className="rounded-md bg-card">
+      <div className="px-4 pt-4">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="rounded-sm bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
+            {selected.company.trim() || '未填公司'}
+          </span>
+          <span className="text-[10px] tabular-nums text-muted-foreground">{charCount(selected.content)}</span>
+        </div>
+        <h2 className="mt-1.5 font-display text-lg font-semibold leading-snug text-foreground">
+          {selected.title.trim() || '(未填标题)'}
+        </h2>
+      </div>
+
+      {/* 就地操作:生成定向题是详情主按钮;编辑就地变表单;删除 AlertDialog */}
+      <div className="flex flex-wrap items-center gap-2 px-4 pt-3">
+        <Button size="sm" onClick={() => navigate(`/add?jd=${selected.id}`)}>
+          <Sparkles className="size-3.5" aria-hidden />
+          按 JD 生成题目
+        </Button>
+        <Button size="sm" variant="secondary" onClick={() => setEditingId(selected.id)}>
+          <Pencil className="size-3.5" aria-hidden />
+          编辑
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+          onClick={() => setDeleting(selected)}
+        >
+          <Trash2 className="size-3.5" aria-hidden />
+          删除
+        </Button>
+      </div>
+
+      <p className="whitespace-pre-wrap px-4 pb-5 pt-3 text-[13px] leading-relaxed text-foreground">
+        {selected.content}
+      </p>
+    </div>
+  ) : (
+    <div className="rounded-md bg-secondary/60 px-4 py-10 text-center text-sm text-muted-foreground">
+      选中左侧一份 JD,在这里看全文与操作
+    </div>
+  );
+
+  if (jds.length === 0 && !creating) {
+    return (
+      <EmptyState
+        icon={Inbox}
+        title="还没有 JD"
+        description="粘贴目标岗位的职位描述,从这条 JD 直接生成定向题。"
+        action={
+          <Button size="sm" variant="secondary" onClick={openCreate}>
             <Plus className="size-3.5" aria-hidden />
             新增 JD
           </Button>
-        </div>
-      )}
+        }
+      />
+    );
+  }
 
-      {/* 内联创建:表单直接出现在列表顶部(v9 交互重做,替代弹窗) */}
+  return (
+    <div className="space-y-4">
+      {/* 内联创建卡(列表顶部) */}
       {creating && (
-        <Card className="page-enter mb-4 flex flex-col gap-3 p-4">
+        <div className="rounded-lg bg-card p-4">
           <div className="flex items-center justify-between">
             <div className="text-sm font-semibold text-foreground">新 JD</div>
             <Button size="sm" variant="ghost" className="h-7 text-xs text-muted-foreground" onClick={() => setCreating(false)}>
               取消
             </Button>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="jd-inline-title">标题(可空)</Label>
               <Input id="jd-inline-title" value={inlineTitle} onChange={(e) => setInlineTitle(e.target.value)} placeholder="如:AI 应用工程师" />
@@ -209,7 +267,7 @@ function JdManager() {
               <Input id="jd-inline-company" value={inlineCompany} onChange={(e) => setInlineCompany(e.target.value)} placeholder={saved?.company || '如:示例公司'} />
             </div>
           </div>
-          <div className="space-y-1.5">
+          <div className="mt-3 space-y-1.5">
             <div className="flex items-center justify-between">
               <Label htmlFor="jd-inline-content">
                 职位描述(JD) <span className="text-destructive" aria-hidden>*</span>
@@ -225,112 +283,75 @@ function JdManager() {
             />
           </div>
           {inlineError && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="mt-3">
               <AlertDescription className="whitespace-pre-wrap">{inlineError}</AlertDescription>
             </Alert>
           )}
-          <div className="flex justify-end gap-2">
+          <div className="mt-3 flex justify-end gap-2">
             <Button onClick={saveInline} disabled={inlineSaving}>
               {inlineSaving ? '保存中…' : '添加 JD'}
             </Button>
           </div>
-        </Card>
+        </div>
       )}
 
-      {jds.length === 0 && !creating ? (
-        <EmptyState
-          icon={Inbox}
-          title="还没有 JD"
-          description="粘贴目标岗位的职位描述,从这条 JD 直接生成定向题。"
-          action={
+      {jds.length > 0 && (
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-sm text-muted-foreground">{jds.length} 个 JD,最近使用的在前</div>
+          {!creating && (
             <Button size="sm" variant="secondary" onClick={openCreate}>
               <Plus className="size-3.5" aria-hidden />
               新增 JD
             </Button>
-          }
-        />
-      ) : (
-        <div className="grid content-start gap-4 sm:grid-cols-2">
-          {jds.map((j) => (
-            <ContextMenu key={j.id}>
-              <ContextMenuTrigger asChild>
-                <Card className="flex h-full flex-col gap-3 p-4 transition-colors hover:border-primary/40">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold text-foreground">{j.title}</div>
-                      <div className="mt-0.5 text-xs text-muted-foreground">
-                        {j.company || '未填公司'} · {charCount(j.content)}
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-0.5">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7 text-muted-foreground"
-                            aria-label={`编辑 JD:${j.title}`}
-                            onClick={() => setEditing(j)}
-                          >
-                            <Pencil aria-hidden />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>编辑</TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                            aria-label={`删除 JD:${j.title}`}
-                            onClick={() => setDeleting(j)}
-                          >
-                            <Trash2 aria-hidden />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>删除</TooltipContent>
-                      </Tooltip>
-                    </div>
-                  </div>
-
-                  <p className="line-clamp-2 min-h-8 text-xs leading-relaxed text-muted-foreground">
-                    {j.content}
-                  </p>
-
-                  <div className="mt-auto flex items-center gap-1.5 pt-1">
-                    <Button
-                      size="sm"
-                      className="h-8 flex-1 justify-start gap-1.5"
-                      onClick={() => navigate(`/add?jd=${j.id}`)}
-                    >
-                      <Sparkles className="size-3.5" aria-hidden />
-                      按 JD 生成题目
-                    </Button>
-                  </div>
-                </Card>
-              </ContextMenuTrigger>
-              <ContextMenuContent>
-                <ContextMenuItem onSelect={() => navigate(`/add?jd=${j.id}`)}>按 JD 生成题目…</ContextMenuItem>
-                <ContextMenuItem onSelect={() => setEditing(j)}>编辑…</ContextMenuItem>
-                <ContextMenuSeparator />
-                <ContextMenuItem className="text-destructive focus:text-destructive" onSelect={() => setDeleting(j)}>
-                  删除…
-                </ContextMenuItem>
-              </ContextMenuContent>
-            </ContextMenu>
-          ))}
+          )}
         </div>
       )}
 
-      {/* 创建已改为内联卡;此弹窗仅承担编辑 */}
-      <JdEditDialog
-        open={editing != null}
-        jd={editing}
-        onClose={() => {
-          setCreating(false);
-          setEditing(null);
-        }}
+      <TwoPane
+        mobileOpen={mobileDetailOpen && !!selected}
+        onCloseMobile={() => setMobileDetailOpen(false)}
+        list={
+          <div className="rounded-md bg-card divide-y divide-border">
+            {jds.map((j) => {
+              const isSelected = j.id === effectiveSelectedId;
+              return (
+                <div
+                  key={j.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={isSelected}
+                  onClick={() => {
+                    setSelectedId(j.id);
+                    setEditingId(null);
+                    setMobileDetailOpen(true);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedId(j.id);
+                      setMobileDetailOpen(true);
+                    }
+                  }}
+                  className={`cursor-pointer px-3 py-2.5 transition-colors ${
+                    isSelected ? 'bg-accent/70' : 'hover:bg-accent/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
+                      {j.title.trim() || '(未填标题)'}
+                    </span>
+                    <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{charCount(j.content)}</span>
+                  </div>
+                  <div className="mt-0.5 flex items-center gap-2">
+                    <span className="shrink-0 text-xs text-muted-foreground">{j.company.trim() || '未填公司'}</span>
+                    <span className="min-w-0 truncate text-xs text-muted-foreground/80">{j.content}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        }
+        detail={detailContent}
       />
 
       {/* 删除 JD:已生成题不受影响,但 JD 本身不可恢复 → AlertDialog */}
@@ -367,29 +388,20 @@ function JdManager() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 }
 
-// 新增/编辑共用:标题可留空(回退公司名 → JD 前 12 字),JD 内容必填
-function JdEditDialog({ open, jd, onClose }: { open: boolean; jd: Jd | null; onClose: () => void }) {
-  const saved = getProfile();
-  const [title, setTitle] = useState('');
-  const [company, setCompany] = useState('');
-  const [content, setContent] = useState('');
+// JD 就地编辑(详情栏内,替代弹窗)。关闭只退出编辑,不碰内联创建卡(v10 修复:
+// 此前 onClose 同时 setCreating(false),内联写一半的内容会被静默丢弃)
+function JdInlineEdit({ jd, onDone }: { jd: Jd | null; onDone: () => void }) {
+  const [title, setTitle] = useState(jd?.title ?? '');
+  const [company, setCompany] = useState(jd?.company ?? '');
+  const [content, setContent] = useState(jd?.content ?? '');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (open) {
-      setTitle(jd?.title ?? '');
-      // 新增时用档案里的默认公司预填,少打一次
-      setCompany(jd?.company ?? saved?.company ?? '');
-      setContent(jd?.content ?? '');
-      setError(null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, jd]);
+  if (!jd) return null;
 
   const handleSave = async () => {
     if (!content.trim()) {
@@ -399,14 +411,9 @@ function JdEditDialog({ open, jd, onClose }: { open: boolean; jd: Jd | null; onC
     setSaving(true);
     setError(null);
     try {
-      if (jd) {
-        await updateJd(jd.id, { title, company, content });
-        toast.success('JD 已更新');
-      } else {
-        await addJd({ title, company, content });
-        toast.success('JD 已添加');
-      }
-      onClose();
+      await updateJd(jd.id, { title, company, content });
+      toast.success('JD 已更新');
+      onDone();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -415,54 +422,43 @@ function JdEditDialog({ open, jd, onClose }: { open: boolean; jd: Jd | null; onC
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{jd ? '编辑 JD' : '新增 JD'}</DialogTitle>
-          <DialogDescription>标题可留空,默认取公司名;生成时按 JD 全文的技术要求出题。</DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-3">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="jd-title" className="text-xs text-muted-foreground">标题(可空)</Label>
-              <Input id="jd-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="如:AI 应用工程师" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="jd-company" className="text-xs text-muted-foreground">公司</Label>
-              <Input id="jd-company" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="如:示例公司" />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="jd-content" className="text-xs text-muted-foreground">
-                职位描述(JD) <span className="text-destructive" aria-hidden>*</span>
-              </Label>
-              <span className="text-[10px] tabular-nums text-muted-foreground">{charCount(content)}</span>
-            </div>
-            <Textarea
-              id="jd-content"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="粘贴目标岗位的 JD 全文"
-              rows={12}
-            />
-          </div>
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription>
-            </Alert>
-          )}
+    <div className="rounded-md bg-card p-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-foreground">编辑 JD</h2>
+        <span className="text-[10px] tabular-nums text-muted-foreground">{charCount(content)}</span>
+      </div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label htmlFor="jd-edit-title" className="text-xs text-muted-foreground">标题(可空)</Label>
+          <Input id="jd-edit-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="如:AI 应用工程师" />
         </div>
-
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="secondary">取消</Button>
-          </DialogClose>
-          <Button onClick={handleSave} disabled={saving}>{saving ? '保存中…' : jd ? '保存修改' : '添加 JD'}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <div className="space-y-1.5">
+          <Label htmlFor="jd-edit-company" className="text-xs text-muted-foreground">公司</Label>
+          <Input id="jd-edit-company" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="如:示例公司" />
+        </div>
+      </div>
+      <div className="mt-3 space-y-1.5">
+        <Label htmlFor="jd-edit-content" className="text-xs text-muted-foreground">
+          职位描述(JD) <span className="text-destructive" aria-hidden>*</span>
+        </Label>
+        <Textarea
+          id="jd-edit-content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="粘贴目标岗位的 JD 全文"
+          rows={12}
+        />
+      </div>
+      {error && (
+        <Alert variant="destructive" className="mt-3">
+          <AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription>
+        </Alert>
+      )}
+      <div className="mt-4 flex justify-end gap-2">
+        <Button variant="secondary" size="sm" onClick={onDone}>取消</Button>
+        <Button size="sm" onClick={handleSave} disabled={saving}>{saving ? '保存中…' : '保存修改'}</Button>
+      </div>
+    </div>
   );
 }
 
@@ -478,7 +474,7 @@ function ResumeCard({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void
     ? saved.company !== company || saved.resume !== resume
     : !!(company || resume);
 
-  // dirty 上报给页面层做站内离开拦截;卸载(切 tab/离页)复位
+  // dirty 上报页面层(全局导航守卫消费);卸载(切 tab/离页)复位
   useEffect(() => {
     onDirtyChange(dirty);
     return () => onDirtyChange(false);
@@ -507,23 +503,22 @@ function ResumeCard({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void
   };
 
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-5 p-5">
-        {/* 编辑器标题栏:标识 + 字数 + 保存 */}
-        <div className="flex items-center justify-between gap-3 border-b border-border pb-4">
-          <div>
-            <div className="text-sm font-semibold text-foreground">我的简历</div>
-            <div className="mt-0.5 text-xs text-muted-foreground">支持全文粘贴(Markdown),只存本机</div>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs tabular-nums text-muted-foreground">{charCount(resume)}</span>
-            {dirty && <span className="text-xs text-warning">未保存</span>}
-            <Button onClick={handleSave} disabled={!dirty || saving} size="sm">
-              {saving ? '保存中…' : '保存简历'}
-            </Button>
-          </div>
+    <div className="rounded-lg bg-card">
+      <div className="flex items-center justify-between gap-3 border-b border-border p-5 pb-4">
+        <div>
+          <div className="text-sm font-semibold text-foreground">我的简历</div>
+          <div className="mt-0.5 text-xs text-muted-foreground">支持全文粘贴(Markdown),只存本机</div>
         </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs tabular-nums text-muted-foreground">{charCount(resume)}</span>
+          {dirty && <span className="text-xs text-warning">未保存</span>}
+          <Button onClick={handleSave} disabled={!dirty || saving} size="sm">
+            {saving ? '保存中…' : '保存简历'}
+          </Button>
+        </div>
+      </div>
 
+      <div className="flex flex-col gap-5 p-5">
         <div className="space-y-1.5">
           <Label htmlFor="resume-company" className="text-xs text-muted-foreground">默认公司 / 岗位</Label>
           <Input
@@ -550,8 +545,8 @@ function ResumeCard({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void
             <span className="text-xs text-warning">有未保存的修改</span>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 

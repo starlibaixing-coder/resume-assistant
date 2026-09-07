@@ -1,10 +1,7 @@
 import { useEffect, useId, useState } from 'react';
 import { toast } from 'sonner';
-import { addManualQuestion, deleteQuestion, getMyCategory, updateQuestion, type DraftQuestion } from '@/lib/mylib';
+import { addManualQuestion, deleteQuestion, getMyCategory, type DraftQuestion } from '@/lib/mylib';
 import type { Difficulty, MyQuestion } from '@/types/question';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
-} from '@/components/ui/dialog';
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
@@ -17,10 +14,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-// 编辑我的题 + 手动加题表单 + 删除确认。官方题不可原地改(ADR-3),先复制再改。
-// 2026-09-04 表单重构:Label 组件 + 必填星号(第九步规范);难度按钮组 → RadioGroup
-// (消灭多选一控件混用);错误 → Alert;删除确认 → AlertDialog(不可逆操作统一);
-// 提交按钮表达结果(「保存题目」)。
+// 共享表单资产:题单字段组 + 手动加题表单 + 删除确认。
+// v10 交互重做:「编辑我的题」不再走弹窗——题库详情栏就地渲染 QuestionFormFields
+// (见 pages/browse.tsx 的 QuestionInlineEdit);本文件保留表单字段与删除确认供其复用。
 
 // 表单态:文本域形态(tags/answer/followups 是原始多行文本,提交时再拆)
 export interface QuestionFormState {
@@ -146,64 +142,6 @@ export function QuestionFormFields({
         <Input id={id('tags')} value={value.tags} onChange={(e) => onChange({ tags: e.target.value })} placeholder="react, hooks" />
       </div>
     </div>
-  );
-}
-
-// 编辑我的题(改后再过共享校验,不过不让存)
-export function QuestionEditDialog({
-  question,
-  open,
-  onOpenChange,
-}: {
-  question: MyQuestion | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const [form, setForm] = useState<QuestionFormState>(EMPTY_FORM);
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  // 打开时以题面填充表单
-  useEffect(() => {
-    if (open && question) {
-      setForm(formStateFromQuestion(question));
-      setError(null);
-    }
-  }, [open, question]);
-
-  if (!question) return null;
-
-  const handleSave = async () => {
-    setSaving(true);
-    setError(null);
-    try {
-      await updateQuestion(question.id, formToDraft(form));
-      toast.success('修改已保存');
-      onOpenChange(false);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>编辑我的题</DialogTitle>
-          <DialogDescription className="font-mono text-xs">{question.id}</DialogDescription>
-        </DialogHeader>
-
-        <QuestionFormFields value={form} onChange={(patch) => setForm((f) => ({ ...f, ...patch }))} />
-        <FormError error={error} />
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
-          <Button onClick={handleSave} disabled={saving}>{saving ? '保存中…' : '保存修改'}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
 
