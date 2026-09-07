@@ -185,7 +185,7 @@ export function DraftsBoard() {
   );
 
   return (
-    <div className="space-y-4" data-version={version}>
+    <div className="flex h-full min-h-0 flex-col" data-version={version}>
       <TwoPane
         mobileOpen={mobileDetailOpen && !!selected}
         onCloseMobile={() => setMobileDetailOpen(false)}

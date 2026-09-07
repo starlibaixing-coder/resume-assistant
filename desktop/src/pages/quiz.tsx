@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
+import { useMemo, useState, useEffect, useRef, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import {
   CheckCircle2,
@@ -23,33 +23,24 @@ import CodeScratchpad from '@/components/code-scratchpad';
 import { ErrorState } from '@/components/error-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-// 练习会话 v5(引擎深化)+ v10(反馈就地闪现):
-//   1. 「不会」即时重排——评不会的题追加到会话尾部再练一遍(每题至多一份重练副本,
-//      重复评不会则移到队尾),直到评模糊/掌握才真正放行;撤销会连带撤销重排。
-//   2. 评分反馈带具体日期——评分后在本题位置闪现「下次复习 9 月 7 日」再自动推进。
-//      此前反馈写入状态后跨题残留(下一题未揭示时显示上一题的复习日期),v10 修复:
-//      反馈归属当前题(entryKey 校验),推进即清,重练落库的题仍可在未揭示态看到自己的反馈。
-//   3. 会话小结逐题可溯——每道题的评分与下次复习日期在完成态列出来,错题一目了然。
-//   ?category= 限定;?focus=due|new|all;?limit= 题量;?qid= 单题直练(题库「练习此题」深链)。
+// 练习会话(v5 引擎 + v10 反馈闪现 + v11 全窗卡片式):
+//   /session = 全窗接管:壳不渲染,本页自绘最小 chrome(进度条 + 图标位,挂 data-app-nav)。
+//   中央舞台:题干升为 font-display 3xl 大字、垂直居中;底部巨型操作区(揭示/三档评分);
+//   评分反馈就地语义色闪现 ~900ms 自动推进(反馈归属当前题,勿跨题残留)。
+//   「不会」即时重排、撤销连带撤销重排、会话小结逐题可溯、?qid= 单题直练保留。
+//   ?category= 限定;?focus=due|new|all;?limit= 题量。
 
 function Kbd({ children }: { children: ReactNode }) {
   return (
-    <kbd className="rounded-sm border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-normal leading-none text-muted-foreground">
+    <kbd className="rounded-sm bg-black/10 px-1.5 py-0.5 font-mono text-[11px] font-normal leading-none opacity-80">
       {children}
     </kbd>
   );
 }
-
-const stickyBarStyle: CSSProperties = {
-  bottom: 'calc(-1 * var(--page-pad-y, 1.5rem))',
-  paddingBottom: 'var(--page-pad-y, 1.5rem)',
-  marginBottom: 'calc(-1 * var(--page-pad-y, 1.5rem))',
-};
 
 interface QueueEntry {
   category: string;
@@ -61,16 +52,9 @@ interface RatedItem {
   prev: CardState | null;
   rating: Rating;
   next: CardState;
-  requeued: boolean; // 这次评分是否触发了「不会」重排
+  requeued: boolean;
 }
 
-const RATING_COLOR: Record<Rating, string> = {
-  不会: 'text-destructive',
-  模糊: 'text-warning',
-  掌握: 'text-success',
-};
-
-// 闪现条语义色底(字面量映射,勿动态拼接——Tailwind 按字面扫描生成类)
 const RATING_TONE: Record<Rating, { cls: string; bg: string }> = {
   不会: { cls: 'text-destructive', bg: 'bg-destructive/10' },
   模糊: { cls: 'text-warning', bg: 'bg-warning/10' },
@@ -80,6 +64,18 @@ const RATING_TONE: Record<Rating, { cls: string; bg: string }> = {
 function shortDate(ts: number): string {
   const d = new Date(ts);
   return `${d.getMonth() + 1} 月 ${d.getDate()} 日`;
+}
+
+// 会话最小 chrome(挂 data-app-nav:沉浸断言与全局锚点);沉浸时隐藏(退出按钮浮层接管)
+function SessionStrip({ progress, actions }: { progress?: ReactNode; actions?: ReactNode }) {
+  const { immersive } = useImmersive();
+  if (immersive) return null;
+  return (
+    <div data-app-nav className="flex h-11 shrink-0 items-center gap-4 px-5">
+      <div className="min-w-0 flex-1">{progress}</div>
+      <div className="flex shrink-0 items-center gap-1">{actions}</div>
+    </div>
+  );
 }
 
 export function QuizPage({ category }: { category?: string }) {
@@ -260,200 +256,222 @@ export function QuizPage({ category }: { category?: string }) {
     }
   }, keyboardEnabled);
 
-  if (error) {
-    return (
-      <div className="mx-auto max-w-3xl">
-        <ErrorState message={error} onRetry={retry} />
-      </div>
-    );
-  }
-  if (!data) {
-    return (
-      <div className="mx-auto flex max-w-3xl flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-5 w-16" />
-          <Skeleton className="h-5 w-24" />
-        </div>
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-20 w-full" />
-      </div>
-    );
-  }
-  if (total === 0)
-    return (
-      <SessionDoneState
-        scopeName={scopeName}
-        total={data.questions.filter((q) => !category || q.category === category).length}
-        onReviewAll={handleNextRound}
-      />
-    );
-  if (roundDone || !current)
-    return (
-      <RoundDoneState
-        items={ratedHistory.map((h) => {
-          const q = byCat.get(h.entry.category)?.find((x) => x.id === h.entry.id);
-          return {
-            title: q?.title ?? h.entry.id,
-            categoryName: h.entry.category,
-            rating: h.rating,
-            due: h.next.due,
-          };
-        })}
-        canUndo={ratedHistory.length > 0}
-        onUndo={handleUndo}
-        onNextRound={handleNextRound}
-      />
-    );
-
-  const widthClass = immersive ? 'max-w-4xl' : 'max-w-3xl';
   const catNameOf = (slug: string) =>
-    slug === 'my' ? '我的题库' : data.categories.find((c) => c.slug === slug)?.name ?? slug;
+    slug === 'my' ? '我的题库' : data?.categories.find((c) => c.slug === slug)?.name ?? slug;
+
+  const immersiveButton = <ImmersiveIconButton />;
+  const askAiButton = <AskAiIconButton />;
+
+  // ── 状态分支 ──
+  let body: ReactNode;
+  if (error) {
+    body = (
+      <SessionFrame actions={askAiButton}>
+        <ErrorState message={error} onRetry={retry} />
+      </SessionFrame>
+    );
+  } else if (!data) {
+    body = (
+      <SessionFrame>
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </div>
+      </SessionFrame>
+    );
+  } else if (total === 0) {
+    body = (
+      <SessionFrame actions={askAiButton}>
+        <SessionDoneState
+          scopeName={scopeName}
+          total={data.questions.filter((q) => !category || q.category === category).length}
+          onReviewAll={handleNextRound}
+        />
+      </SessionFrame>
+    );
+  } else if (roundDone || !current) {
+    body = (
+      <SessionFrame actions={askAiButton}>
+        <RoundDoneState
+          items={ratedHistory.map((h) => {
+            const q = byCat.get(h.entry.category)?.find((x) => x.id === h.entry.id);
+            return {
+              title: q?.title ?? h.entry.id,
+              categoryName: h.entry.category,
+              rating: h.rating,
+              due: h.next.due,
+            };
+          })}
+          canUndo={ratedHistory.length > 0}
+          onUndo={handleUndo}
+          onNextRound={handleNextRound}
+        />
+      </SessionFrame>
+    );
+  } else {
+    // ── 答题主舞台 ──
+    body = (
+      <div className="flex h-full flex-col">
+        <SessionStrip
+          progress={
+            <>
+              <span className="font-display text-lg tabular-nums text-foreground">
+                {queueIdx + 1}
+                <span className="text-muted-foreground"> / {total}</span>
+                {requeue.length > 0 && (
+                  <span className="ml-1.5 text-[11px] text-warning">(含 {requeue.length} 题重练)</span>
+                )}
+              </span>
+              <span className="ml-3 hidden text-xs text-muted-foreground sm:inline">
+                {scopeName === '全部题库' ? `${catNameOf(current.category)} · ` : ''}
+                {current.moduleName}
+              </span>
+            </>
+          }
+          actions={
+            <>
+              {askAiButton}
+              {immersiveButton}
+            </>
+          }
+        />
+        {/* 顶部细进度线 */}
+        <div
+          className="h-0.5 shrink-0 bg-muted"
+          role="progressbar"
+          aria-label="本轮进度"
+          aria-valuemin={0}
+          aria-valuemax={total}
+          aria-valuenow={queueIdx}
+        >
+          <div className="h-0.5 bg-primary/80 transition-[width] duration-300" style={{ width: `${total ? (queueIdx / total) * 100 : 0}%` }} />
+        </div>
+
+        {/* 中央舞台 */}
+        <div className="flex min-h-0 flex-1 justify-center overflow-y-auto px-8">
+          <div key={current.id} className="page-enter flex w-full max-w-3xl flex-col justify-center py-8">
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="secondary">{current.difficulty}</Badge>
+              {current.tags.map((t) => (
+                <Badge key={t} variant="secondary">{t}</Badge>
+              ))}
+            </div>
+            <h1 className="font-display mt-5 text-3xl font-semibold leading-relaxed tracking-tight text-foreground">
+              {current.title}
+            </h1>
+            <p className="mt-3 text-sm text-muted-foreground">{current.focus}</p>
+
+            <div className="mt-4 flex items-center gap-0.5">
+              <NotePanel category={current.category} questionId={current.id} />
+              <CodeScratchpad category={current.category} questionId={current.id} question={current} />
+            </div>
+
+            {revealed && (
+              <div className="mt-8">
+                <AnswerPanel answer={current.answer} followups={current.followups} />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setRevealed(false)}
+                  className="mx-auto mt-3 block text-muted-foreground"
+                >
+                  ↑ 收起答案
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 底部巨型操作区 */}
+        <div className="shrink-0 px-8 pb-9 pt-3">
+          <div className="mx-auto max-w-3xl">
+            {flash ? (
+              <div className={cn('flex h-14 items-center justify-center rounded-xl text-lg font-semibold', flash.bg, flash.cls)}>
+                {flash.text}
+              </div>
+            ) : revealed ? (
+              <div className="grid grid-cols-3 gap-3">
+                <Button
+                  variant="secondary"
+                  title="快捷键 1"
+                  className="h-14 justify-between rounded-xl px-5 text-lg font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  onClick={() => handleRate('不会')}
+                >
+                  不会
+                  <Kbd>1</Kbd>
+                </Button>
+                <Button
+                  variant="secondary"
+                  title="快捷键 2"
+                  className="h-14 justify-between rounded-xl px-5 text-lg font-semibold text-warning hover:bg-warning/10 hover:text-warning"
+                  onClick={() => handleRate('模糊')}
+                >
+                  模糊
+                  <Kbd>2</Kbd>
+                </Button>
+                <Button
+                  variant="secondary"
+                  title="快捷键 3"
+                  className="h-14 justify-between rounded-xl px-5 text-lg font-semibold text-success hover:bg-success/10 hover:text-success"
+                  onClick={() => handleRate('掌握')}
+                >
+                  掌握
+                  <Kbd>3</Kbd>
+                </Button>
+              </div>
+            ) : (
+              <>
+                <Button
+                  onClick={() => setRevealed(true)}
+                  className="h-14 w-full justify-between rounded-xl px-6 text-lg font-semibold shadow-lg shadow-primary/25"
+                >
+                  我想好了,看答案
+                  <Kbd>空格</Kbd>
+                </Button>
+                <div className={`mt-2 text-center text-xs ${lastFeedback?.entryKey === `${current.category}:${current.id}` ? 'text-success' : 'text-muted-foreground'}`}>
+                  {lastFeedback?.entryKey === `${current.category}:${current.id}` ? lastFeedback.text : '先在脑中想清楚,再对答案'}
+                </div>
+              </>
+            )}
+            {!flash && (
+              <div className="mt-2 flex items-center justify-center gap-2">
+                {ratedHistory.length > 0 && (
+                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-muted-foreground" onClick={handleUndo}>
+                    <Undo2 className="size-3.5" aria-hidden />
+                    撤销上一题
+                  </Button>
+                )}
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-muted-foreground" onClick={handleSkip}>
+                  跳过本题
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className={cn('mx-auto flex w-full flex-1 flex-col gap-5', widthClass)}>
-      {/* 会话进度行 */}
-      <div className="border-b border-border pb-3">
-        <div className="flex justify-between items-center text-sm text-muted-foreground">
-          <span className="font-display text-lg tabular-nums text-foreground">
-            {queueIdx + 1}
-            <span className="text-muted-foreground"> / {total}</span>
-            {requeue.length > 0 && (
-              <span className="ml-1.5 text-[11px] text-warning">(含 {requeue.length} 题重练)</span>
-            )}
-          </span>
-          <div className="flex items-center gap-3">
-            <span>
-              {scopeName === '全部题库' ? `${catNameOf(current.category)} · ` : ''}
-              {current.moduleName}
-            </span>
-            <span className="flex items-center gap-1">
-              <AskAiIconButton />
-              <ImmersiveIconButton />
-            </span>
-          </div>
+    <div className={cn('relative h-full', immersive && 'bg-background')}>
+      {/* 沉浸模式:chrome 全隐,浮出退出按钮(Esc 之外的出口) */}
+      {immersive && (
+        <div className="absolute right-4 top-3 z-20">
+          <ImmersiveIconButton />
         </div>
-        <Progress
-          value={roundDone ? 100 : total ? (queueIdx / total) * 100 : 0}
-          className="mt-3 h-0.5 bg-muted ring-0"
-          aria-label="本轮进度"
-        />
-      </div>
+      )}
+      {body}
+    </div>
+  );
+}
 
-      {/* 题面 */}
-      <div key={current.id} className="page-enter flex flex-1 flex-col justify-center py-5">
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary">{current.difficulty}</Badge>
-          {current.tags.map((t) => (
-            <Badge key={t} variant="secondary">
-              {t}
-            </Badge>
-          ))}
-        </div>
-        <h1 className="font-display mt-4 text-2xl font-semibold leading-relaxed tracking-tight text-foreground">
-          {current.title}
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">{current.focus}</p>
-
-        <div className="mt-3 flex items-center gap-0.5">
-          <NotePanel category={current.category} questionId={current.id} />
-          <CodeScratchpad category={current.category} questionId={current.id} question={current} />
-        </div>
-
-        {revealed && (
-          <div className="mt-6">
-            <AnswerPanel answer={current.answer} followups={current.followups} />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setRevealed(false)}
-              className="mx-auto mt-2 block text-muted-foreground"
-            >
-              ↑ 收起答案
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* 操作条:真吸底 + 顶缘渐隐 */}
-      <div
-        className="sticky z-10 mt-auto -mx-6 border-t border-border bg-background px-6 pt-2.5"
-        style={stickyBarStyle}
-      >
-        <div
-          className="pointer-events-none absolute -top-8 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent"
-          aria-hidden
-        />
-        {flash ? (
-          /* 评分反馈闪现:本题位置语义色底展示复习日期,随后自动推进 */
-          <div className="mx-auto max-w-3xl">
-            <div className={cn('flex h-12 items-center justify-center rounded-lg text-base font-semibold', flash.bg, flash.cls)}>
-              {flash.text}
-            </div>
-          </div>
-        ) : revealed ? (
-          <div className="mx-auto grid max-w-3xl grid-cols-3 gap-2">
-            <Button
-              variant="secondary"
-              title="快捷键 1"
-              className="h-12 justify-between rounded-lg border-destructive/40 px-4 text-base font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive"
-              onClick={() => handleRate('不会')}
-            >
-              不会
-              <Kbd>1</Kbd>
-            </Button>
-            <Button
-              variant="secondary"
-              title="快捷键 2"
-              className="h-12 justify-between rounded-lg border-warning/40 px-4 text-base font-semibold text-warning hover:bg-warning/10 hover:text-warning"
-              onClick={() => handleRate('模糊')}
-            >
-              模糊
-              <Kbd>2</Kbd>
-            </Button>
-            <Button
-              variant="secondary"
-              title="快捷键 3"
-              className="h-12 justify-between rounded-lg border-success/40 px-4 text-base font-semibold text-success hover:bg-success/10 hover:text-success"
-              onClick={() => handleRate('掌握')}
-            >
-              掌握
-              <Kbd>3</Kbd>
-            </Button>
-          </div>
-        ) : (
-          <div className="mx-auto max-w-3xl space-y-1.5">
-            <Button onClick={() => setRevealed(true)} className="h-12 w-full justify-between rounded-lg px-4 text-base font-semibold shadow-lg shadow-primary/20">
-              我想好了,看答案
-              <Kbd>空格</Kbd>
-            </Button>
-            <div className={`text-center text-[11px] ${lastFeedback?.entryKey === `${current.category}:${current.id}` ? 'text-success' : 'text-muted-foreground'}`}>
-              {lastFeedback?.entryKey === `${current.category}:${current.id}` ? lastFeedback.text : '先在脑中想清楚,再对答案'}
-            </div>
-          </div>
-        )}
-        {!flash && (
-          <div className="mx-auto mt-1.5 flex max-w-3xl items-center justify-center gap-2">
-            {ratedHistory.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs text-muted-foreground"
-                onClick={handleUndo}
-              >
-                <Undo2 className="size-3.5" aria-hidden />
-                撤销上一题
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs text-muted-foreground"
-              onClick={handleSkip}
-            >
-              跳过本题
-            </Button>
-          </div>
-        )}
+// 会话通用框架:最小 chrome + 居中舞台(空态/小结/错误共用)
+function SessionFrame({ children, actions }: { children: ReactNode; actions?: ReactNode }) {
+  return (
+    <div className="flex h-full flex-col">
+      <SessionStrip actions={actions} />
+      <div className="flex min-h-0 flex-1 justify-center overflow-y-auto px-8 pb-10 pt-4">
+        {children}
       </div>
     </div>
   );
@@ -523,19 +541,16 @@ function SessionDoneState({ scopeName, total, onReviewAll }: {
   total: number;
   onReviewAll: () => void;
 }) {
-  const { immersive } = useImmersive();
   return (
-    <div className={cn('mx-auto w-full', immersive ? 'max-w-4xl' : 'max-w-3xl')}>
-      <div className="flex flex-col items-center gap-3 bg-card py-24 text-center">
-        <CheckCircle2 className="size-10 text-success" aria-hidden />
-        <div className="text-2xl font-bold tracking-tight">今日练习已完成</div>
-        <p className="text-sm text-muted-foreground">{scopeName}没有待复习和待学习的题了。</p>
-        <div className="mt-3 flex flex-col items-center gap-3">
-          {total > 0 && <Button onClick={onReviewAll}>再过一遍(全部题)</Button>}
-          <div className="flex items-center gap-4 text-sm">
-            <Link to="/" className="text-primary hover:opacity-80">回到今日</Link>
-            <Link to="/library" className="text-primary hover:opacity-80">去题库</Link>
-          </div>
+    <div className="flex w-full max-w-3xl flex-col items-center justify-center gap-3 py-24 text-center">
+      <CheckCircle2 className="size-10 text-success" aria-hidden />
+      <div className="font-display text-3xl font-bold tracking-tight">今日练习已完成</div>
+      <p className="text-sm text-muted-foreground">{scopeName}没有待复习和待学习的题了。</p>
+      <div className="mt-3 flex flex-col items-center gap-3">
+        {total > 0 && <Button onClick={onReviewAll}>再过一遍(全部题)</Button>}
+        <div className="flex items-center gap-4 text-sm">
+          <Link to="/" className="text-primary hover:opacity-80">回到今日</Link>
+          <Link to="/library" className="text-primary hover:opacity-80">去题库</Link>
         </div>
       </div>
     </div>
@@ -554,19 +569,18 @@ function RoundDoneState({
   onUndo: () => void;
   onNextRound: () => void;
 }) {
-  const { immersive } = useImmersive();
   const mastered = items.filter((i) => i.rating === '掌握').length;
   const failed = items.filter((i) => i.rating === '不会').length;
   const catNameOf = (slug: string) => (slug === 'my' ? '我的题库' : slug);
   return (
-    <div className={cn('mx-auto w-full', immersive ? 'max-w-4xl' : 'max-w-3xl')}>
-      <div className="bg-card py-12 text-center">
-        <CheckCircle2 className="mx-auto size-10 text-success" aria-hidden />
-        <div className="mt-3 text-2xl font-bold tracking-tight">
+    <div className="w-full max-w-3xl">
+      <div className="flex flex-col items-center gap-3 py-10 text-center">
+        <CheckCircle2 className="size-10 text-success" aria-hidden />
+        <div className="font-display text-3xl font-bold tracking-tight">
           本轮完成,学了 {items.length} 道题{mastered > 0 ? `,掌握 ${mastered} 道` : ''}
           {failed > 0 ? `,${failed} 道待重练` : ''}
         </div>
-        <div className="mt-3 flex flex-col items-center gap-3">
+        <div className="mt-2 flex flex-col items-center gap-3">
           <Button onClick={onNextRound}>继续学下一轮</Button>
           <div className="flex items-center gap-4 text-sm">
             <Button
@@ -586,12 +600,12 @@ function RoundDoneState({
       </div>
 
       {/* 逐题小结:评分色点 + 题干 + 下次复习日期 */}
-      <section className="mt-8">
+      <section className="mt-4 rounded-xl bg-card p-5">
         <h2 className="text-sm font-semibold tracking-wide text-foreground">逐题回顾</h2>
-        <div className="mt-2 max-h-[28rem] overflow-y-auto border-t border-border">
+        <div className="mt-2 max-h-[26rem] overflow-y-auto">
           {items.map((item, i) => (
-            <div key={i} className="flex items-center gap-3 border-b border-border py-2 text-sm last:border-b-0">
-              <span className={`w-12 shrink-0 text-xs font-medium ${RATING_COLOR[item.rating]}`}>{item.rating}</span>
+            <div key={i} className="flex items-center gap-3 py-2 text-sm">
+              <span className={`w-12 shrink-0 text-xs font-medium ${RATING_TONE[item.rating].cls}`}>{item.rating}</span>
               <span className="min-w-0 flex-1 truncate text-foreground">{item.title}</span>
               <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">{catNameOf(item.categoryName)}</span>
               <span className="w-24 shrink-0 text-right text-xs tabular-nums text-muted-foreground">{shortDate(item.due)}</span>

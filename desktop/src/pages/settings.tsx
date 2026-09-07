@@ -146,7 +146,8 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6" data-refresh={refresh}>
+    <div className="h-full overflow-y-auto">
+      <div className="mx-auto max-w-2xl space-y-6 px-8 py-8" data-refresh={refresh}>
       <PageHeader title="设置" />
 
       {/* ── 学习 ─────────────────────────────────────── */}
@@ -342,6 +343,7 @@ export function SettingsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
     </div>
   );
 }

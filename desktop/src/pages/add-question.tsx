@@ -342,7 +342,8 @@ export function AddQuestionPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="h-full overflow-y-auto">
+      <div className="mx-auto max-w-3xl space-y-6 px-8 py-8">
       <PageHeader
         title={fixedJd ? `按 JD 生成题目 · ${fixedJd.title.trim() || '(未填标题)'}` : '添加题目'}
         description="手动写题保存即进我的题库;AI 与按 JD 生成的题先进待审核,通过后入队。"
@@ -396,6 +397,7 @@ export function AddQuestionPage() {
         <JdPicker value={jdPick} onChange={setJdPick} />
         {jdPick && <GenerateForm jd={jdPick} onCancel={goBack} />}
       </section>
+      </div>
     </div>
   );
 }

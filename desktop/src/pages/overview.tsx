@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { ChevronRight, Inbox } from 'lucide-react';
+import { Check, ChevronRight, Inbox } from 'lucide-react';
 import { useQuestions } from '@/lib/questions';
 import { getStats } from '@/lib/schedule';
 import { getMyCategory, getPendingCount, subscribeMyLib } from '@/lib/mylib';
@@ -10,14 +10,13 @@ import { getProfile } from '@/lib/profile';
 import { getJds, subscribeJds } from '@/lib/jd';
 import { getRecentActivity, formatActivityTime, type Activity } from '@/lib/activity';
 import { Button } from '@/components/ui/button';
-import { PageHeader } from '@/components/page-header';
-import { SectionHead } from '@/components/section-head';
 import { ErrorState } from '@/components/error-state';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
-// 今日(v4「今日驱动」IA + v10 交接式排程):调度决策由应用做好——
-// 第一件未完成的事放大为「现在」卡(唯一主 CTA),其余未完成项弱化为「接下来」,
-// 已完成项不再出现;全部完成给完成态。分类细节收进题库空间。
+// 今日 v11「驾驶舱」:首屏 = 朱砂 hero 面板(应用替你排程:第一件未完成事 = 唯一主 CTA,
+// 右侧大数字仪表)→ 横向计划时间线 → 预测/动态双栏 → 分类进度。
+// 与 v4~v10 的「白卡片行列表」彻底换构成;交接逻辑(现在/接下来/零值不出现)沿用 v10。
 
 interface CatEntry {
   slug: string;
@@ -41,56 +40,60 @@ interface PlanTask {
   description: string;
   active: boolean;
   count: number | null;
-  countTone?: 'warning' | 'primary';
   to: string;
-  cta?: string;
-  right?: ReactNode;
+  cta: string;
 }
 
-// 「现在」卡:当前任务的唯一主行动,数字是版面主角
-function CurrentTaskCard({ task }: { task: PlanTask }) {
+// hero 右侧仪表 tile:大数字 + 术语,整块可点
+function MetricTile({ label, count, to, tone }: {
+  label: string;
+  count: number;
+  to: string;
+  tone?: 'dim';
+}) {
   return (
-    <div className="flex items-center gap-5 p-5">
-      <span className="w-8 flex-none text-center font-display text-3xl font-semibold tabular-nums text-primary" aria-hidden>
-        {task.index}
+    <Link
+      to={to}
+      className="group flex min-w-24 flex-col items-center rounded-xl border border-primary-foreground/25 px-5 py-3 transition-colors hover:bg-primary-foreground/10"
+    >
+      <span className={cn('font-display text-4xl font-semibold tabular-nums', tone === 'dim' ? 'text-primary-foreground/60' : 'text-primary-foreground')}>
+        {count}
       </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-baseline gap-2">
-          <span className="text-[11px] font-semibold tracking-widest text-primary">现在</span>
-          <span className="text-xs text-muted-foreground/70">先做这件事</span>
-        </div>
-        <div className="mt-0.5 font-display text-xl font-semibold text-foreground">{task.title}</div>
-        <div className="mt-1 text-xs text-muted-foreground">{task.description}</div>
-      </div>
-      {task.count != null && (
-        <span className={`font-display text-5xl font-semibold tabular-nums ${task.countTone === 'warning' ? 'text-warning' : task.countTone === 'primary' ? 'text-primary' : 'text-foreground'}`}>
-          {task.count}
-        </span>
-      )}
-      {task.right}
-      <Button asChild className="shrink-0">
-        <Link to={task.to}>{task.cta}</Link>
-      </Button>
-    </div>
+      <span className="mt-1 text-xs text-primary-foreground/75">{label}</span>
+    </Link>
   );
 }
 
-// 「接下来」行:弱化的后续任务,仍可单独进入
-function NextTaskRow({ task }: { task: PlanTask }) {
+// 横向计划时间线的一步
+function PlanStep({ task, state }: { task: PlanTask; state: 'done' | 'current' | 'next' }) {
   return (
     <Link
       to={task.to}
-      className="group flex items-center gap-4 px-5 py-2.5 transition-colors hover:bg-accent/60"
+      className={cn(
+        'group flex flex-col gap-1.5 rounded-xl bg-card p-4 text-left transition-colors',
+        state === 'current' ? 'ring-1 ring-primary' : 'hover:bg-accent/60',
+      )}
     >
-      <span className="w-8 flex-none text-center font-display text-sm tabular-nums text-muted-foreground/70" aria-hidden>
-        {task.index}
-      </span>
-      <div className="min-w-0 flex-1 text-sm text-muted-foreground">
-        {task.title}
-        {task.count != null && <span className="ml-2 tabular-nums">{task.count}</span>}
+      <div className="flex items-center gap-2">
+        <span className={cn(
+          'flex h-6 w-6 items-center justify-center rounded-full font-display text-xs font-semibold tabular-nums',
+          state === 'done' ? 'bg-success/15 text-success'
+            : state === 'current' ? 'bg-primary text-primary-foreground'
+            : 'bg-secondary text-muted-foreground',
+        )}>
+          {state === 'done' ? <Check className="size-3.5" aria-hidden /> : task.index}
+        </span>
+        <span className={cn('text-sm font-semibold', state === 'done' ? 'text-muted-foreground' : 'text-foreground')}>
+          {task.title}
+        </span>
+        <ChevronRight className={cn('ml-auto size-4 transition-transform group-hover:translate-x-0.5',
+          state === 'current' ? 'text-primary' : 'text-muted-foreground/50')} aria-hidden />
       </div>
-      {task.right}
-      <ChevronRight className="size-4 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5" aria-hidden />
+      <div className="text-xs text-muted-foreground">
+        {state === 'done' ? '已完成'
+          : task.count != null ? <span className="tabular-nums">{task.count} 道</span>
+          : '可完善'}
+      </div>
     </Link>
   );
 }
@@ -204,146 +207,178 @@ export function TodayPage() {
   const tasks: PlanTask[] = [
     {
       key: 'review', index: '01', title: '复习', active: totalDue > 0,
-      description: '之前学过、今天到该再看一遍的题(SM-2 到期)',
-      count: totalDue, countTone: 'warning', to: '/session?focus=due', cta: '开始复习',
+      description: '之前学过、今天该再看的题(SM-2 到期)',
+      count: totalDue, to: '/session?focus=due', cta: '开始复习',
     },
     {
       key: 'learn', index: '02', title: '学习新题', active: totalRemaining > 0,
       description: '从没学过的题,按分类顺序补位',
-      count: totalRemaining, countTone: 'primary', to: '/session?focus=new', cta: '开始学习',
+      count: totalRemaining, to: '/session?focus=new', cta: '开始学习',
     },
     {
       key: 'audit', index: '03', title: '审核', active: pendingCount > 0,
       description: 'AI 生成的题,人工把关后才进练习队列',
-      count: pendingCount, countTone: 'warning', to: '/library?tab=review', cta: '去审核',
+      count: pendingCount, to: '/library?tab=review', cta: '去审核',
     },
     {
       key: 'job', index: '04', title: '求职材料', active: jobMissing,
       description: 'JD 与简历,按 JD 生成深挖题的前提',
       count: null, to: '/profile', cta: jobMissing ? '去完善' : '查看',
-      right: (
-        <span className="hidden shrink-0 text-sm tabular-nums text-muted-foreground sm:inline">
-          JD {jds.length}{profile?.resume.trim() ? ` · 简历 ${profile.resume.trim().length} 字` : ' · 简历未填'}
-        </span>
-      ),
     },
   ];
-  const currentTask = tasks.find((t) => t.active) ?? null;
-  const nextTasks = tasks.filter((t) => t.active && t !== currentTask);
+  const currentIndex = tasks.findIndex((t) => t.active);
+  const currentTask = currentIndex >= 0 ? tasks[currentIndex] : null;
   const allDone = !currentTask;
 
   if (!data && !error) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-7 w-32" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-48 w-full" />
+      <div className="h-full overflow-y-auto">
+        <div className="mx-auto max-w-6xl space-y-6 px-8 py-8">
+          <Skeleton className="h-7 w-40" />
+          <Skeleton className="h-56 w-full rounded-2xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
+        </div>
       </div>
     );
   }
   if (error) {
     return (
-      <div className="space-y-6">
-        <PageHeader title="今日" />
+      <div className="h-full overflow-y-auto p-8">
         <ErrorState message={error} onRetry={retry} />
       </div>
     );
   }
 
+  const heroKicker = allDone
+    ? '今日 · 全部完成'
+    : `现在 · 第 ${currentIndex + 1} / ${tasks.length} 件事`;
+
   return (
-    <div className="space-y-8">
-      <PageHeader
-        title="今日"
-        description={`${dateLabel(now)} · ${learnedTotal > 0 ? `已累计学习 ${learnedTotal} 道题` : '还没有学习记录'}${studyStats.streak > 1 ? ` · 连续学习 ${studyStats.streak} 天` : ''}${studyStats.practicedToday > 0 ? ` · 今天已练 ${studyStats.practicedToday} 题` : ''}`}
-        actions={
+    <div className="h-full overflow-y-auto">
+      <div className="mx-auto max-w-6xl space-y-7 px-8 py-8">
+
+        {/* 页头:标题 + 日期 + 学习足迹 */}
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">今日</h1>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {dateLabel(now)} · {learnedTotal > 0 ? `已累计学习 ${learnedTotal} 道题` : '还没有学习记录'}
+              {studyStats.streak > 1 && ` · 连续学习 ${studyStats.streak} 天`}
+              {studyStats.practicedToday > 0 && ` · 今天已练 ${studyStats.practicedToday} 题`}
+            </p>
+          </div>
           <Button variant="secondary" asChild>
             <Link to="/add">添加题目</Link>
           </Button>
-        }
-      />
+        </div>
 
-      {/* 今天的计划:交接式——「现在」卡是唯一主行动,其余弱化;全部完成给完成态 */}
-      <section>
-        <SectionHead title="计划" description="应用已按序排好,从第一件事开始;其余项可单独进入。" />
-        <div className="mt-2 divide-y divide-border rounded-lg bg-card">
-          {allDone ? (
-            <div className="flex flex-col items-center gap-2 px-5 py-10 text-center">
-              <div className="font-display text-xl font-semibold text-foreground">今天的计划已全部完成</div>
-              <p className="text-sm text-muted-foreground">休息一下,或者把学过的题再过一遍。</p>
-              <Button variant="secondary" size="sm" asChild className="mt-1">
-                <Link to="/session?force=all">再过一遍(全部题)</Link>
+        {/* 朱砂 hero:唯一主行动 + 大数字仪表 */}
+        <section className="relative overflow-hidden rounded-2xl bg-primary p-8 shadow-lg shadow-primary/25">
+          <div aria-hidden className="pointer-events-none absolute -right-20 -top-28 h-72 w-72 rounded-full bg-primary-foreground/10 blur-2xl" />
+          <div className="relative flex flex-wrap items-center justify-between gap-8">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold tracking-[0.22em] text-primary-foreground/75">{heroKicker}</p>
+              <h2 className="mt-2 font-display text-4xl font-bold tracking-tight text-primary-foreground">
+                {allDone ? '今天的计划做完了' : currentTask!.title}
+              </h2>
+              <p className="mt-2 max-w-md text-sm leading-relaxed text-primary-foreground/85">
+                {allDone ? '休息一下,或者把学过的题再过一遍。' : currentTask!.description}
+              </p>
+              <Button
+                asChild
+                className="mt-6 h-12 rounded-xl bg-background px-8 text-base font-semibold text-primary shadow-none hover:bg-background/90"
+              >
+                <Link to={allDone ? '/session?force=all' : currentTask!.to}>
+                  {allDone ? '再过一遍(全部题)' : currentTask!.cta}
+                </Link>
               </Button>
             </div>
-          ) : (
-            <>
-              {currentTask && <CurrentTaskCard task={currentTask} />}
-              {nextTasks.map((t) => <NextTaskRow key={t.key} task={t} />)}
-            </>
-          )}
-        </div>
-      </section>
+            <div className="flex shrink-0 items-center gap-3">
+              <MetricTile label="待复习" count={totalDue} to="/session?focus=due" tone={totalDue === 0 ? 'dim' : undefined} />
+              <MetricTile label="待学习" count={totalRemaining} to="/session?focus=new" tone={totalRemaining === 0 ? 'dim' : undefined} />
+              <MetricTile label="待审核" count={pendingCount} to="/library?tab=review" tone={pendingCount === 0 ? 'dim' : undefined} />
+            </div>
+          </div>
+          <p className="relative mt-7 text-right text-[11px] text-primary-foreground/60">本地优先 · 数据不上传</p>
+        </section>
 
-      {/* 复习预测:SM-2 未来 7 天的到期分布(有数据才出现) */}
-      {studyStats.weekTotal > 0 && (
+        {/* 计划时间线:四步横排,当前步高亮 */}
         <section>
-          <SectionHead
-            title="复习预测"
-            description="按每道题的记忆曲线到期时间统计,提前看到负荷。"
-            right={<span className="text-xs tabular-nums text-muted-foreground">未来 7 天 {studyStats.weekTotal} 题</span>}
-          />
-          <div className="mt-3 grid grid-cols-7 gap-2">
-            {studyStats.buckets.map((n, i) => {
-              const d = new Date();
-              d.setDate(d.getDate() + i);
-              const label = i === 0 ? '今天' : i === 1 ? '明天' : `周${'日一二三四五六'[d.getDay()]}`;
-              const max = Math.max(...studyStats.buckets, 1);
-              const isPeak = n > 0 && n === max;
-              return (
-                <div key={i} className="flex flex-col items-center gap-1.5">
-                  <span className={`font-display text-xl font-semibold tabular-nums ${isPeak ? 'text-primary' : n > 0 ? 'text-foreground' : 'text-foreground/30'}`}>{n}</span>
-                  <div className="flex h-12 w-full items-end rounded-sm bg-muted" aria-hidden>
-                    <div className="w-full rounded-sm bg-primary/70" style={{ height: `${Math.round((n / max) * 100)}%` }} />
-                  </div>
-                  <span className="text-[11px] text-muted-foreground">{label}</span>
-                </div>
-              );
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {tasks.map((t) => {
+              const idx = tasks.indexOf(t);
+              const state = !t.active ? 'done' : idx === currentIndex ? 'current' : 'next';
+              return <PlanStep key={t.key} task={t} state={allDone ? 'done' : state} />;
             })}
           </div>
         </section>
-      )}
 
-      {/* 题库进度:学习中/未开始 */}
-      {learning.length > 0 && (
-        <section>
-          <SectionHead title="学习中" />
-          <div className="mt-2 rounded-lg bg-card divide-y divide-border">
-            {learning.map((e) => renderCatRow(e))}
-          </div>
-        </section>
-      )}
-      {notStarted.length > 0 && (
-        <section>
-          <SectionHead title="未开始" />
-          <div className="mt-2 rounded-lg bg-card divide-y divide-border">
-            {notStarted.map((e) => renderCatRow(e))}
-          </div>
-        </section>
-      )}
+        {/* 预测 + 动态 双栏 */}
+        <div className="grid gap-6 lg:grid-cols-5">
+          {studyStats.weekTotal > 0 && (
+            <section className="lg:col-span-3">
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-sm font-semibold tracking-wide text-foreground">复习预测</h2>
+                <span className="text-xs tabular-nums text-muted-foreground">未来 7 天 {studyStats.weekTotal} 题</span>
+              </div>
+              <div className="mt-3 grid grid-cols-7 gap-2 rounded-xl bg-card p-4">
+                {studyStats.buckets.map((n, i) => {
+                  const d = new Date();
+                  d.setDate(d.getDate() + i);
+                  const label = i === 0 ? '今天' : i === 1 ? '明天' : `周${'日一二三四五六'[d.getDay()]}`;
+                  const max = Math.max(...studyStats.buckets, 1);
+                  const isPeak = n > 0 && n === max;
+                  return (
+                    <div key={i} className="flex flex-col items-center gap-1.5">
+                      <span className={cn('font-display text-lg font-semibold tabular-nums', isPeak ? 'text-primary' : n > 0 ? 'text-foreground' : 'text-foreground/30')}>{n}</span>
+                      <div className="flex h-16 w-full items-end rounded-sm bg-muted" aria-hidden>
+                        <div className="w-full rounded-sm bg-primary/70" style={{ height: `${Math.round((n / max) * 100)}%` }} />
+                      </div>
+                      <span className="text-[11px] text-muted-foreground">{label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
-      {/* 最近动态 */}
-      <section>
-        <SectionHead title="最近动态" />
-        {activity.length === 0 ? (
-          <div className="mt-1 flex items-center gap-3 rounded-md bg-secondary/60 px-4 py-4 text-sm text-muted-foreground">
-            <Inbox className="size-4 text-muted-foreground/50" aria-hidden />
-            还没有动态。从上面的「计划」开始第一道题。
-          </div>
-        ) : (
-          <div className="mt-2 rounded-lg bg-card divide-y divide-border">
-            {activity.map((item, i) => <ActivityRow key={`${item.kind}-${item.time}-${i}`} item={item} />)}
+          <section className={studyStats.weekTotal > 0 ? 'lg:col-span-2' : 'lg:col-span-5'}>
+            <h2 className="text-sm font-semibold tracking-wide text-foreground">最近动态</h2>
+            {activity.length === 0 ? (
+              <div className="mt-3 flex items-center gap-3 rounded-xl bg-card px-4 py-4 text-sm text-muted-foreground">
+                <Inbox className="size-4 text-muted-foreground/50" aria-hidden />
+                还没有动态。从上面开始第一件事。
+              </div>
+            ) : (
+              <div className="mt-3 rounded-xl bg-card py-1">
+                {activity.slice(0, 6).map((item, i) => <ActivityRow key={`${item.kind}-${item.time}-${i}`} item={item} />)}
+              </div>
+            )}
+          </section>
+        </div>
+
+        {/* 题库进度:学习中/未开始 */}
+        {(learning.length > 0 || notStarted.length > 0) && (
+          <div className="grid gap-6 lg:grid-cols-2">
+            {learning.length > 0 && (
+              <section>
+                <h2 className="text-sm font-semibold tracking-wide text-foreground">学习中</h2>
+                <div className="mt-3 rounded-xl bg-card py-1">
+                  {learning.map((e) => renderCatRow(e))}
+                </div>
+              </section>
+            )}
+            {notStarted.length > 0 && (
+              <section>
+                <h2 className="text-sm font-semibold tracking-wide text-foreground">未开始</h2>
+                <div className="mt-3 rounded-xl bg-card py-1">
+                  {notStarted.map((e) => renderCatRow(e))}
+                </div>
+              </section>
+            )}
           </div>
         )}
-      </section>
+      </div>
     </div>
   );
 }
@@ -368,15 +403,13 @@ function renderCatRow(e: CatEntry) {
         </div>
       </div>
       {!empty && (
-        <div className="hidden w-36 sm:block" aria-hidden>
+        <div className="hidden w-32 sm:block" aria-hidden>
           <div className="h-0.5 w-full bg-muted">
             <div className="h-0.5 bg-primary/70" style={{ width: `${pct}%` }} />
           </div>
         </div>
       )}
-      <span className="flex items-center gap-1 text-xs text-muted-foreground transition-colors group-hover:text-primary">
-        进入 <ChevronRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
-      </span>
+      <ChevronRight className="size-4 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden />
     </Link>
   );
 }
