@@ -26,7 +26,7 @@ export function PageHeader({ title, description, actions, back }: PageHeaderProp
       )}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
+          <h1 className="font-display text-lg font-semibold tracking-tight">{title}</h1>
           {description != null && (
             <p className="mt-0.5 text-[13px] text-muted-foreground">{description}</p>
           )}

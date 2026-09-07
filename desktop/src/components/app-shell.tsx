@@ -172,9 +172,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-svh w-full flex-col overflow-hidden bg-background text-foreground">
-      {/* 氛围层:烛光 + 纸纹(纯装饰) */}
-      <div className="app-atmosphere" aria-hidden />
-      <div className="relative z-10 flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1">
         {!immersive && sidebar}
         <div className="flex min-w-0 flex-1 flex-col">
           {!immersive && (

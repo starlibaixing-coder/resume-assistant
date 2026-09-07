@@ -323,7 +323,7 @@ export function QuizPage({ category }: { category?: string }) {
             </Badge>
           ))}
         </div>
-        <h1 className="mt-4 text-2xl font-semibold leading-relaxed tracking-tight text-foreground">
+        <h1 className="font-display mt-4 text-2xl font-semibold leading-relaxed tracking-tight text-foreground">
           {current.title}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">{current.focus}</p>
