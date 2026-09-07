@@ -50,7 +50,7 @@ function PlanRow({ index, title, description, count, countTone, to, right }: {
       to={to}
       className={`group flex items-center gap-4 border-b border-border py-3 transition-colors last:border-b-0 hover:bg-accent/40 ${zero ? 'opacity-60' : ''}`}
     >
-      <span className="w-5 flex-none text-center font-mono text-xs tabular-nums text-muted-foreground" aria-hidden>
+      <span className="w-6 flex-none text-center font-display text-sm tabular-nums text-primary" aria-hidden>
         {index}
       </span>
       <div className="min-w-0 flex-1">
@@ -58,7 +58,7 @@ function PlanRow({ index, title, description, count, countTone, to, right }: {
         <div className="mt-0.5 text-xs text-muted-foreground">{description}</div>
       </div>
       {count != null && (
-        <span className={`text-lg font-semibold tabular-nums ${countTone === 'warning' && count > 0 ? 'text-warning' : countTone === 'primary' && count > 0 ? 'text-primary' : 'text-foreground/35'}`}>
+        <span className={`font-display text-2xl font-semibold tabular-nums ${countTone === 'warning' && count > 0 ? 'text-warning' : countTone === 'primary' && count > 0 ? 'text-primary' : 'text-foreground/35'}`}>
           {count}
         </span>
       )}
@@ -210,7 +210,7 @@ export function TodayPage() {
       {/* 今天的计划:调度决策由应用做好,用户按序执行 */}
       <section>
         <SectionHead title="计划" description="按序执行即可;每项也可单独进入。" />
-        <div className="mt-1 border-t border-border">
+        <div className="stagger mt-1 border-t border-border">
           <PlanRow
             index="01"
             title="复习"
@@ -268,9 +268,10 @@ export function TodayPage() {
               d.setDate(d.getDate() + i);
               const label = i === 0 ? '今天' : i === 1 ? '明天' : `周${'日一二三四五六'[d.getDay()]}`;
               const max = Math.max(...studyStats.buckets, 1);
+              const isPeak = n > 0 && n === max;
               return (
                 <div key={i} className="flex flex-col items-center gap-1.5">
-                  <span className={`text-sm font-semibold tabular-nums ${n > 0 ? 'text-foreground' : 'text-foreground/30'}`}>{n}</span>
+                  <span className={`font-display text-xl font-semibold tabular-nums ${isPeak ? 'text-primary' : n > 0 ? 'text-foreground' : 'text-foreground/30'}`}>{n}</span>
                   <div className="flex h-12 w-full items-end rounded-sm bg-muted" aria-hidden>
                     <div className="w-full rounded-sm bg-primary/70" style={{ height: `${Math.round((n / max) * 100)}%` }} />
                   </div>

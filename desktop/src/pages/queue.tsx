@@ -105,7 +105,7 @@ export function QueuePage({ category }: { category: string }) {
         <section>
           <div className="grid grid-cols-2 divide-x divide-border border-y border-border">
             <div className="flex flex-col items-center gap-1.5 py-8 text-center">
-              <div className={`text-4xl font-semibold leading-none tabular-nums tracking-tight ${dueCount > 0 ? 'text-warning' : 'text-foreground/30'}`}>
+              <div className={`font-display text-5xl font-semibold leading-none tabular-nums tracking-tight ${dueCount > 0 ? 'text-warning' : 'text-foreground/30'}`}>
                 {dueCount}
               </div>
               <div className="text-xs text-muted-foreground">
@@ -116,7 +116,7 @@ export function QueuePage({ category }: { category: string }) {
               </div>
             </div>
             <div className="flex flex-col items-center gap-1.5 py-8 text-center">
-              <div className={`text-4xl font-semibold leading-none tabular-nums tracking-tight ${newCount > 0 ? 'text-primary' : 'text-foreground/30'}`}>
+              <div className={`font-display text-5xl font-semibold leading-none tabular-nums tracking-tight ${newCount > 0 ? 'text-primary' : 'text-foreground/30'}`}>
                 {newCount}
               </div>
               <div className="text-xs text-muted-foreground">

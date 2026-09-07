@@ -24,9 +24,9 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-// meta 行进度计数(如「1 / 50」);限定 main 内容区,避开侧栏分类计数的 font-mono
+// meta 行进度计数(如「1 / 50」);v6 计数用显示字体,限定 main 内容区首个
 function counter(page: import('@playwright/test').Page) {
-  return page.locator('main span.font-mono').first();
+  return page.locator('main span.font-display').first();
 }
 
 test('键盘流:空格翻答案,数字键评分推进', async ({ page }) => {

@@ -139,7 +139,7 @@ test('添加题目页:手动保存 → 直接进我的题库(不经待审核),�
 
   // toast + 题出现在我的题库题目列表(无待审核步骤)+ 来源徽标
   await expect(page.getByText('已保存到我的题库')).toBeVisible();
-  await page.goto('/#/my/browse');
+  await expect(page).toHaveURL(/library\?category=my/);
   await expect(page.getByText('手写一个防抖函数要注意什么?').first()).toBeVisible({ timeout: 5_000 });
   await expect(page.getByText('面试手写').first()).toBeVisible();
   await expect(page.getByText('手动', { exact: true }).first()).toBeVisible();

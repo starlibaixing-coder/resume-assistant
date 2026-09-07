@@ -288,8 +288,9 @@ export function QuizPage({ category }: { category?: string }) {
       {/* 会话进度行 */}
       <div className="border-b border-border pb-3">
         <div className="flex justify-between items-center text-sm text-muted-foreground">
-          <span className="font-mono tabular-nums">
-            {queueIdx + 1} / {total}
+          <span className="font-display text-lg tabular-nums text-foreground">
+            {queueIdx + 1}
+            <span className="text-muted-foreground"> / {total}</span>
             {requeue.length > 0 && (
               <span className="ml-1.5 text-[11px] text-warning">(含 {requeue.length} 题重练)</span>
             )}
@@ -313,7 +314,7 @@ export function QuizPage({ category }: { category?: string }) {
       </div>
 
       {/* 题面 */}
-      <div className="flex flex-1 flex-col justify-center py-5">
+      <div key={current.id} className="page-enter flex flex-1 flex-col justify-center py-5">
         <div className="flex flex-wrap gap-2">
           <Badge variant="outline">{current.difficulty}</Badge>
           {current.tags.map((t) => (
@@ -322,7 +323,7 @@ export function QuizPage({ category }: { category?: string }) {
             </Badge>
           ))}
         </div>
-        <h1 className="mt-3 text-xl font-semibold leading-snug tracking-tight text-foreground">
+        <h1 className="mt-4 text-2xl font-semibold leading-relaxed tracking-tight text-foreground">
           {current.title}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">{current.focus}</p>
@@ -361,7 +362,7 @@ export function QuizPage({ category }: { category?: string }) {
             <Button
               variant="outline"
               title="快捷键 1"
-              className="h-11 justify-between border-destructive/40 px-4 font-medium text-destructive hover:bg-destructive/10 hover:text-destructive"
+              className="h-12 justify-between rounded-lg border-destructive/40 px-4 text-base font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive"
               onClick={() => handleRate('不会')}
             >
               不会
@@ -370,7 +371,7 @@ export function QuizPage({ category }: { category?: string }) {
             <Button
               variant="outline"
               title="快捷键 2"
-              className="h-11 justify-between border-warning/40 px-4 font-medium text-warning hover:bg-warning/10 hover:text-warning"
+              className="h-12 justify-between rounded-lg border-warning/40 px-4 text-base font-semibold text-warning hover:bg-warning/10 hover:text-warning"
               onClick={() => handleRate('模糊')}
             >
               模糊
@@ -379,7 +380,7 @@ export function QuizPage({ category }: { category?: string }) {
             <Button
               variant="outline"
               title="快捷键 3"
-              className="h-11 justify-between border-success/40 px-4 font-medium text-success hover:bg-success/10 hover:text-success"
+              className="h-12 justify-between rounded-lg border-success/40 px-4 text-base font-semibold text-success hover:bg-success/10 hover:text-success"
               onClick={() => handleRate('掌握')}
             >
               掌握
@@ -388,7 +389,7 @@ export function QuizPage({ category }: { category?: string }) {
           </div>
         ) : (
           <div className="mx-auto max-w-3xl space-y-1.5">
-            <Button onClick={() => setRevealed(true)} className="h-11 w-full justify-between px-4 font-medium">
+            <Button onClick={() => setRevealed(true)} className="h-12 w-full justify-between rounded-lg px-4 text-base font-semibold shadow-lg shadow-primary/20">
               我想好了,看答案
               <Kbd>空格</Kbd>
             </Button>

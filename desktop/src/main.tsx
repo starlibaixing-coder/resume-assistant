@@ -7,6 +7,7 @@ import { isTauri } from '@/lib/llm-config';
 import { runSmoke } from '@/lib/smoke';
 import { logger } from '@/lib/logger';
 import { syncOfficialBank } from '@/lib/officialbank';
+import '@fontsource-variable/fraunces';
 import './index.css';
 
 // 启动分流:
@@ -46,7 +47,7 @@ async function boot(): Promise<void> {
     ) : null;
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <ThemeProvider defaultTheme="light" storageKey="quiz-theme">
+      <ThemeProvider defaultTheme="dark" storageKey="quiz-theme">
         {banner}
         <App />
       </ThemeProvider>

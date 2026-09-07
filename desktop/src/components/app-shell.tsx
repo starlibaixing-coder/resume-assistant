@@ -39,7 +39,7 @@ function NavItem({ to, icon: Icon, label, active, count, badge, shortcut }: NavI
       className={cn(
         'flex h-7 items-center gap-2 rounded-md px-2 text-[13px] transition-colors',
         active
-          ? 'bg-accent font-medium text-accent-foreground'
+          ? 'bg-primary/12 font-medium text-primary'
           : 'text-sidebar-foreground hover:bg-accent/60 hover:text-accent-foreground',
       )}
     >
@@ -172,7 +172,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-svh w-full flex-col overflow-hidden bg-background text-foreground">
-      <div className="flex min-h-0 flex-1">
+      {/* 氛围层:烛光 + 纸纹(纯装饰) */}
+      <div className="app-atmosphere" aria-hidden />
+      <div className="relative z-10 flex min-h-0 flex-1">
         {!immersive && sidebar}
         <div className="flex min-w-0 flex-1 flex-col">
           {!immersive && (

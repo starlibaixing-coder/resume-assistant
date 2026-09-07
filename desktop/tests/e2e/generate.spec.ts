@@ -182,7 +182,7 @@ test('今日页:计划条目 + 学习新题深链到混排会话', async ({ page
   // 学习新题行 → 全库混排会话(focus=new)
   await learnRow.click();
   await expect(page).toHaveURL(/session\?focus=new/);
-  await expect(page.locator('main span.font-mono').first()).toHaveText(/^1 \/ \d+$/);
+  await expect(page.locator('main span.font-display').first()).toHaveText(/^1 \/ \d+$/);
 });
 
 test('官方题题目列表:添加到我的题库 → toast + 标识 + 副本进我的库(来源官方复制)', async ({ page }) => {
