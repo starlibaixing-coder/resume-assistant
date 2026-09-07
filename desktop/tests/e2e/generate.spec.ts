@@ -82,6 +82,8 @@ test('AI 生成:生成 → 提交审核 → 通过 → 我的题库可见 → �
   await page.goto('/#/my');
   await page.getByRole('link', { name: '添加题目' }).first().click();
   await expect(page.getByRole('heading', { name: '添加题目' })).toBeVisible();
+  // v7 模式卡片:先切到 AI 生成
+  await page.locator('[data-add-mode="ai"]').click();
   const aiSection = page.locator('[data-add-section="ai"]');
   await aiSection.getByPlaceholder(/React Hooks/).fill('React Hooks 深入');
   await aiSection.getByRole('button', { name: '生成题目', exact: true }).click();
@@ -121,6 +123,7 @@ test('AI 生成:生成 → 提交审核 → 通过 → 我的题库可见 → �
 test('待审核:逐题拒绝不进我的题库', async ({ page }) => {
   await page.goto('/#/my');
   await page.getByRole('link', { name: '添加题目' }).first().click();
+  await page.locator('[data-add-mode="ai"]').click();
   const aiSection = page.locator('[data-add-section="ai"]');
   await aiSection.getByPlaceholder(/React Hooks/).fill('Event Loop');
   await aiSection.getByRole('button', { name: '生成题目', exact: true }).click();

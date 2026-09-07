@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { CheckCircle2, ChevronDown, ChevronRight, Pencil, Sparkles, Target, type LucideIcon } from 'lucide-react';
 import { generateQuestions, generateJdQuestions, type GeneratedQuestion } from '@/lib/generate';
 import { getProfile } from '@/lib/profile';
 import { getJds, type Jd } from '@/lib/jd';
@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 // 添加题目页(2026-09-03 弃弹窗改独立路由 /add):三种方式——手动(直接 approved,
 // 人写即人审)/ AI 生成 / 按 JD 生成(后两者先进待审核,ADR-10)。
@@ -321,13 +322,18 @@ export function AddQuestionPage() {
   const [params] = useSearchParams();
   const jdParam = params.get('jd');
   const fixedJd = jdParam ? getJds().find((j) => String(j.id) === jdParam) ?? null : null;
+  // 模式卡片:一次只呈现一条出题流程;深链 ?jd= 自动定位「按 JD 生成」
+  const [mode, setMode] = useState<AddQuestionTab>(fixedJd ? 'jd' : 'manual');
   const [jdPick, setJdPick] = useState<Jd | null>(fixedJd);
   const jdSectionRef = useRef<HTMLDivElement | null>(null);
 
   // JD 深链:同步选中并滚动到「按 JD 生成」段
   useEffect(() => {
     setJdPick(fixedJd);
-    if (fixedJd) jdSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (fixedJd) {
+      setMode('jd');
+      jdSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }, [fixedJd]);
 
   const goBack = () => {
@@ -336,37 +342,99 @@ export function AddQuestionPage() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-10">
+    <div className="space-y-6">
       <PageHeader
         title={fixedJd ? `按 JD 生成题目 · ${fixedJd.title.trim() || '(未填标题)'}` : '添加题目'}
         description="手动写题保存即进我的题库;AI 与按 JD 生成的题先进待审核,通过后入队。"
         back={{ to: '/', label: '返回' }}
       />
 
-      <section data-add-section="manual" className="pb-10">
-        <SectionHead index="01" title="手动写题" description="保存后直接进我的题库。" />
-        <div className="mt-5">
+      {/* 模式卡片:三选一,当前流程高亮 */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <ModeCard
+          mode="manual"
+          active={mode === 'manual'}
+          icon={Pencil}
+          title="手动写题"
+          desc="自己写,保存即入库"
+          onSelect={() => setMode('manual')}
+        />
+        <ModeCard
+          mode="ai"
+          active={mode === 'ai'}
+          icon={Sparkles}
+          title="AI 生成"
+          desc="按知识点出一批题"
+          onSelect={() => setMode('ai')}
+        />
+        <ModeCard
+          mode="jd"
+          active={mode === 'jd'}
+          icon={Target}
+          title="按 JD 生成"
+          desc="对着目标岗位出题"
+          onSelect={() => setMode('jd')}
+        />
+      </div>
+
+      {/* 当前模式唯一呈现,页面聚焦一条流程 */}
+      {mode === 'manual' && (
+        <section data-add-section="manual" className="page-enter space-y-4">
+          <SectionHead index="01" title="手动写题" description="保存后直接进我的题库。" />
           <ManualAddForm onSaved={(id) => {
             toast.success('已保存到我的题库', { description: id });
             navigate('/my/browse');
           }} />
-        </div>
-      </section>
+        </section>
+      )}
 
-      <section data-add-section="ai" className="border-t border-border pb-10 pt-10">
-        <SectionHead index="02" title="AI 生成" description="按知识点出一批题,先进待审核。" />
-        <div className="mt-5">
+      {mode === 'ai' && (
+        <section data-add-section="ai" className="page-enter space-y-4">
+          <SectionHead index="02" title="AI 生成" description="按知识点出一批题,先进待审核。" />
           <GenerateForm jd={null} onCancel={goBack} />
-        </div>
-      </section>
+        </section>
+      )}
 
-      <section data-add-section="jd" ref={jdSectionRef} className="border-t border-border pt-10">
-        <SectionHead index="03" title="按 JD 生成" description="对着目标 JD 的技术要求出题,先进待审核。" />
-        <div className="mt-5 space-y-4">
+      {mode === 'jd' && (
+        <section data-add-section="jd" ref={jdSectionRef} className="page-enter space-y-4">
+          <SectionHead index="03" title="按 JD 生成" description="对着目标 JD 的技术要求出题,先进待审核。" />
           <JdPicker value={jdPick} onChange={setJdPick} />
           {jdPick && <GenerateForm jd={jdPick} onCancel={goBack} />}
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }
+
+// 模式卡片:可选中的流程入口卡
+function ModeCard({ mode, active, icon: Icon, title, desc, onSelect }: {
+  mode: string;
+  active: boolean;
+  icon: LucideIcon;
+  title: string;
+  desc: string;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      data-add-mode={mode}
+      aria-pressed={active}
+      onClick={onSelect}
+      className={cn(
+        'flex cursor-pointer flex-col gap-1 rounded-lg border p-3.5 text-left transition-colors',
+        active
+          ? 'border-primary bg-primary/5'
+          : 'border-border hover:border-primary/40 hover:bg-accent/40',
+      )}
+    >
+      <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+        <Icon className={cn('size-4', active ? 'text-primary' : 'text-muted-foreground')} aria-hidden />
+        {title}
+        {active && <CheckCircle2 className="ml-auto size-4 text-primary" aria-hidden />}
+      </span>
+      <span className="text-xs text-muted-foreground">{desc}</span>
+    </button>
+  );
+}
+
