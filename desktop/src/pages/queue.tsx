@@ -83,7 +83,7 @@ export function QueuePage({ category }: { category: string }) {
       <PageHeader
         title={cat?.name || category}
         actions={
-          <Button size="sm" variant="outline" asChild>
+          <Button size="sm" variant="secondary" asChild>
             <Link to="/add">
               <Plus className="size-3.5" aria-hidden />
               添加题目
@@ -94,7 +94,7 @@ export function QueuePage({ category }: { category: string }) {
 
       {/* 双巨号数字对开 + 行动:版面主角是"今天还剩多少" */}
       {cleared ? (
-        <div className="flex flex-col items-center gap-4 border-y border-border py-16 text-center">
+        <div className="flex flex-col items-center gap-4 bg-card py-16 text-center">
           <CheckCircle2 className="size-10 text-success" aria-hidden />
           <div className="text-lg font-semibold">今天的都学完了,没有待复习的题</div>
           <Button asChild size="lg">
@@ -103,7 +103,7 @@ export function QueuePage({ category }: { category: string }) {
         </div>
       ) : (
         <section>
-          <div className="grid grid-cols-2 divide-x divide-border border-y border-border">
+          <div className="grid grid-cols-2 divide-x divide-border bg-card">
             <div className="flex flex-col items-center gap-1.5 py-8 text-center">
               <div className={`font-display text-5xl font-semibold leading-none tabular-nums tracking-tight ${dueCount > 0 ? 'text-warning' : 'text-foreground/30'}`}>
                 {dueCount}
@@ -111,7 +111,7 @@ export function QueuePage({ category }: { category: string }) {
               <div className="text-xs text-muted-foreground">
                 题待复习
                 {dueCount > 0 && (
-                  <Link to={`/${category}/browse?status=due`} className="ml-1 text-primary hover:underline">是哪些题</Link>
+                  <Link to={`/${category}/browse?status=due`} className="ml-1 text-primary hover:opacity-80">是哪些题</Link>
                 )}
               </div>
             </div>
@@ -122,7 +122,7 @@ export function QueuePage({ category }: { category: string }) {
               <div className="text-xs text-muted-foreground">
                 题待学习
                 {newCount > 0 && (
-                  <Link to={`/${category}/browse?status=unseen`} className="ml-1 text-primary hover:underline">是哪些题</Link>
+                  <Link to={`/${category}/browse?status=unseen`} className="ml-1 text-primary hover:opacity-80">是哪些题</Link>
                 )}
               </div>
             </div>
@@ -159,12 +159,12 @@ export function QueuePage({ category }: { category: string }) {
       {/* 模块目录:细线行 */}
       <section>
         <div className="text-xs font-medium text-muted-foreground">模块浏览</div>
-        <div className="mt-2 rounded-lg border border-border bg-card divide-y divide-border">
+        <div className="mt-2 rounded-lg bg-card divide-y divide-border">
           {cat?.modules.map((mod) => (
             <Link
               key={mod.id}
               to={`/${category}/browse?m=${mod.id}`}
-              className="group flex items-center gap-4 border-b border-border py-3.5 transition-colors last:border-b-0 hover:bg-accent/40"
+              className="group flex items-center gap-4 border-b border-border py-3.5 transition-colors last:border-b-0 hover:bg-accent/60"
             >
               <span className="w-8 flex-none font-mono text-xs tabular-nums text-muted-foreground">
                 {String(mod.id).padStart(2, '0')}

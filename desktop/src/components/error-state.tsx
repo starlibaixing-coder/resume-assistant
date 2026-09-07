@@ -24,7 +24,7 @@ export function ErrorState({
       )}
       {onRetry && (
         <div className="pt-1">
-          <Button size="sm" variant="outline" onClick={onRetry}>
+          <Button size="sm" variant="secondary" onClick={onRetry}>
             重试
           </Button>
         </div>

@@ -316,7 +316,7 @@ export function QuizPage({ category }: { category?: string }) {
       {/* 题面 */}
       <div key={current.id} className="page-enter flex flex-1 flex-col justify-center py-5">
         <div className="flex flex-wrap gap-2">
-          <Badge variant="outline">{current.difficulty}</Badge>
+          <Badge variant="secondary">{current.difficulty}</Badge>
           {current.tags.map((t) => (
             <Badge key={t} variant="secondary">
               {t}
@@ -360,7 +360,7 @@ export function QuizPage({ category }: { category?: string }) {
         {revealed ? (
           <div className="mx-auto grid max-w-3xl grid-cols-3 gap-2">
             <Button
-              variant="outline"
+              variant="secondary"
               title="快捷键 1"
               className="h-12 justify-between rounded-lg border-destructive/40 px-4 text-base font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive"
               onClick={() => handleRate('不会')}
@@ -369,7 +369,7 @@ export function QuizPage({ category }: { category?: string }) {
               <Kbd>1</Kbd>
             </Button>
             <Button
-              variant="outline"
+              variant="secondary"
               title="快捷键 2"
               className="h-12 justify-between rounded-lg border-warning/40 px-4 text-base font-semibold text-warning hover:bg-warning/10 hover:text-warning"
               onClick={() => handleRate('模糊')}
@@ -378,7 +378,7 @@ export function QuizPage({ category }: { category?: string }) {
               <Kbd>2</Kbd>
             </Button>
             <Button
-              variant="outline"
+              variant="secondary"
               title="快捷键 3"
               className="h-12 justify-between rounded-lg border-success/40 px-4 text-base font-semibold text-success hover:bg-success/10 hover:text-success"
               onClick={() => handleRate('掌握')}
@@ -491,15 +491,15 @@ function SessionDoneState({ scopeName, total, onReviewAll }: {
   const { immersive } = useImmersive();
   return (
     <div className={cn('mx-auto w-full', immersive ? 'max-w-4xl' : 'max-w-3xl')}>
-      <div className="flex flex-col items-center gap-3 border-y border-border py-24 text-center">
+      <div className="flex flex-col items-center gap-3 bg-card py-24 text-center">
         <CheckCircle2 className="size-10 text-success" aria-hidden />
         <div className="text-2xl font-bold tracking-tight">今日练习已完成</div>
         <p className="text-sm text-muted-foreground">{scopeName}没有待复习和待学习的题了。</p>
         <div className="mt-3 flex flex-col items-center gap-3">
           {total > 0 && <Button onClick={onReviewAll}>再过一遍(全部题)</Button>}
           <div className="flex items-center gap-4 text-sm">
-            <Link to="/" className="text-primary hover:underline">回到今日</Link>
-            <Link to="/library" className="text-primary hover:underline">去题库</Link>
+            <Link to="/" className="text-primary hover:opacity-80">回到今日</Link>
+            <Link to="/library" className="text-primary hover:opacity-80">去题库</Link>
           </div>
         </div>
       </div>
@@ -525,7 +525,7 @@ function RoundDoneState({
   const catNameOf = (slug: string) => (slug === 'my' ? '我的题库' : slug);
   return (
     <div className={cn('mx-auto w-full', immersive ? 'max-w-4xl' : 'max-w-3xl')}>
-      <div className="border-y border-border py-12 text-center">
+      <div className="bg-card py-12 text-center">
         <CheckCircle2 className="mx-auto size-10 text-success" aria-hidden />
         <div className="mt-3 text-2xl font-bold tracking-tight">
           本轮完成,学了 {items.length} 道题{mastered > 0 ? `,掌握 ${mastered} 道` : ''}
@@ -544,8 +544,8 @@ function RoundDoneState({
               <Undo2 className="size-3.5" aria-hidden />
               撤销最后一题
             </Button>
-            <Link to="/" className="text-primary hover:underline">回到今日</Link>
-            <Link to="/library" className="text-primary hover:underline">去题库</Link>
+            <Link to="/" className="text-primary hover:opacity-80">回到今日</Link>
+            <Link to="/library" className="text-primary hover:opacity-80">去题库</Link>
           </div>
         </div>
       </div>

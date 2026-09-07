@@ -176,7 +176,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {!immersive && sidebar}
         <div className="flex min-w-0 flex-1 flex-col">
           {!immersive && (
-            <div data-app-nav className="flex h-11 shrink-0 items-center gap-1 border-b border-border bg-background px-2">
+            <div data-app-nav className="flex h-11 shrink-0 items-center gap-1 bg-background px-2">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -229,7 +229,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </div>
       {!immersive && (
-        <footer className="flex h-7 shrink-0 items-center justify-between border-t border-border bg-background px-3 text-[11px] text-muted-foreground">
+        <footer className="flex h-7 shrink-0 items-center justify-between bg-background px-3 text-[11px] text-muted-foreground">
           <span className="tabular-nums">
             题库 {totalQuestions} · 待复习 {todoCounts.due} · 待学习 {todoCounts.unseen} · 待审核 {pendingCount}
           </span>

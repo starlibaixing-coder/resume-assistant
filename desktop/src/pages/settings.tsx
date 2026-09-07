@@ -233,7 +233,7 @@ export function SettingsPage() {
           {/* 操作:无改动时保存禁用;测试连接结果就近显示(语义色) */}
           <div className="flex flex-wrap items-center gap-2 pt-1">
             <Button onClick={handleSave} disabled={saving || !llmDirty}>{saving ? '保存中…' : '保存 LLM 配置'}</Button>
-            <Button variant="outline" onClick={handleTest} disabled={testing}>
+            <Button variant="secondary" onClick={handleTest} disabled={testing}>
               {testing ? '测试中…' : '测试连接'}
             </Button>
             {status && (
@@ -258,7 +258,7 @@ export function SettingsPage() {
                 {lastSynced ? `上次同步 ${new Date(lastSynced).toLocaleString()}` : '尚未同步(仅包内快照)'}
               </div>
             </div>
-            <Button size="sm" variant="outline" disabled={syncing} onClick={handleSyncOfficial}>
+            <Button size="sm" variant="secondary" disabled={syncing} onClick={handleSyncOfficial}>
               {syncing ? '同步中…' : '同步官方题库'}
             </Button>
           </div>
@@ -276,7 +276,7 @@ export function SettingsPage() {
                 <div className="flex gap-2">
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant="secondary"
                     disabled={progressCount === 0}
                     onClick={() => setConfirm({ kind: 'progress', category: c.slug, name: c.name })}
                   >
@@ -284,7 +284,7 @@ export function SettingsPage() {
                   </Button>
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant="secondary"
                     disabled={noteCount === 0}
                     onClick={() => setConfirm({ kind: 'notes', category: c.slug, name: c.name })}
                   >

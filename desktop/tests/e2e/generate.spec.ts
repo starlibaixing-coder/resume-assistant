@@ -142,15 +142,15 @@ test('待审核:逐题拒绝不进我的题库', async ({ page }) => {
   await expect(page.getByText('暂无题目')).toBeVisible();
 });
 
-test('JD 管理:新增 JD → 行内「按 JD 生成」弹窗 → 提交审核(来源按 JD)', async ({ page }) => {
-  // 1) JD 管理:新增 JD(弹窗)
+test('JD 管理:内联新增 JD → 行内「按 JD 生成」→ 提交审核(来源按 JD)', async ({ page }) => {
+  // 1) JD 管理:内联创建(表单出现在列表顶部,不弹窗)
   await page.goto('/#/profile');
   await expect(page.getByRole('heading', { name: 'JD 管理' })).toBeVisible();
   await page.getByRole('button', { name: '新增 JD' }).first().click();
-  await page.getByRole('dialog').getByLabel('标题(可空)').fill('AI 应用工程师');
-  await page.getByRole('dialog').getByLabel('公司').fill('示例公司');
-  await page.getByRole('dialog').getByLabel('职位描述(JD)').fill('负责 RAG 检索系统的设计与优化,熟悉向量数据库与 embedding 调优,有 LLM 应用落地经验。');
-  await page.getByRole('dialog').getByRole('button', { name: '添加 JD', exact: true }).click();
+  await page.getByLabel('标题(可空)').fill('AI 应用工程师');
+  await page.getByLabel('公司').fill('示例公司');
+  await page.getByLabel('职位描述(JD)').fill('负责 RAG 检索系统的设计与优化,熟悉向量数据库与 embedding 调优,有 LLM 应用落地经验。');
+  await page.getByRole('button', { name: '添加 JD', exact: true }).click();
 
   // 2) JD 列表出现该条;行内「按 JD 生成题目」开弹窗(jd 模式,标题带 JD 名)
   await expect(page.getByText('AI 应用工程师').first()).toBeVisible();
@@ -249,20 +249,19 @@ test('设置页渲染:预设与 key 表单', async ({ page }) => {
   await expect(page.getByText('LLM 配置已保存').first()).toBeVisible();
 });
 
-test('官方题题目列表:统一筛选栏(模块/难度/状态)', async ({ page }) => {
-  await page.goto('/#/agent/browse');
+test('官方题题目列表:筛选(模块下拉 + 难度/状态芯片)', async ({ page }) => {
+  await page.goto('/#/library?category=agent');
   await expect(page.getByRole('combobox', { name: '模块' })).toBeVisible();
-  await expect(page.getByRole('combobox', { name: '难度' })).toBeVisible();
-  await expect(page.getByRole('combobox', { name: '状态' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '全部难度' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '全部状态' })).toBeVisible();
   await expect(page.getByText(/共 \d+ 题/)).toBeVisible();
   // 筛单个模块:出现该模块统计 + 进度条
   await page.getByRole('combobox', { name: '模块' }).click();
   await page.getByRole('option', { name: /· / }).first().click();
   await expect(page.getByText(/已学 \d+\/\d+/).first()).toBeVisible();
-  // 叠加难度筛选,计数变化
+  // 叠加难度芯片,计数变化
   const totalText = await page.getByText(/共 \d+ 题/).innerText();
-  await page.getByRole('combobox', { name: '难度' }).click();
-  await page.getByRole('option', { name: '高', exact: true }).click();
+  await page.getByRole('button', { name: '高', exact: true }).click();
   await expect(page.getByText(/共 \d+ 题/)).not.toHaveText(totalText);
   // 重置回全部
   await page.getByRole('button', { name: '重置' }).click();

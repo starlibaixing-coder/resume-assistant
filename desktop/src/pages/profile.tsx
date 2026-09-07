@@ -119,7 +119,7 @@ export function ProfilePage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>留在本页</AlertDialogCancel>
-            <Button variant="outline" onClick={confirmLeave}>
+            <Button variant="secondary" onClick={confirmLeave}>
               不保存,离开
             </Button>
           </AlertDialogFooter>
@@ -141,26 +141,109 @@ function JdManager() {
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<Jd | null>(null);
   const [deletingBusy, setDeletingBusy] = useState(false);
+  // 内联创建(v9 交互重做):新 JD 直接在列表顶部一张卡里写,不再弹窗
+  const saved = getProfile();
+  const [inlineTitle, setInlineTitle] = useState('');
+  const [inlineCompany, setInlineCompany] = useState('');
+  const [inlineContent, setInlineContent] = useState('');
+  const [inlineError, setInlineError] = useState<string | null>(null);
+  const [inlineSaving, setInlineSaving] = useState(false);
+
+  const openCreate = () => {
+    setInlineTitle('');
+    setInlineCompany(saved?.company ?? '');
+    setInlineContent('');
+    setInlineError(null);
+    setCreating(true);
+  };
+
+  const saveInline = async () => {
+    if (!inlineContent.trim()) {
+      setInlineError('JD 内容不能为空——贴上职位描述全文');
+      return;
+    }
+    setInlineSaving(true);
+    setInlineError(null);
+    try {
+      await addJd({ title: inlineTitle, company: inlineCompany, content: inlineContent });
+      toast.success('JD 已添加');
+      setCreating(false);
+      setInlineTitle('');
+      setInlineCompany('');
+      setInlineContent('');
+    } catch (e) {
+      setInlineError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setInlineSaving(false);
+    }
+  };
 
   return (
     <>
-      {jds.length > 0 && (
+      {jds.length > 0 && !creating && (
         <div className="mb-4 flex items-center justify-between gap-2">
           <div className="text-sm text-muted-foreground">{jds.length} 个 JD,最近使用的在前</div>
-          <Button size="sm" onClick={() => setCreating(true)}>
+          <Button size="sm" onClick={openCreate}>
             <Plus className="size-3.5" aria-hidden />
             新增 JD
           </Button>
         </div>
       )}
 
-      {jds.length === 0 ? (
+      {/* 内联创建:表单直接出现在列表顶部(v9 交互重做,替代弹窗) */}
+      {creating && (
+        <Card className="page-enter mb-4 flex flex-col gap-3 p-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-semibold text-foreground">新 JD</div>
+            <Button size="sm" variant="ghost" className="h-7 text-xs text-muted-foreground" onClick={() => setCreating(false)}>
+              取消
+            </Button>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="jd-inline-title">标题(可空)</Label>
+              <Input id="jd-inline-title" value={inlineTitle} onChange={(e) => setInlineTitle(e.target.value)} placeholder="如:AI 应用工程师" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="jd-inline-company">公司</Label>
+              <Input id="jd-inline-company" value={inlineCompany} onChange={(e) => setInlineCompany(e.target.value)} placeholder={saved?.company || '如:示例公司'} />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="jd-inline-content">
+                职位描述(JD) <span className="text-destructive" aria-hidden>*</span>
+              </Label>
+              <span className="text-[10px] tabular-nums text-muted-foreground">{charCount(inlineContent)}</span>
+            </div>
+            <Textarea
+              id="jd-inline-content"
+              value={inlineContent}
+              onChange={(e) => setInlineContent(e.target.value)}
+              placeholder="粘贴目标岗位的 JD 全文"
+              rows={8}
+            />
+          </div>
+          {inlineError && (
+            <Alert variant="destructive">
+              <AlertDescription className="whitespace-pre-wrap">{inlineError}</AlertDescription>
+            </Alert>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button onClick={saveInline} disabled={inlineSaving}>
+              {inlineSaving ? '保存中…' : '添加 JD'}
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {jds.length === 0 && !creating ? (
         <EmptyState
           icon={Inbox}
           title="还没有 JD"
           description="粘贴目标岗位的职位描述,从这条 JD 直接生成定向题。"
           action={
-            <Button size="sm" variant="outline" onClick={() => setCreating(true)}>
+            <Button size="sm" variant="secondary" onClick={openCreate}>
               <Plus className="size-3.5" aria-hidden />
               新增 JD
             </Button>
@@ -240,8 +323,9 @@ function JdManager() {
         </div>
       )}
 
+      {/* 创建已改为内联卡;此弹窗仅承担编辑 */}
       <JdEditDialog
-        open={creating || editing != null}
+        open={editing != null}
         jd={editing}
         onClose={() => {
           setCreating(false);
@@ -373,7 +457,7 @@ function JdEditDialog({ open, jd, onClose }: { open: boolean; jd: Jd | null; onC
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline">取消</Button>
+            <Button variant="secondary">取消</Button>
           </DialogClose>
           <Button onClick={handleSave} disabled={saving}>{saving ? '保存中…' : jd ? '保存修改' : '添加 JD'}</Button>
         </DialogFooter>

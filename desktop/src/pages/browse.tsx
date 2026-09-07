@@ -81,6 +81,42 @@ function FilterSelect({
   );
 }
 
+// 芯片筛选:可切换小圆片,替代下拉(交互重做:一次点击直达、状态一目了然)
+function ChipGroup({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: Array<{ key: string; label: string }>;
+}) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <div className="flex gap-1">
+        {options.map((o) => (
+          <button
+            key={o.key}
+            type="button"
+            aria-pressed={value === o.key}
+            onClick={() => onChange(o.key)}
+            className={`cursor-pointer rounded-full px-2.5 py-1 text-xs transition-colors ${
+              value === o.key
+                ? 'bg-primary font-medium text-primary-foreground'
+                : 'bg-secondary/80 text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function BrowsePage({ category }: { category: string }) {
   const { data, error, retry } = useQuestions();
   const [searchParams] = useSearchParams();
@@ -124,6 +160,38 @@ export function BrowsePage({ category }: { category: string }) {
     return html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
   };
   const hasNoteOf = (id: string): boolean => noteTextOf(id).length > 0;
+
+  // 键盘导航(v9 交互重做):↑↓ 移动选中行,E 编辑 / D 删除 / C 复制(官方题)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = document.activeElement as HTMLElement | null;
+      if (el?.closest('input, textarea, select, [contenteditable="true"], .cm-editor, .ProseMirror')) return;
+      if (document.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]')) return;
+      if (listQuestions.length === 0) return;
+      const idx = listQuestions.findIndex((x) => x.id === effectiveSelectedId);
+      const move = (d: number) => {
+        e.preventDefault();
+        const next = listQuestions[Math.min(Math.max(idx + d, 0), listQuestions.length - 1)];
+        setSelectedId(next.id);
+      };
+      if (e.key === 'ArrowDown') return move(1);
+      if (e.key === 'ArrowUp') return move(-1);
+      if (!effectiveSelectedId) return;
+      if ((e.key === 'e' || e.key === 'E') && isMy) {
+        e.preventDefault();
+        setEditingId(effectiveSelectedId);
+      } else if ((e.key === 'd' || e.key === 'D') && isMy) {
+        e.preventDefault();
+        setDeletingId(effectiveSelectedId);
+      } else if ((e.key === 'c' || e.key === 'C') && !isMy) {
+        const target = listQuestions.find((x) => x.id === effectiveSelectedId);
+        if (target && !copiedSourceIds.has(target.id)) void handleAddToMy(target);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
 
   // ⌘K 题目搜索深链:?qid= 直接选中该题
   const qidParam = searchParams.get('qid');
@@ -236,12 +304,12 @@ export function BrowsePage({ category }: { category: string }) {
         description={
           <>
             管理与查阅:选中行在右侧看题面与答案;学习、评分、写笔记去
-            <Link to={`/${category}/quiz`} className="mx-0.5 text-primary hover:underline">学习页</Link>。
+            <Link to={`/${category}/quiz`} className="mx-0.5 text-primary hover:opacity-80">学习页</Link>。
           </>
         }
         actions={
           isMy ? (
-            <Button size="sm" variant="outline" asChild>
+            <Button size="sm" variant="secondary" asChild>
               <Link to="/add">
                 <Plus className="size-3.5" aria-hidden />
                 添加题目
@@ -251,13 +319,13 @@ export function BrowsePage({ category }: { category: string }) {
         }
       />
 
-      {/* 筛选行 */}
+      {/* 筛选行:模块下拉 + 难度/状态/来源芯片 + 关键词 */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
         <FilterSelect label="模块" value={effectiveModule} onChange={setModuleFilter} options={moduleOptions} />
-        <FilterSelect label="难度" value={diffFilter} onChange={(v) => setDiffFilter(v as DiffFilter)} options={DIFF_OPTIONS} />
-        <FilterSelect label="状态" value={statusFilter} onChange={(v) => setStatusFilter(v as StatusFilter)} options={STATUS_OPTIONS} />
+        <ChipGroup label="难度" value={diffFilter} onChange={(v) => setDiffFilter(v as DiffFilter)} options={DIFF_OPTIONS} />
+        <ChipGroup label="状态" value={statusFilter} onChange={(v) => setStatusFilter(v as StatusFilter)} options={STATUS_OPTIONS} />
         {isMy && (
-          <FilterSelect
+          <ChipGroup
             label="来源"
             value={sourceFilter}
             onChange={setSourceFilter}
@@ -307,7 +375,7 @@ export function BrowsePage({ category }: { category: string }) {
 
       {/* 主从分栏:左列表(单选)+ 右详情 */}
       <div className="flex items-start gap-5">
-        <div data-browse-list className="min-w-0 flex-1 rounded-md border border-border bg-card">
+        <div data-browse-list className="min-w-0 flex-1 rounded-md bg-card">
           {listQuestions.length === 0 ? (
             <div className="flex items-center justify-center gap-3 p-6 text-sm text-muted-foreground">
               没有符合筛选的题
@@ -335,7 +403,7 @@ export function BrowsePage({ category }: { category: string }) {
                     }
                   }}
                   className={`flex cursor-pointer items-center gap-2.5 border-b px-3 py-2 text-left transition-colors last:border-b-0 ${
-                    isSelected ? 'bg-accent/70' : 'hover:bg-accent/40'
+                    isSelected ? 'bg-accent/70' : 'hover:bg-accent/60'
                   }`}
                 >
                   <span className="w-6 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">{i + 1}</span>
@@ -354,7 +422,7 @@ export function BrowsePage({ category }: { category: string }) {
                   {hasNoteOf(q.id) && (
                     <StickyNote className="size-3 shrink-0 text-primary/70" aria-label="有笔记" />
                   )}
-                  <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
+                  <Badge variant="secondary" className="shrink-0">{q.difficulty}</Badge>
                   {isMy ? (
                     <span className="flex shrink-0 items-center">
                       <Tooltip>
@@ -448,7 +516,7 @@ export function BrowsePage({ category }: { category: string }) {
         {/* 详情面板:选中行即看,少跳页 */}
         <div className="sticky top-0 hidden max-h-[calc(100vh-2rem)] w-[22rem] shrink-0 overflow-y-auto lg:block">
           {selected ? (
-            <div className="rounded-md border border-border bg-card">
+            <div className="rounded-md bg-card">
               <div className="flex items-start justify-between gap-2 border-b border-border px-4 py-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-1.5">
@@ -458,7 +526,7 @@ export function BrowsePage({ category }: { category: string }) {
                         {SOURCE_LABELS[source]}
                       </span>
                     )}
-                    <Badge variant="outline">{selected.difficulty}</Badge>
+                    <Badge variant="secondary">{selected.difficulty}</Badge>
                   </div>
                   <h2 className="mt-1.5 text-sm font-semibold leading-snug text-foreground">{selected.title}</h2>
                   <p className="mt-1 text-xs text-muted-foreground">{selected.focus}</p>
@@ -518,7 +586,7 @@ export function BrowsePage({ category }: { category: string }) {
               </div>
             </div>
           ) : (
-            <div className="rounded-md border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
+            <div className="rounded-md bg-secondary/60 px-4 py-10 text-center text-sm text-muted-foreground">
               选中左侧一行,在这里看题面与答案
             </div>
           )}
