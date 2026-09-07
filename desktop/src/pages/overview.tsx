@@ -58,7 +58,7 @@ function PlanRow({ index, title, description, count, countTone, to, right }: {
         <div className="mt-0.5 text-xs text-muted-foreground">{description}</div>
       </div>
       {count != null && (
-        <span className={`font-display text-2xl font-semibold tabular-nums ${countTone === 'warning' && count > 0 ? 'text-warning' : countTone === 'primary' && count > 0 ? 'text-primary' : 'text-foreground/35'}`}>
+        <span className={`font-display text-2xl font-semibold tabular-nums ${countTone === 'warning' && count > 0 ? 'text-warning' : countTone === 'primary' && count > 0 ? 'text-primary' : 'text-foreground/45'}`}>
           {count}
         </span>
       )}

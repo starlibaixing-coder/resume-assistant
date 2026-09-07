@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>CommitCareer · 练习页设计方向对比</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; background: #1a1a1a; }
+  .head { padding: 20px 28px; color: #ddd; }
+  .head h1 { font-size: 18px; font-weight: 600; }
+  .head p { font-size: 13px; color: #999; margin-top: 4px; }
+  .row { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; }
+  .panel { flex: 0 0 460px; height: calc(100vh - 84px); overflow-y: auto; scroll-snap-align: start; position: relative; }
+  .tag-num { position: sticky; top: 0; z-index: 5; padding: 8px 16px; font-size: 12px; font-weight: 700; letter-spacing: .1em; }
+
+  /* ── A 暗夜书房:墨绿 + 烛光琥珀 + 衬线数字(= 当前 v6) ── */
+  .a { background: #0f1614; color: #eae4d6; }
+  .a .tag-num { background: #0a100e; color: #e8a33d; }
+  .a .meta { display: flex; justify-content: space-between; font-size: 13px; color: #9a9482; padding: 14px 22px 0; }
+  .a .qcard { margin: 18px 22px 0; padding: 26px 24px; background: #141d1a; border: 1px solid rgba(234,228,214,.08); border-radius: 10px; }
+  .a .tags { display: flex; gap: 6px; margin-bottom: 14px; }
+  .a .tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(234,228,214,.18); color: #b5ae9c; }
+  .a h2 { font-size: 21px; line-height: 1.5; font-weight: 600; }
+  .a .focus { margin-top: 10px; font-size: 13px; color: #9a9482; }
+  .a .ans { border-top: 1px solid rgba(234,228,214,.1); margin-top: 18px; padding-top: 16px; font-size: 13.5px; line-height: 1.8; color: #cfc9b8; }
+  .a .ans b { color: #eae4d6; }
+  .a .rate { position: sticky; bottom: 0; display: flex; gap: 8px; padding: 14px 22px 18px; background: linear-gradient(to top, #0f1614 78%, transparent); }
+  .a .rb { flex: 1; height: 46px; border-radius: 10px; border: 1px solid; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-size: 15px; font-weight: 600; background: none; cursor: pointer; }
+  .a .rb kbd { font-size: 11px; opacity: .6; font-weight: 400; }
+  .a .no { color: #e06c5f; border-color: rgba(224,108,95,.35); }
+  .a .mid { color: #e8a33d; border-color: rgba(232,163,61,.35); }
+  .a .ok { color: #5fbf8f; border-color: rgba(95,191,143,.35); }
+
+  /* ── B 暖纸书页:米纸 + 朱砂 + 宋体标题(微信读书式阅读感) ── */
+  .b { background: #f7f3ea; color: #2b2b26; }
+  .b .tag-num { background: #efe8d8; color: #c2452d; }
+  .b .meta { display: flex; justify-content: space-between; font-size: 13px; color: #8f887a; padding: 14px 22px 0; }
+  .b .qcard { margin: 18px 22px 0; padding: 8px 6px 0; }
+  .b .tags { display: flex; gap: 6px; margin-bottom: 16px; }
+  .b .tag { font-size: 11px; padding: 2px 9px; border-radius: 999px; background: #efe8d8; color: #6e6656; }
+  .b h2 { font-family: "Songti SC", "STSong", serif; font-size: 24px; line-height: 1.55; font-weight: 700; color: #262620; }
+  .b .focus { margin-top: 12px; font-size: 13px; color: #8f887a; }
+  .b .ans { border-top: 1px solid #e2dac8; margin-top: 22px; padding-top: 18px; font-size: 14px; line-height: 2; color: #4a463c; }
+  .b .ans b { color: #262620; }
+  .b .rate { position: sticky; bottom: 0; display: flex; gap: 10px; padding: 14px 22px 20px; background: linear-gradient(to top, #f7f3ea 75%, transparent); }
+  .b .rb { flex: 1; height: 44px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; cursor: pointer; border: 1px solid #ddd3bd; background: #fffdf7; color: #4a463c; }
+  .b .rb kbd { font-size: 11px; color: #a29a86; }
+  .b .no { border-color: #d8a49a; color: #a8432f; }
+  .b .mid { border-color: #dcc389; color: #8a6d1f; }
+  .b .ok { border-color: #a9c2a0; color: #4f7042; }
+
+  /* ── C 力量橙:近黑 + 电光橙 + 特粗黑体(能量感) ── */
+  .c { background: #0a0a0b; color: #f5f5f4; }
+  .c .tag-num { background: #000; color: #ff5c1f; }
+  .c .meta { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; letter-spacing: .08em; color: #8b8b8b; padding: 14px 22px 0; text-transform: uppercase; }
+  .c .bar { height: 3px; background: #232323; margin: 12px 22px 0; }
+  .c .bar i { display: block; height: 3px; width: 15%; background: #ff5c1f; }
+  .c .qcard { margin: 26px 22px 0; }
+  .c .tags { display: flex; gap: 6px; margin-bottom: 16px; }
+  .c .tag { font-size: 11px; font-weight: 700; padding: 3px 9px; background: #1c1c1e; color: #ff5c1f; }
+  .c h2 { font-size: 27px; line-height: 1.4; font-weight: 900; letter-spacing: -.01em; }
+  .c .focus { margin-top: 12px; font-size: 13px; color: #8b8b8b; }
+  .c .ans { border-left: 3px solid #ff5c1f; margin-top: 22px; padding: 4px 0 4px 16px; font-size: 13.5px; line-height: 1.9; color: #cfcfcf; }
+  .c .ans b { color: #fff; }
+  .c .rate { position: sticky; bottom: 0; display: flex; gap: 8px; padding: 16px 22px 20px; background: #0a0a0b; }
+  .c .rb { flex: 1; height: 52px; font-size: 16px; font-weight: 900; cursor: pointer; border: none; background: #1c1c1e; color: #f5f5f4; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .c .rb kbd { font-size: 11px; color: #777; font-weight: 400; }
+  .c .no { background: #ff5c1f; color: #0a0a0b; }
+  .c .no kbd { color: rgba(10,10,11,.6); }
+
+  /* ── D 精密工具:浅灰 + 单点蓝 + 紧凑克制(Linear 式) ── */
+  .d { background: #fafafa; color: #18181b; }
+  .d .tag-num { background: #f4f4f5; color: #2563eb; border-bottom: 1px solid #e4e4e7; }
+  .d .meta { display: flex; justify-content: space-between; font-size: 12.5px; color: #71717a; padding: 16px 22px 0; font-variant-numeric: tabular-nums; }
+  .d .qcard { margin: 14px 22px 0; padding: 20px 22px; background: #fff; border: 1px solid #e4e4e7; border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+  .d .tags { display: flex; gap: 6px; margin-bottom: 14px; }
+  .d .tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; border: 1px solid #e4e4e7; color: #52525b; }
+  .d h2 { font-size: 19px; line-height: 1.55; font-weight: 600; }
+  .d .focus { margin-top: 10px; font-size: 13px; color: #71717a; }
+  .d .ans { border-top: 1px solid #f0f0f1; margin-top: 18px; padding-top: 16px; font-size: 13.5px; line-height: 1.8; color: #3f3f46; }
+  .d .ans b { color: #18181b; }
+  .d .rate { position: sticky; bottom: 0; display: flex; gap: 8px; padding: 14px 22px 18px; background: #fafafa; }
+  .d .rb { flex: 1; height: 40px; border-radius: 8px; border: 1px solid #e4e4e7; background: #fff; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; font-weight: 500; cursor: pointer; color: #3f3f46; }
+  .d .rb kbd { font-size: 11px; color: #a1a1aa; }
+  .d .no:hover, .d .mid:hover, .d .ok:hover { border-color: #2563eb; color: #2563eb; }
+  .d .rb kbd { border: 1px solid #e4e4e7; border-radius: 4px; padding: 0 5px; background: #fff; }
+</style>
+</head>
+<body>
+<div class="head">
+  <h1>CommitCareer · 练习页 · 四个设计方向</h1>
+  <p>看中哪个就回我「A / B / C / D」;都不对就说一个你喜欢的 App,我照它的感觉做。选定后我把整套语言贯彻到全部页面。</p>
+</div>
+<div class="row">
+
+  <section class="panel a">
+    <div class="tag-num">方向 A · 暗夜书房(当前版本)</div>
+    <div class="meta"><span>AI Agent 工程师 · 大模型原理与架构</span><span>3 / 20</span></div>
+    <div class="qcard">
+      <div class="tags"><span class="tag">中</span><span class="tag">必问</span></div>
+      <h2>大模型架构是什么样的?Transformer 的核心是什么?</h2>
+      <div class="focus">是否理解 LLM 的底层结构(而非黑盒)</div>
+      <div class="ans"><b>主流架构:</b>Decoder-only Transformer。<b>核心:注意力机制(Self-Attention):</b>每个 token 通过 Query/Key/Value 三个矩阵与其他 token 计算相关性,加权聚合信息;Multi-Head Attention 多组 Q/K/V 并行。</div>
+    </div>
+    <div class="rate">
+      <button class="rb no">不会 <kbd>1</kbd></button>
+      <button class="rb mid">模糊 <kbd>2</kbd></button>
+      <button class="rb ok">掌握 <kbd>3</kbd></button>
+    </div>
+  </section>
+
+  <section class="panel b">
+    <div class="tag-num">方向 B · 暖纸书页</div>
+    <div class="meta"><span>AI Agent 工程师 · 大模型原理与架构</span><span>3 / 20</span></div>
+    <div class="qcard">
+      <div class="tags"><span class="tag">中</span><span class="tag">必问</span></div>
+      <h2>大模型架构是什么样的?Transformer 的核心是什么?</h2>
+      <div class="focus">是否理解 LLM 的底层结构(而非黑盒)</div>
+      <div class="ans"><b>主流架构:</b>Decoder-only Transformer。<b>核心:注意力机制(Self-Attention):</b>每个 token 通过 Query/Key/Value 三个矩阵与其他 token 计算相关性,加权聚合信息;Multi-Head Attention 多组 Q/K/V 并行。</div>
+    </div>
+    <div class="rate">
+      <button class="rb no">不会 <kbd>1</kbd></button>
+      <button class="rb mid">模糊 <kbd>2</kbd></button>
+      <button class="rb ok">掌握 <kbd>3</kbd></button>
+    </div>
+  </section>
+
+  <section class="panel c">
+    <div class="tag-num">方向 C · 力量橙</div>
+    <div class="meta"><span>AGENT · 大模型原理与架构</span><span>3 / 20</span></div>
+    <div class="bar"><i></i></div>
+    <div class="qcard">
+      <div class="tags"><span class="tag">中</span><span class="tag">必问</span></div>
+      <h2>大模型架构是什么样的?Transformer 的核心是什么?</h2>
+      <div class="focus">是否理解 LLM 的底层结构(而非黑盒)</div>
+      <div class="ans"><b>主流架构:</b>Decoder-only Transformer。<b>核心:注意力机制(Self-Attention):</b>每个 token 通过 Query/Key/Value 三个矩阵与其他 token 计算相关性,加权聚合信息。</div>
+    </div>
+    <div class="rate">
+      <button class="rb no">不会 <kbd>1</kbd></button>
+      <button class="rb">模糊 <kbd>2</kbd></button>
+      <button class="rb">掌握 <kbd>3</kbd></button>
+    </div>
+  </section>
+
+  <section class="panel d">
+    <div class="tag-num">方向 D · 精密工具</div>
+    <div class="meta"><span>AI Agent 工程师 · 大模型原理与架构</span><span>3 / 20</span></div>
+    <div class="qcard">
+      <div class="tags"><span class="tag">中</span><span class="tag">必问</span></div>
+      <h2>大模型架构是什么样的?Transformer 的核心是什么?</h2>
+      <div class="focus">是否理解 LLM 的底层结构(而非黑盒)</div>
+      <div class="ans"><b>主流架构:</b>Decoder-only Transformer。<b>核心:注意力机制(Self-Attention):</b>每个 token 通过 Query/Key/Value 三个矩阵与其他 token 计算相关性,加权聚合信息;Multi-Head Attention 多组 Q/K/V 并行。</div>
+    </div>
+    <div class="rate">
+      <button class="rb no">不会 <kbd>1</kbd></button>
+      <button class="rb mid">模糊 <kbd>2</kbd></button>
+      <button class="rb ok">掌握 <kbd>3</kbd></button>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

@@ -1,94 +1,92 @@
 @import "tailwindcss";
-@import "@fontsource-variable/fraunces";
 @plugin "@tailwindcss/typography";
 
 /* 让 dark: 变体跟随 .dark 类(ThemeProvider 切换),而非 prefers-color-scheme。 */
 @custom-variant dark (&:is(.dark *));
 
-/* ── 设计语言 v6「墨笺 Ink Study」(2026-09-04,specs/2026-09-04-ui-redesign.md §v6)──
-   深夜书房:墨绿近黑的底、暖米色的字、烛光琥珀的主色。
-   显示层(Fraunces 衬线变体)只给数字与大字,中文走系统黑体;
-   氛围 = 烛光径向渐变 + 纸纹颗粒;动效 = 进场上浮 + 逐行 stagger,尊重 reduced-motion。
-   浅色主题 = 同结构的暖米纸,深色为默认身份。 */
+/* ── 设计语言 v8「暖纸书页」(2026-09-07,specs/2026-09-04-ui-redesign.md §v8)──
+   用户选定方向 B:米纸底、墨色字、朱砂点缀、宋体标题的阅读感(微信读书/纸书式)。
+   默认浅色纸面;深色为「夜读」暖黑纸伴生主题,同一身份。
+   显示字体 = 宋体系(题目大标题/页头),中文正文走系统黑体。 */
 
 :root {
-  --background: hsl(45 40% 96%);
-  --foreground: hsl(172 18% 14%);
+  --background: hsl(42 45% 94%);
+  --foreground: hsl(50 10% 16%);
 
-  --card: hsl(46 45% 98%);
-  --card-foreground: hsl(172 18% 14%);
+  --card: hsl(45 55% 98%);
+  --card-foreground: hsl(50 10% 16%);
 
-  --popover: hsl(46 45% 98%);
-  --popover-foreground: hsl(172 18% 14%);
+  --popover: hsl(45 55% 98%);
+  --popover-foreground: hsl(50 10% 16%);
 
-  --sidebar: hsl(44 32% 92%);
-  --sidebar-foreground: hsl(172 15% 30%);
+  --sidebar: hsl(43 32% 89%);
+  --sidebar-foreground: hsl(45 15% 35%);
 
-  --primary: hsl(35 82% 40%);
+  --primary: hsl(12 60% 47%);
   --primary-foreground: hsl(45 60% 97%);
 
-  --secondary: hsl(44 26% 91%);
-  --secondary-foreground: hsl(172 18% 14%);
+  --secondary: hsl(43 32% 91%);
+  --secondary-foreground: hsl(50 10% 25%);
 
-  --muted: hsl(44 26% 91%);
-  --muted-foreground: hsl(172 8% 38%);
+  --muted: hsl(43 32% 91%);
+  --muted-foreground: hsl(44 10% 50%);
 
-  --accent: hsl(43 36% 88%);
-  --accent-foreground: hsl(172 18% 14%);
+  --accent: hsl(43 35% 90%);
+  --accent-foreground: hsl(50 10% 20%);
 
-  --destructive: hsl(10 70% 46%);
+  --destructive: hsl(8 60% 47%);
   --destructive-foreground: hsl(45 60% 97%);
 
-  --success: hsl(160 62% 28%);
+  --success: hsl(100 25% 35%);
   --success-foreground: hsl(45 60% 97%);
 
-  --warning: hsl(40 90% 40%);
+  --warning: hsl(45 60% 32%);
   --warning-foreground: hsl(45 60% 97%);
 
-  --border: hsl(44 20% 84%);
-  --input: hsl(44 20% 82%);
-  --ring: hsl(35 82% 40%);
+  --border: hsl(43 28% 83%);
+  --input: hsl(43 28% 81%);
+  --ring: hsl(12 60% 47%);
 
   --radius: 0.5rem;
 }
 
 .dark {
-  --background: hsl(172 18% 7%);
-  --foreground: hsl(44 30% 88%);
+  --background: hsl(40 10% 10%);
+  --foreground: hsl(45 25% 86%);
 
-  --card: hsl(172 15% 10%);
-  --card-foreground: hsl(44 30% 88%);
+  --card: hsl(40 10% 13%);
+  --card-foreground: hsl(45 25% 86%);
 
-  --popover: hsl(172 16% 11%);
-  --popover-foreground: hsl(44 30% 88%);
+  --popover: hsl(40 10% 13%);
+  --popover-foreground: hsl(45 25% 86%);
 
-  --sidebar: hsl(172 19% 5.5%);
-  --sidebar-foreground: hsl(44 20% 72%);
+  --sidebar: hsl(40 12% 8%);
+  --sidebar-foreground: hsl(45 15% 65%);
 
-  --primary: hsl(40 85% 60%);
-  --primary-foreground: hsl(172 20% 10%);
+  --primary: hsl(12 65% 62%);
+  --primary-foreground: hsl(45 30% 10%);
 
-  --secondary: hsl(172 12% 13%);
-  --secondary-foreground: hsl(44 30% 88%);
+  --secondary: hsl(40 8% 15%);
+  --secondary-foreground: hsl(45 25% 86%);
 
-  --muted: hsl(172 12% 13%);
-  --muted-foreground: hsl(44 15% 62%);
+  --muted: hsl(40 8% 15%);
+  --muted-foreground: hsl(45 12% 60%);
 
-  --accent: hsl(172 12% 16%);
-  --accent-foreground: hsl(44 30% 88%);
+  --accent: hsl(40 10% 17%);
+  --accent-foreground: hsl(45 25% 86%);
 
-  --destructive: hsl(8 75% 62%);
-  --destructive-foreground: hsl(172 20% 10%);
+  --destructive: hsl(8 65% 60%);
+  --destructive-foreground: hsl(45 30% 10%);
 
-  --success: hsl(155 55% 55%);
-  --success-foreground: hsl(172 20% 10%);
+  --success: hsl(100 30% 55%);
+  --success-foreground: hsl(45 30% 10%);
 
-  --warning: hsl(45 92% 62%);
-  --warning-foreground: hsl(172 20% 10%);
+  --warning: hsl(45 70% 60%);
+  --warning-foreground: hsl(45 30% 10%);
 
-  --border: hsl(44 30% 88% / 0.10);
-  --input: hsl(44 30% 88% / 0.14);
-  --ring: hsl(40 85% 60%);
+  --border: hsl(45 20% 85% / 0.12);
+  --input: hsl(45 20% 85% / 0.16);
+  --ring: hsl(12 65% 62%);
 }
 
 @theme inline {
@@ -120,8 +118,8 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
-  /* 显示字体:数字与大字的身份(Fraunces 变体衬线);中文回退系统黑体 */
-  --font-display: "Fraunces Variable", Georgia, "Times New Roman", serif;
+  /* 显示字体:宋体系,用于题目大标题与页头(书卷身份);中文正文走系统黑体 */
+  --font-display: "Songti SC", "STSong", "SimSun", Georgia, "Times New Roman", serif;
   --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
     "Microsoft YaHei", "Segoe UI", Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", "Fira Code", Consolas, "PingFang SC", "Microsoft YaHei", monospace;
@@ -137,14 +135,12 @@
     border-color: var(--border);
   }
   ::selection {
-    background-color: hsl(40 85% 60% / 0.3);
+    background-color: hsl(12 60% 47% / 0.16);
   }
   @media (prefers-reduced-motion: no-preference) {
-    /* 页面进场:上浮淡入 */
     .page-enter {
-      animation: page-enter 0.4s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+      animation: page-enter 0.35s cubic-bezier(0.2, 0.7, 0.3, 1) both;
     }
-    /* 直接子元素逐行 stagger(配合 .page-enter 用在同一容器) */
     .stagger > * {
       animation: page-enter 0.3s cubic-bezier(0.2, 0.7, 0.3, 1) both;
     }
@@ -160,30 +156,11 @@
   @keyframes page-enter {
     from {
       opacity: 0;
-      transform: translateY(7px);
+      transform: translateY(6px);
     }
     to {
       opacity: 1;
       transform: none;
     }
-  }
-}
-
-@layer utilities {
-  /* 氛围层:烛光径向渐变 + 纸纹颗粒,固定铺满、不拦截交互 */
-  .app-atmosphere {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    background:
-      radial-gradient(52rem 32rem at 88% -8%, hsl(40 90% 55% / 0.055), transparent 60%),
-      radial-gradient(44rem 30rem at -6% 108%, hsl(165 60% 45% / 0.05), transparent 60%);
-  }
-  .app-atmosphere::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    opacity: 0.028;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 }
