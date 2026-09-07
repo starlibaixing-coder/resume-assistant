@@ -38,7 +38,7 @@ export function LibraryPage() {
         title="题库"
         description="浏览、管理与审核;练习去「练习」空间。"
         actions={
-          <Button size="sm" variant="outline" asChild>
+          <Button size="sm" variant="secondary" asChild>
             <Link to="/add">
               <Plus className="size-3.5" aria-hidden />
               添加题目

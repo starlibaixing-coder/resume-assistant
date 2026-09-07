@@ -96,7 +96,7 @@ export function DraftsBoard() {
           title="没有待审核的题"
           description="AI 出的题先进这里,你逐题通过后才进学习队列。"
           action={
-            <Button size="sm" variant="outline" asChild>
+            <Button size="sm" variant="secondary" asChild>
               <Link to="/add">
                 <Plus className="size-3.5" aria-hidden />
                 添加题目
@@ -119,7 +119,7 @@ export function DraftsBoard() {
                 <span className="h-px flex-1 bg-border" aria-hidden />
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant="secondary"
                   disabled={busy != null}
                   onClick={() => handleApproveAll(qs)}
                 >
@@ -127,12 +127,12 @@ export function DraftsBoard() {
                 </Button>
               </div>
 
-              <div className="mt-3 rounded-lg border border-border bg-card divide-y divide-border">
+              <div className="mt-3 rounded-lg bg-card divide-y divide-border">
                 {qs.map((q) => {
                   const isOpen = expandedId === q.id;
                   return (
                     <div key={q.id}>
-                      <div className="flex w-full items-center gap-3 px-3 py-2.5 transition-colors hover:bg-accent/40">
+                      <div className="flex w-full items-center gap-3 px-3 py-2.5 transition-colors hover:bg-accent/60">
                         <button
                           type="button"
                           aria-expanded={isOpen}
@@ -148,7 +148,7 @@ export function DraftsBoard() {
                             {q.id}
                           </span>
                           <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{q.title}</span>
-                          <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
+                          <Badge variant="secondary" className="shrink-0">{q.difficulty}</Badge>
                         </button>
                         <span className="flex shrink-0 items-center gap-0.5">
                           <Tooltip>

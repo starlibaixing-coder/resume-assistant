@@ -147,7 +147,7 @@ function GenerateForm({ jd, onCancel }: { jd: Jd | null; onCancel: () => void })
         <Alert>
           <AlertDescription>
             还没配置 AI 服务——先去
-            <Link to="/settings" className="mx-0.5 font-medium text-primary hover:underline">设置</Link>
+            <Link to="/settings" className="mx-0.5 font-medium text-primary hover:opacity-80">设置</Link>
             填 API key(智谱 / DeepSeek / 本地 Ollama 均可)。
           </AlertDescription>
         </Alert>
@@ -156,7 +156,7 @@ function GenerateForm({ jd, onCancel }: { jd: Jd | null; onCancel: () => void })
         <Alert variant="destructive">
           <AlertDescription>
             还没配置 AI 服务,无法生成——先去
-            <Link to="/settings" className="mx-0.5 font-medium text-primary hover:underline">设置</Link>
+            <Link to="/settings" className="mx-0.5 font-medium text-primary hover:opacity-80">设置</Link>
             填 API key 再回来。
           </AlertDescription>
         </Alert>
@@ -233,7 +233,7 @@ function GenerateForm({ jd, onCancel }: { jd: Jd | null; onCancel: () => void })
           {result.questions.map((q, i) => {
             const isOpen = expanded === i;
             return (
-              <div key={i} className="rounded-md border border-border">
+              <div key={i} className="rounded-md bg-card">
                 <button
                   type="button"
                   aria-expanded={isOpen}
@@ -244,7 +244,7 @@ function GenerateForm({ jd, onCancel }: { jd: Jd | null; onCancel: () => void })
                     ? <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
                     : <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />}
                   <span className="text-sm text-foreground flex-1">{q.title}</span>
-                  <Badge variant="outline" className="shrink-0">{q.difficulty}</Badge>
+                  <Badge variant="secondary" className="shrink-0">{q.difficulty}</Badge>
                 </button>
                 {isOpen && (
                   <div className="space-y-2 border-t border-border px-3 pb-3 pt-2">
@@ -261,7 +261,7 @@ function GenerateForm({ jd, onCancel }: { jd: Jd | null; onCancel: () => void })
       <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">
         {result && !loading && (
           <>
-            <Button variant="outline" size="sm" onClick={handleGenerate} disabled={submitting}>重新生成</Button>
+            <Button variant="secondary" size="sm" onClick={handleGenerate} disabled={submitting}>重新生成</Button>
             <Button size="sm" onClick={handleSubmit} disabled={submitting}>
               {submitting ? '提交中…' : `提交审核(${result.questions.length} 题)`}
             </Button>
@@ -269,14 +269,14 @@ function GenerateForm({ jd, onCancel }: { jd: Jd | null; onCancel: () => void })
         )}
         {!result && (
           <>
-            <Button variant="outline" onClick={onCancel}>取消</Button>
+            <Button variant="secondary" onClick={onCancel}>取消</Button>
             <Button onClick={handleGenerate} disabled={loading}>
               {loading ? `生成中…已用 ${elapsed}s` : '生成题目'}
             </Button>
           </>
         )}
         {loading && (
-          <Button variant="outline" onClick={() => abortRef.current?.abort()}>取消生成</Button>
+          <Button variant="secondary" onClick={() => abortRef.current?.abort()}>取消生成</Button>
         )}
       </div>
     </div>
@@ -425,7 +425,7 @@ function ModeCard({ mode, active, icon: Icon, title, desc, onSelect }: {
         'flex cursor-pointer flex-col gap-1 rounded-lg border p-3.5 text-left transition-colors',
         active
           ? 'border-primary bg-primary/5'
-          : 'border-border hover:border-primary/40 hover:bg-accent/40',
+          : 'border-border hover:border-primary/40 hover:bg-accent/60',
       )}
     >
       <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
