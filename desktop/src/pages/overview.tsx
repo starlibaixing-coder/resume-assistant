@@ -48,7 +48,7 @@ function PlanRow({ index, title, description, count, countTone, to, right }: {
   return (
     <Link
       to={to}
-      className={`group flex items-center gap-4 border-b border-border py-3 transition-colors last:border-b-0 hover:bg-accent/40 ${zero ? 'opacity-60' : ''}`}
+      className={`group flex items-center gap-4 px-3 py-3 transition-colors hover:bg-accent/40 ${zero ? 'opacity-60' : ''}`}
     >
       <span className="w-6 flex-none text-center font-display text-sm tabular-nums text-primary" aria-hidden>
         {index}
@@ -70,7 +70,7 @@ function PlanRow({ index, title, description, count, countTone, to, right }: {
 
 function ActivityRow({ item }: { item: Activity }) {
   const time = <span className="flex-none text-xs tabular-nums text-muted-foreground">{formatActivityTime(item.time)}</span>;
-  const cls = 'flex items-center gap-3 border-b border-border py-2 text-sm transition-colors last:border-b-0 hover:bg-accent/40';
+  const cls = 'flex items-center gap-3 px-3 py-2 text-sm transition-colors hover:bg-accent/40';
   if (item.kind === 'study') {
     return (
       <Link to={`/${item.categorySlug}`} className={cls}>
@@ -210,7 +210,7 @@ export function TodayPage() {
       {/* 今天的计划:调度决策由应用做好,用户按序执行 */}
       <section>
         <SectionHead title="计划" description="按序执行即可;每项也可单独进入。" />
-        <div className="stagger mt-1 border-t border-border">
+        <div className="stagger mt-2 rounded-lg border border-border bg-card divide-y divide-border">
           <PlanRow
             index="01"
             title="复习"
@@ -287,7 +287,7 @@ export function TodayPage() {
       {learning.length > 0 && (
         <section>
           <SectionHead title="学习中" />
-          <div className="mt-1 border-t border-border">
+          <div className="mt-2 rounded-lg border border-border bg-card divide-y divide-border">
             {learning.map((e) => renderCatRow(e))}
           </div>
         </section>
@@ -295,7 +295,7 @@ export function TodayPage() {
       {notStarted.length > 0 && (
         <section>
           <SectionHead title="未开始" />
-          <div className="mt-1 border-t border-border">
+          <div className="mt-2 rounded-lg border border-border bg-card divide-y divide-border">
             {notStarted.map((e) => renderCatRow(e))}
           </div>
         </section>
@@ -310,7 +310,7 @@ export function TodayPage() {
             还没有动态。点右上角「开始练习」学第一道题。
           </div>
         ) : (
-          <div className="mt-1 border-t border-border">
+          <div className="mt-2 rounded-lg border border-border bg-card divide-y divide-border">
             {activity.map((item, i) => <ActivityRow key={`${item.kind}-${item.time}-${i}`} item={item} />)}
           </div>
         )}
@@ -327,7 +327,7 @@ function renderCatRow(e: CatEntry) {
     <Link
       key={e.slug}
       to={`/library?category=${e.slug}`}
-      className="group flex items-center gap-5 border-b border-border py-2.5 transition-colors last:border-b-0 hover:bg-accent/40"
+      className="group flex items-center gap-5 px-3 py-2.5 transition-colors hover:bg-accent/40"
     >
       <div className="min-w-0 flex-1">
         <div className="text-sm font-semibold text-foreground">{e.name}</div>

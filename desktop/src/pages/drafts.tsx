@@ -127,12 +127,12 @@ export function DraftsBoard() {
                 </Button>
               </div>
 
-              <div className="mt-3 border-t border-border">
+              <div className="mt-3 rounded-lg border border-border bg-card divide-y divide-border">
                 {qs.map((q) => {
                   const isOpen = expandedId === q.id;
                   return (
-                    <div key={q.id} className="border-b border-border">
-                      <div className="flex w-full items-center gap-3 py-3 transition-colors hover:bg-accent/40">
+                    <div key={q.id}>
+                      <div className="flex w-full items-center gap-3 px-3 py-2.5 transition-colors hover:bg-accent/40">
                         <button
                           type="button"
                           aria-expanded={isOpen}
@@ -184,7 +184,7 @@ export function DraftsBoard() {
                         </span>
                       </div>
                       {isOpen && (
-                        <div className="space-y-3 px-1 pb-5">
+                        <div className="space-y-3 px-3 pb-4">
                           <div className="pt-1 text-sm text-muted-foreground">{q.focus}</div>
                           <AnswerPanel answer={q.answer} followups={q.followups} />
                           <div className="flex gap-2 pt-1">

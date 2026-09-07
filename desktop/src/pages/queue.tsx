@@ -159,7 +159,7 @@ export function QueuePage({ category }: { category: string }) {
       {/* 模块目录:细线行 */}
       <section>
         <div className="text-xs font-medium text-muted-foreground">模块浏览</div>
-        <div className="mt-2 border-t border-border">
+        <div className="mt-2 rounded-lg border border-border bg-card divide-y divide-border">
           {cat?.modules.map((mod) => (
             <Link
               key={mod.id}
