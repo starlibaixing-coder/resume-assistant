@@ -339,7 +339,7 @@ export function BrowsePage({ category }: { category: string }) {
                   }`}
                 >
                   <span className="w-6 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">{i + 1}</span>
-                  <span className="max-w-20 truncate shrink-0 rounded-sm bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                  <span className="max-w-28 truncate shrink-0 rounded-sm bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                     {modName}
                   </span>
                   {rowSource && (

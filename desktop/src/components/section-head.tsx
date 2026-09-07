@@ -17,7 +17,7 @@ export function SectionHead({
     <div>
       <div className="flex items-baseline gap-3">
         {index != null && (
-          <span className="font-mono text-xs tabular-nums text-primary" aria-hidden>
+          <span className="font-display text-sm tabular-nums text-primary" aria-hidden>
             {index}
           </span>
         )}

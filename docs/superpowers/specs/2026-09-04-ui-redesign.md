@@ -497,3 +497,13 @@ PageHeader: 添加题目(深链带 JD 时:按 JD 生成题目 · {标题})
 - **边界内未做(记录避免遗忘)**:会话内出题分布调控、JD 就绪度(需 mylib 记录 jd_id,涉及数据层)、数据导出导入(ADR-7 规划项)、多题库对比统计。
 - **修复的连带 bug**:⌘K 受控搜索误把 value/onValueChange 挂在根(那是选中项语义)导致搜题永不可用——改为 shouldFilter=false + 自管过滤;状态栏计数在评分后不重算(缓存与 questions 分离)——跨页导航强制重算;详情面板笔记预览在折叠线下——上移至面板顶部高亮块。
 - **验证**:typecheck + 单测 215 + e2e 31(新增:不会重排放行/会话逐题小结)+ build 全绿;10 张带真实交互种子的截图(今日预测/会话小结/⌘K 搜题/笔记资产化/来源筛选 × 深浅)judge 两轮目检全过。覆盖层:e2e 为 web 层,Tauri 壳需真机复核。
+
+---
+
+## v6 修订(2026-09-04,第六次迭代:设计质量专项「墨笺 Ink Study」)
+
+- **触发**:用户点名三个设计 skill(ui-ux-pro-max / frontend-design / tailwind-v4-shadcn)并判定"完全不可用"。审计结论:功能与结构已达标,失败在**设计质量**——v3~v5 的中性灰方案没有身份感、层级弱、无温度。本轮按 frontend-design 的方法选定并贯彻一个明确美学方向,结构与功能(v4/v5)不动。
+- **美学方向「墨笺 Ink Study」**:深夜书房——墨绿近黑底(hsl 172 18% 7%)+ 暖米字(hsl 44 30% 88%)+ 烛光琥珀主色(hsl 40 85% 60%,品牌橙的暖化);浅色主题 = 暖米纸同构。**Fraunces Variable**(打包的衬线变体字体)只用于数字与大字(计数、序号、预测值、词标),中文走系统黑体;氛围 = 烛光径向渐变 + 纸纹颗粒(feTurbulence data-URI)+ 页面进场上浮/逐行 stagger(尊重 prefers-reduced-motion)。深色为默认身份。
+- **贯彻要点**:练习页题面按题 key 重放进场动画;吸底胶囊评分条(h-12/rounded-lg/键位);今日计划琥珀大数字 + 序号衬线化;⌘K 列表底部渐隐;题库模块 chip 加宽。pre-delivery 检查单(对色 4.5:1、cursor-pointer、150-300ms 过渡、focus 可见、reduced-motion)逐项过。
+- **落地置与 token**:全部走既有 CSS 变量体系(--font-display 新增);无魔法色值;字体经 @fontsource-variable/fraunces 离线打包。
+- **验证**:typecheck + 单测 215 + e2e 31(计数选择器同步 font-display)+ build 全绿;三轮连跑排除一例 goto 同 URL 重载竞态(测试自身问题,已修);12 张截图(6 状态×深浅,含种子数据/会话小结/⌘K 搜题)judge 两轮目检:**12/12 通过,设计质量 8.5/10**(首评 7.5,三条建议——预测峰值琥珀强调/⌘K 底部渐隐/chip 加宽——落实后复核通过)。覆盖层:e2e 为 web 层,Tauri 壳需真机复核。
