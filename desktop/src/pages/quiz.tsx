@@ -14,6 +14,7 @@ import { saveCard, deleteCard, loadProgress } from '@/lib/storage';
 import { loadLimit } from '@/lib/prefs';
 import { isTauri } from '@/lib/secrets';
 import { useImmersive } from '@/lib/immersive';
+import { usePageKeys } from '@/lib/use-page-keys';
 import { AI_CHAT_URL, openAiAssistant } from '@/lib/ai-assistant';
 import type { Rating, Question } from '@/types/question';
 import { AnswerPanel } from '@/components/answer-panel';
@@ -27,13 +28,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-// 练习会话 v5(引擎深化):
+// 练习会话 v5(引擎深化)+ v10(反馈就地闪现):
 //   1. 「不会」即时重排——评不会的题追加到会话尾部再练一遍(每题至多一份重练副本,
 //      重复评不会则移到队尾),直到评模糊/掌握才真正放行;撤销会连带撤销重排。
-//   2. 评分反馈带具体日期——"下次复习 9 月 7 日",不只是"N 天后"。
+//   2. 评分反馈带具体日期——评分后在本题位置闪现「下次复习 9 月 7 日」再自动推进。
+//      此前反馈写入状态后跨题残留(下一题未揭示时显示上一题的复习日期),v10 修复:
+//      反馈归属当前题(entryKey 校验),推进即清,重练落库的题仍可在未揭示态看到自己的反馈。
 //   3. 会话小结逐题可溯——每道题的评分与下次复习日期在完成态列出来,错题一目了然。
-//   /session 跨全库混排;?category= 限定;?focus=due|new|all;?limit= 题量。
-// 键盘流、笔记/代码草稿((分类,题id) 落库)、吸底操作条、渐隐上缘保留。
+//   ?category= 限定;?focus=due|new|all;?limit= 题量;?qid= 单题直练(题库「练习此题」深链)。
 
 function Kbd({ children }: { children: ReactNode }) {
   return (
@@ -68,6 +70,13 @@ const RATING_COLOR: Record<Rating, string> = {
   掌握: 'text-success',
 };
 
+// 闪现条语义色底(字面量映射,勿动态拼接——Tailwind 按字面扫描生成类)
+const RATING_TONE: Record<Rating, { cls: string; bg: string }> = {
+  不会: { cls: 'text-destructive', bg: 'bg-destructive/10' },
+  模糊: { cls: 'text-warning', bg: 'bg-warning/10' },
+  掌握: { cls: 'text-success', bg: 'bg-success/10' },
+};
+
 function shortDate(ts: number): string {
   const d = new Date(ts);
   return `${d.getMonth() + 1} 月 ${d.getDate()} 日`;
@@ -80,7 +89,11 @@ export function QuizPage({ category }: { category?: string }) {
   const [queueIdx, setQueueIdx] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [roundDone, setRoundDone] = useState(false);
-  const [lastFeedback, setLastFeedback] = useState<string | null>(null);
+  // 评分反馈:归属当前题(entryKey),推进即清——不再残留到下一题
+  const [lastFeedback, setLastFeedback] = useState<{ text: string; entryKey: string } | null>(null);
+  // 评分后反馈闪现阶段:本题位置语义色底展示复习日期,~900ms 后自动推进
+  const [flash, setFlash] = useState<{ text: string; cls: string; bg: string } | null>(null);
+  const flashTimerRef = useRef<number | null>(null);
   const [round, setRound] = useState(0);
   // 「不会」重排副本(每题至多一份;重复评不会移到队尾)
   const [requeue, setRequeue] = useState<QueueEntry[]>([]);
@@ -114,7 +127,10 @@ export function QuizPage({ category }: { category?: string }) {
     } else {
       queue = [...due, ...unseen];
     }
-    if (limit > 0) queue = queue.slice(0, limit);
+    // ?qid= 单题直练(题库详情「练习此题」):只保留命中的那道,limit 不适用
+    const qid = searchParams.get('qid');
+    if (qid) queue = queue.filter((e) => e.id === qid);
+    else if (limit > 0) queue = queue.slice(0, limit);
     return { queue, byCat, scopeName: category ?? '全部题库' };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, category, round, searchParams]);
@@ -131,6 +147,11 @@ export function QuizPage({ category }: { category?: string }) {
     setRevealed(false);
   }, [queueIdx, entry?.id]);
 
+  // 卸载时清掉反馈推进计时器
+  useEffect(() => () => {
+    if (flashTimerRef.current != null) window.clearTimeout(flashTimerRef.current);
+  }, []);
+
   const advance = () => {
     if (queueIdx < total - 1) setQueueIdx(queueIdx + 1);
     else setRoundDone(true);
@@ -143,11 +164,10 @@ export function QuizPage({ category }: { category?: string }) {
     const next = review(existing || newCard(), rating);
     saveCard(cat, id, next);
     const dueTs = Date.now() + next.interval * 86_400_000;
-    setLastFeedback(
-      rating === '掌握' && isMastered(next)
-        ? `已掌握 · ${shortDate(dueTs)} 再见`
-        : `下次复习 ${shortDate(dueTs)}`,
-    );
+    const text = rating === '掌握' && isMastered(next)
+      ? `已掌握 · ${shortDate(dueTs)} 再见`
+      : `下次复习 ${shortDate(dueTs)}`;
+    setLastFeedback({ text, entryKey: `${cat}:${id}` });
     // 「不会」即时重排:首犯追加副本;重练副本再犯移到队尾并停留在原位重练
     const inRequeueIdx = requeue.findIndex((e) => e.category === entry.category && e.id === entry.id);
     const willAdd = rating === '不会' && inRequeueIdx === -1;
@@ -161,12 +181,19 @@ export function QuizPage({ category }: { category?: string }) {
     }
     setRatedHistory((h) => [...h, { entry, prev: existing, rating, next, requeued: rating === '不会' }]);
     if (repeatFailAtEnd) {
-      // 仍留在本题:清空揭示,让用户再练一遍
+      // 仍留在本题:清空揭示,让用户再练一遍;反馈属于本题,未揭示态可见
       setRevealed(false);
       return;
     }
-    if (queueIdx < newTotal - 1) setQueueIdx(queueIdx + 1);
-    else setRoundDone(true);
+    // 反馈在本题位置闪现后自动推进(评分结果有了去处,也不再跨题残留)
+    setFlash({ text, ...RATING_TONE[rating] });
+    if (flashTimerRef.current != null) window.clearTimeout(flashTimerRef.current);
+    flashTimerRef.current = window.setTimeout(() => {
+      flashTimerRef.current = null;
+      setFlash(null);
+      if (queueIdx < newTotal - 1) setQueueIdx(queueIdx + 1);
+      else setRoundDone(true);
+    }, 900);
   };
 
   const handleSkip = () => advance();
@@ -211,28 +238,27 @@ export function QuizPage({ category }: { category?: string }) {
     setRevealed(false);
     setRequeue([]);
     setRatedHistory([]);
+    setLastFeedback(null);
+    setFlash(null);
   };
 
   const revealedRef = useRef(revealed);
   revealedRef.current = revealed;
-  useEffect(() => {
-    if (roundDone || total === 0 || !entry) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
-      const el = document.activeElement as HTMLElement | null;
-      if (el?.closest('input, textarea, select, [contenteditable="true"], .cm-editor, .ProseMirror')) return;
-      if (document.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]')) return;
-      if (!revealedRef.current && (e.key === ' ' || e.key === 'Enter')) {
-        e.preventDefault();
-        setRevealed(true);
-      } else if (revealedRef.current && (e.key === '1' || e.key === '2' || e.key === '3')) {
-        const ratings: Rating[] = ['不会', '模糊', '掌握'];
-        handleRate(ratings[Number(e.key) - 1]);
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  });
+  const entryRef = useRef(entry);
+  entryRef.current = entry;
+  const keyboardEnabled = !roundDone && total > 0 && !!entry && !flash;
+  usePageKeys((e) => {
+    const cur = entryRef.current;
+    if (!cur) return;
+    if (!revealedRef.current && (e.key === ' ' || e.key === 'Enter')) {
+      e.preventDefault();
+      setRevealed(true);
+    } else if (revealedRef.current && (e.key === '1' || e.key === '2' || e.key === '3')) {
+      e.preventDefault();
+      const ratings: Rating[] = ['不会', '模糊', '掌握'];
+      handleRate(ratings[Number(e.key) - 1]);
+    }
+  }, keyboardEnabled);
 
   if (error) {
     return (
@@ -357,7 +383,14 @@ export function QuizPage({ category }: { category?: string }) {
           className="pointer-events-none absolute -top-8 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent"
           aria-hidden
         />
-        {revealed ? (
+        {flash ? (
+          /* 评分反馈闪现:本题位置语义色底展示复习日期,随后自动推进 */
+          <div className="mx-auto max-w-3xl">
+            <div className={cn('flex h-12 items-center justify-center rounded-lg text-base font-semibold', flash.bg, flash.cls)}>
+              {flash.text}
+            </div>
+          </div>
+        ) : revealed ? (
           <div className="mx-auto grid max-w-3xl grid-cols-3 gap-2">
             <Button
               variant="secondary"
@@ -393,32 +426,34 @@ export function QuizPage({ category }: { category?: string }) {
               我想好了,看答案
               <Kbd>空格</Kbd>
             </Button>
-            <div className={`text-center text-[11px] ${lastFeedback ? 'text-success' : 'text-muted-foreground'}`}>
-              {lastFeedback ?? '先在脑中想清楚,再对答案'}
+            <div className={`text-center text-[11px] ${lastFeedback?.entryKey === `${current.category}:${current.id}` ? 'text-success' : 'text-muted-foreground'}`}>
+              {lastFeedback?.entryKey === `${current.category}:${current.id}` ? lastFeedback.text : '先在脑中想清楚,再对答案'}
             </div>
           </div>
         )}
-        <div className="mx-auto mt-1.5 flex max-w-3xl items-center justify-center gap-2">
-          {ratedHistory.length > 0 && (
+        {!flash && (
+          <div className="mx-auto mt-1.5 flex max-w-3xl items-center justify-center gap-2">
+            {ratedHistory.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-muted-foreground"
+                onClick={handleUndo}
+              >
+                <Undo2 className="size-3.5" aria-hidden />
+                撤销上一题
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
               className="h-7 px-2 text-xs text-muted-foreground"
-              onClick={handleUndo}
+              onClick={handleSkip}
             >
-              <Undo2 className="size-3.5" aria-hidden />
-              撤销上一题
+              跳过本题
             </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs text-muted-foreground"
-            onClick={handleSkip}
-          >
-            跳过本题
-          </Button>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

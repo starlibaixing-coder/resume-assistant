@@ -134,7 +134,7 @@ function GenerateForm({ jd, onCancel }: { jd: Jd | null; onCancel: () => void })
         jd ? 'jd' : 'ai',
       );
       toast.success(`已提交审核,通过后进我的题库(来源:${jd ? '按 JD' : 'AI 生成'})`);
-      navigate('/drafts');
+      navigate('/library?tab=review');
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setSubmitting(false);
@@ -377,31 +377,25 @@ export function AddQuestionPage() {
         />
       </div>
 
-      {/* 当前模式唯一呈现,页面聚焦一条流程 */}
-      {mode === 'manual' && (
-        <section data-add-section="manual" className="page-enter space-y-4">
-          <SectionHead index="01" title="手动写题" description="保存后直接进我的题库。" />
-          <ManualAddForm onSaved={(id) => {
-            toast.success('已保存到我的题库', { description: id });
-            navigate('/my/browse');
-          }} />
-        </section>
-      )}
+      {/* 三段常驻挂载,hidden 切换可见性——切换模式不再丢已填内容(v10 修复) */}
+      <section data-add-section="manual" hidden={mode !== 'manual'} className="space-y-4">
+        <SectionHead index="01" title="手动写题" description="保存后直接进我的题库。" />
+        <ManualAddForm onSaved={(id) => {
+          toast.success('已保存到我的题库', { description: id });
+          navigate('/library?category=my');
+        }} />
+      </section>
 
-      {mode === 'ai' && (
-        <section data-add-section="ai" className="page-enter space-y-4">
-          <SectionHead index="02" title="AI 生成" description="按知识点出一批题,先进待审核。" />
-          <GenerateForm jd={null} onCancel={goBack} />
-        </section>
-      )}
+      <section data-add-section="ai" hidden={mode !== 'ai'} className="space-y-4">
+        <SectionHead index="02" title="AI 生成" description="按知识点出一批题,先进待审核。" />
+        <GenerateForm jd={null} onCancel={goBack} />
+      </section>
 
-      {mode === 'jd' && (
-        <section data-add-section="jd" ref={jdSectionRef} className="page-enter space-y-4">
-          <SectionHead index="03" title="按 JD 生成" description="对着目标 JD 的技术要求出题,先进待审核。" />
-          <JdPicker value={jdPick} onChange={setJdPick} />
-          {jdPick && <GenerateForm jd={jdPick} onCancel={goBack} />}
-        </section>
-      )}
+      <section data-add-section="jd" ref={jdSectionRef} hidden={mode !== 'jd'} className="space-y-4">
+        <SectionHead index="03" title="按 JD 生成" description="对着目标 JD 的技术要求出题,先进待审核。" />
+        <JdPicker value={jdPick} onChange={setJdPick} />
+        {jdPick && <GenerateForm jd={jdPick} onCancel={goBack} />}
+      </section>
     </div>
   );
 }

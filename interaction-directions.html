@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CommitCareer · 交互范式从 0 重设计:四个可操作的方向</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: #efe9da; color: #2b2b26; }
+
+  :root {
+    --paper: #f7f3ea; --card: #fffdf7; --input: #f0ead9;
+    --ink: #2b2b26; --mut: #8f887a; --cin: #c2452d;
+    --line: #e7dfcc; --ok: #4f7042; --warn: #8a6d1f; --bad: #a8432f;
+  }
+
+  /* ───── 顶部说明与切换 ───── */
+  .head { max-width: 1180px; margin: 0 auto; padding: 26px 28px 0; }
+  .head h1 { font-size: 20px; font-weight: 700; }
+  .head p { font-size: 13.5px; color: var(--mut); margin-top: 6px; line-height: 1.7; }
+  .head p b { color: var(--ink); }
+  .switch { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  .switch button { appearance: none; border: none; cursor: pointer; font: inherit; font-size: 13.5px; font-weight: 600;
+    padding: 9px 16px; border-radius: 8px; background: #e4dcc8; color: #6e6656; transition: background .18s, color .18s; }
+  .switch button:hover { background: #ddd4bd; }
+  .switch button.on { background: var(--cin); color: #fff; }
+
+  .panel { display: none; max-width: 1180px; margin: 0 auto; padding: 16px 28px 60px; }
+  .panel.on { display: block; }
+
+  .hint { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.8; color: #6e6656;
+    background: #ece5d2; border-radius: 10px; padding: 10px 16px; margin-bottom: 14px; }
+  .hint .n { flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%; background: var(--cin); color: #fff;
+    font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+
+  /* ───── 演示画布(统一暖纸皮肤) ───── */
+  .demo { position: relative; height: 72vh; min-height: 560px; border-radius: 14px; overflow: hidden;
+    background: var(--paper); box-shadow: 0 20px 50px rgba(60,50,30,.18), 0 2px 8px rgba(60,50,30,.10); }
+
+  kbd { font-family: inherit; font-size: 11px; padding: 1px 6px; border-radius: 4px; background: #efe8d6; color: #a29a86; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 4px 11px; border-radius: 999px;
+    background: #efe8d6; color: #6e6656; cursor: pointer; border: none; font-family: inherit; transition: background .16s, color .16s; }
+  .chip.on { background: var(--cin); color: #fff; }
+  .pill { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 999px; background: #efe8d6; color: #6e6656; }
+  .pill.due { background: #f3e3c2; color: #8a6d1f; }
+  .pill.new { background: #e3ecdf; color: #4f7042; }
+  .pill.done { background: #ece5d2; color: #a29a86; }
+  .pill.pend { background: #f4ddd6; color: #a8432f; }
+  .pill.diff { background: transparent; color: #8f887a; box-shadow: inset 0 0 0 1px #ddd3bd; }
+
+  .btn { appearance: none; border: none; cursor: pointer; font: inherit; font-size: 13.5px; font-weight: 600;
+    padding: 9px 18px; border-radius: 8px; background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(60,50,30,.10);
+    transition: transform .15s, box-shadow .15s, background .16s, color .16s; display: inline-flex; align-items: center; gap: 8px; }
+  .btn:hover { box-shadow: 0 3px 10px rgba(60,50,30,.16); }
+  .btn:active { transform: translateY(1px); box-shadow: 0 1px 2px rgba(60,50,30,.10); }
+  .btn.pri { background: var(--cin); color: #fff; }
+  .btn.ok { color: var(--ok); } .btn.ok:hover { background: #eef2ea; }
+  .btn.bad { color: var(--bad); } .btn.bad:hover { background: #f7e8e4; }
+  .btn.ghost { background: transparent; box-shadow: none; color: #6e6656; }
+  .btn.ghost:hover { background: #efe8d6; box-shadow: none; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn kbd { background: rgba(0,0,0,.06); color: inherit; opacity: .75; }
+  .btn.pri kbd { background: rgba(255,255,255,.2); color: #fff; }
+
+  .overlay { position: absolute; inset: 0; background: var(--paper); display: none; flex-direction: column; z-index: 20; }
+  .overlay.on { display: flex; }
+
+  .toast { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); background: #3a352c; color: #f3eee1;
+    font-size: 13px; padding: 9px 18px; border-radius: 999px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 50;
+    box-shadow: 0 6px 20px rgba(0,0,0,.25); white-space: nowrap; }
+  .toast.on { opacity: 1; }
+
+  /* 题卡(共享) */
+  .qcard { background: var(--card); border-radius: 12px; padding: 26px 30px; box-shadow: 0 2px 10px rgba(60,50,30,.07); }
+  .qcard h2 { font-family: "Songti SC", "STSong", "SimSun", serif; font-size: 22px; line-height: 1.55; font-weight: 700; }
+  .qcard .focus { margin-top: 10px; font-size: 13px; color: var(--mut); }
+  .qcard .tags { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .ans { border-top: 1px solid var(--line); margin-top: 20px; padding-top: 16px; font-size: 13.5px; line-height: 2; color: #4a463c; }
+  .ans b { color: var(--ink); }
+  .ans ul { padding-left: 18px; } .ans li { margin: 4px 0; }
+  .feedback { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 13px; padding: 8px 14px; border-radius: 8px; }
+  .feedback.no { background: #f7e8e4; color: var(--bad); }
+  .feedback.mid { background: #f3e9cd; color: var(--warn); }
+  .feedback.ok { background: #eef2e8; color: var(--ok); }
+
+  /* ═══ A 指挥台 ═══ */
+  .a-top { display: flex; gap: 14px; align-items: center; padding: 14px 18px 10px; }
+  .a-brand { font-weight: 800; font-size: 14px; color: var(--cin); flex: 0 0 auto; }
+  .a-cmd { flex: 1; position: relative; }
+  .a-cmd input { width: 100%; font: inherit; font-size: 13.5px; padding: 9px 60px 9px 14px; border: none; border-radius: 9px;
+    background: var(--input); color: var(--ink); outline: none; }
+  .a-cmd input::placeholder { color: #a89f8a; }
+  .a-cmd input:focus { box-shadow: 0 0 0 2px rgba(194,69,45,.35); }
+  .a-cmd kbd { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
+  .a-nums { display: flex; gap: 6px; flex: 0 0 auto; }
+  .a-num { font-size: 12px; padding: 6px 10px; border-radius: 8px; background: var(--card); cursor: pointer; border: none;
+    font-family: inherit; color: #6e6656; box-shadow: 0 1px 2px rgba(60,50,30,.08); }
+  .a-num b { color: var(--cin); font-size: 14px; }
+  .a-drop { position: absolute; left: 118px; right: 118px; top: 56px; background: var(--card); border-radius: 12px; z-index: 30;
+    box-shadow: 0 16px 40px rgba(60,50,30,.22); display: none; max-height: 320px; overflow: auto; }
+  .a-drop.on { display: block; }
+  .a-drop .grp { font-size: 11px; color: var(--mut); padding: 10px 16px 4px; font-weight: 700; letter-spacing: .06em; }
+  .a-drop .it { display: flex; justify-content: space-between; gap: 10px; padding: 8px 16px; font-size: 13.5px; cursor: pointer; }
+  .a-drop .it:hover, .a-drop .it.sel { background: #f3edde; }
+  .a-drop .it .sub { color: var(--mut); font-size: 12px; }
+  .a-drop .it kbd { flex: 0 0 auto; }
+  .a-filters { display: flex; gap: 6px; padding: 4px 18px 10px; align-items: center; flex-wrap: wrap; }
+  .a-list { position: absolute; top: 118px; left: 0; right: 0; bottom: 58px; overflow-y: auto; padding: 0 18px 20px; }
+  .a-sec { font-size: 11px; font-weight: 700; color: var(--mut); letter-spacing: .08em; margin: 14px 4px 6px; }
+  .a-row { display: flex; gap: 12px; align-items: center; padding: 11px 12px; border-radius: 10px; cursor: pointer; transition: background .14s; }
+  .a-row:hover { background: #f1ebdc; }
+  .a-row.sel { background: var(--card); box-shadow: 0 2px 8px rgba(60,50,30,.10); }
+  .a-row.sel .a-t { color: var(--cin); }
+  .a-row .a-id { font-size: 11px; color: var(--mut); flex: 0 0 52px; font-variant-numeric: tabular-nums; }
+  .a-row .a-t { font-size: 13.5px; font-weight: 500; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .a-row .a-m { font-size: 12px; color: var(--mut); flex: 0 0 auto; }
+  .a-actbar { position: absolute; left: 0; right: 0; bottom: 0; height: 58px; background: var(--card);
+    display: flex; align-items: center; gap: 10px; padding: 0 18px; box-shadow: 0 -6px 20px rgba(60,50,30,.08); z-index: 10; }
+  .a-actbar .who { flex: 1; font-size: 13px; color: var(--mut); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .a-practice { padding: 40px 56px; }
+  .a-practice .prog { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: var(--mut); margin-bottom: 14px; }
+  .a-rate { position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: 10px; padding: 16px 56px 22px;
+    background: linear-gradient(to top, var(--paper) 72%, transparent); }
+  .a-rate .btn { flex: 1; height: 46px; justify-content: center; font-size: 15px; }
+  .a-reveal { position: absolute; left: 0; right: 0; bottom: 0; padding: 16px 56px 24px;
+    background: linear-gradient(to top, var(--paper) 72%, transparent); }
+  .a-reveal .btn { width: 100%; height: 46px; justify-content: center; font-size: 15px; }
+
+  /* ═══ B 交接棒 ═══ */
+  .b-stage { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 34px; }
+  .b-card { width: 560px; max-width: 92%; }
+  .b-kicker { font-size: 12px; font-weight: 700; letter-spacing: .14em; color: var(--cin); margin-bottom: 12px; }
+  .b-card h2 { font-family: "Songti SC", "STSong", "SimSun", serif; font-size: 26px; line-height: 1.5; }
+  .b-card .desc { margin-top: 10px; font-size: 13.5px; color: var(--mut); line-height: 1.8; }
+  .b-next { margin-top: 22px; font-size: 12.5px; color: #b3ab97; }
+  .b-next i { font-style: normal; }
+  .b-actions { margin-top: 24px; display: flex; gap: 10px; }
+  .b-cta { width: 100%; height: 52px; justify-content: center; font-size: 16px; }
+  .b-sess { width: 640px; max-width: 94%; }
+  .b-prog { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: var(--mut); margin-bottom: 14px; }
+  .b-rate { display: flex; gap: 10px; margin-top: 20px; }
+  .b-rate .btn { flex: 1; height: 50px; justify-content: center; font-size: 15px; }
+  .b-tri-dots { display: flex; gap: 6px; margin-bottom: 14px; }
+  .b-tri-dots i { width: 22px; height: 4px; border-radius: 2px; background: #ddd3bd; }
+  .b-tri-dots i.ok { background: var(--ok); } .b-tri-dots i.bad { background: var(--bad); }
+  .b-confirm { margin-top: 14px; background: #f7e8e4; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: var(--bad);
+    display: flex; align-items: center; gap: 10px; }
+  .b-confirm .sp { flex: 1; }
+  .b-foot { position: absolute; bottom: 14px; left: 0; right: 0; text-align: center; font-size: 12px; color: #b3ab97; }
+  .b-foot span { cursor: pointer; } .b-foot span:hover { color: var(--cin); }
+
+  /* ═══ C 三栏工作台 ═══ */
+  .c-wrap { position: absolute; inset: 0; display: flex; }
+  .c-rail { flex: 0 0 150px; background: #efe9d9; padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; }
+  .c-rail .brand { font-weight: 800; font-size: 13px; color: var(--cin); padding: 4px 10px 12px; }
+  .c-nav { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13.5px;
+    color: #5c5546; border: none; background: none; font-family: inherit; text-align: left; transition: background .15s; }
+  .c-nav:hover { background: #e6dec9; }
+  .c-nav.on { background: var(--cin); color: #fff; }
+  .c-nav .cnt { margin-left: auto; font-size: 12px; opacity: .75; font-variant-numeric: tabular-nums; }
+  .c-mid { flex: 0 0 320px; border-right: 1px solid var(--line); display: flex; flex-direction: column; background: #f3eee1; }
+  .c-mid .tools { padding: 12px 14px 8px; display: flex; flex-direction: column; gap: 8px; }
+  .c-mid input.search { font: inherit; font-size: 13px; padding: 8px 12px; border-radius: 8px; border: none; background: var(--card); outline: none; color: var(--ink); }
+  .c-mid input.search:focus { box-shadow: 0 0 0 2px rgba(194,69,45,.30); }
+  .c-mid .chips { display: flex; gap: 5px; flex-wrap: wrap; }
+  .c-rows { flex: 1; overflow-y: auto; padding: 4px 10px 14px; }
+  .c-row { padding: 10px 12px; border-radius: 9px; cursor: pointer; transition: background .14s; }
+  .c-row:hover { background: #ece5d2; }
+  .c-row.sel { background: var(--card); box-shadow: 0 2px 8px rgba(60,50,30,.10); }
+  .c-row .t { font-size: 13.5px; font-weight: 500; line-height: 1.5; }
+  .c-row.sel .t { color: var(--cin); }
+  .c-row .s { display: flex; gap: 6px; margin-top: 6px; align-items: center; }
+  .c-row .s .m { font-size: 11.5px; color: var(--mut); }
+  .c-det { flex: 1; overflow-y: auto; padding: 22px 26px; }
+  .c-det .empty { height: 100%; display: flex; align-items: center; justify-content: center; color: #b3ab97; font-size: 13.5px; flex-direction: column; gap: 8px; }
+  .c-det h2 { font-family: "Songti SC", "STSong", "SimSun", serif; font-size: 20px; line-height: 1.55; }
+  .c-det .meta { display: flex; gap: 6px; margin: 10px 0 4px; flex-wrap: wrap; }
+  .c-acts { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+  .c-confirm { margin-top: 14px; background: #f7e8e4; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: var(--bad);
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .c-confirm .sp { flex: 1; }
+  .c-form label { display: block; font-size: 12.5px; font-weight: 600; margin: 14px 0 6px; }
+  .c-form label i { color: var(--cin); font-style: normal; }
+  .c-form textarea, .c-form input { width: 100%; font: inherit; font-size: 13.5px; padding: 9px 12px; border-radius: 8px;
+    border: none; background: var(--input); color: var(--ink); outline: none; resize: vertical; }
+  .c-form textarea:focus, .c-form input:focus { box-shadow: 0 0 0 2px rgba(194,69,45,.30); }
+  .c-practice { padding: 44px 64px; }
+  .c-practice .prog { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--mut); margin-bottom: 14px; }
+  .c-rate { position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: 10px; padding: 16px 64px 22px;
+    background: linear-gradient(to top, var(--paper) 72%, transparent); }
+  .c-rate .btn { flex: 1; height: 46px; justify-content: center; font-size: 15px; }
+
+  /* ═══ D 双模式 ═══ */
+  .d-top { display: flex; align-items: center; gap: 14px; padding: 14px 20px; }
+  .d-seg { display: flex; background: #e7dfcc; border-radius: 10px; padding: 3px; }
+  .d-seg button { appearance: none; border: none; font: inherit; font-size: 13.5px; font-weight: 600; padding: 7px 22px;
+    border-radius: 8px; cursor: pointer; background: transparent; color: #6e6656; transition: background .16s, color .16s; }
+  .d-seg button.on { background: var(--cin); color: #fff; box-shadow: 0 1px 3px rgba(60,50,30,.18); }
+  .d-top .counts { margin-left: auto; font-size: 12.5px; color: var(--mut); }
+  .d-top .counts b { color: var(--cin); }
+  .d-stage { position: absolute; top: 58px; left: 0; right: 0; bottom: 0; }
+  .d-launch { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+  .d-launch .bignum { font-size: 84px; font-weight: 800; color: var(--cin); font-variant-numeric: tabular-nums; line-height: 1; }
+  .d-launch .lbl { font-size: 14px; color: var(--mut); }
+  .d-launch .sub { font-size: 13px; color: #b3ab97; margin-bottom: 14px; }
+  .d-practice { height: 100%; display: flex; flex-direction: column; padding: 26px 72px; }
+  .d-practice .qcard { flex: 1; overflow-y: auto; }
+  .d-mtabs { display: flex; gap: 6px; padding: 6px 20px 10px; }
+  .d-rows { position: absolute; top: 46px; left: 0; right: 0; bottom: 0; overflow-y: auto; padding: 0 20px 20px; }
+  .d-row { border-radius: 10px; padding: 9px 12px; cursor: pointer; transition: background .12s; }
+  .d-row:hover { background: #f1ebdc; }
+  .d-row:hover .d-acts { opacity: 1; }
+  .d-row.cur { background: var(--card); box-shadow: 0 2px 8px rgba(60,50,30,.10); }
+  .d-row .l1 { display: flex; align-items: center; gap: 10px; }
+  .d-row .id { font-size: 11px; color: var(--mut); flex: 0 0 52px; font-variant-numeric: tabular-nums; }
+  .d-row .t { flex: 1; font-size: 13.5px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .d-row .d-acts { display: flex; gap: 2px; opacity: 0; transition: opacity .15s; }
+  .d-row .d-acts button { appearance: none; border: none; background: none; cursor: pointer; width: 26px; height: 26px;
+    border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #8f887a; }
+  .d-row .d-acts button:hover { background: #efe8d6; color: var(--ink); }
+  .d-row .d-acts button.svg-ok:hover { background: #eef2e8; color: var(--ok); }
+  .d-row .d-acts button.svg-bad:hover { background: #f7e8e4; color: var(--bad); }
+  .d-detail { border-top: 1px solid var(--line); margin-top: 8px; padding: 10px 2px 4px; font-size: 13px; line-height: 1.9; color: #4a463c; }
+  .d-keys { position: absolute; right: 16px; bottom: 12px; font-size: 11.5px; color: #b3ab97; }
+  .svg { width: 15px; height: 15px; display: block; }
+
+  /* ═══ 对比页 ═══ */
+  .cmp { background: var(--paper); border-radius: 14px; padding: 28px 30px; box-shadow: 0 20px 50px rgba(60,50,30,.14); }
+  .cmp h2 { font-size: 17px; margin-bottom: 14px; }
+  .cmp table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .cmp th, .cmp td { text-align: left; padding: 10px 12px; vertical-align: top; line-height: 1.7; border-bottom: 1px solid var(--line); }
+  .cmp th { font-size: 12px; color: var(--mut); letter-spacing: .05em; }
+  .cmp td:first-child { color: var(--mut); font-size: 12.5px; white-space: nowrap; }
+  .cmp td b { color: var(--cin); }
+  .cmp .rec { margin-top: 20px; font-size: 13.5px; line-height: 2; color: #4a463c; background: #fffdf7; border-radius: 10px; padding: 16px 20px; }
+  .cmp .rec b { color: var(--cin); }
+  .fixlist { margin-top: 22px; }
+  .fixlist h3 { font-size: 15px; margin-bottom: 8px; }
+  .fixlist ol { padding-left: 20px; font-size: 13px; line-height: 2; color: #4a463c; }
+</style>
+</head>
+<body>
+
+<header class="head">
+  <h1>CommitCareer · 交互范式从 0 重设计</h1>
+  <p>四个方向,<b>同一场景(今日启动 → 练习 → 审核 → 管理)</b>,<b>同一皮肤(你选定的「暖纸书页」)</b>——只变交互范式,这样评的就是交互本身。
+  每个方向都是<b>真的可以操作</b>的:能点击、能用键盘走完全程。建议按 A → B → C → D 各操作一遍,再看「对比与建议」。</p>
+  <nav class="switch" id="switch">
+    <button data-p="a" class="on">A 指挥台 · 命令驱动</button>
+    <button data-p="b">B 交接棒 · 一屏一事</button>
+    <button data-p="c">C 工作台 · 三栏就地</button>
+    <button data-p="d">D 双模式 · 学习/分拣</button>
+    <button data-p="cmp">对比与建议</button>
+  </nav>
+</header>
+
+<!-- ═══════════════ A 指挥台 ═══════════════ -->
+<section class="panel on" id="p-a">
+  <div class="hint"><span class="n">A</span><div><b>主张:一个命令框就是整个应用。</b>像 Linear/Raycast:顶部命令框搜题、搜命令、做筛选;
+  列表键盘选择(↑↓),所有动作挂在「当前选中」上(底部动作栏),不再有每行一排图标。试试:① 点命令框输入「闭包」或「复习」(或按 <kbd>/</kbd>) ② 列表 ↑↓ 选择,看底部动作栏变化 ③ <kbd>Enter</kbd> 练习此题;选中待审核行 <kbd>P</kbd>=通过 <kbd>X</kbd>=拒绝 ④ 点右上数字过滤</div></div>
+  <div class="demo" id="demo-a">
+    <div class="a-top">
+      <div class="a-brand">CommitCareer</div>
+      <div class="a-cmd"><input id="a-cmd" placeholder="搜索题目,或输入命令:复习 / 学习 / 审核 / 添加…" autocomplete="off"><kbd>⌘K</kbd></div>
+      <div class="a-nums">
+        <button class="a-num" data-f="due"><b>12</b> 待复习</button>
+        <button class="a-num" data-f="new"><b>25</b> 待学习</button>
+        <button class="a-num" data-f="pend"><b>2</b> 待审核</button>
+      </div>
+    </div>
+    <div class="a-filters" id="a-filters"></div>
+    <div class="a-list" id="a-list"></div>
+    <div class="a-actbar" id="a-actbar"></div>
+    <div class="a-drop" id="a-drop"></div>
+    <div class="overlay a-practice" id="a-practice"></div>
+    <div class="toast" id="a-toast"></div>
+  </div>
+</section>
+
+<!-- ═══════════════ B 交接棒 ═══════════════ -->
+<section class="panel" id="p-b">
+  <div class="hint"><span class="n">B</span><div><b>主张:应用替你决定下一步,一屏永远只有一件事。</b>像 Things/Duolingo:今日只有一张任务卡,
+  做完自动交接下一张;审核也是一题一卡地过,没有列表没有批次。试试:① 点「开始复习」 <kbd>空格</kbd> 揭示 <kbd>1/2/3</kbd> 评分 ② 评完自动下一题,一轮完成自动交接「学习新题」→「审核」 ③ 拒绝有就地确认 ④ 底部仍有安静的题库入口</div></div>
+  <div class="demo" id="demo-b">
+    <div class="b-stage" id="b-stage"></div>
+    <div class="b-foot">管理是次要路径:<span id="b-lib">浏览全部题目</span> · <span>求职材料</span> · <span>设置</span></div>
+  </div>
+</section>
+
+<!-- ═══════════════ C 三栏工作台 ═══════════════ -->
+<section class="panel" id="p-c">
+  <div class="hint"><span class="n">C</span><div><b>主张:导航栏 | 列表 | 详情,三栏常驻,一切就地发生,零弹窗。</b>像 Mail.app/Obsidian:
+  中列选行,右栏即详情;编辑就是右栏变表单,删除就是就地确认条,通过/拒绝就在详情里。试试:① 左栏切「题库」点行看右栏 ② 点「编辑」→ 右栏就地变表单 → 保存 ③ 点「删除」→ 就地确认条 ④ 左栏「今日」→「开始练习」(Esc 退出) ⑤ 「审核」里选中题直接通过/拒绝</div></div>
+  <div class="demo" id="demo-c">
+    <div class="c-wrap">
+      <div class="c-rail" id="c-rail"></div>
+      <div class="c-mid"><div class="tools" id="c-tools"></div><div class="c-rows" id="c-rows"></div></div>
+      <div class="c-det" id="c-det"></div>
+    </div>
+    <div class="overlay c-practice" id="c-practice"></div>
+    <div class="toast" id="c-toast"></div>
+  </div>
+</section>
+
+<!-- ═══════════════ D 双模式 ═══════════════ -->
+<section class="panel" id="p-d">
+  <div class="hint"><span class="n">D</span><div><b>主张:学习和管理是两种动物,干脆分成两个模式。</b>像 Anki + Superhuman:
+  「学习」= 全屏大卡,今天剩多少就一个数字;「管理」= 密度分拣队列,<kbd>j</kbd>/<kbd>k</kbd> 移动,悬停浮现动作,待审核 <kbd>a</kbd>=通过 <kbd>r</kbd>=拒绝。试试:① 学习模式点大数字下的「开始练习」 <kbd>空格</kbd> <kbd>1/2/3</kbd> ② 切「管理」→ 待审核页签,<kbd>j</kbd>/<kbd>k</kbd> 移动 <kbd>a</kbd>/<kbd>r</kbd> ③ 题目行悬停看动作,点行展开</div></div>
+  <div class="demo" id="demo-d">
+    <div class="d-top">
+      <div class="d-seg" id="d-seg"><button data-m="study" class="on">学习</button><button data-m="manage">管理</button></div>
+      <div class="counts">今日 <b>12</b> 待复习 · <b>25</b> 待学习 · <b>2</b> 待审核</div>
+    </div>
+    <div class="d-stage" id="d-stage"></div>
+    <div class="toast" id="d-toast"></div>
+  </div>
+</section>
+
+<!-- ═══════════════ 对比与建议 ═══════════════ -->
+<section class="panel" id="p-cmp">
+  <div class="cmp">
+    <h2>四方向对比</h2>
+    <table>
+      <tr><th></th><th>A 指挥台(命令驱动)</th><th>B 交接棒(一屏一事)</th><th>C 工作台(三栏就地)</th><th>D 双模式(学习/分拣)</th></tr>
+      <tr><td>一句话</td><td>一个命令框就是整个应用;动作挂选中</td><td>应用替你排程,永远只见当前任务</td><td>三栏常驻,一切就地,零弹窗</td><td>学习全屏大卡;管理密度分拣队列</td></tr>
+      <tr><td>今日启动</td><td>数字条 + 命令「复习」,一步进入</td><td><b>最强</b>:唯一卡片唯一按钮,零决策</td><td>列表选中计划项,右栏开始</td><td><b>强</b>:大数字 + 空格即开</td></tr>
+      <tr><td>练习专注</td><td>好(全屏 overlay)</td><td><b>最强</b>(本身就是全流程)</td><td>好(Esc 退出回原位)</td><td><b>最强</b>(零 chrome 大卡)</td></tr>
+      <tr><td>管理/编辑效率</td><td><b>强</b>(键盘选择 + 动作栏,快)</td><td>弱(管理被刻意弱化,只留审卡片)</td><td><b>最强</b>(就地看/改/删,指针最优)</td><td>强(j/k 分拣,批量过审最快)</td></tr>
+      <tr><td>弹窗策略</td><td>编辑仍需弹层或转详情</td><td>就地确认</td><td><b>完全无弹窗</b>(就地表单+就地确认)</td><td>编辑转弹层(Anki 式)</td></tr>
+      <tr><td>键盘模型</td><td>⌘K 万能 + 选择式动作</td><td>单键线性(空格/1/2/3)</td><td>方向键 + 快捷键辅助</td><td>j/k/vim 式分拣</td></tr>
+      <tr><td>指针友好</td><td>中(动作栏需先选中)</td><td>高(大按钮)</td><td><b>最高</b>(所见即所点)</td><td>高(悬停动作)</td></tr>
+      <tr><td>学习成本</td><td>中(要学命令框心智)</td><td><b>最低</b></td><td>低(人人都懂三栏邮件)</td><td>中(要理解双模式)</td></tr>
+      <tr><td>改造范围</td><td>大(壳+列表+⌘K 升级为中枢)</td><td>大(今日/练习/审核重写,题库压缩)</td><td>中(壳改三栏,各列表就地化,<b>无新概念</b>)</td><td>中(模式切换 + 分拣列表)</td></tr>
+      <tr><td>主要风险</td><td>指针用户迷失;JD/简历表单不适配命令范式</td><td>想同时看/管多题时受限制</td><td>窄窗口需详情降级方案</td><td>简历/JD 仍需第三种形态</td></tr>
+    </table>
+    <div class="rec"><b>建议:C 三栏工作台为骨架,吸收 B 的交接启动。</b>理由:你的痛点是「同一件事到处是不同范式」(编辑有时弹窗、有时内联卡、有时整页;动作有时图标、有时右键、有时快捷键)——C 用<b>一套语法</b>(选行 → 详情就地操作)统一了题库、审核、JD、简历全部管理面,<b>零弹窗</b>,指针键盘双优,且不需要学新概念。练习流已是全站最好的部分,保持全屏专注;今日页吸收 B 的「应用替你排程」:进来第一眼就是唯一主行动,而不是四组并列板块。</div>
+    <div class="fixlist">
+      <h3>无论选哪个方向,以下现存交互 bug 一并修复(代码走查实锤)</h3>
+      <ol>
+        <li>工具栏提示「后退 Cmd+← / 前进 Cmd+→」但快捷键从未绑定——提示与实现不符</li>
+        <li>评分反馈残留:上一题的「下次复习 X 日」会闪现在下一题未揭示的吸底条上</li>
+        <li>简历未保存守卫只拦鼠标点链接,<kbd>⌘K</kbd> 面板 / <kbd>⌘1..6</kbd> 切换会静默丢失改动</li>
+        <li>关闭 JD 编辑弹窗会顺手清空内联创建卡里写了一半的内容</li>
+        <li>/add 三张模式卡切换即丢已填内容,无任何警告</li>
+        <li>⌘K 搜题跳转丢了分类参数,与总览同逻辑的注释不符</li>
+        <li>题库页双层页头(「题库」+ 内层「题目列表/待审核」)纵向堆叠</li>
+        <li>窄窗口下主从分栏详情不可达,点行无任何反馈</li>
+        <li>四处重复的「输入框/弹窗让键」守卫各自实现;两个页面级 keydown 每次渲染重挂</li>
+        <li>旧路由重定向混用(手动加题保存跳 /my/browse 等),凭空多一跳、后退语义混乱</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<script>
+'use strict';
+/* ───────── 共享数据 ───────── */
+var QS = [
+  { id:'fe.01.1', m:'JS 原理', d:'中', tags:['高频'], st:'due',
+    t:'什么是闭包？它有哪些实际用途？', f:'理解闭包的本质与工程价值',
+    a:['<b>闭包 = 函数 + 其词法作用域的引用</b>:内层函数引用外层变量,外层返回后变量仍存活。','用途:封装私有状态(计数器)、柯里化、模块模式、回调中保留上下文。','代价:被引用的变量无法回收,需注意意外的内存持有。'] },
+  { id:'fe.01.2', m:'JS 原理', d:'高', tags:[], st:'due',
+    t:'事件循环中宏任务与微任务的执行顺序是怎样的？', f:'掌握一轮循环的精确顺序',
+    a:['一轮:执行完当前宏任务 → <b>清空全部微任务</b> → 渲染 → 下一个宏任务。','Promise.then / queueMicrotask 是微任务;setTimeout / I/O 是宏任务。','async/await:await 之后的代码等价于 then 回调(微任务)。'] },
+  { id:'fe.03.1', m:'React', d:'中', tags:[], st:'new',
+    t:'React 18 的自动批处理与旧版有何区别？', f:'理解批处理的范围变化',
+    a:['v17 及以前:只有 React 事件处理器内的更新批处理;setTimeout/promise 里各自同步渲染。','v18:createRoot 下<b>所有更新默认批处理</b>,多处 setState 合并为一次渲染。','需要同步时用 flushSync 退回。'] },
+  { id:'ag.05.1', m:'Agent 机制', d:'中', tags:['高频'], st:'new',
+    t:'什么是 Function Calling？描述它的工作流程。', f:'理解模型与外部工具的衔接',
+    a:['模型不直接执行函数:它输出<b>想调用的函数名 + JSON 参数</b>,应用执行后把结果回传,模型继续。','流程:定义 tools schema → 模型决策调用 → 应用执行 → 结果作为 tool 消息回传 → 模型归纳。','适合:任务步数不定、需要真实数据的场景。'] },
+  { id:'ag.05.2', m:'Agent 机制', d:'高', tags:[], st:'due',
+    t:'为什么 ReAct 容易跑偏？有哪些缓解手段？', f:'理解推理-行动循环的失败模式',
+    a:['错误会累积:一步错误观察带偏后续推理;可能幻觉工具结果或死循环同一动作。','缓解:<b>限制最大步数</b>、每步校验观察结果、引入规划层、关键节点人工确认。','工具描述越精确,跑偏率越低。'] },
+  { id:'fe.07.1', m:'工程化', d:'初', tags:[], st:'done',
+    t:'tree shaking 的原理是什么？', f:'理解 ES Module 静态分析',
+    a:['基于 ESM 的静态结构:编译期分析 import/export 依赖图,<b>未被引用的导出在打包时剔除</b>。','前提:sideEffects 标注正确;CommonJS 动态 require 无法静态分析。'] },
+];
+var PEND = [
+  { id:'my.gen.1', m:'我的题库', d:'中', t:'什么是虚拟列表？它与分页加载如何取舍？', f:'长列表渲染优化', gen:'AI 生成 · 知识点「长列表优化」',
+    a:['虚拟列表只渲染<b>可视区 ± 缓冲区</b>的行,滚动时复用 DOM,总高度用占位撑起。','取舍:要随机跳转/检索用分页;要无限流畅滚动、数据大用虚拟列表。','实现要点:绝对定位行、二分查找起始索引、动态行高测量缓存。'] },
+  { id:'my.gen.2', m:'我的题库', d:'高', t:'如何设计一个支持取消的异步任务队列？', f:'并发控制与生命周期管理', gen:'按 JD 生成 · AI 应用工程师',
+    a:['每个任务持有 <b>AbortController</b>;队列并发上限 N,完成后自动补位。','取消 = abort 信号传给 fetch,任务标记 cancelled 不再执行回调。','取消后要清理副作用;重试与取消互斥。'] },
+];
+var JDS = [
+  { t:'高级前端工程师', c:'字节跳动', d:'负责抖音 Web 性能优化与工程化…要求:深入 React/Vue 原理,大型工程化经验,熟悉 Node 中间层,关注加载与渲染性能…' },
+  { t:'AI 应用工程师', c:'月之暗面', d:'负责 AI Agent 产品的前端与编排层…要求:理解 Function Calling / RAG 等应用模式,TypeScript 熟练,对模型能力边界有体感…' },
+];
+var STMAP = { due:['待复习','due'], new:['待学习','new'], done:['已掌握','done'], pend:['待审核','pend'] };
+var RATE_MSG = { no:['不会','no','明天再来 · 9 月 8 日'], mid:['模糊','mid','3 天后 · 9 月 10 日'], ok:['掌握','ok','7 天后 · 9 月 14 日'] };
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function stPill(st){ var m = STMAP[st]; return '<span class="pill '+m[1]+'">'+m[0]+'</span>'; }
+function qTags(q){ var h = '<span class="pill diff">难度 '+q.d+'</span>'; (q.tags||[]).forEach(function(t){ h += '<span class="pill">'+esc(t)+'</span>'; }); return h; }
+function ansHtml(q){ return '<div class="ans"><ul>' + q.a.map(function(x){ return '<li>'+x+'</li>'; }).join('') + '</ul></div>'; }
+
+/* 会话状态机(题目练习) */
+function makeSession(list){ return { qs:list, i:0, rev:false, res:[], done:false }; }
+function sessionRate(s, r){
+  s.res.push({ q:s.qs[s.i], r:r }); s.rev = false; s.i++;
+  if (s.i >= s.qs.length) s.done = true;
+}
+function sessionSummary(s){
+  var ok = s.res.filter(function(x){ return x.r==='ok'; }).length;
+  var mid = s.res.filter(function(x){ return x.r==='mid'; }).length;
+  var no = s.res.filter(function(x){ return x.r==='no'; }).length;
+  return '本轮完成 · 学了 '+s.res.length+' 道题,掌握 '+ok+' 道,模糊 '+mid+' 道,不会 '+no+' 道';
+}
+
+/* 通用 toast */
+function toast(id, msg){
+  var el = document.getElementById(id); el.textContent = msg; el.classList.add('on');
+  clearTimeout(el._t); el._t = setTimeout(function(){ el.classList.remove('on'); }, 1800);
+}
+
+/* 渲染练习 overlay(多方向共用骨架) */
+function practiceHtml(prefix, s, opts){
+  if (s.done) {
+    return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px">'
+      + '<div style="font-family:\'Songti SC\',serif;font-size:24px;font-weight:700">今日练习完成</div>'
+      + '<div style="font-size:13.5px;color:var(--mut)">' + sessionSummary(s) + '</div>'
+      + '<div style="display:flex;gap:8px;margin-top:8px"><button class="btn pri" data-act="back">回到列表</button></div></div>';
+  }
+  var q = s.qs[s.i];
+  var head = '<div class="prog"><span>练习 ' + (s.i+1) + ' / ' + s.qs.length + '</span>'
+    + '<span><button class="btn ghost" data-act="back" style="padding:4px 10px;font-size:12.5px">退出练习 <kbd>Esc</kbd></button></span></div>';
+  var card = '<div class="qcard" style="max-width:640px;margin:0 auto;width:100%"><div class="tags">' + qTags(q) + '</div>'
+    + '<h2>' + esc(q.t) + '</h2><div class="focus">考察方向:' + esc(q.f) + '</div>'
+    + (s.rev ? ansHtml(q) : '') + '</div>';
+  var bar;
+  if (!s.rev) bar = '<div class="'+(prefix==='a'?'a-reveal':'')+'" style="position:absolute;left:0;right:0;bottom:0;padding:16px 56px 24px;background:linear-gradient(to top,var(--paper) 72%,transparent)">'
+    + '<button class="btn pri" data-act="reveal" style="width:100%;height:46px;justify-content:center;font-size:15px">我想好了,看答案 <kbd>空格</kbd></button></div>';
+  else bar = '<div class="'+(prefix==='a'?'a-rate':'c-rate')+'" style="position:absolute;left:0;right:0;bottom:0;display:flex;gap:10px;padding:16px 56px 22px;background:linear-gradient(to top,var(--paper) 72%,transparent)">'
+    + '<button class="btn" data-act="rate-no" style="flex:1;height:46px;justify-content:center;font-size:15px;color:var(--bad)">不会 <kbd>1</kbd></button>'
+    + '<button class="btn" data-act="rate-mid" style="flex:1;height:46px;justify-content:center;font-size:15px;color:var(--warn)">模糊 <kbd>2</kbd></button>'
+    + '<button class="btn" data-act="rate-ok" style="flex:1;height:46px;justify-content:center;font-size:15px;color:var(--ok)">掌握 <kbd>3</kbd></button></div>';
+  var fb = s._fb ? '<div class="feedback '+RATE_MSG[s._fb][1]+'" style="max-width:640px;margin:12px auto 0;width:100%">已评「'+RATE_MSG[s._fb][0]+'」· 下次复习 '+RATE_MSG[s._fb][2]+'</div>' : '';
+  return head + card + fb + bar;
+}
+
+/* ═════════ A 指挥台 ═════════ */
+var A = (function(){
+  var filter = 'all', sel = -1, rows = [], session = null, dropOpen = false, dropSel = 0, dropItems = [];
+  var $list = document.getElementById('a-list'), $bar = document.getElementById('a-actbar'),
+      $filters = document.getElementById('a-filters'), $drop = document.getElementById('a-drop'),
+      $cmd = document.getElementById('a-cmd'), $pra = document.getElementById('a-practice');
+
+  var FILTERS = [['all','全部'],['due','待复习'],['new','待学习'],['done','已掌握'],['pend','待审核']];
+  function currentRows(){
+    var arr = [];
+    if (filter !== 'pend') QS.forEach(function(q){ if (filter==='all' || q.st===filter) arr.push({ type:'q', q:q }); });
+    if (filter === 'all' || filter === 'pend') PEND.forEach(function(p){ arr.push({ type:'p', q:p }); });
+    return arr;
+  }
+  function renderFilters(){
+    $filters.innerHTML = FILTERS.map(function(f){
+      return '<button class="chip '+(filter===f[0]?'on':'')+'" data-f="'+f[0]+'">'+f[1]+'</button>';
+    }).join('') + '<span style="flex:1"></span><span style="font-size:12px;color:#b3ab97">模块 ▾</span>';
+  }
+  function renderList(){
+    rows = currentRows();
+    if (!rows.length) { $list.innerHTML = '<div style="text-align:center;color:#b3ab97;font-size:13px;padding:60px 0">没有符合筛选的题</div>'; return; }
+    if (sel >= rows.length) sel = rows.length - 1;
+    var html = '', lastSec = '';
+    rows.forEach(function(r, i){
+      var sec = r.type==='p' ? '待审核' : '题库';
+      if (sec !== lastSec) { html += '<div class="a-sec">'+sec+'</div>'; lastSec = sec; }
+      var pill = r.type==='p' ? stPill('pend') : stPill(r.q.st);
+      html += '<div class="a-row '+(i===sel?'sel':'')+'" data-i="'+i+'">'
+        + '<span class="a-id">'+esc(r.q.id)+'</span><span class="a-t">'+esc(r.q.t)+'</span>'
+        + '<span class="a-m">'+esc(r.q.m)+'</span>'+pill+'</div>';
+    });
+    $list.innerHTML = html;
+  }
+  function renderBar(){
+    if (sel < 0 || !rows[sel]) {
+      $bar.innerHTML = '<span class="who">↑↓ 选择题目,Enter 练习此题;输入框想让键时按 Esc</span>'; return;
+    }
+    var r = rows[sel], left = '<span class="who">'+esc(r.q.t)+'</span>', btns = '';
+    if (r.type === 'p') btns = '<button class="btn ok" data-act="pass">通过,进我的题库 <kbd>P</kbd></button>'
+      + '<button class="btn bad" data-act="reject">拒绝 <kbd>X</kbd></button>';
+    else btns = '<button class="btn pri" data-act="practice">练习此题 <kbd>Enter</kbd></button>'
+      + '<button class="btn" data-act="edit">编辑 <kbd>E</kbd></button>'
+      + (r.q.st!=='done' && r.q.m!=='我的题库' ? '<button class="btn" data-act="copy">复制 <kbd>C</kbd></button>' : '');
+    $bar.innerHTML = left + btns;
+  }
+  function renderPractice(){
+    if (!session) { $pra.classList.remove('on'); return; }
+    $pra.classList.add('on');
+    $pra.innerHTML = practiceHtml('a', session);
+  }
+  function openDrop(items){
+    dropItems = items; dropSel = 0; dropOpen = true;
+    if (!items.length) { $drop.classList.remove('on'); dropOpen = false; return; }
+    $drop.innerHTML = items.map(function(it, i){
+      return '<div class="it '+(i===dropSel?'sel':'')+'" data-i="'+i+'"><span>'+it.label+'</span>'
+        + '<span class="sub">'+(it.sub||'')+'</span></div>';
+    }).join('');
+    $drop.classList.add('on');
+  }
+  function closeDrop(){ dropOpen = false; $drop.classList.remove('on'); }
+  function runItem(it){
+    closeDrop(); $cmd.value = ''; $cmd.blur();
+    if (it.kind === 'action') {
+      if (it.filter) { filter = it.filter; sel = -1; renderFilters(); renderList(); renderBar(); }
+      toast('a-toast', it.done || it.label);
+    } else if (it.kind === 'q') {
+      session = makeSession([it.q]); renderPractice();
+    }
+  }
+  function buildItems(v){
+    var acts = [
+      { kind:'action', label:'开始复习 12 题', sub:'命令', filter:'due', done:'已为你筛出待复习 12 题' },
+      { kind:'action', label:'开始学习新题', sub:'命令', filter:'new', done:'已为你筛出待学习 25 题' },
+      { kind:'action', label:'去审核 2 题', sub:'命令', filter:'pend', done:'已为你筛出待审核 2 题' },
+      { kind:'action', label:'添加题目', sub:'命令', done:'「添加题目」打开(演示)' },
+    ];
+    var qs = QS.concat(PEND).filter(function(q){ return v && (q.t.indexOf(v)>=0 || q.f.indexOf(v)>=0); })
+      .map(function(q){ return { kind:'q', q:q, label:esc(q.t), sub:q.m }; });
+    return acts.filter(function(a){ return !v || a.label.indexOf(v)>=0; }).concat(qs).slice(0, 9);
+  }
+
+  $cmd.addEventListener('input', function(){ openDrop(buildItems($cmd.value.trim())); });
+  $cmd.addEventListener('focus', function(){ openDrop(buildItems($cmd.value.trim())); });
+  $cmd.addEventListener('keydown', function(e){
+    if (!dropOpen) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); dropSel = Math.min(dropSel+1, dropItems.length-1); openDrop(buildItems($cmd.value.trim())); markDrop(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); dropSel = Math.max(dropSel-1, 0); openDrop(buildItems($cmd.value.trim())); markDrop(); }
+    else if (e.key === 'Enter') { e.preventDefault(); runItem(dropItems[dropSel]); }
+    else if (e.key === 'Escape') { closeDrop(); $cmd.blur(); }
+  });
+  function markDrop(){
+    var its = $drop.querySelectorAll('.it'); its.forEach(function(el, i){ el.classList.toggle('sel', i===dropSel); });
+  }
+  $drop.addEventListener('click', function(e){
+    var it = e.target.closest('.it'); if (!it) return;
+    runItem(dropItems[+it.dataset.i]);
+  });
+  $filters.addEventListener('click', function(e){
+    var b = e.target.closest('[data-f]'); if (!b) return;
+    filter = b.dataset.f; sel = -1; renderFilters(); renderList(); renderBar();
+  });
+  document.getElementById('demo-a').addEventListener('click', function(e){
+    var num = e.target.closest('.a-num');
+    if (num) { filter = num.dataset.f; sel = -1; renderFilters(); renderList(); renderBar(); return; }
+    var row = e.target.closest('.a-row');
+    if (row) { sel = +row.dataset.i; renderList(); renderBar(); return; }
+    var btn = e.target.closest('[data-act]');
+    if (btn) act(btn.dataset.act);
+  });
+  function act(a){
+    var r = rows[sel];
+    if (a === 'practice' && r && r.type === 'q') { session = makeSession([r.q]); renderPractice(); }
+    else if (a === 'reveal') { session.rev = true; renderPractice(); }
+    else if (a === 'rate-no' || a === 'rate-mid' || a === 'rate-ok') {
+      var k = a.slice(5); session._fb = k; sessionRate(session, k); renderPractice();
+    }
+    else if (a === 'back') { session = null; renderPractice(); renderList(); renderBar(); }
+    else if (a === 'edit') toast('a-toast', '编辑:就地或弹层(实现时定),演示从略');
+    else if (a === 'copy') toast('a-toast', '已复制到我的题库');
+    else if (a === 'pass') { PEND.splice(PEND.indexOf(r.q), 1); sel = -1; renderList(); renderBar(); toast('a-toast', '已通过,进我的题库'); }
+    else if (a === 'reject') { PEND.splice(PEND.indexOf(r.q), 1); sel = -1; renderList(); renderBar(); toast('a-toast', '已拒绝(不可恢复)'); }
+  }
+  function key(e){
+    if (dropOpen) return;
+    if (e.key === '/') { e.preventDefault(); $cmd.focus(); return; }
+    if (e.key === 'ArrowDown') { e.preventDefault(); sel = Math.min(sel+1, rows.length-1); renderList(); renderBar(); scrollSel(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); sel = Math.max(sel-1, 0); renderList(); renderBar(); scrollSel(); }
+    else if (e.key === 'Enter') { if (rows[sel] && rows[sel].type==='q') act('practice'); }
+    else if (session && !session.done && e.key === ' ') { e.preventDefault(); act('reveal'); }
+    else if (session && !session.done && ['1','2','3'].indexOf(e.key)>=0) { act('rate-' + ['no','mid','ok'][+e.key-1]); }
+    else if (e.key === 'Escape') { if (session) act('back'); }
+    else if (rows[sel] && rows[sel].type==='p') {
+      if (e.key === 'p' || e.key === 'P') act('pass');
+      else if (e.key === 'x' || e.key === 'X') act('reject');
+    } else if (rows[sel] && rows[sel].type==='q') {
+      if (e.key === 'e' || e.key === 'E') act('edit');
+      else if (e.key === 'c' || e.key === 'C') act('copy');
+    }
+  }
+  function scrollSel(){
+    var el = $list.querySelector('.a-row.sel'); if (el) el.scrollIntoView({ block:'nearest' });
+  }
+  renderFilters(); renderList(); renderBar();
+  return { key:key };
+})();
+
+/* ═════════ B 交接棒 ═════════ */
+var B = (function(){
+  var PLAN = [
+    { k:'review', n:'01', label:'复习 12 道', desc:'都是之前学过、今天该再见的题。', qs:[QS[0], QS[1], QS[4]] },
+    { k:'learn', n:'02', label:'学习新题 5 道', desc:'从没见过的题,先想后看答案。', qs:[QS[2], QS[3]] },
+    { k:'audit', n:'03', label:'审核 2 道 AI 题', desc:'AI 生成的题,你把关后才进学习队列。', pend:PEND },
+  ];
+  var step = 0, mode = 'plan', session = null, tri = 0, triRes = [], confirmNo = false;
+  var $stage = document.getElementById('b-stage');
+
+  function upNext(){
+    if (mode === 'plan') return '';
+    var rest = PLAN.slice(step+1).map(function(p){ return '<i>'+p.label+'</i>'; }).join(' → ');
+    return rest ? '接下来:' + rest : '这是今天的最后一件事。';
+  }
+  function renderPlanCard(){
+    var p = PLAN[step];
+    $stage.innerHTML = '<div class="b-card">'
+      + '<div class="b-kicker">今日 · 第 ' + (step+1) + ' / ' + PLAN.length + ' 件事</div>'
+      + '<h2>' + p.label + '</h2><div class="desc">' + p.desc + '</div>'
+      + '<div class="b-actions"><button class="btn pri b-cta" data-act="go">' + (p.k==='audit' ? '开始审核' : '开始') + ' <kbd>空格</kbd></button></div>'
+      + '<div class="b-next">' + upNext() + '</div></div>';
+  }
+  function renderSession(){
+    var head = '<div class="b-prog"><span>' + PLAN[step].label + ' · ' + (session.i+1) + ' / ' + session.qs.length + '</span>'
+      + '<span style="font-size:12px">评分反馈会立刻出现,评完自动下一题</span></div>';
+    var q = session.qs[session.i];
+    var card = '<div class="qcard"><div class="tags">' + qTags(q) + '</div><h2>' + esc(q.t) + '</h2>'
+      + '<div class="focus">考察方向:' + esc(q.f) + '</div>' + (session.rev ? ansHtml(q) : '') + '</div>';
+    var fb = session._fb ? '<div class="feedback '+RATE_MSG[session._fb][1]+'" style="margin-top:12px">已评「'+RATE_MSG[session._fb][0]+'」· 下次复习 '+RATE_MSG[session._fb][2]+' · 即将进入下一题…</div>' : '';
+    var bar = !session.rev
+      ? '<div class="b-rate"><button class="btn pri b-cta" data-act="reveal">我想好了,看答案 <kbd>空格</kbd></button></div>'
+      : '<div class="b-rate"><button class="btn" data-act="rate-no" style="flex:1;height:50px;justify-content:center;font-size:15px;color:var(--bad)">不会 <kbd>1</kbd></button>'
+      + '<button class="btn" data-act="rate-mid" style="flex:1;height:50px;justify-content:center;font-size:15px;color:var(--warn)">模糊 <kbd>2</kbd></button>'
+      + '<button class="btn" data-act="rate-ok" style="flex:1;height:50px;justify-content:center;font-size:15px;color:var(--ok)">掌握 <kbd>3</kbd></button></div>';
+    $stage.innerHTML = '<div class="b-sess">' + head + card + fb + bar + '</div>';
+  }
+  function renderSessionDone(){
+    $stage.innerHTML = '<div class="b-card"><div class="b-kicker">' + PLAN[step].label + ' · 完成</div>'
+      + '<h2>这一轮学完了</h2><div class="desc">' + sessionSummary(session) + '</div>'
+      + '<div class="b-actions"><button class="btn pri b-cta" data-act="nexthand">继续 → 交给下一件事 <kbd>空格</kbd></button></div>'
+      + '<div class="b-next">' + upNext() + '</div></div>';
+  }
+  function renderTriage(){
+    var pend = PLAN[step].pend;
+    if (tri >= pend.length) {
+      $stage.innerHTML = '<div class="b-card"><div class="b-kicker">待审核 · 完成</div><h2>审核完毕</h2>'
+        + '<div class="desc">通过 ' + triRes.filter(function(r){return r==='ok';}).length + ' 道,拒绝 ' + triRes.filter(function(r){return r==='bad';}).length + ' 道。库保持干净。</div>'
+        + '<div class="b-actions"><button class="btn pri b-cta" data-act="nexthand">继续 <kbd>空格</kbd></button></div></div>';
+      return;
+    }
+    var q = pend[tri];
+    var dots = pend.map(function(_, i){
+      return '<i class="' + (i < triRes.length ? (triRes[i]==='ok'?'ok':'bad') : '') + '"></i>';
+    }).join('');
+    var confirm = confirmNo
+      ? '<div class="b-confirm"><span>拒绝即永久删除,不可恢复。</span><span class="sp"></span>'
+        + '<button class="btn bad" data-act="reject-yes">确认拒绝</button><button class="btn ghost" data-act="reject-no">取消</button></div>'
+      : '';
+    $stage.innerHTML = '<div class="b-sess"><div class="b-tri-dots">' + dots + '</div>'
+      + '<div class="qcard"><div class="tags"><span class="pill pend">待审核</span><span class="pill diff">难度 '+q.d+'</span></div>'
+      + '<h2>' + esc(q.t) + '</h2><div class="focus">' + esc(q.gen) + ' · 考察方向:' + esc(q.f) + '</div>'
+      + (PLAN[step]._rev ? ansHtml(q) : '') + '</div>' + confirm
+      + (PLAN[step]._rev
+        ? '<div class="b-rate"><button class="btn ok" data-act="pass" style="flex:1;height:50px;justify-content:center;font-size:15px">通过,进我的题库 <kbd>1</kbd></button>'
+          + '<button class="btn bad" data-act="reject" style="flex:1;height:50px;justify-content:center;font-size:15px">拒绝 <kbd>2</kbd></button></div>'
+        : '<div class="b-rate"><button class="btn pri b-cta" data-act="reveal-p">我想好了,看答案 <kbd>空格</kbd></button></div>')
+      + '</div>';
+  }
+  function renderAllDone(){
+    $stage.innerHTML = '<div class="b-card"><div class="b-kicker">今日 · 全部完成</div>'
+      + '<h2>今天的计划做完了</h2><div class="desc">复习 12 · 新学 5 · 审核 2。明天会按你的遗忘曲线排好新的一批。</div>'
+      + '<div class="b-actions"><button class="btn b-cta" data-act="restart">重看演示</button></div></div>';
+  }
+  function render(){
+    if (mode === 'plan') renderPlanCard();
+    else if (mode === 'session') { if (session.done) renderSessionDone(); else renderSession(); }
+    else if (mode === 'triage') renderTriage();
+    else renderAllDone();
+  }
+  function next(){
+    step++;
+    if (step >= PLAN.length) { mode = 'done'; }
+    else { mode = 'plan'; }
+    render();
+  }
+  document.getElementById('demo-b').addEventListener('click', function(e){
+    var b = e.target.closest('[data-act]'); if (!b) return;
+    act(b.dataset.act);
+  });
+  document.getElementById('b-lib').addEventListener('click', function(){
+    toast('a-toast', '浏览题库:完整列表降级为次要入口(实现时保留全功能)');
+  });
+  function act(a){
+    if (mode === 'plan') { if (a === 'go') { if (PLAN[step].k === 'audit') { mode = 'triage'; tri = 0; triRes = []; confirmNo = false; PLAN[step]._rev = false; } else { session = makeSession(PLAN[step].qs); mode = 'session'; } render(); } }
+    else if (mode === 'session') {
+      if (session.done) { if (a === 'nexthand') next(); return; }
+      if (a === 'reveal') { session.rev = true; render(); }
+      else if (a.indexOf('rate-') === 0) {
+        var k = a.slice(5); session._fb = k; sessionRate(session, k); render();
+        if (!session.done) { $stage.querySelectorAll('[data-act]').forEach(function(el){ el.disabled = true; }); setTimeout(function(){ session._fb = null; render(); }, 950); }
+      }
+    }
+    else if (mode === 'triage') {
+      if (a === 'reveal-p') { PLAN[step]._rev = true; render(); }
+      else if (a === 'pass') { triRes.push('ok'); PLAN[step]._rev = false; tri++; render(); }
+      else if (a === 'reject') { confirmNo = true; render(); }
+      else if (a === 'reject-no') { confirmNo = false; render(); }
+      else if (a === 'reject-yes') { confirmNo = false; triRes.push('bad'); PLAN[step]._rev = false; tri++; render(); }
+    }
+    else if (mode === 'done') { if (a === 'restart') { step = 0; mode = 'plan'; render(); } }
+  }
+  function key(e){
+    if (e.key === ' ') {
+      e.preventDefault();
+      if (mode === 'plan') act('go');
+      else if (mode === 'session' && !session.done) act(session.rev ? '' : 'reveal');
+      else if (mode === 'session' && session.done) act('nexthand');
+      else if (mode === 'triage' && !PLAN[step]._rev) act('reveal-p');
+    }
+    else if (mode === 'session' && !session.done && session.rev && ['1','2','3'].indexOf(e.key)>=0) {
+      act('rate-' + ['no','mid','ok'][+e.key-1]);
+    }
+    else if (mode === 'triage' && PLAN[step]._rev && !confirmNo) {
+      if (e.key === '1') act('pass'); else if (e.key === '2') act('reject');
+    }
+  }
+  render();
+  return { key:key };
+})();
+
+/* ═════════ C 三栏工作台 ═════════ */
+var C = (function(){
+  var view = 'today', sel = null, editing = false, confirming = false, session = null;
+  var VIEWS = [['today','今日'],['practice','练习'],['library','题库'],['audit','审核'],['job','求职']];
+  var $rail = document.getElementById('c-rail'), $tools = document.getElementById('c-tools'),
+      $rows = document.getElementById('c-rows'), $det = document.getElementById('c-det'),
+      $pra = document.getElementById('c-practice');
+  var myQs = QS.map(function(q){ return { q:q }; });
+
+  function viewRows(){
+    if (view === 'today') return [
+      { type:'plan', k:'review', t:'01 · 复习 12 道', s:'之前学过、今天该再见', st:'due' },
+      { type:'plan', k:'learn', t:'02 · 学习新题 5 道', s:'从未见过的题', st:'new' },
+      { type:'plan', k:'audit', t:'03 · 审核 2 道', s:'AI 生成,待把关', st:'pend' },
+      { type:'plan', k:'job', t:'04 · 求职材料', s:'JD / 简历', st:'' },
+    ];
+    if (view === 'audit') return PEND.map(function(p){ return { type:'p', q:p }; });
+    if (view === 'job') return JDS.map(function(j){ return { type:'j', j:j }; });
+    return myQs.map(function(w){ return { type:'q', q:w.q }; });
+  }
+  function renderRail(){
+    var counts = { today:'', practice:'', library:QS.length, audit:PEND.length, job:JDS.length };
+    $rail.innerHTML = '<div class="brand">CommitCareer</div>' + VIEWS.map(function(v){
+      return '<button class="c-nav '+(view===v[0]?'on':'')+'" data-v="'+v[0]+'">'+v[1]
+        + (counts[v[0]]!=='' && counts[v[0]]>0 ? '<span class="cnt">'+counts[v[0]]+'</span>' : '') + '</button>';
+    }).join('');
+  }
+  function renderTools(){
+    if (view === 'library') $tools.innerHTML = '<input class="search" placeholder="搜索题干 / 考察点…">'
+      + '<div class="chips"><button class="chip on">全部</button><button class="chip">待复习</button><button class="chip">待学习</button><button class="chip">已掌握</button></div>';
+    else if (view === 'audit') $tools.innerHTML = '<input class="search" placeholder="搜索待审核题…">'
+      + '<div class="chips"><button class="chip on">全部来源</button><button class="chip">AI 生成</button><button class="chip">按 JD 生成</button></div>';
+    else $tools.innerHTML = '';
+  }
+  function renderRows(){
+    var rows = viewRows();
+    if (!rows.length) { $rows.innerHTML = '<div style="text-align:center;color:#b3ab97;font-size:13px;padding:50px 14px">这里空了</div>'; return; }
+    if (!rows.some(function(r){ return r === sel; })) sel = rows[0];
+    $rows.innerHTML = rows.map(function(r){
+      if (r.type === 'plan') return '<div class="c-row '+(r===sel?'sel':'')+'" data-k="'+r.k+'"><div class="t">'+esc(r.t)+'</div><div class="s">'+(r.st?stPill(r.st):'')+'<span class="m">'+esc(r.s)+'</span></div></div>';
+      if (r.type === 'j') return '<div class="c-row '+(r===sel?'sel':'')+'" data-i="'+JDS.indexOf(r.j)+'"><div class="t">'+esc(r.j.t)+'</div><div class="s"><span class="m">'+esc(r.j.c)+'</span></div></div>';
+      var q = r.q;
+      return '<div class="c-row '+(r===sel?'sel':'')+'" data-i="'+(r.type==='p'?PEND.indexOf(q):myQs.findIndex(function(w){return w.q===q;}))+'"><div class="t">'+esc(q.t)+'</div><div class="s">'+stPill(r.type==='p'?'pend':q.st)+'<span class="pill diff">难度 '+q.d+'</span><span class="m">'+esc(q.m)+'</span></div></div>';
+    }).join('');
+  }
+  function renderDet(){
+    if (!sel) { $det.innerHTML = '<div class="empty">← 从中间列表选一项</div>'; return; }
+    editing = editing; confirming = confirming;
+    if (sel.type === 'plan') {
+      var cta = (sel.k === 'review' || sel.k === 'learn')
+        ? '<div class="c-acts"><button class="btn pri" data-act="start">' + (sel.k==='review'?'开始复习 12 题':'开始学习 5 道') + '</button>'
+          + '<button class="btn ghost" data-act="seewhich">是哪些题</button></div>'
+        : sel.k === 'audit'
+        ? '<div class="c-acts"><button class="btn pri" data-act="goaudit">开始审核</button></div>'
+        : '<div class="c-acts"><button class="btn" data-act="gotojob">查看求职材料</button></div>';
+      $det.innerHTML = '<h2>' + esc(sel.t) + '</h2><div class="meta">' + (sel.st ? stPill(sel.st) : '') + '</div>'
+        + '<div style="font-size:13.5px;line-height:2;color:#4a463c;margin-top:10px">'
+        + (sel.k==='review' ? 'SM-2 按你的遗忘曲线算出:这 12 道今天再看一次收益最高。预计 15 分钟。'
+          : sel.k==='learn' ? '新题按模块混排,先想后看答案。学完自动进入复习队列。'
+          : sel.k==='audit' ? 'AI 生成的题必须经过你把关(通过/拒绝)才会进入学习队列。'
+          : 'JD 与简历是「按 JD 生成题目」的原料。') + '</div>' + cta;
+      return;
+    }
+    if (sel.type === 'j') {
+      var j = sel.j;
+      if (editing) return detForm(j.t, j.c, j.d, 'jd');
+      $det.innerHTML = '<h2>' + esc(j.t) + '</h2><div class="meta"><span class="pill">' + esc(j.c) + '</span><span class="pill">' + j.d.length + ' 字</span></div>'
+        + '<div style="font-size:13.5px;line-height:2;color:#4a463c;margin-top:10px">' + esc(j.d) + '</div>'
+        + '<div class="c-acts"><button class="btn pri" data-act="genjd">按 JD 生成题目</button>'
+        + '<button class="btn" data-act="edit">编辑</button><button class="btn bad" data-act="del">删除</button></div>';
+      return;
+    }
+    var q = sel.q, isPend = sel.type === 'p', isMine = q.m === '我的题库' || isPend;
+    if (editing) return detForm(q.t, q.f, q.a.join('\n'), 'q');
+    var acts;
+    if (isPend) acts = '<div class="c-acts"><button class="btn ok" data-act="pass">通过,进我的题库</button>'
+      + '<button class="btn bad" data-act="reject">拒绝</button></div>';
+    else if (isMine) acts = '<div class="c-acts"><button class="btn pri" data-act="practice">练习此题</button>'
+      + '<button class="btn" data-act="edit">编辑</button><button class="btn bad" data-act="del">删除</button></div>';
+    else acts = '<div class="c-acts"><button class="btn pri" data-act="practice">练习此题</button>'
+      + '<button class="btn" data-act="copy">复制到我的题库</button></div>';
+    $det.innerHTML = '<div class="tags" style="display:flex;gap:6px;margin-bottom:12px">' + (isPend?'<span class="pill pend">待审核</span>':'') + qTags(q) + '</div>'
+      + '<h2>' + esc(q.t) + '</h2><div class="meta"><span class="m" style="font-size:12.5px;color:var(--mut)">考察方向:' + esc(q.f) + '</span></div>'
+      + ansHtml(q) + acts
+      + (confirming ? '<div class="c-confirm"><span>删除后此题及其笔记、进度一并清除,<b>不可恢复</b>。</span><span class="sp"></span>'
+        + '<button class="btn bad" data-act="del-yes">确认删除</button><button class="btn ghost" data-act="del-no">取消</button></div>' : '');
+  }
+  function detForm(title, sub, body, kind){
+    $det.innerHTML = '<div class="c-form"><h2>编辑' + (kind==='jd'?' JD':'题目') + '</h2>'
+      + '<label>' + (kind==='jd'?'职位名称':'题干') + ' <i>*</i></label><input id="cf-t" value="' + esc(title) + '">'
+      + '<label>' + (kind==='jd'?'公司':'考察方向') + '</label><input id="cf-s" value="' + esc(sub) + '">'
+      + '<label>' + (kind==='jd'?'JD 全文':'答案要点(每行一条)') + ' <i>*</i></label><textarea id="cf-b" rows="7">' + esc(body) + '</textarea>'
+      + '<div class="c-acts"><button class="btn pri" data-act="save">保存</button><button class="btn ghost" data-act="cancel">取消</button></div></div>';
+  }
+  function renderPractice(){
+    if (!session) { $pra.classList.remove('on'); return; }
+    $pra.classList.add('on');
+    $pra.innerHTML = practiceHtml('c', session);
+  }
+  document.getElementById('demo-c').addEventListener('click', function(e){
+    var nav = e.target.closest('.c-nav');
+    if (nav) { view = nav.dataset.v; sel = null; editing = false; confirming = false; renderRail(); renderTools(); renderRows(); renderDet(); return; }
+    var row = e.target.closest('.c-row');
+    if (row) {
+      var rows = viewRows();
+      sel = rows.filter(function(r){
+        if (r.type==='plan') return r.k === row.dataset.k;
+        if (r.type==='j') return String(JDS.indexOf(r.j)) === row.dataset.i;
+        var q = r.q;
+        return String(r.type==='p'?PEND.indexOf(q):myQs.findIndex(function(w){return w.q===q;})) === row.dataset.i;
+      })[0];
+      editing = false; confirming = false; renderRows(); renderDet(); return;
+    }
+    var btn = e.target.closest('[data-act]'); if (!btn) return;
+    act(btn.dataset.act);
+  });
+  function act(a){
+    if (a === 'start') { session = makeSession(sel.k==='review' ? [QS[0], QS[1], QS[4]] : [QS[2], QS[3]]); renderPractice(); return; }
+    if (a === 'practice') { session = makeSession([sel.q]); renderPractice(); return; }
+    if (session) {
+      if (a === 'reveal') { session.rev = true; renderPractice(); return; }
+      if (a.indexOf('rate-') === 0) { var k = a.slice(5); session._fb = k; sessionRate(session, k); renderPractice(); return; }
+      if (a === 'back') { session = null; $pra.classList.remove('on'); return; }
+    }
+    if (a === 'edit') { editing = true; renderDet(); }
+    else if (a === 'save') {
+      var t = document.getElementById('cf-t').value.trim();
+      if (!t) { toast('c-toast', '题干不能为空'); return; }
+      if (sel.type === 'j') { sel.j.t = t; sel.j.c = document.getElementById('cf-s').value; sel.j.d = document.getElementById('cf-b').value; }
+      else { sel.q.t = t; sel.q.f = document.getElementById('cf-s').value; sel.q.a = document.getElementById('cf-b').value.split('\n').filter(Boolean); }
+      editing = false; renderRows(); renderDet(); toast('c-toast', '已保存');
+    }
+    else if (a === 'cancel') { editing = false; renderDet(); }
+    else if (a === 'del') { confirming = true; renderDet(); }
+    else if (a === 'del-no') { confirming = false; renderDet(); }
+    else if (a === 'del-yes') {
+      if (sel.type === 'j') JDS.splice(JDS.indexOf(sel.j), 1);
+      else { var w = myQs.find(function(x){return x.q===sel.q;}); if (w) myQs.splice(myQs.indexOf(w),1); }
+      sel = null; confirming = false; renderRows(); renderDet(); toast('c-toast', '已删除(不可恢复)');
+    }
+    else if (a === 'copy') toast('c-toast', '已复制到我的题库');
+    else if (a === 'pass') { PEND.splice(PEND.indexOf(sel.q), 1); sel = null; renderRail(); renderRows(); renderDet(); toast('c-toast', '已通过,进我的题库'); }
+    else if (a === 'reject') { PEND.splice(PEND.indexOf(sel.q), 1); sel = null; renderRail(); renderRows(); renderDet(); toast('c-toast', '已拒绝(不可恢复)'); }
+    else if (a === 'goaudit') { view = 'audit'; sel = null; renderRail(); renderTools(); renderRows(); renderDet(); }
+    else if (a === 'gotojob') { view = 'job'; sel = null; renderRail(); renderTools(); renderRows(); renderDet(); }
+    else if (a === 'genjd') toast('c-toast', '「添加题目 · 按 JD 生成」已打开(演示从略)');
+    else if (a === 'seewhich') toast('c-toast', '深链到题库并按状态过滤(演示从略)');
+  }
+  function key(e){
+    if (session) {
+      if (e.key === 'Escape') act('back');
+      else if (!session.done && e.key === ' ') { e.preventDefault(); act('reveal'); }
+      else if (!session.done && ['1','2','3'].indexOf(e.key)>=0) act('rate-' + ['no','mid','ok'][+e.key-1]);
+      return;
+    }
+    if (editing && e.key === 'Escape') { act('cancel'); return; }
+    var rows = viewRows();
+    var i = rows.indexOf(sel);
+    if (e.key === 'ArrowDown' && i < rows.length-1) { e.preventDefault(); sel = rows[i+1]; renderRows(); renderDet(); }
+    else if (e.key === 'ArrowUp' && i > 0) { e.preventDefault(); sel = rows[i-1]; renderRows(); renderDet(); }
+  }
+  renderRail(); renderTools(); renderRows(); renderDet();
+  return { key:key };
+})();
+
+/* ═════════ D 双模式 ═════════ */
+var D = (function(){
+  var mode = 'study', tab = 'q', cur = 0, session = null;
+  var $seg = document.getElementById('d-seg'), $stage = document.getElementById('d-stage');
+  var ICONS = {
+    play:'<svg class="svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l14 8-14 8z"/></svg>',
+    edit:'<svg class="svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>',
+    trash:'<svg class="svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>',
+    copy:'<svg class="svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>',
+    check:'<svg class="svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>',
+    x:'<svg class="svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+  };
+  function renderLaunch(){
+    $stage.innerHTML = '<div class="d-launch"><div class="bignum">12</div><div class="lbl">道题今天该复习</div>'
+      + '<div class="sub">另有 25 道待学习 · 2 道待审核 —— 学完这 12 道再说</div>'
+      + '<button class="btn pri" data-act="go" style="height:52px;padding:0 42px;font-size:16px">开始练习 <kbd>空格</kbd></button></div>';
+  }
+  function renderStudy(){
+    if (!session) return renderLaunch();
+    if (session.done) {
+      $stage.innerHTML = '<div class="d-launch"><div style="font-family:\'Songti SC\',serif;font-size:26px;font-weight:700">练完了</div>'
+        + '<div class="lbl">' + sessionSummary(session) + '</div>'
+        + '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn pri" data-act="back">回到今天</button></div></div>';
+      return;
+    }
+    var q = session.qs[session.i];
+    var card = '<div class="qcard" style="flex:1;overflow-y:auto;margin-bottom:14px"><div class="tags">' + qTags(q) + '</div>'
+      + '<h2 style="font-size:26px">' + esc(q.t) + '</h2><div class="focus">考察方向:' + esc(q.f) + '</div>'
+      + (session.rev ? ansHtml(q) : '') + (session._fb ? '<div class="feedback '+RATE_MSG[session._fb][1]+'">已评「'+RATE_MSG[session._fb][0]+'」· 下次复习 '+RATE_MSG[session._fb][2]+'</div>' : '') + '</div>';
+    var bar = !session.rev
+      ? '<button class="btn pri" data-act="reveal" style="height:56px;font-size:16px">我想好了,看答案 <kbd>空格</kbd></button>'
+      : '<div style="display:flex;gap:10px"><button class="btn" data-act="rate-no" style="flex:1;height:56px;font-size:16px;color:var(--bad);justify-content:center">不会 <kbd>1</kbd></button>'
+      + '<button class="btn" data-act="rate-mid" style="flex:1;height:56px;font-size:16px;color:var(--warn);justify-content:center">模糊 <kbd>2</kbd></button>'
+      + '<button class="btn" data-act="rate-ok" style="flex:1;height:56px;font-size:16px;color:var(--ok);justify-content:center">掌握 <kbd>3</kbd></button></div>';
+    $stage.innerHTML = '<div class="d-practice"><div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--mut);margin-bottom:12px">'
+      + '<span>' + (session.i+1) + ' / ' + session.qs.length + '</span><span><button class="btn ghost" data-act="back" style="padding:3px 10px;font-size:12px">退出 <kbd>Esc</kbd></button></span></div>'
+      + card + bar + '</div>';
+  }
+  function renderManage(){
+    var tabs = [['q','题目 ('+QS.length+')'],['p','待审核 ('+PEND.length+')'],['j','JD ('+JDS.length+')']];
+    var list = tab==='q' ? QS : tab==='p' ? PEND : JDS;
+    if (cur >= list.length) cur = Math.max(0, list.length-1);
+    var rowsHtml = list.map(function(x, i){
+      var isCur = i === cur;
+      var acts;
+      if (tab === 'q') acts = '<button data-act="row-practice" title="练习">' + ICONS.play + '</button>'
+        + '<button data-act="row-edit" title="编辑">' + ICONS.edit + '</button>'
+        + '<button data-act="row-copy" title="复制">' + ICONS.copy + '</button>';
+      else if (tab === 'p') acts = '<button class="svg-ok" data-act="row-pass" title="通过">' + ICONS.check + '</button>'
+        + '<button class="svg-bad" data-act="row-reject" title="拒绝">' + ICONS.x + '</button>';
+      else acts = '<button data-act="row-genjd" title="按 JD 生成">' + ICONS.play + '</button>'
+        + '<button data-act="row-edit" title="编辑">' + ICONS.edit + '</button>'
+        + '<button class="svg-bad" data-act="row-del" title="删除">' + ICONS.trash + '</button>';
+      var l1;
+      if (tab === 'j') l1 = '<span class="id">' + (i+1) + '</span><span class="t">' + esc(x.t) + ' · ' + esc(x.c) + '</span>';
+      else l1 = '<span class="id">' + esc(x.id) + '</span><span class="t">' + esc(x.t) + '</span>'
+        + (tab==='q' ? stPill(x.st) : stPill('pend'));
+      var detail = isCur && tab !== 'j'
+        ? '<div class="d-detail"><b>考察方向:</b>' + esc(x.f) + '<br>' + x.a.map(function(li){ return '· ' + li; }).join('<br>') + '</div>'
+        : isCur ? '<div class="d-detail">' + esc(x.d) + '</div>' : '';
+      return '<div class="d-row '+(isCur?'cur':'')+'" data-i="'+i+'"><div class="l1">'+l1+'<div class="d-acts">'+acts+'</div></div>'+detail+'</div>';
+    }).join('');
+    var keys = tab === 'p' ? 'j/k 移动 · a 通过 · r 拒绝 · 空格 展开' : 'j/k 移动 · 空格 展开 · 悬停行尾出动作';
+    $stage.innerHTML = '<div class="d-mtabs">' + tabs.map(function(t){
+      return '<button class="chip '+(tab===t[0]?'on':'')+'" data-t="'+t[0]+'">'+t[1]+'</button>';
+    }).join('') + '</div><div class="d-rows">' + rowsHtml + '</div><div class="d-keys">' + keys + '</div>';
+  }
+  function render(){ if (mode === 'study') renderStudy(); else renderManage(); }
+  $seg.addEventListener('click', function(e){
+    var b = e.target.closest('[data-m]'); if (!b) return;
+    mode = b.dataset.m; render();
+  });
+  document.getElementById('demo-d').addEventListener('click', function(e){
+    var segb = e.target.closest('[data-m]');
+    if (segb) { mode = segb.dataset.m; $seg.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x.dataset.m===mode); }); render(); return; }
+    var chip = e.target.closest('[data-t]');
+    if (chip) { tab = chip.dataset.t; cur = 0; render(); return; }
+    var row = e.target.closest('.d-row');
+    if (row && !e.target.closest('.d-acts')) { cur = +row.dataset.i; render(); return; }
+    var btn = e.target.closest('[data-act]'); if (!btn) return;
+    act(btn.dataset.act);
+  });
+  function act(a){
+    if (a === 'go') { session = makeSession([QS[0], QS[1], QS[4]]); render(); }
+    else if (a === 'reveal') { session.rev = true; render(); }
+    else if (a.indexOf('rate-') === 0 && session && !session.done) {
+      var k = a.slice(5); session._fb = k; sessionRate(session, k); render();
+      if (!session.done) setTimeout(function(){ session._fb = null; render(); }, 950);
+    }
+    else if (a === 'back') { session = null; mode = 'study'; $seg.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x.dataset.m==='study'); }); render(); }
+    else if (a === 'row-practice') { session = makeSession([QS[cur]]); renderStudy(); }
+    else if (a === 'row-edit') toast('d-toast', '编辑(弹层,演示从略)');
+    else if (a === 'row-copy') toast('d-toast', '已复制到我的题库');
+    else if (a === 'row-del') toast('d-toast', '删除:就地确认(演示从略)');
+    else if (a === 'row-pass') { PEND.splice(cur, 1); render(); toast('d-toast', '已通过,进我的题库'); }
+    else if (a === 'row-reject') { PEND.splice(cur, 1); render(); toast('d-toast', '已拒绝(不可恢复)'); }
+    else if (a === 'row-genjd') toast('d-toast', '按 JD 生成题目(演示从略)');
+  }
+  function key(e){
+    if (mode === 'study') {
+      if (!session) { if (e.key === ' ') { e.preventDefault(); act('go'); } return; }
+      if (e.key === 'Escape') act('back');
+      else if (!session.done && e.key === ' ') { e.preventDefault(); act('reveal'); }
+      else if (!session.done && ['1','2','3'].indexOf(e.key)>=0) act('rate-' + ['no','mid','ok'][+e.key-1]);
+      return;
+    }
+    var list = tab==='q' ? QS : tab==='p' ? PEND : JDS;
+    if (e.key === 'j' || e.key === 'ArrowDown') { e.preventDefault(); cur = Math.min(cur+1, list.length-1); render(); }
+    else if (e.key === 'k' || e.key === 'ArrowUp') { e.preventDefault(); cur = Math.max(cur-1, 0); render(); }
+    else if (tab === 'p' && (e.key === 'a' || e.key === 'A')) act('row-pass');
+    else if (tab === 'p' && (e.key === 'r' || e.key === 'R')) act('row-reject');
+  }
+  render();
+  return { key:key, setMode:function(m){ mode = m; } };
+})();
+
+/* ───────── 面板切换 + 键盘路由 ───────── */
+var active = 'a';
+document.getElementById('switch').addEventListener('click', function(e){
+  var b = e.target.closest('[data-p]'); if (!b) return;
+  active = b.dataset.p;
+  document.querySelectorAll('#switch button').forEach(function(x){ x.classList.toggle('on', x === b); });
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.toggle('on', p.id === 'p-' + active); });
+});
+function isTyping(t){
+  return t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+}
+document.addEventListener('keydown', function(e){
+  if (active === 'cmp') return;
+  if (isTyping(e.target)) return;
+  var map = { a:A, b:B, c:C, d:D };
+  map[active] && map[active].key(e);
+});
+</script>
+</body>
+</html>
