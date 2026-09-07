@@ -18,7 +18,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PageHeader } from '@/components/page-header';
 import { EmptyState } from '@/components/empty-state';
 import { TwoPane } from '@/components/two-pane';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -54,16 +53,7 @@ export function ProfilePage() {
   }, [tab]);
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={tab === 'resume' ? '简历管理' : 'JD 管理'}
-        description={
-          tab === 'resume'
-            ? '维护简历全文与默认公司,按 JD 生成时可结合简历出深挖题。'
-            : '维护目标岗位的职位描述,选中左侧 JD 在右侧查看全文、生成定向题。'
-        }
-      />
-
+    <div className="flex h-full flex-col">
       <Tabs
         value={tab}
         onValueChange={(v) => {
@@ -73,17 +63,29 @@ export function ProfilePage() {
           }
           setSearchParams(v === 'resume' ? { tab: 'resume' } : {}, { replace: true });
         }}
+        className="flex min-h-0 flex-1 flex-col"
       >
-        <TabsList>
-          <TabsTrigger value="jds">JD 管理</TabsTrigger>
-          <TabsTrigger value="resume">简历管理</TabsTrigger>
-        </TabsList>
+        {/* 标题工具条 */}
+        <div className="flex h-12 shrink-0 items-center gap-3 px-5">
+          <h1 className="font-display text-lg font-bold tracking-tight text-foreground">
+            {tab === 'resume' ? '简历管理' : 'JD 管理'}
+          </h1>
+          <p className="min-w-0 truncate text-xs text-muted-foreground">
+            {tab === 'resume'
+              ? '维护简历全文与默认公司,按 JD 生成时可结合简历出深挖题。'
+              : '选中左侧 JD 在右侧看全文、生成定向题。'}
+          </p>
+          <TabsList className="ml-auto shrink-0">
+            <TabsTrigger value="jds">JD 管理</TabsTrigger>
+            <TabsTrigger value="resume">简历管理</TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="jds" className="mt-5">
+        <TabsContent value="jds" className="mt-0 flex min-h-0 flex-1 flex-col">
           <JdManager />
         </TabsContent>
 
-        <TabsContent value="resume" className="mt-5">
+        <TabsContent value="resume" className="mt-0 flex min-h-0 flex-1 flex-col px-5 pb-5">
           <ResumeCard onDirtyChange={setResumeDirty} />
         </TabsContent>
       </Tabs>
@@ -232,25 +234,27 @@ function JdManager() {
 
   if (jds.length === 0 && !creating) {
     return (
-      <EmptyState
-        icon={Inbox}
-        title="还没有 JD"
-        description="粘贴目标岗位的职位描述,从这条 JD 直接生成定向题。"
-        action={
-          <Button size="sm" variant="secondary" onClick={openCreate}>
-            <Plus className="size-3.5" aria-hidden />
-            新增 JD
-          </Button>
-        }
-      />
+      <div className="px-5 py-6">
+        <EmptyState
+          icon={Inbox}
+          title="还没有 JD"
+          description="粘贴目标岗位的职位描述,从这条 JD 直接生成定向题。"
+          action={
+            <Button size="sm" variant="secondary" onClick={openCreate}>
+              <Plus className="size-3.5" aria-hidden />
+              新增 JD
+            </Button>
+          }
+        />
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex h-full min-h-0 flex-col px-5 pb-5 pt-1">
       {/* 内联创建卡(列表顶部) */}
       {creating && (
-        <div className="rounded-lg bg-card p-4">
+        <div className="mb-3 shrink-0 rounded-xl bg-card p-4">
           <div className="flex items-center justify-between">
             <div className="text-sm font-semibold text-foreground">新 JD</div>
             <Button size="sm" variant="ghost" className="h-7 text-xs text-muted-foreground" onClick={() => setCreating(false)}>
@@ -296,7 +300,7 @@ function JdManager() {
       )}
 
       {jds.length > 0 && (
-        <div className="flex items-center justify-between gap-2">
+        <div className="mb-3 flex shrink-0 items-center justify-between gap-2">
           <div className="text-sm text-muted-foreground">{jds.length} 个 JD,最近使用的在前</div>
           {!creating && (
             <Button size="sm" variant="secondary" onClick={openCreate}>
@@ -503,11 +507,12 @@ function ResumeCard({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void
   };
 
   return (
-    <div className="rounded-lg bg-card">
-      <div className="flex items-center justify-between gap-3 border-b border-border p-5 pb-4">
-        <div>
-          <div className="text-sm font-semibold text-foreground">我的简历</div>
-          <div className="mt-0.5 text-xs text-muted-foreground">支持全文粘贴(Markdown),只存本机</div>
+    <div className="flex h-full min-h-0 flex-col">
+      {/* 编辑器标题栏:标识 + 字数 + 保存 */}
+      <div className="flex items-center justify-between gap-3 pb-3">
+        <div className="flex items-baseline gap-3">
+          <span className="text-sm font-semibold text-foreground">我的简历</span>
+          <span className="text-xs text-muted-foreground">支持全文粘贴(Markdown),只存本机</span>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs tabular-nums text-muted-foreground">{charCount(resume)}</span>
@@ -518,34 +523,30 @@ function ResumeCard({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void
         </div>
       </div>
 
-      <div className="flex flex-col gap-5 p-5">
-        <div className="space-y-1.5">
-          <Label htmlFor="resume-company" className="text-xs text-muted-foreground">默认公司 / 岗位</Label>
-          <Input
-            id="resume-company"
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
-            placeholder="如:示例公司 · AI 应用工程师(新增 JD 时预填)"
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="resume-content" className="text-xs text-muted-foreground">简历全文(Markdown)</Label>
-          <Textarea
-            id="resume-content"
-            value={resume}
-            onChange={(e) => setResume(e.target.value)}
-            placeholder="粘贴简历全文(markdown)…"
-            className="min-h-72 text-[13px] leading-relaxed"
-          />
-        </div>
-
-        {dirty && (
-          <div className="flex items-center justify-end border-t border-border pt-3">
-            <span className="text-xs text-warning">有未保存的修改</span>
-          </div>
-        )}
+      <div className="mb-3 flex shrink-0 items-center gap-3">
+        <Label htmlFor="resume-company" className="shrink-0 text-xs text-muted-foreground">默认公司 / 岗位</Label>
+        <Input
+          id="resume-company"
+          value={company}
+          onChange={(e) => setCompany(e.target.value)}
+          placeholder="如:示例公司 · AI 应用工程师(新增 JD 时预填)"
+          className="max-w-md flex-1"
+        />
       </div>
+
+      {/* 全高编辑区:输入面即卡面 */}
+      <Textarea
+        id="resume-content"
+        value={resume}
+        onChange={(e) => setResume(e.target.value)}
+        placeholder="粘贴简历全文(markdown)…"
+        aria-label="简历全文(Markdown)"
+        className="min-h-0 flex-1 resize-none rounded-xl bg-card p-5 text-[13px] leading-relaxed"
+      />
+
+      {dirty && (
+        <p className="pt-2 text-right text-xs text-warning">有未保存的修改</p>
+      )}
     </div>
   );
 }

@@ -432,9 +432,9 @@ export function BrowsePage({ category }: { category: string }) {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="flex h-full min-h-0 flex-col">
       {/* 筛选行:模块下拉 + 难度/状态/来源芯片 + 关键词 */}
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-5 pb-3">
         <FilterSelect label="模块" value={effectiveModule} onChange={setModuleFilter} options={moduleOptions} />
         <ChipGroup label="难度" value={diffFilter} onChange={(v) => setDiffFilter(v as DiffFilter)} options={DIFF_OPTIONS} />
         <ChipGroup label="状态" value={statusFilter} onChange={(v) => setStatusFilter(v as StatusFilter)} options={STATUS_OPTIONS} />
@@ -469,7 +469,7 @@ export function BrowsePage({ category }: { category: string }) {
 
       {/* 单模块上下文:统计行 */}
       {singleModule && singleStats && (
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 px-5 pb-3">
           <span className="text-sm text-muted-foreground">
             {String(singleModule.id).padStart(2, '0')} · {singleModule.name}
           </span>
@@ -487,7 +487,7 @@ export function BrowsePage({ category }: { category: string }) {
         </div>
       )}
 
-      {/* 双栏工作台:左列表(单选)+ 右详情(就地操作) */}
+      {/* 双栏工作台:左列表(单选)+ 右详情(就地操作);吃满剩余高度 */}
       <TwoPane
         listTestId="browse-list"
         mobileOpen={mobileDetailOpen && !!selected}

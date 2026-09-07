@@ -64,11 +64,11 @@ test('跳过本题:不评分直接前进,无撤销入口', async ({ page }) => {
   await expect(page.getByRole('button', { name: '撤销上一题' })).toBeHidden();
 });
 
-test('操作条 sticky 吸底 + 进度条渲染', async ({ page }) => {
+test('操作条常驻底部 + 进度条渲染', async ({ page }) => {
   await page.goto('/#/session?category=agent');
-  // 评分/跳过所在操作条 sticky(长答案滚动时仍可达)
-  await expect(page.locator('div.sticky').filter({ has: page.getByRole('button', { name: '跳过本题' }) })).toBeVisible();
-  // radix progress
+  // v11 全窗布局:评分/跳过所在操作条是 flex 常驻底栏(长答案滚动时仍可达)
+  await expect(page.getByRole('button', { name: '跳过本题' })).toBeVisible();
+  // progressbar 语义
   await expect(page.getByRole('progressbar')).toBeVisible();
 });
 

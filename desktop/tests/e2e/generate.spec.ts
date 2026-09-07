@@ -102,14 +102,14 @@ test('AI 生成:生成 → 提交审核 → 通过 → 我的题库可见 → �
   await page.getByRole('button', { name: '本批全部通过' }).click();
   await expect(page.getByText('没有待审核的题')).toBeVisible({ timeout: 10_000 });
 
-  // 5) 首页:我的题库卡片出现 2 题
+  // 5) 首页:未开始区出现我的题库行(已学 0/2)
   await page.goto('/#/');
-  const myCard = page.locator('main').getByRole('link', { name: /我的题库/ }).first();
-  await expect(myCard).toBeVisible();
-  await expect(myCard.getByText('0/2')).toBeVisible();
+  const myRow = page.getByRole('link', { name: /^我的题库/ }).first();
+  await expect(myRow).toBeVisible();
+  await expect(myRow.getByText('已学 0/2')).toBeVisible();
 
   // 6) 进我的题库(题库空间):2 题在列
-  await myCard.click();
+  await myRow.click();
   await expect(page).toHaveURL(/library\?category=my/);
   await expect(page.getByText('共 2 题')).toBeVisible();
 
@@ -176,9 +176,9 @@ test('JD 管理:内联新增 JD → 行内「按 JD 生成」→ 提交审核(�
 test('今日页:交接式计划(现在卡)+ 学习新题深链到混排会话', async ({ page }) => {
   await page.goto('/#/');
   await expect(page.getByRole('heading', { name: '今日' })).toBeVisible();
-  // 官方库已播种、零进度:第一件事 = 学习新题,「现在」卡是唯一主行动;
+  // 官方库已播种、零进度:第一件事 = 学习新题,hero 是唯一主行动;
   // 审核零值不出现(交接式只显示未完成项)
-  await expect(page.getByText('现在', { exact: true })).toBeVisible();
+  await expect(page.getByText(/现在 · 第/)).toBeVisible();
   const learnCta = page.getByRole('link', { name: '开始学习' });
   await expect(learnCta).toBeVisible();
   await expect(page.getByRole('link', { name: /求职材料/ })).toBeVisible();

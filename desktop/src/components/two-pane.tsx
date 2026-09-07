@@ -3,10 +3,10 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-// 双栏工作台脚手架(v10 交互重做「选行 → 详情就地操作」):
-//   ≥lg:左列列表 + 右侧 sticky 详情栏,一切查看/编辑/动作在详情栏就地完成;
-//   <lg:详情以全屏覆盖层呈现(此前窄窗下详情面板 display:none,点行无任何反馈)。
-// 题库浏览与审核共用同一语法,消除「列表页」「看板」两套交互范式。
+// 双栏工作台脚手架(v11 全窗化):父级须为 h-full flex-col。
+//   ≥lg:左列列表(内部滚动)+ 右侧详情列(内部滚动),一切查看/编辑/动作在详情列就地完成;
+//   <lg:详情以全屏覆盖层呈现(带"返回列表")。
+// 题库浏览与审核共用同一语法。
 
 export function TwoPane({ list, detail, mobileOpen, onCloseMobile, listTestId }: {
   list: ReactNode;
@@ -18,12 +18,15 @@ export function TwoPane({ list, detail, mobileOpen, onCloseMobile, listTestId }:
 }) {
   return (
     <>
-      <div className="flex items-start gap-5">
-        <div className="min-w-0 flex-1" data-workbench-list={listTestId}>
-          {list}
+      <div className="flex min-h-0 flex-1 gap-4 px-5 pb-5">
+        <div
+          className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl bg-card"
+          data-workbench-list={listTestId}
+        >
+          <div className="min-h-0 flex-1 overflow-y-auto">{list}</div>
         </div>
         <div
-          className="sticky top-0 hidden max-h-[calc(100svh-13rem)] w-96 shrink-0 overflow-y-auto lg:block"
+          className="hidden w-96 shrink-0 overflow-y-auto lg:block"
           data-workbench-detail
         >
           {detail}
