@@ -3,54 +3,80 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CommitCareer · 从 0 设计原型 v2(桌面工作台)</title>
+<title>今天 · CommitCareer</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; }
   body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
-    background: #f7f3ea; color: #2b2b26; overflow: hidden; font-size: 13.5px; }
-
+    background: var(--paper); color: var(--ink); overflow: hidden; font-size: 13.5px; }
   :root {
+    --font-display: "Songti SC", "Noto Serif SC", "SimSun", serif;
     --paper: #f7f3ea; --card: #fffdf7; --input: #efe8d6; --sidebar: #f1ebdc;
     --ink: #2b2b26; --mut: #8f887a; --mut-deep: #b3ab97; --cin: #c2452d;
     --line: #e7dfcc; --ok: #4f7042; --warn: #8a6d1f; --bad: #a8432f;
   }
+  body.night {
+    --paper: #211d17; --card: #2a251d; --input: #373126; --sidebar: #251f19;
+    --ink: #ebe3d1; --mut: #9c9280; --mut-deep: #6f675a; --cin: #d0604a;
+    --line: #3d362b; --ok: #7d9a6d; --warn: #c2a04a; --bad: #cf6a55;
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
   kbd { font-family: inherit; font-size: 10.5px; padding: 1px 6px; border-radius: 4px; background: var(--input); color: var(--mut); }
-  .btn { appearance: none; border: none; cursor: pointer; font: inherit; font-size: 12.5px; font-weight: 600;
+  button { font-family: inherit; }
+  :focus-visible { outline: 2px solid var(--cin); outline-offset: 1px; border-radius: 4px; }
+
+  .btn { appearance: none; border: none; cursor: pointer; font-size: 12.5px; font-weight: 600;
     padding: 6px 13px; border-radius: 7px; background: var(--card); color: var(--ink);
-    box-shadow: 0 1px 2px rgba(60,50,30,.10); transition: background .15s, box-shadow .15s;
+    box-shadow: 0 1px 2px rgba(60,50,30,.10); transition: background .15s, box-shadow .15s, opacity .15s;
     display: inline-flex; align-items: center; gap: 7px; }
-  .btn:hover { box-shadow: 0 2px 8px rgba(60,50,30,.15); }
+  .btn:hover { box-shadow: 0 2px 8px rgba(60,50,30,.16); }
   .btn.pri { background: var(--cin); color: #fff; }
-  .btn.soft { background: var(--input); box-shadow: none; color: #5c5546; }
-  .btn.soft:hover { background: #e6ddc7; box-shadow: none; }
+  .btn.pri:hover { background: #d05239; }
+  body.night .btn.pri:hover { background: #dd6a54; }
+  .btn.soft { background: var(--input); box-shadow: none; color: var(--ink); }
+  .btn.soft:hover { background: #e4dbc5; box-shadow: none; }
+  body.night .btn.soft:hover { background: #443b2e; }
   .btn.ghost { background: transparent; box-shadow: none; color: var(--mut); }
   .btn.ghost:hover { background: var(--input); }
   .btn.ok { color: var(--ok); } .btn.ok:hover { background: #eef2ea; }
+  body.night .btn.ok:hover { background: #34392c; }
   .btn.bad { color: var(--bad); } .btn.bad:hover { background: #f7e8e4; }
+  body.night .btn.bad:hover { background: #453028; }
   .btn:disabled { opacity: .45; cursor: default; }
   .btn kbd { background: rgba(0,0,0,.06); }
+  body.night .btn kbd { background: rgba(255,255,255,.08); }
 
-  .pill { display: inline-block; font-size: 10.5px; padding: 1px 8px; border-radius: 999px; background: var(--input); color: #6e6656; }
-  .pill.due { background: #f3e3c2; color: var(--warn); }
-  .pill.new { background: #e3ecdf; color: var(--ok); }
-  .pill.done { background: #ece5d2; color: #a29a86; }
-  .pill.pend { background: #f4ddd6; color: var(--bad); }
+  .pill { display: inline-block; font-size: 10.5px; padding: 1px 8px; border-radius: 999px; background: var(--input); color: var(--mut); white-space: nowrap; }
+  .pill.due { background: #f3e3c2; color: #7c6013; }
+  .pill.new { background: #ddebd6; color: #3e6033; }
+  .pill.done { background: #ece5d2; color: #8a8270; }
+  body.night .pill.done { background: #3a342a; color: #857c69; }
+  .pill.pend { background: #f4ddd6; color: #a8432f; }
+  body.night .pill.due { background: #463a1e; color: #e3c673; } body.night .pill.new { background: #33402c; color: #b3d0a4; }
+  body.night .pill.pend { background: #4a2e26; color: #e59a85; }
+
+  svg.ic { width: 15px; height: 15px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 
   /* ───── 壳:源列表侧栏 + 内容 + 状态栏 ───── */
   .shell { display: flex; height: 100vh; }
-  .side { width: 172px; flex: none; background: var(--sidebar); display: flex; flex-direction: column;
+  .side { width: 196px; flex: none; background: var(--sidebar); display: flex; flex-direction: column;
     padding: 10px 8px; border-right: 1px solid var(--line); }
-  .side .group { font-size: 10.5px; font-weight: 700; color: var(--mut-deep); letter-spacing: .1em; padding: 10px 8px 4px; }
-  .snav { appearance: none; border: none; background: none; font: inherit; text-align: left; cursor: pointer;
+  .side .group { font-size: 11px; font-weight: 700; color: var(--mut); letter-spacing: .1em; padding: 10px 8px 4px; }
+  .snav { appearance: none; border: none; background: none; text-align: left; cursor: pointer;
     display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; border-radius: 7px;
-    font-size: 13px; color: #5c5546; }
+    font-size: 13px; color: var(--ink); opacity: .82; transition: background .15s; }
   .snav:hover { background: #e6dec9; }
-  .snav.on { background: var(--cin); color: #fff; font-weight: 600; }
-  .snav .cnt { margin-left: auto; font-size: 11px; color: var(--mut); font-variant-numeric: tabular-nums; }
-  .snav.on .cnt { color: rgba(255,255,255,.85); }
+  body.night .snav:hover { background: #322b22; }
+  .snav.on { background: var(--cin); color: #fff; opacity: 1; font-weight: 600; }
+  .snav .cnt { margin-left: auto; font-size: 10.5px; color: var(--mut); font-variant-numeric: tabular-nums;
+    background: rgba(0,0,0,.07); border-radius: 999px; padding: 0 6px; }
+  .snav.on .cnt { color: #fff; background: rgba(255,255,255,.22); }
+  .snav .k { margin-left: auto; font-size: 10px; color: var(--mut-deep); }
+  .snav .k + .cnt { margin-left: 0; }
+  .snav:hover .k, .snav.on .k { display: none; }
   .side .sp { flex: 1; }
+  .side .addbtn { margin: 0 2px 6px; justify-content: flex-start; width: calc(100% - 4px); }
   .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   .content { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 24px; }
   .status { height: 26px; flex: none; display: flex; align-items: center; justify-content: space-between;
@@ -59,16 +85,17 @@
   .view { display: none; }
   .view.on { display: block; }
   .view-h { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
-  .view-h h1 { font-size: 17px; font-weight: 700; }
+  .view-h h1 { font-size: 18px; font-weight: 700; font-family: var(--font-display); }
   .view-h .desc { font-size: 12px; color: var(--mut); }
   .view-h .right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 
   /* ───── 今天 ───── */
   .today-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; }
   .panel { background: var(--card); border-radius: 10px; box-shadow: 0 1px 3px rgba(60,50,30,.08); }
+  body.night .panel { box-shadow: 0 1px 3px rgba(0,0,0,.35); }
   .panel .ph { display: flex; align-items: baseline; justify-content: space-between; padding: 11px 14px 0; }
   .panel .ph h3 { font-size: 12px; font-weight: 700; color: var(--mut); letter-spacing: .08em; }
-  .plan-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid #f2ecdd; }
+  .plan-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
   .plan-row:last-child { border-bottom: none; }
   .plan-row .num { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; width: 34px; text-align: right; }
   .plan-row .num.warn { color: var(--warn); } .plan-row .num.cin { color: var(--cin); } .plan-row .num.mut { color: var(--mut-deep); }
@@ -77,95 +104,156 @@
   .plan-row .info .d { font-size: 11.5px; color: var(--mut); margin-top: 1px; }
   .mini-bars { display: flex; align-items: flex-end; gap: 7px; height: 64px; padding: 4px 2px 0; }
   .mini-bars .b { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
-  .mini-bars .b i { width: 100%; background: rgba(194,69,45,.55); border-radius: 2px 2px 0 0; }
+  .mini-bars .b i { width: 100%; background: rgba(194,69,45,.5); border-radius: 2px 2px 0 0; }
   .mini-bars .b.peak i { background: var(--cin); }
   .mini-bars .b span { font-size: 10px; color: var(--mut); }
-  .act-row { display: flex; gap: 10px; align-items: center; padding: 8px 14px; border-bottom: 1px solid #f2ecdd; font-size: 12.5px; }
+  .act-row { display: flex; gap: 10px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--line); font-size: 12.5px; }
   .act-row:last-child { border-bottom: none; }
   .act-row .time { margin-left: auto; color: var(--mut-deep); font-size: 11px; font-variant-numeric: tabular-nums; }
   .stat-strip { display: flex; gap: 26px; padding: 10px 14px; }
   .stat-strip .s .n { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
   .stat-strip .s .l { font-size: 11px; color: var(--mut); }
 
-  /* ───── 学习(进行中) ───── */
+  /* ───── 学习 ───── */
   .quiz-top { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
   .quiz-top .prog { font-variant-numeric: tabular-nums; font-weight: 600; }
   .quiz-top .line { flex: 1; height: 2px; background: var(--input); border-radius: 1px; overflow: hidden; }
   .quiz-top .line i { display: block; height: 100%; background: var(--cin); transition: width .3s; }
-  .quiz-stage { max-width: 720px; margin: 6vh auto 0; }
-  .quiz-stage .tags { display: flex; gap: 6px; margin-bottom: 14px; }
-  .quiz-stage h2 { font-size: 21px; line-height: 1.65; font-weight: 600; }
+  .quiz-stage { max-width: 640px; margin: 5vh auto 0; transition: opacity .12s; }
+  .quiz-stage.fade { opacity: .25; }
+  .quiz-stage .tags { display: flex; gap: 6px; margin-bottom: 14px; align-items: center; flex-wrap: wrap; }
+  .quiz-stage h2 { font-size: 22px; line-height: 1.65; font-weight: 600; font-family: var(--font-display); }
   .quiz-stage .focus { margin-top: 8px; font-size: 12.5px; color: var(--mut); }
   .quiz-stage .ans { border-top: 1px solid var(--line); margin-top: 20px; padding-top: 16px; font-size: 13.5px;
-    line-height: 2; color: #4a463c; }
+    line-height: 2; color: var(--ink); opacity: .88; }
   .quiz-stage .ans ul { padding-left: 17px; } .quiz-stage .ans li { margin: 4px 0; }
-  .quiz-stage .ans b { color: var(--ink); }
-  .quiz-ops { max-width: 720px; margin: 26px auto 40px; }
+  .quiz-stage .fu { margin-top: 16px; padding: 10px 14px; background: var(--input); border-radius: 8px; font-size: 12.5px; }
+  .quiz-stage .fu .h { font-weight: 700; font-size: 11.5px; color: var(--mut); margin-bottom: 4px; }
+  .quiz-stage .fu li { margin: 3px 0; list-style: none; color: var(--ink); opacity: .85; }
+  .quiz-ops { max-width: 640px; margin: 26px auto 40px; }
   .quiz-ops .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
   .quiz-ops .big { width: 100%; height: 42px; justify-content: center; font-size: 14px; border-radius: 8px; }
   .quiz-ops .rate-no { color: var(--bad); } .quiz-ops .rate-mid { color: var(--warn); } .quiz-ops .rate-ok { color: var(--ok); }
   .quiz-ops .sub { text-align: center; margin-top: 8px; font-size: 11.5px; color: var(--mut); }
   .quiz-ops .sec { display: flex; justify-content: center; gap: 8px; margin-top: 10px; }
-  .fb-line { margin-top: 10px; text-align: center; font-size: 12px; color: var(--ok); }
+  .flash { animation: flash .5s ease-out; }
+  @keyframes flash { 0% { transform: scale(1); } 35% { transform: scale(1.045); } 100% { transform: scale(1); } }
+  /* 代码草稿纸 */
+  .pad { margin-top: 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); overflow: hidden; }
+  .pad .ph2 { display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-size: 12px; font-weight: 600; color: var(--mut); }
+  .pad textarea { width: 100%; min-height: 120px; border: none; border-top: 1px solid var(--line); background: var(--input);
+    font: 12px/1.7 ui-monospace, "SF Mono", Menlo, monospace; color: var(--ink); padding: 10px 12px; outline: none; resize: vertical; }
+  .pad .out { border-top: 1px solid var(--line); background: var(--paper); padding: 8px 12px; min-height: 20px;
+    font: 11.5px/1.6 ui-monospace, Menlo, monospace; color: var(--mut); white-space: pre-wrap; }
   .sum-panel { max-width: 640px; margin: 4vh auto; }
   .sum-panel .head { text-align: center; padding: 22px 0 6px; }
-  .sum-panel .head .t { font-size: 18px; font-weight: 700; }
+  .sum-panel .head .t { font-size: 19px; font-weight: 700; font-family: var(--font-display); }
   .sum-panel .head .s { font-size: 12.5px; color: var(--mut); margin-top: 4px; }
-  .sum-panel .r { display: flex; gap: 12px; padding: 7px 18px; font-size: 12.5px; border-bottom: 1px solid #f2ecdd; }
+  .sum-panel .r { display: flex; gap: 12px; padding: 7px 18px; font-size: 12.5px; border-bottom: 1px solid var(--line); }
   .sum-panel .r:last-of-type { border-bottom: none; }
-  .sum-panel .r .rate { width: 30px; font-weight: 700; }
+  .sum-panel .r .rate { width: 34px; font-weight: 700; flex: none; }
   .sum-panel .r .t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .sum-panel .r .due { color: var(--mut); }
+  .sum-panel .r .due { color: var(--mut); flex: none; }
   .sum-panel .foot { display: flex; justify-content: center; gap: 10px; padding: 16px; }
 
   /* ───── 题库(表格) ───── */
-  .bankbar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .bankbar .q { flex: 1; display: flex; align-items: center; gap: 8px; background: var(--card); border-radius: 8px;
-    padding: 7px 12px; box-shadow: 0 1px 2px rgba(60,50,30,.07); }
+  .catbar { display: flex; gap: 4px; margin-bottom: 10px; }
+  .catbar .c { appearance: none; border: none; cursor: pointer; font-size: 12.5px; font-weight: 600; padding: 5px 13px;
+    border-radius: 999px; background: var(--input); color: var(--ink); opacity: .75; transition: all .15s; }
+  .catbar .c.on { background: var(--ink); color: var(--paper); opacity: 1; }
+  .bankbar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .bankbar .q { flex: 1; min-width: 220px; display: flex; align-items: center; gap: 8px; background: var(--card); border-radius: 8px;
+    padding: 7px 12px; box-shadow: 0 1px 2px rgba(60,50,30,.07); color: var(--mut); }
   .bankbar .q input { flex: 1; border: none; background: none; outline: none; font: inherit; font-size: 12.5px; color: var(--ink); }
-  .hint-chip { font-size: 11px; padding: 3px 10px; border-radius: 999px; background: var(--input); color: var(--mut); cursor: pointer; border: none; font-family: inherit; }
+  .hint-chip { font-size: 11px; padding: 3px 10px; border-radius: 999px; background: var(--input); color: var(--mut); cursor: pointer; border: none; }
   .hint-chip.on { background: var(--cin); color: #fff; }
-  .bank-wrap { display: flex; gap: 14px; height: calc(100vh - 208px); }
+  .bankbar select { appearance: none; border: none; font: inherit; font-size: 11.5px; padding: 4px 10px; border-radius: 999px;
+    background: var(--input); color: var(--mut); cursor: pointer; outline: none; margin-left: auto; }
+  .bankbar .cnt { font-size: 11.5px; color: var(--mut); white-space: nowrap; }
+  .bank-wrap { display: flex; gap: 14px; height: calc(100vh - 236px); }
   .bank-scroll { flex: 1; min-width: 0; overflow-y: auto; background: var(--card); border-radius: 10px;
     box-shadow: 0 1px 3px rgba(60,50,30,.08); }
   table.bank { width: 100%; border-collapse: collapse; table-layout: fixed; }
   .bank thead th { position: sticky; top: 0; background: var(--card); font-size: 11px; color: var(--mut); text-align: left;
-    font-weight: 700; letter-spacing: .05em; padding: 9px 13px; cursor: pointer; user-select: none; border-bottom: 1px solid var(--line); z-index: 2; }
+    font-weight: 700; letter-spacing: .05em; padding: 9px 10px; cursor: pointer; user-select: none; border-bottom: 1px solid var(--line); z-index: 2; }
   .bank thead th:hover { color: var(--ink); }
-  .bank tbody td { padding: 9px 13px; font-size: 12.5px; border-bottom: 1px solid #f2ecdd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bank thead th .arr { font-size: 9px; margin-left: 3px; }
+  .bank tbody td { padding: 9px 10px; font-size: 12.5px; border-bottom: 1px solid var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fgrp { display: inline-flex; align-items: center; gap: 5px; padding-left: 11px; border-left: 1px solid var(--line); }
+  .fgrp:first-of-type { border-left: none; padding-left: 0; }
+  .fgrp > i { font-style: normal; font-size: 10.5px; color: var(--mut-deep); }
   .bank tbody tr { cursor: pointer; }
-  .bank tbody tr:hover td { background: #f6f1e4; }
+  .bank tbody tr:hover td { background: var(--input); }
+  body.night .bank tbody tr:hover td { background: #332c23; }
   .bank tbody tr.sel td { background: #f0e9d8; }
+  body.night .bank tbody tr.sel td { background: #3d3527; }
   .bank tbody tr.sel td:first-child { box-shadow: inset 2px 0 0 var(--cin); }
   .detail { flex: 0 0 360px; overflow-y: auto; background: var(--card); border-radius: 10px; padding: 18px 20px;
     box-shadow: 0 1px 3px rgba(60,50,30,.08); }
-  .detail h3 { font-size: 15px; line-height: 1.6; margin: 8px 0 2px; }
+  .detail h3 { font-size: 15px; line-height: 1.6; margin: 8px 0 2px; font-family: var(--font-display); }
   .detail .ops { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 13px; }
-  .detail .ans { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; font-size: 12.5px; line-height: 1.9; color: #4a463c; }
+  .detail .sec-h { font-size: 11px; font-weight: 700; color: var(--mut); letter-spacing: .07em; margin: 16px 0 6px; }
+  .detail .ans { font-size: 12.5px; line-height: 1.9; color: var(--ink); opacity: .88; }
   .detail .ans ul { padding-left: 16px; } .detail .ans li { margin: 3px 0; }
-  .detail .ans b { color: var(--ink); }
-  .detail .form label { display: block; font-size: 11.5px; font-weight: 600; margin: 11px 0 4px; }
-  .detail .form input, .detail .form textarea { width: 100%; font: inherit; font-size: 12.5px; padding: 7px 10px;
+  .detail .fu-l { list-style: none; font-size: 12.5px; }
+  .detail .fu-l li { margin: 3px 0; color: var(--ink); opacity: .85; }
+  .detail .note-txt { font-size: 12.5px; line-height: 1.8; background: var(--input); border-radius: 8px; padding: 9px 12px; }
+  .detail textarea, .detail input { width: 100%; font: inherit; font-size: 12.5px; padding: 7px 10px;
     border: none; border-radius: 7px; background: var(--input); outline: none; resize: vertical; color: var(--ink); }
-  .confirm-strip { margin-top: 12px; background: #f7e8e4; border-radius: 8px; padding: 9px 12px; font-size: 12px;
-    color: var(--bad); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .confirm-strip .sp { flex: 1; }
+  .detail .form label { display: block; font-size: 11.5px; font-weight: 600; margin: 11px 0 4px; color: var(--mut); }
+  .form-row { display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; }
+  .empty-tip { padding: 30px; text-align: center; color: var(--mut-deep); font-size: 12.5px; }
+  .empty-tip .act { margin-top: 10px; }
+  .seg { display: inline-flex; background: var(--input); border-radius: 8px; padding: 2px; gap: 2px; }
+  .seg button { appearance: none; border: none; cursor: pointer; font: inherit; font-size: 12px; padding: 4px 12px; border-radius: 6px;
+    background: none; color: var(--mut); font-weight: 600; }
+  .seg button.on { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(60,50,30,.12); }
 
   /* ───── 待审核 ───── */
-  .audit-wrap { display: flex; gap: 14px; height: calc(100vh - 208px); }
+  .audit-wrap { display: flex; gap: 14px; height: calc(100vh - 178px); }
   .audit-list { flex: 1; min-width: 0; overflow-y: auto; background: var(--card); border-radius: 10px; box-shadow: 0 1px 3px rgba(60,50,30,.08); }
-  .a-row { padding: 10px 14px; border-bottom: 1px solid #f2ecdd; cursor: pointer; }
-  .a-row:hover { background: #f6f1e4; }
+  .a-row { padding: 10px 14px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .a-row:hover { background: var(--input); }
+  body.night .a-row:hover { background: #332c23; }
   .a-row.sel { background: #f0e9d8; box-shadow: inset 2px 0 0 var(--cin); }
+  body.night .a-row.sel { background: #3d3527; }
   .a-row .src { font-size: 11px; color: var(--mut); margin-bottom: 2px; }
   .a-row .t { font-size: 12.5px; font-weight: 500; }
 
-  /* ───── 求职 ───── */
-  .job-grid { display: flex; gap: 14px; height: calc(100vh - 208px); }
+  /* ───── 添加题目 ───── */
+  .add-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 1060px; align-items: start; }
+  .add-sec { background: var(--card); border-radius: 10px; box-shadow: 0 1px 3px rgba(60,50,30,.08); }
+  .add-sec .ph2 { padding: 13px 16px 2px; }
+  .add-sec .ph2 .t { font-size: 14px; font-weight: 700; }
+  .add-sec .ph2 .d { font-size: 11.5px; color: var(--mut); margin-top: 2px; }
+  .add-sec .bd { padding: 10px 16px 16px; }
+  .add-sec.hl { box-shadow: 0 0 0 2px var(--cin), 0 1px 3px rgba(60,50,30,.1); }
+  .f-label { display: block; font-size: 11.5px; font-weight: 600; margin: 10px 0 4px; color: var(--mut); }
+  .f-label .req { color: var(--cin); }
+  .add-sec input[type=text], .add-sec textarea { width: 100%; font: inherit; font-size: 12.5px; padding: 7px 10px;
+    border: none; border-radius: 7px; background: var(--input); outline: none; resize: vertical; color: var(--ink); }
+  .add-sec textarea { line-height: 1.8; }
+  .jd-pick { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+  .jd-pick label { display: flex; align-items: center; gap: 9px; padding: 8px 11px; background: var(--input); border-radius: 8px;
+    font-size: 12.5px; cursor: pointer; }
+  .jd-pick label.on { box-shadow: inset 0 0 0 1.5px var(--cin); }
+  .jd-pick input { accent-color: var(--cin); }
+  .chk { display: flex; align-items: center; gap: 8px; font-size: 12.5px; margin-top: 10px; cursor: pointer; color: var(--ink); }
+  .chk input { accent-color: var(--cin); }
+  .gen-out { margin-top: 12px; font-size: 12px; color: var(--mut); background: var(--input); border-radius: 8px; padding: 9px 12px; display: none; }
+  .gen-out.on { display: block; }
+  .spin { display: inline-block; width: 11px; height: 11px; border: 2px solid var(--mut-deep); border-top-color: var(--cin);
+    border-radius: 50%; animation: rot .7s linear infinite; vertical-align: -1px; margin-right: 6px; }
+  @keyframes rot { to { transform: rotate(360deg); } }
+
+  /* ───── JD 管理 ───── */
+  .job-grid { display: flex; gap: 14px; height: calc(100vh - 178px); }
   .jd-list { flex: 0 0 300px; overflow-y: auto; background: var(--card); border-radius: 10px; box-shadow: 0 1px 3px rgba(60,50,30,.08); }
-  .jd-item { padding: 11px 14px; border-bottom: 1px solid #f2ecdd; cursor: pointer; }
-  .jd-item:hover { background: #f6f1e4; }
+  .jd-item { padding: 11px 14px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .jd-item:hover { background: var(--input); }
+  body.night .jd-item:hover { background: #332c23; }
   .jd-item.sel { background: #f0e9d8; box-shadow: inset 2px 0 0 var(--cin); }
+  body.night .jd-item.sel { background: #3d3527; }
   .jd-item .t { font-weight: 600; font-size: 13px; }
   .jd-item .c { font-size: 11.5px; color: var(--mut); margin-top: 1px; }
   .job-detail { flex: 1; min-width: 0; overflow-y: auto; background: var(--card); border-radius: 10px; padding: 18px 22px;
@@ -173,74 +261,115 @@
   .job-detail .stats { display: flex; gap: 30px; margin: 14px 0; padding: 10px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
   .job-detail .stats .s .n { font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; }
   .job-detail .stats .s .l { font-size: 11px; color: var(--mut); }
-  .job-detail .jd-text { font-size: 12.5px; line-height: 1.9; color: #4a463c; }
+  .jd-text { font-size: 12.5px; line-height: 1.9; color: var(--ink); opacity: .88; }
   .resume-block { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
   .resume-block .rh { display: flex; align-items: center; gap: 10px; }
   .resume-block .rh .t { font-weight: 700; font-size: 13px; }
   .resume-block .rh .m { font-size: 11.5px; color: var(--mut); }
 
-  /* ⌘K */
-  .palette-mask { position: fixed; inset: 0; background: rgba(25,23,19,.4); display: none; z-index: 60; }
-  .palette-mask.on { display: block; }
-  .palette { width: 480px; margin: 12vh auto 0; background: var(--card); border-radius: 10px; overflow: hidden;
+  /* ───── 简历管理 ───── */
+  .resume-wrap { max-width: 760px; }
+  .resume-bar { display: flex; align-items: center; gap: 10px; background: var(--card); border-radius: 10px;
+    padding: 10px 16px; box-shadow: 0 1px 3px rgba(60,50,30,.08); }
+  .resume-bar .t { font-weight: 700; font-size: 14px; font-family: var(--font-display); }
+  .resume-bar .m { font-size: 11.5px; color: var(--mut); font-variant-numeric: tabular-nums; }
+  .resume-bar .sp { flex: 1; }
+  #resume-ta { width: 100%; height: calc(100vh - 300px); margin-top: 14px; font: 13px/2 ui-monospace, "SF Mono", Menlo, monospace;
+    padding: 20px 24px; border: none; border-radius: 10px; background: var(--card); box-shadow: 0 1px 3px rgba(60,50,30,.08);
+    outline: none; resize: none; color: var(--ink); }
+
+  /* ───── 设置 ───── */
+  .set-wrap { max-width: 640px; display: flex; flex-direction: column; gap: 16px; }
+  .set-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+  .set-row:last-child { border-bottom: none; }
+  .set-row .info { flex: 1; min-width: 0; }
+  .set-row .info .t { font-weight: 600; }
+  .set-row .info .d { font-size: 11.5px; color: var(--mut); margin-top: 1px; }
+  .set-row input[type=password] { font: inherit; font-size: 12.5px; padding: 6px 10px; border: none; border-radius: 7px;
+    background: var(--input); outline: none; width: 220px; color: var(--ink); }
+
+  /* ───── ⌘K / 弹窗 / toast ───── */
+  .palette-mask, .modal-mask { position: fixed; inset: 0; background: rgba(25,23,19,.4); display: none; z-index: 60; }
+  .palette-mask.on, .modal-mask.on { display: block; }
+  .palette { width: 520px; margin: 10vh auto 0; background: var(--card); border-radius: 10px; overflow: hidden;
     box-shadow: 0 24px 60px rgba(25,23,19,.35); }
   .palette input { width: 100%; border: none; outline: none; font: inherit; font-size: 13.5px; padding: 13px 16px;
     background: none; color: var(--ink); border-bottom: 1px solid var(--line); }
-  .palette .it { padding: 9px 16px; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between; color: var(--ink); }
-  .palette .it:hover { background: #f3edde; }
-  .palette .it .sub { color: var(--mut); font-size: 11.5px; }
-
-  .toast { position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%); background: #3a352c; color: #f3eee1;
+  .palette .list { max-height: 380px; overflow-y: auto; padding: 6px 0 8px; }
+  .palette .grp { font-size: 10.5px; font-weight: 700; color: var(--mut-deep); letter-spacing: .08em; padding: 8px 16px 3px; }
+  .palette .it { padding: 8px 16px; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between; gap: 12px; color: var(--ink); }
+  .palette .it.sel { background: var(--input); }
+  .palette .it .sub { color: var(--mut); font-size: 11.5px; flex: none; }
+  .palette .it .lb { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .modal { width: 400px; margin: 24vh auto 0; background: var(--card); border-radius: 12px; padding: 20px 22px 16px;
+    box-shadow: 0 24px 60px rgba(25,23,19,.4); }
+  .modal .mt { font-size: 15px; font-weight: 700; }
+  .modal .mb { font-size: 12.5px; color: var(--mut); margin-top: 8px; line-height: 1.8; }
+  .modal .mf { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+  .toast { position: fixed; left: 50%; bottom: 42px; transform: translateX(-50%); background: #3a352c; color: #f3eee1;
     font-size: 12.5px; padding: 9px 18px; border-radius: 999px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 80; }
   .toast.on { opacity: 1; }
+
+  /* ───── 专注模式:壳全隐,题面放大 ───── */
+  body.focus .side, body.focus .status { display: none; }
+  body.focus .content { padding-top: 0; }
+  body.focus .quiz-stage { max-width: 700px; margin-top: 9vh; }
+  body.focus .quiz-stage h2 { font-size: 27px; }
+  body.focus .quiz-stage .ans { font-size: 15px; }
+  body.focus .quiz-ops { max-width: 700px; }
+  #focus-exit { display: none; position: fixed; right: 22px; bottom: 20px; z-index: 50; }
+  body.focus #focus-exit { display: inline-flex; }
+  body.focus .view-h h1, body.focus .view-h .desc { visibility: hidden; }
 </style>
 </head>
 <body>
 
 <div class="shell">
-  <!-- 源列表侧栏(桌面惯例) -->
+  <!-- 源列表侧栏(桌面惯例:图标 + 文字 + 计数) -->
   <aside class="side">
-    <div class="navs">
-      <button class="snav on" data-v="today">今天 <span class="cnt" id="cnt-today"></span></button>
-      <button class="snav" data-v="quiz">学习</button>
-      <button class="snav" data-v="bank">题库</button>
-      <button class="snav" data-v="audit">待审核 <span class="cnt" id="cnt-audit">2</span></button>
-    </div>
+    <button class="snav on" data-v="today">
+      <svg class="ic" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>
+      今天 <span class="k">⌘1</span><span class="cnt" id="cnt-today"></span></button>
+    <button class="snav" data-v="quiz">
+      <svg class="ic" viewBox="0 0 24 24"><path d="M12 6c-2-1.8-4.8-2.2-8-1.5V19c3.2-.7 6-.3 8 1.5 2-1.8 4.8-2.2 8-1.5V4.5C16.8 3.8 14 4.2 12 6Z"/><path d="M12 6v14.5"/></svg>
+      学习 <span class="k">⌘2</span></button>
+    <button class="snav" data-v="bank">
+      <svg class="ic" viewBox="0 0 24 24"><path d="M12 3.5 21 8l-9 4.5L3 8l9-4.5Z"/><path d="m4.5 12.7 7.5 3.7 7.5-3.7M4.5 16.9l7.5 3.6 7.5-3.6"/></svg>
+      题库 <span class="k">⌘3</span></button>
+    <button class="snav" data-v="audit">
+      <svg class="ic" viewBox="0 0 24 24"><rect x="5" y="4.5" width="14" height="16" rx="2"/><path d="M9 11l2 2 4-4.5"/></svg>
+      待审核 <span class="k">⌘4</span><span class="cnt" id="cnt-audit"></span></button>
     <div class="group">求职</div>
-    <button class="snav" data-v="jobs">JD 与简历</button>
+    <button class="snav" data-v="jobs">
+      <svg class="ic" viewBox="0 0 24 24"><rect x="3.5" y="7.5" width="17" height="12" rx="2"/><path d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5M3.5 12.5h17"/></svg>
+      JD 管理 <span class="k">⌘5</span></button>
+    <button class="snav" data-v="resume">
+      <svg class="ic" viewBox="0 0 24 24"><path d="M6 3.5h8.5L19 8v12a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20V5A1.5 1.5 0 0 1 6.5 3.5Z"/><path d="M14.5 3.5V8H19M8.5 13h7M8.5 16.5h4.5"/></svg>
+      简历管理 <span class="k">⌘6</span></button>
     <div class="sp"></div>
-    <button class="snav" data-v="settings">设置</button>
+    <button class="btn soft addbtn" data-v="add">
+      <svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      添加题目 <span class="k" style="margin-left:auto;font-size:10px;color:var(--mut-deep)">⌘7</span></button>
+    <button class="snav" data-v="settings">
+      <svg class="ic" viewBox="0 0 24 24"><path d="M4 7.5h10M18 7.5h2M4 16.5h2M10 16.5h10"/><circle cx="16" cy="7.5" r="2.2"/><circle cx="8" cy="16.5" r="2.2"/></svg>
+      设置 <span class="k">⌘8</span></button>
   </aside>
 
   <div class="main">
-    <div class="content">
+    <div class="content" id="content">
 
       <!-- ═══ 今天 ═══ -->
       <section class="view on" id="v-today">
         <div class="view-h">
           <h1>今天</h1>
-          <span class="desc">9 月 7 日 周一 · 连续学习 12 天</span>
-          <div class="right"><button class="btn soft">添加题目</button></div>
+          <span class="desc">9 月 8 日 周二 · 连续学习 12 天</span>
+          <div class="right"><button class="btn soft" data-v="add">添加题目</button></div>
         </div>
         <div class="today-grid">
           <div>
             <div class="panel" style="margin-bottom:14px">
               <div class="ph"><h3>学习计划</h3><span style="font-size:11px;color:var(--mut)">按遗忘曲线排好,清空即完成今天</span></div>
-              <div class="plan-row">
-                <span class="num warn">3</span>
-                <div class="info"><div class="t">待复习</div><div class="d">之前学过、今天该再看一遍的题</div></div>
-                <button class="btn pri" data-goquiz="due">开始复习 3 题</button>
-              </div>
-              <div class="plan-row">
-                <span class="num cin">2</span>
-                <div class="info"><div class="t">待学习</div><div class="d">从没学过的题,先想后看答案</div></div>
-                <button class="btn" data-goquiz="new">开始学习 2 题</button>
-              </div>
-              <div class="plan-row">
-                <span class="num mut">2</span>
-                <div class="info"><div class="t">待审核</div><div class="d">AI 生成的题,通过后才进学习队列</div></div>
-                <button class="btn soft" data-goto="audit">去审核</button>
-              </div>
+              <div id="today-plan"></div>
             </div>
             <div class="panel">
               <div class="ph"><h3>最近学习记录</h3></div>
@@ -270,11 +399,14 @@
       <section class="view" id="v-quiz">
         <div class="view-h">
           <h1>学习</h1>
-          <span class="desc" id="quiz-scope">全部题库 · 待复习优先,新题补位</span>
-          <div class="right"><button class="btn ghost" data-goto="today">退出学习</button></div>
+          <span class="desc" id="quiz-scope"></span>
+          <div class="right">
+            <button class="btn ghost" id="focus-btn">专注 <kbd>F</kbd></button>
+            <button class="btn ghost" data-v="today">退出学习</button>
+          </div>
         </div>
         <div class="quiz-top">
-          <span class="prog" id="quiz-prog">1 / 5</span>
+          <span class="prog" id="quiz-prog"></span>
           <div class="line"><i id="quiz-line" style="width:0%"></i></div>
         </div>
         <div id="quiz-body"></div>
@@ -285,30 +417,51 @@
         <div class="view-h">
           <h1>题库</h1>
           <span class="desc">官方题库只读,复制副本后可改;选中行在右侧看详情与操作</span>
-          <div class="right"><button class="btn soft">添加题目</button></div>
+          <div class="right"><button class="btn soft" data-v="add">添加题目</button></div>
+        </div>
+        <div class="catbar" id="catbar">
+          <button class="c on" data-cat="fe">前端工程师</button>
+          <button class="c" data-cat="agent">AI Agent 工程师</button>
+          <button class="c" data-cat="my">我的题库 <span id="my-cnt"></span></button>
         </div>
         <div class="bankbar">
           <div class="q">
+            <svg class="ic" viewBox="0 0 24 24" style="width:13px;height:13px"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4.5 4.5"/></svg>
             <input id="bank-q" placeholder="搜索题干 / 考察点…">
-            <span style="display:flex;gap:6px">
-              <button class="hint-chip on" data-st="all">全部</button>
-              <button class="hint-chip" data-st="due">待复习</button>
-              <button class="hint-chip" data-st="new">待学习</button>
-              <button class="hint-chip" data-st="done">已掌握</button>
-            </span>
           </div>
-          <span style="font-size:11.5px;color:var(--mut);white-space:nowrap" id="bank-count"></span>
+          <span class="fgrp" id="st-chips"><i>状态</i>
+            <button class="hint-chip on" data-st="all">全部</button>
+            <button class="hint-chip" data-st="new">待学习</button>
+            <button class="hint-chip" data-st="due">待复习</button>
+            <button class="hint-chip" data-st="done">已掌握</button>
+          </span>
+          <span class="fgrp" id="dif-chips"><i>难度</i>
+            <button class="hint-chip on" data-dif="all">不限</button>
+            <button class="hint-chip" data-dif="初">初</button>
+            <button class="hint-chip" data-dif="中">中</button>
+            <button class="hint-chip" data-dif="高">高</button>
+          </span>
+          <span class="fgrp" id="src-chips"><i>来源</i>
+            <button class="hint-chip on" data-src="all">不限</button>
+            <button class="hint-chip" data-src="官方">官方</button>
+            <button class="hint-chip" data-src="手动">手动</button>
+            <button class="hint-chip" data-src="AI">AI</button>
+            <button class="hint-chip" data-src="JD">JD</button>
+          </span>
+          <select id="mod-sel"></select>
+          <span class="cnt" id="bank-count"></span>
         </div>
         <div class="bank-wrap">
           <div class="bank-scroll">
             <table class="bank">
               <thead><tr id="bank-head">
-                <th style="width:80px" data-k="id">题号</th>
+                <th style="width:84px" data-k="id">题号</th>
                 <th data-k="t">题干</th>
-                <th style="width:96px" data-k="m">模块</th>
-                <th style="width:56px" data-k="d">难度</th>
-                <th style="width:76px" data-k="st">状态</th>
-                <th style="width:92px" data-k="due">下次复习</th>
+                <th style="width:92px" data-k="m">模块</th>
+                <th style="width:44px" data-k="d">难度</th>
+                <th style="width:78px" data-k="st">状态</th>
+                <th style="width:88px" data-k="due">下次复习</th>
+                <th style="width:26px"></th>
               </tr></thead>
               <tbody id="bank-body"></tbody>
             </table>
@@ -321,8 +474,8 @@
       <section class="view" id="v-audit">
         <div class="view-h">
           <h1>待审核</h1>
-          <span class="desc" id="audit-desc">2 题待审核;AI 生成的题通过后才进学习队列</span>
-          <div class="right"><button class="btn soft" data-goto="today">返回今天</button></div>
+          <span class="desc" id="audit-desc"></span>
+          <div class="right"><button class="btn soft" data-v="today">返回今天</button></div>
         </div>
         <div class="audit-wrap">
           <div class="audit-list" id="audit-list"></div>
@@ -330,12 +483,62 @@
         </div>
       </section>
 
-      <!-- ═══ 求职 ═══ -->
+      <!-- ═══ 添加题目 ═══ -->
+      <section class="view" id="v-add">
+        <div class="view-h">
+          <h1>添加题目</h1>
+          <span class="desc">手动写的直接进我的题库;AI 与按 JD 生成的先进待审核,通过后才进学习队列</span>
+        </div>
+        <div class="add-grid">
+          <div class="add-sec" id="add-manual">
+            <div class="ph2"><div class="t">手动写题</div><div class="d">自己写的题直接进我的题库,不用审核</div></div>
+            <div class="bd">
+              <label class="f-label">题干 <span class="req">*</span></label>
+              <input type="text" id="am-t" placeholder="例如:什么是虚拟列表?它与分页加载如何取舍?">
+              <label class="f-label">考察方向 <span class="req">*</span></label>
+              <input type="text" id="am-f" placeholder="这道题在考察什么(不是答案摘要)">
+              <label class="f-label">难度</label>
+              <div class="seg" id="am-d"><button class="on">初</button><button>中</button><button>高</button></div>
+              <label class="f-label">答案要点(每行一条,合计 ≥ 50 字)<span class="req">*</span></label>
+              <textarea id="am-a" rows="4" placeholder="一行一个要点,先给结论,再给展开"></textarea>
+              <div class="form-row">
+                <button class="btn pri" id="am-save">保存到我的题库</button>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="add-sec" id="add-ai">
+              <div class="ph2"><div class="t">AI 生成</div><div class="d">数量由 AI 按知识点广度判断;生成的题先进待审核</div></div>
+              <div class="bd">
+                <label class="f-label">知识点 <span class="req">*</span></label>
+                <input type="text" id="aa-k" placeholder="例如:长列表优化 / 事件循环 / RAG 分块策略">
+                <div class="gen-out" id="aa-out"></div>
+                <div class="form-row">
+                  <button class="btn pri" id="aa-go">生成题目</button>
+                </div>
+              </div>
+            </div>
+            <div class="add-sec" id="add-jd">
+              <div class="ph2"><div class="t">按 JD 生成</div><div class="d">围绕目标岗位出题,可结合简历出深挖题</div></div>
+              <div class="bd">
+                <div class="jd-pick" id="aj-pick"></div>
+                <label class="chk"><input type="checkbox" id="aj-resume" checked>结合简历,生成深挖题</label>
+                <div class="gen-out" id="aj-out"></div>
+                <div class="form-row">
+                  <button class="btn pri" id="aj-go">按 JD 生成题目</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ JD 管理 ═══ -->
       <section class="view" id="v-jobs">
         <div class="view-h">
-          <h1>求职</h1>
-          <span class="desc">目标岗位的 JD 与简历;可按 JD 生成题目</span>
-          <div class="right"><button class="btn soft">新增 JD</button></div>
+          <h1>JD 管理</h1>
+          <span class="desc">目标岗位的 JD;可按 JD 生成题目,结合简历出深挖题</span>
+          <div class="right"><button class="btn soft" id="jd-new">新增 JD</button></div>
         </div>
         <div class="job-grid">
           <div class="jd-list" id="jd-list"></div>
@@ -343,21 +546,69 @@
         </div>
       </section>
 
-      <!-- ═══ 设置(示意) ═══ -->
+      <!-- ═══ 简历管理 ═══ -->
+      <section class="view" id="v-resume">
+        <div class="view-h">
+          <h1>简历管理</h1>
+          <span class="desc">Markdown 编辑;按 JD 生成深挖题、后续简历功能都会用到它</span>
+        </div>
+        <div class="resume-wrap">
+          <div class="resume-bar">
+            <span class="t">我的简历</span>
+            <span class="m" id="resume-cnt"></span>
+            <span class="pill">只存本机</span>
+            <span class="sp"></span>
+            <button class="btn pri" id="resume-save" disabled>保存</button>
+          </div>
+          <textarea id="resume-ta" spellcheck="false"></textarea>
+        </div>
+      </section>
+
+      <!-- ═══ 设置 ═══ -->
       <section class="view" id="v-settings">
         <div class="view-h"><h1>设置</h1></div>
-        <div class="panel" style="max-width:560px">
-          <div class="ph"><h3>学习偏好</h3></div>
-          <div class="plan-row"><div class="info"><div class="t">每次学习题量</div><div class="d">先取待复习,再取待学习</div></div>
-            <button class="btn soft">20</button><button class="btn pri">50</button><button class="btn soft">全部</button></div>
-          <div class="plan-row"><div class="info"><div class="t">外观</div><div class="d">浅色纸面 / 夜读深色 / 跟随系统</div></div>
-            <button class="btn pri">浅色</button><button class="btn soft">深色</button></div>
+        <div class="set-wrap">
+          <div class="panel">
+            <div class="ph"><h3>AI 服务</h3></div>
+            <div class="set-row">
+              <div class="info"><div class="t">服务商</div><div class="d">OpenAI 兼容协议;本地 Ollama 离线零成本</div></div>
+              <div class="seg" id="set-prov"><button class="on">智谱</button><button>DeepSeek</button><button>Ollama</button></div>
+            </div>
+            <div class="set-row">
+              <div class="info"><div class="t">API Key</div><div class="d">已保存 · 仅存本机,不上传</div></div>
+              <input type="password" placeholder="sk-········" id="set-key">
+              <button class="btn soft" id="set-key-save">保存</button>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>学习偏好</h3></div>
+            <div class="set-row">
+              <div class="info"><div class="t">每次学习题量</div><div class="d">先取待复习,再取待学习补位</div></div>
+              <div class="seg" id="set-n"><button>20</button><button class="on">50</button><button>全部</button></div>
+            </div>
+            <div class="set-row">
+              <div class="info"><div class="t">外观</div><div class="d">浅色纸面 / 夜读</div></div>
+              <div class="seg" id="set-theme"><button class="on">浅色纸面</button><button>夜读</button></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>题库与数据</h3></div>
+            <div class="set-row">
+              <div class="info"><div class="t">官方题库同步</div><div class="d" id="sync-time">上次同步:今天 08:12 · 前端 135 题 · AI Agent 147 题</div></div>
+              <button class="btn soft" id="set-sync">立即同步</button>
+            </div>
+            <div class="set-row">
+              <div class="info"><div class="t">备份</div><div class="d">导出进度、笔记、我的题库为本地文件</div></div>
+              <button class="btn soft" id="set-exp">导出备份</button>
+              <button class="btn soft" id="set-imp">导入</button>
+            </div>
+          </div>
         </div>
       </section>
     </div>
 
     <div class="status">
-      <span>题库 282 · 待复习 3 · 待学习 2 · 待审核 <span id="st-audit">2</span></span>
+      <span id="st-left"></span>
       <span>本地优先 · 数据不上传</span>
     </div>
   </div>
@@ -366,375 +617,797 @@
 <!-- ⌘K -->
 <div class="palette-mask" id="palette-mask">
   <div class="palette">
-    <input id="palette-q" placeholder="前往:今天 / 学习 / 题库 / 待审核 / 求职…">
-    <div id="palette-list"></div>
+    <input id="palette-q" placeholder="搜索题目,或执行动作:开始复习 / 添加题目 / 前往…">
+    <div class="list" id="palette-list"></div>
   </div>
 </div>
+<!-- 确认弹窗(不可逆操作) -->
+<div class="modal-mask" id="confirm-mask">
+  <div class="modal">
+    <div class="mt" id="cf-t"></div>
+    <div class="mb" id="cf-b"></div>
+    <div class="mf">
+      <button class="btn ghost" id="cf-no">取消</button>
+      <button class="btn bad" id="cf-yes"></button>
+    </div>
+  </div>
+</div>
+<!-- 未保存守卫 -->
+<div class="modal-mask" id="guard-mask">
+  <div class="modal">
+    <div class="mt">有未保存的修改</div>
+    <div class="mb">离开将丢弃当前修改。可先保存再离开。</div>
+    <div class="mf">
+      <button class="btn ghost" id="gd-stay">继续编辑</button>
+      <button class="btn bad" id="gd-leave">放弃修改并离开</button>
+    </div>
+  </div>
+</div>
+<button class="btn ghost" id="focus-exit">退出专注 <kbd>Esc</kbd></button>
 <div class="toast" id="toast"></div>
 
 <script>
 'use strict';
-/* ───── 数据 ───── */
+/* ═══════════ 数据(演示用;真实实现中来自官方库物化 + 本地 SQLite) ═══════════ */
 var QS = [
-  { id:'fe.01.1', m:'JS 原理', d:'中', st:'due', due:'今天', tags:['高频'],
+  { id:'fe.01.1', cat:'fe', m:'JS 原理', d:'中', st:'due', due:'今天', tags:['高频'], src:'官方',
     t:'什么是闭包？它有哪些实际用途？', f:'理解闭包的本质与工程价值',
-    a:['<b>闭包 = 函数 + 其词法作用域的引用</b>:内层函数引用外层变量,外层返回后变量仍存活。','用途:封装私有状态、柯里化、模块模式、回调中保留上下文。','代价:被引用的变量无法回收。'] },
-  { id:'fe.01.2', m:'JS 原理', d:'高', st:'due', due:'今天', tags:[],
-    t:'事件循环中宏任务与微任务的执行顺序是怎样的？', f:'掌握一轮循环的精确顺序',
+    a:['<b>闭包 = 函数 + 其词法作用域的引用</b>:内层函数引用外层变量,外层返回后变量仍存活。','用途:封装私有状态、柯里化、模块模式、回调中保留上下文。','代价:被引用的变量无法回收。'],
+    fu:['闭包在循环中捕获变量为什么容易出错?如何修复?'] },
+  { id:'fe.01.2', cat:'fe', m:'JS 原理', d:'高', st:'due', due:'今天', tags:[], src:'官方',
+    t:'事件循环中宏任务与微任务的执行顺序是怎样的？', f:'掌握一轮循环的精确顺序', code:true,
     a:['一轮:当前宏任务 → <b>清空全部微任务</b> → 渲染 → 下一宏任务。','Promise.then 是微任务;setTimeout / I/O 是宏任务。'] },
-  { id:'ag.05.2', m:'Agent 机制', d:'高', st:'due', due:'今天', tags:[],
+  { id:'agent.05.2', cat:'agent', m:'Agent 机制', d:'高', st:'due', due:'今天', tags:[], src:'官方',
     t:'为什么 ReAct 容易跑偏？有哪些缓解手段？', f:'推理-行动循环的失败模式',
-    a:['错误会累积:一步错带偏后续;可能幻觉工具结果或死循环。','缓解:<b>限制步数</b>、校验观察、规划层、关键节点人工确认。'] },
-  { id:'fe.03.1', m:'React', d:'中', st:'new', due:'—', tags:[],
+    a:['错误会累积:一步错带偏后续;可能幻觉工具结果或死循环。','缓解:<b>限制步数</b>、校验观察、规划层、关键节点人工确认。'],
+    fu:['如果工具返回为空,agent 应该怎么处理?'] },
+  { id:'fe.03.1', cat:'fe', m:'React', d:'中', st:'new', due:'—', tags:[], src:'官方',
     t:'React 18 的自动批处理与旧版有何区别？', f:'批处理的范围变化',
     a:['v17:只有事件处理器内批处理。','v18:<b>所有更新默认批处理</b>;flushSync 可退回。'] },
-  { id:'ag.05.1', m:'Agent 机制', d:'中', st:'new', due:'—', tags:['高频'],
+  { id:'agent.05.1', cat:'agent', m:'Agent 机制', d:'中', st:'new', due:'—', tags:['高频'], src:'官方',
     t:'什么是 Function Calling？描述它的工作流程。', f:'模型与外部工具的衔接',
     a:['模型输出<b>函数名 + JSON 参数</b>,应用执行后回传,模型归纳。','适合:步数不定、需要真实数据的任务。'] },
-  { id:'fe.07.1', m:'工程化', d:'初', st:'done', due:'9 月 12 日', tags:[],
+  { id:'fe.07.1', cat:'fe', m:'工程化', d:'初', st:'done', due:'9 月 15 日', tags:[], src:'官方',
     t:'tree shaking 的原理是什么？', f:'ES Module 静态分析',
     a:['基于 ESM 静态结构,未引用的导出打包时剔除。','前提:sideEffects 标注正确。'] },
+  { id:'agent.02.3', cat:'agent', m:'模型原理', d:'中', st:'new', due:'—', tags:[], src:'官方', code:true,
+    t:'temperature 与 top_p 分别控制什么？什么场景该调低？', f:'采样参数对输出分布的影响',
+    a:['temperature 缩放整条分布,top_p 截断累积概率头部。','事实问答 / 代码生成调低,创意发散调高。'] },
+  { id:'agent.03.4', cat:'agent', m:'RAG', d:'高', st:'done', due:'9 月 11 日', tags:[], src:'官方', note:'分块大小要和 embedding 模型的最大输入对齐,检索质量比生成端调参更值得先做。',
+    t:'RAG 的分块策略有哪些？如何权衡？', f:'chunk 粒度与召回质量的关系',
+    a:['固定长度 / 按结构(标题、段落)/ 语义分块。','小块召回准、上下文弱;大块相反,常用<b>小块检索 + 相邻块拼接</b>。'] },
+  { id:'my.1.1', cat:'my', m:'长列表优化', d:'中', st:'new', due:'—', tags:[], src:'JD',
+    t:'什么是虚拟列表？它与分页加载如何取舍？', f:'长列表渲染优化', code:true,
+    a:['虚拟列表只渲染<b>可视区 ± 缓冲</b>,滚动复用 DOM,总高占位撑起。','要随机跳转用分页;要无限流畅、数据大用虚拟列表。','要点:行绝对定位、二分找起点、动态行高测量缓存。'] },
+  { id:'my.1.2', cat:'my', m:'并发编程', d:'高', st:'due', due:'今天', tags:[], src:'AI',
+    t:'如何设计一个支持取消的异步任务队列？', f:'并发控制与生命周期管理',
+    a:['每任务持有 <b>AbortController</b>;并发上限 N,完成自动补位。','取消 = abort 传给 fetch,标记 cancelled 不执行回调。','取消后清理副作用;重试与取消互斥。'] },
+  { id:'my.1.3', cat:'my', m:'并发编程', d:'中', st:'done', due:'9 月 10 日', tags:[], src:'手动', note:'手动记的题:项目里用过 p-limit,对比过实现。',
+    t:'Promise.all、allSettled、race、any 的区别？', f:'并发原语的失败语义',
+    a:['all:一败全败;allSettled:等全部落定;race:第一个落定;any:第一个成功。','按「要不要失败即停」选型。'] },
 ];
 var PEND = [
-  { id:'my.gen.1', m:'长列表优化', d:'中', t:'什么是虚拟列表？它与分页加载如何取舍？', f:'长列表渲染优化', gen:'AI 生成 · 知识点「长列表优化」',
-    a:['虚拟列表只渲染<b>可视区 ± 缓冲</b>,滚动复用 DOM,总高占位撑起。','要随机跳转用分页;要无限流畅、数据大用虚拟列表。','要点:行绝对定位、二分找起点、动态行高测量缓存。'] },
+  { id:'my.gen.1', m:'长列表优化', d:'中', t:'无限滚动如何避免内存持续增长？', f:'滚动加载的资源回收', gen:'AI 生成 · 知识点「长列表优化」',
+    a:['离屏数据只留索引与高度缓存,不持 DOM。','用 IntersectionObserver 做哨兵,到达阈值再取数。','可见区外条目回收/复用,滚动位置与数据键对齐。'] },
   { id:'my.gen.2', m:'并发编程', d:'高', t:'如何设计一个支持取消的异步任务队列？', f:'并发控制与生命周期管理', gen:'按 JD 生成 · AI 应用工程师',
     a:['每任务持有 <b>AbortController</b>;并发上限 N,完成自动补位。','取消 = abort 传给 fetch,标记 cancelled 不执行回调。','取消后清理副作用;重试与取消互斥。'] },
 ];
 var JDS = [
-  { t:'AI 应用工程师', c:'月之暗面', d:'负责 AI Agent 产品的前端与编排层建设,深入理解 Function Calling、RAG 等应用模式;TypeScript 熟练,对模型能力边界有体感。' },
-  { t:'高级前端工程师', c:'字节跳动', d:'负责抖音 Web 性能优化与工程化,深入 React/Vue 原理,大型工程化经验,熟悉 Node 中间层。' },
+  { t:'AI 应用工程师', c:'月之暗面', u:'今天', n:{ pend:2, mine:3, done:1 },
+    d:'负责 AI Agent 产品的前端与编排层建设,深入理解 Function Calling、RAG 等应用模式;TypeScript 熟练,对模型能力边界有体感。' },
+  { t:'高级前端工程师', c:'字节跳动', u:'9 月 5 日', n:{ pend:0, mine:2, done:2 },
+    d:'负责抖音 Web 性能优化与工程化,深入 React/Vue 原理,大型工程化经验,熟悉 Node 中间层。' },
 ];
+var RESUME = '# 基本信息\n前端工程师 · 5 年\n\n# 经历\n## 某电商 中台前端\n- 参与营销页搭建平台,组件 40+,周构建 200+\n- 协助完成长列表性能优化,首屏从 3.2s 降到 1.4s\n\n# 项目\n## 内部 Agent 工作台\n- 基于 Vercel AI SDK 编排多步工具调用\n- 封装 Function Calling 注册与重试层\n';
+var CATNAME = { fe:'前端工程师', agent:'AI Agent 工程师', my:'我的题库' };
 var STMAP = { due:['待复习','due'], new:['待学习','new'], done:['已掌握','done'] };
 
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function toast(msg){ var el = document.getElementById('toast'); el.textContent = msg; el.classList.add('on');
-  clearTimeout(el._t); el._t = setTimeout(function(){ el.classList.remove('on'); }, 1600); }
+  clearTimeout(el._t); el._t = setTimeout(function(){ el.classList.remove('on'); }, 1800); }
+function cntDue(){ return QS.filter(function(q){ return q.st === 'due' && q.due === '今天'; }).length; }
+function cntNew(){ return QS.filter(function(q){ return q.st === 'new'; }).length; }
+function cntMine(){ return QS.filter(function(q){ return q.cat === 'my'; }).length; }
+function refreshCounts(){
+  document.getElementById('cnt-audit').textContent = PEND.length || '';
+  document.getElementById('cnt-today').textContent = (cntDue() + cntNew() + PEND.length) || '';
+  document.getElementById('st-left').textContent =
+    '官方 282 · 我的 ' + cntMine() + ' · 待学习 ' + cntNew() + ' · 待复习 ' + cntDue() + ' · 待审核 ' + PEND.length;
+  document.getElementById('my-cnt').textContent = cntMine();
+  renderTodayPlan();
+}
 
-/* ───── 视图 ───── */
+/* ═══════════ 视图切换(dirty 守卫统一拦截) ═══════════ */
+var VIEWS = ['today','quiz','bank','audit','add','jobs','resume','settings'];
 var active = 'today';
-function show(v){
+function dirty(){ return jdDirty || resumeDirty; }
+var jdDirty = false, resumeDirty = false;
+function nav(v, opts){
+  if (v === active && v !== 'bank' && v !== 'add') return;
+  if (dirty()) { openGuard(function(){ doShow(v, opts); }); return; }
+  doShow(v, opts);
+}
+function doShow(v, opts){
+  jdDirty = false; resumeDirty = false;
+  if (state.focus && v !== 'quiz') exitFocus();
   active = v;
-  ['today','quiz','bank','audit','jobs','settings'].forEach(function(x){
-    document.getElementById('v-' + x).classList.toggle('on', x === v);
+  VIEWS.forEach(function(x){ document.getElementById('v-' + x).classList.toggle('on', x === v); });
+  document.querySelectorAll('.snav').forEach(function(b){
+    b.classList.toggle('on', b.dataset.v === v);
   });
-  document.querySelectorAll('.snav').forEach(function(b){ b.classList.toggle('on', b.dataset.v === v); });
-  if (v === 'bank') renderBank();
+  document.querySelectorAll('.addbtn').forEach(function(b){
+    b.classList.toggle('pri', v === 'add'); b.classList.toggle('soft', v !== 'add');
+  });
+  document.title = ({ today:'今天', quiz:'学习', bank:'题库', audit:'待审核', add:'添加题目', jobs:'JD 管理', resume:'简历管理', settings:'设置' })[v] + ' · CommitCareer';
+  if (v === 'bank') renderBank(opts);
   if (v === 'audit') renderAudit();
   if (v === 'jobs') renderJobs();
-  if (v === 'today') updateToday();
+  if (v === 'add') resetAdd(opts);
+  if (v === 'resume') syncResumeBar();
+  if (v === 'quiz' && !SESS) renderQuizEmpty();
+  refreshCounts();
 }
-document.querySelectorAll('.snav').forEach(function(b){ b.addEventListener('click', function(){ show(b.dataset.v); }); });
-document.querySelectorAll('[data-goto]').forEach(function(b){ b.addEventListener('click', function(){ show(this.dataset.goto); }); });
+document.querySelectorAll('.snav').forEach(function(b){ b.addEventListener('click', function(){ nav(b.dataset.v); }); });
+document.querySelectorAll('.addbtn').forEach(function(b){ b.addEventListener('click', function(){ nav('add'); }); });
+document.querySelectorAll('.content [data-v]').forEach(function(b){ b.addEventListener('click', function(){ nav(b.dataset.v); }); });
 
-/* ───── 今天 ───── */
-function updateToday(){
-  document.getElementById('cnt-audit').textContent = PEND.length;
-  document.getElementById('st-audit').textContent = PEND.length;
+/* ═══════════ 今天 ═══════════ */
+function renderTodayPlan(){
+  var el = document.getElementById('today-plan'); if (!el) return;
+  var due = cntDue(), nw = cntNew(), pend = PEND.length, html = '';
+  if (!due && !nw && !pend) {
+    html = '<div class="plan-row"><span class="num mut">0</span>'
+      + '<div class="info"><div class="t">今日队列已清空</div><div class="d">复习与新题都完成了,明天见</div></div>'
+      + '<button class="btn" data-force="1">再过一遍</button></div>';
+  } else {
+    if (due) html += '<div class="plan-row"><span class="num warn">' + due + '</span>'
+      + '<div class="info"><div class="t">待复习</div><div class="d">之前学过、今天该再看一遍的题</div></div>'
+      + '<button class="btn pri" data-goquiz="due">开始复习 ' + due + ' 题</button></div>';
+    if (nw) html += '<div class="plan-row"><span class="num cin">' + nw + '</span>'
+      + '<div class="info"><div class="t">待学习</div><div class="d">从没学过的题,先想后看答案</div></div>'
+      + '<button class="btn" data-goquiz="new">开始学习 ' + nw + ' 题</button></div>';
+    if (pend) html += '<div class="plan-row"><span class="num mut">' + pend + '</span>'
+      + '<div class="info"><div class="t">待审核</div><div class="d">AI 生成的题,通过后才进学习队列</div></div>'
+      + '<button class="btn soft" data-v="audit">去审核</button></div>';
+  }
+  el.innerHTML = html;
+  el.querySelectorAll('[data-goquiz]').forEach(function(b){
+    b.addEventListener('click', function(){ startQuiz(b.dataset.goquiz); });
+  });
+  el.querySelectorAll('[data-force]').forEach(function(b){
+    b.addEventListener('click', function(){ startQuiz('all'); });
+  });
+  el.querySelectorAll('[data-v]').forEach(function(b){
+    b.addEventListener('click', function(){ nav(b.dataset.v); });
+  });
 }
 (function bars(){
   var data = [3,2,0,1,0,4,2], peak = Math.max.apply(null, data);
   document.getElementById('mini-bars').innerHTML = data.map(function(n, i){
     var d = new Date(); d.setDate(d.getDate() + i);
     var label = i === 0 ? '今天' : i === 1 ? '明天' : '周' + '日一二三四五六'[d.getDay()];
-    var h = Math.round(n / peak * 100);
     return '<div class="b ' + (n === peak && n > 0 ? 'peak' : '') + '"><span style="order:-1">' + n + '</span>'
-      + '<i style="height:' + h + '%;min-height:2px"></i><span>' + label + '</span></div>';
+      + '<i style="height:' + Math.max(Math.round(n / peak * 100), 2) + '%;min-height:2px"></i><span>' + label + '</span></div>';
   }).join('');
 })();
 
-/* ───── 学习 ───── */
+/* ═══════════ 学习 ═══════════ */
 var SESS = null;
-function startQuiz(focus){
-  var pool = QS.filter(function(q){ return focus === 'due' ? q.st === 'due' : focus === 'new' ? q.st === 'new' : q.st !== 'done'; });
-  if (!pool.length) { toast('没有待学习的题'); return; }
-  SESS = { qs: pool, i: 0, rev: false, res: [], focus: focus === 'due' ? '待复习队列' : focus === 'new' ? '新题' : '待复习优先,新题补位' };
-  show('quiz'); renderQuiz();
+function startQuiz(focus, single){
+  var pool;
+  if (single) pool = [single];
+  else if (focus === 'due') pool = QS.filter(function(q){ return q.st === 'due' && q.due === '今天'; });
+  else if (focus === 'new') pool = QS.filter(function(q){ return q.st === 'new'; });
+  else pool = QS.filter(function(q){ return q.st !== 'done'; });
+  if (!pool.length) { toast('没有可学习的题'); return; }
+  SESS = { qs: pool.slice(), i: 0, rev: false, res: [], req: {},
+    focus: single ? '单题 · ' + single.id : focus === 'due' ? '待复习' : focus === 'new' ? '待学习' : '全部题 · 待复习优先' };
+  nav('quiz'); renderQuiz();
 }
-document.querySelectorAll('[data-goquiz]').forEach(function(b){
-  b.addEventListener('click', function(){ startQuiz(this.dataset.goquiz); });
-});
+function renderQuizEmpty(){
+  document.getElementById('quiz-scope').textContent = '全部题库 · 待复习优先,新题补位';
+  document.getElementById('quiz-prog').textContent = '—';
+  document.getElementById('quiz-line').style.width = '0%';
+  document.getElementById('quiz-body').innerHTML =
+    '<div class="sum-panel panel"><div class="head"><div class="t">从这里开始一轮学习</div>'
+    + '<div class="s">先取待复习,再取待学习补位;也可以去题库挑一道直练</div></div>'
+    + '<div class="foot">'
+    + (cntDue() ? '<button class="btn pri" data-eq="due">开始复习 ' + cntDue() + ' 题</button>' : '')
+    + (cntNew() ? '<button class="btn" data-eq="new">开始学习 ' + cntNew() + ' 题</button>' : '')
+    + '<button class="btn soft" data-eq="all">再过一遍(全部题)</button></div></div>';
+  document.querySelectorAll('#quiz-body [data-eq]').forEach(function(b){
+    b.addEventListener('click', function(){ startQuiz(b.dataset.eq); });
+  });
+}
 function renderQuiz(){
   if (!SESS) return;
   var q = SESS.qs[SESS.i];
-  document.getElementById('quiz-scope').textContent = SESS.focus + ' · ' + (q.m || '');
+  document.getElementById('quiz-scope').textContent = SESS.focus + ' · ' + q.m;
   document.getElementById('quiz-prog').textContent = (SESS.i + 1) + ' / ' + SESS.qs.length;
   document.getElementById('quiz-line').style.width = (SESS.i / SESS.qs.length * 100) + '%';
   var body = document.getElementById('quiz-body');
-  var html = '<div class="quiz-stage"><div class="tags"><span class="pill">' + esc(q.d) + '</span>';
-  (q.tags || []).forEach(function(t){ html += '<span class="pill">' + esc(t) + '</span>'; });
-  html += '</div><h2>' + esc(q.t) + '</h2><div class="focus">' + esc(q.f) + '</div>';
-  if (SESS.rev) html += '<div class="ans"><ul>' + q.a.map(function(x){ return '<li>' + x + '</li>'; }).join('') + '</ul></div>';
+  var html = '<div class="quiz-stage" id="q-stage"><div class="tags">'
+    + '<span class="pill">' + esc(q.d) + '</span>'
+    + (q.code ? '<span class="pill">代码题</span>' : '')
+    + (q.src !== '官方' ? '<span class="pill">来自' + esc(q.src === 'JD' ? ' JD' : q.src) + '</span>' : '')
+    + (SESS.req[q.id] ? '<span class="pill due">重练</span>' : '')
+    + (q.tags || []).map(function(t){ return '<span class="pill">' + esc(t) + '</span>'; }).join('')
+    + '</div><h2>' + esc(q.t) + '</h2><div class="focus">' + esc(q.f) + '</div>';
+  if (SESS.rev) {
+    html += '<div class="ans"><ul>' + q.a.map(function(x){ return '<li>' + x + '</li>'; }).join('') + '</ul></div>';
+    if (q.fu) html += '<div class="fu"><div class="h">追问 · 面试官可能接着问</div><ul>'
+      + q.fu.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
+    if (q.code) html += padHtml(q);
+  }
   html += '</div><div class="quiz-ops">';
   if (!SESS.rev) html += '<button class="btn pri big" id="q-reveal">我想好了,看答案 <kbd>空格</kbd></button>'
-    + '<div class="sub">先在脑中想清楚,再对答案</div>';
+    + '<div class="sub">先在脑中想清楚,再对答案;评分会决定下次复习时间</div>'
+    + '<div class="sec"><button class="btn ghost" id="q-ask">问 AI</button></div>';
   else html += '<div class="row3">'
     + '<button class="btn big rate-no" data-r="no">不会 <kbd>1</kbd></button>'
     + '<button class="btn big rate-mid" data-r="mid">模糊 <kbd>2</kbd></button>'
     + '<button class="btn big rate-ok" data-r="ok">掌握 <kbd>3</kbd></button></div>'
-    + '<div class="sub">评分后自动进入下一题</div>';
+    + '<div class="sub">评分后自动进入下一题;「不会」的题本轮末尾会再出现一次</div>'
+    + '<div class="sec"><button class="btn ghost" id="q-ask">问 AI</button></div>';
   html += '</div>';
   body.innerHTML = html;
   var rv = body.querySelector('#q-reveal');
   if (rv) rv.addEventListener('click', function(){ SESS.rev = true; renderQuiz(); });
   body.querySelectorAll('[data-r]').forEach(function(b){
-    b.addEventListener('click', function(){ quizRate(this.dataset.r); });
+    b.addEventListener('click', function(){ quizRate(b.dataset.r); });
+  });
+  var ask = body.querySelector('#q-ask');
+  if (ask) ask.addEventListener('click', function(){ toast('已在独立窗口打开问 AI(登录一次,之后常驻)'); });
+  wirePad(q);
+}
+function padHtml(q){
+  return '<div class="pad" id="q-pad"><div class="ph2">代码草稿纸'
+    + '<span style="flex:1"></span><button class="btn soft" id="pad-run" style="padding:3px 10px;font-size:11.5px">运行</button></div>'
+    + '<textarea id="pad-ta" spellcheck="false">' + esc((q._pad != null ? q._pad : (q.pad0 || '// 在这里写下你的思路,可运行\nconsole.log("hello");'))) + '</textarea>'
+    + '<div class="out" id="pad-out">// 输出</div></div>';
+}
+function wirePad(q){
+  var ta = document.getElementById('pad-ta'); if (!ta) return;
+  ta.addEventListener('input', function(){ q._pad = ta.value; });
+  document.getElementById('pad-run').addEventListener('click', function(){
+    var out = [], log = console.log;
+    console.log = function(){ out.push([].slice.call(arguments).map(String).join(' ')); };
+    try { new Function(ta.value)(); } catch (e) { out.push('✕ ' + e.message); }
+    console.log = log;
+    document.getElementById('pad-out').textContent = out.length ? out.join('\n') : '(无输出)';
   });
 }
 function quizRate(r){
   var q = SESS.qs[SESS.i];
+  if (r === 'ok') { q.st = 'done'; q.due = '7 天后'; }
+  else if (r === 'mid') { q.st = 'due'; q.due = '3 天后'; }
+  else { q.st = 'due'; q.due = '明天'; }
   SESS.res.push({ q: q, r: r });
-  if (r === 'no') { SESS.qs.push(q); toast('「不会」的题稍后会再出现一次'); }
+  if (r === 'no' && !SESS.req[q.id]) { SESS.req[q.id] = true; SESS.qs.push(q); }
+  var msg = r === 'ok' ? '已掌握 · 7 天后再学' : r === 'mid' ? '模糊 · 3 天后再学' : '不会 · 明天优先';
+  if (r === 'no') msg = '「不会」的题稍后会再出现一次';
+  toast(msg);
   SESS.rev = false; SESS.i++;
-  if (SESS.i >= SESS.qs.length) { renderQuizDone(); return; }
-  renderQuiz();
+  var stage = document.getElementById('q-stage');
+  if (stage) stage.classList.add('fade');
+  setTimeout(function(){ SESS.i >= SESS.qs.length ? renderQuizDone() : renderQuiz(); }, 220);
 }
 function renderQuizDone(){
   var ok = SESS.res.filter(function(x){ return x.r === 'ok'; }).length;
   var weak = SESS.res.filter(function(x){ return x.r === 'no'; }).length;
-  var d = ['ok · 7 天后', 'mid · 3 天后', 'no · 明天优先'];
+  var RL = { ok:['掌握','var(--ok)'], mid:['模糊','var(--warn)'], no:['不会','var(--bad)'] };
   document.getElementById('quiz-body').innerHTML =
     '<div class="sum-panel panel"><div class="head"><div class="t">本轮学习完成</div>'
     + '<div class="s">学习了 ' + SESS.res.length + ' 道题,掌握 ' + ok + ' 道' + (weak ? ',偏弱 ' + weak + ' 道已排进明天' : '') + '</div></div>'
     + SESS.res.map(function(x){
-      var color = x.r === 'ok' ? 'var(--ok)' : x.r === 'mid' ? 'var(--warn)' : 'var(--bad)';
       var due = x.r === 'ok' ? '7 天后再学' : x.r === 'mid' ? '3 天后再学' : '明天 · 优先';
-      return '<div class="r"><span class="rate" style="color:' + color + '">' + x.r + '</span>'
+      return '<div class="r"><span class="rate" style="color:' + RL[x.r][1] + '">' + RL[x.r][0] + '</span>'
         + '<span class="t">' + esc(x.q.t) + '</span><span class="due">' + due + '</span></div>';
     }).join('')
     + '<div class="foot"><button class="btn pri" id="q-back">回到今天</button>'
-    + '<button class="btn" id="q-more">继续学下一轮</button></div></div>';
-  document.getElementById('q-back').addEventListener('click', function(){ show('today'); });
+    + '<button class="btn" id="q-more">再过一遍</button></div></div>';
+  document.getElementById('quiz-scope').textContent = SESS.focus;
+  document.getElementById('q-back').addEventListener('click', function(){ nav('today'); });
   document.getElementById('q-more').addEventListener('click', function(){ startQuiz('all'); });
 }
 
-/* ───── 题库 ───── */
-var bankFilter = 'all', bankQ = '', bankSort = { k: 'id', dir: 1 }, bankSel = null;
+/* 专注模式 */
+var state = { focus:false };
+function enterFocus(){ if (active !== 'quiz' || !SESS) return; state.focus = true; document.body.classList.add('focus'); }
+function exitFocus(){ state.focus = false; document.body.classList.remove('focus'); }
+document.getElementById('focus-btn').addEventListener('click', enterFocus);
+document.getElementById('focus-exit').addEventListener('click', exitFocus);
+
+/* ═══════════ 题库 ═══════════ */
+var bk = { cat:'fe', st:'all', dif:'all', src:'all', mod:'all', q:'', sort:{ k:'id', dir:1 }, sel:null };
 function bankRows(){
   var rows = QS.filter(function(q){
-    if (bankFilter !== 'all' && q.st !== bankFilter) return false;
-    if (bankQ && (q.t + q.f).toLowerCase().indexOf(bankQ.toLowerCase()) < 0) return false;
+    if (q.cat !== bk.cat) return false;
+    if (bk.st !== 'all' && q.st !== bk.st) return false;
+    if (bk.dif !== 'all' && q.d !== bk.dif) return false;
+    if (bk.src !== 'all' && q.src !== bk.src) return false;
+    if (bk.mod !== 'all' && q.m !== bk.mod) return false;
+    if (bk.q && (q.t + q.f + q.id).toLowerCase().indexOf(bk.q.toLowerCase()) < 0) return false;
     return true;
   });
-  var k = bankSort.k, dir = bankSort.dir;
+  var k = bk.sort.k, dir = bk.sort.dir;
   rows.sort(function(a, b){ var va = a[k] || '', vb = b[k] || ''; return va < vb ? -dir : va > vb ? dir : 0; });
   return rows;
 }
-function renderBank(){
+function renderMods(){
+  var mods = ['all'].concat(QS.filter(function(q){ return q.cat === bk.cat; })
+    .map(function(q){ return q.m; }).filter(function(v, i, arr){ return arr.indexOf(v) === i; }));
+  var sel = document.getElementById('mod-sel');
+  sel.innerHTML = mods.map(function(m){ return '<option value="' + esc(m) + '">' + (m === 'all' ? '全部模块' : esc(m)) + '</option>'; }).join('');
+  sel.value = mods.indexOf(bk.mod) >= 0 ? bk.mod : 'all'; bk.mod = sel.value;
+}
+function renderBank(opts){
+  if (opts && opts.cat) bk.cat = opts.cat;
+  if (opts && opts.sel) bk.sel = opts.sel;
+  if (opts && opts.reset) { bk.st = bk.dif = bk.src = bk.mod = 'all'; bk.q = ''; syncBankBar(); }
+  document.querySelectorAll('#catbar .c').forEach(function(c){ c.classList.toggle('on', c.dataset.cat === bk.cat); });
+  renderMods();
   var rows = bankRows();
-  if (bankSel && !rows.some(function(q){ return q.id === bankSel; })) bankSel = rows[0] ? rows[0].id : null;
+  if (bk.sel && !rows.some(function(q){ return q.id === bk.sel; })) bk.sel = rows[0] ? rows[0].id : null;
   document.getElementById('bank-count').textContent = rows.length + ' 题';
+  var arr = bk.sort.dir === 1 ? '▾' : '▴';
+  document.querySelectorAll('#bank-head th').forEach(function(th){
+    th.textContent = th.textContent.replace(/ [▾▴]$/, '');
+    if (th.dataset.k === bk.sort.k) th.textContent += ' ' + arr;
+  });
   document.getElementById('bank-body').innerHTML = rows.map(function(q){
     var st = STMAP[q.st];
-    return '<tr data-id="' + esc(q.id) + '" class="' + (q.id === bankSel ? 'sel' : '') + '">'
+    return '<tr data-id="' + esc(q.id) + '" class="' + (q.id === bk.sel ? 'sel' : '') + '">'
       + '<td>' + esc(q.id) + '</td><td>' + esc(q.t) + '</td><td>' + esc(q.m) + '</td>'
       + '<td>' + esc(q.d) + '</td><td><span class="pill ' + st[1] + '">' + st[0] + '</span></td>'
-      + '<td>' + esc(q.due) + '</td></tr>';
-  }).join('');
+      + '<td>' + esc(q.due) + '</td>'
+      + '<td>' + (q.note ? '<svg class="ic" viewBox="0 0 24 24" style="width:12px;height:12px;color:var(--warn)" title="有笔记"><path d="M7 3.5h10a1 1 0 0 1 1 1V21l-6-3.5L6 21V4.5a1 1 0 0 1 1-1Z"/></svg>' : '') + '</td></tr>';
+  }).join('') || '<tr><td colspan="7"><div class="empty-tip">没有匹配的题<div class="act"><button class="btn soft" id="bk-clear">清除筛选</button></div></div></td></tr>';
+  var clr = document.getElementById('bk-clear');
+  if (clr) clr.addEventListener('click', function(){ nav('bank', { reset:true }); });
   renderBankDetail();
 }
 function renderBankDetail(){
-  var q = QS.find(function(x){ return x.id === bankSel; });
+  var q = QS.find(function(x){ return x.id === bk.sel; });
   var el = document.getElementById('bank-detail');
-  if (!q) { el.innerHTML = '<div style="color:var(--mut-deep);text-align:center;padding:40px 0">← 选中一行看详情</div>'; return; }
+  if (!q) { el.innerHTML = '<div class="empty-tip">选中一行,在右侧看详情与操作</div>'; return; }
   var st = STMAP[q.st];
-  el.innerHTML = '<span class="pill ' + st[1] + '">' + st[0] + '</span> <span class="pill">难度 ' + q.d + '</span>'
+  el.innerHTML = '<div><span class="pill ' + st[1] + '">' + st[0] + '</span> <span class="pill">难度 ' + q.d + '</span>'
+    + (q.src !== '官方' ? '<span class="pill">来自' + esc(q.src === 'JD' ? ' JD' : q.src) + '</span>' : '')
+    + (q.code ? '<span class="pill">代码题</span>' : '') + '</div>'
     + '<h3>' + esc(q.t) + '</h3>'
-    + '<div style="font-size:11.5px;color:var(--mut);margin-top:5px">考察方向:' + esc(q.f) + '</div>'
+    + '<div style="font-size:11.5px;color:var(--mut);margin-top:5px">考察方向:' + esc(q.f) + ' · 下次复习:' + esc(q.due) + '</div>'
     + '<div class="ops">'
     + '<button class="btn pri" data-act="drill1">学习此题</button>'
-    + '<button class="btn" data-act="edit">编辑</button>'
-    + '<button class="btn" data-act="copy">复制到我的题库</button>'
-    + '<button class="btn bad" data-act="del">删除</button></div>'
-    + '<div id="detail-extra"></div>'
-    + '<div class="ans"><b>参考答案要点</b><ul>' + q.a.map(function(x){ return '<li>' + x + '</li>'; }).join('') + '</ul></div>';
+    + (q.cat === 'my' ? '<button class="btn" data-act="edit">编辑</button>' : '')
+    + (q.cat === 'my' ? '<button class="btn bad" data-act="del">删除</button>' : '<button class="btn" data-act="copy">复制到我的题库</button>')
+    + '</div><div id="detail-extra"></div>'
+    + '<div class="sec-h">参考答案要点</div><div class="ans"><ul>' + q.a.map(function(x){ return '<li>' + x + '</li>'; }).join('') + '</ul></div>'
+    + (q.fu ? '<div class="sec-h">追问</div><ul class="fu-l">' + q.fu.map(function(x){ return '<li>· ' + esc(x) + '</li>'; }).join('') + '</ul>' : '')
+    + '<div class="sec-h">笔记</div><div id="detail-note"></div>';
   el.querySelectorAll('[data-act]').forEach(function(b){
-    b.addEventListener('click', function(){ bankAct(this.dataset.act, q); });
+    b.addEventListener('click', function(){ bankAct(b.dataset.act, q); });
   });
+  renderNote(q);
+}
+function renderNote(q){
+  var el = document.getElementById('detail-note'); if (!el) return;
+  if (q._noteEdit) {
+    el.innerHTML = '<textarea id="nt-ta" rows="3">' + esc(q.note || '') + '</textarea>'
+      + '<div class="form-row"><button class="btn ghost" id="nt-x">取消</button><button class="btn pri" id="nt-s">保存笔记</button></div>';
+    document.getElementById('nt-s').addEventListener('click', function(){ q.note = document.getElementById('nt-ta').value.trim(); q._noteEdit = false; renderBankDetail(); toast(q.note ? '笔记已保存' : '笔记已清空'); });
+    document.getElementById('nt-x').addEventListener('click', function(){ q._noteEdit = false; renderBankDetail(); });
+  } else if (q.note) {
+    el.innerHTML = '<div class="note-txt">' + esc(q.note) + '</div>'
+      + '<div class="form-row" style="justify-content:flex-start"><button class="btn ghost" id="nt-e" style="font-size:11.5px">编辑笔记</button></div>';
+    document.getElementById('nt-e').addEventListener('click', function(){ q._noteEdit = true; renderBankDetail(); });
+  } else {
+    el.innerHTML = '<button class="btn ghost" id="nt-a" style="font-size:11.5px;padding:3px 8px">+ 写笔记</button>';
+    document.getElementById('nt-a').addEventListener('click', function(){ q._noteEdit = true; renderBankDetail(); });
+  }
 }
 function bankAct(act, q){
   var extra = document.getElementById('detail-extra');
-  if (act === 'drill1') toast('进入学习:只学这道题');
-  else if (act === 'copy') toast('已复制到我的题库');
-  else if (act === 'edit') {
-    extra.innerHTML = '<div class="form"><label>题干</label><input id="ef-t" value="' + esc(q.t) + '">'
-      + '<label>答案要点(每行一条)</label><textarea rows="5">' + esc(q.a.join('\n')) + '</textarea>'
-      + '<div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">'
-      + '<button class="btn ghost" data-e="cancel">取消</button>'
-      + '<button class="btn pri" data-e="save">保存修改</button></div></div>';
+  if (act === 'drill1') { SESS = null; startQuiz(null, q); }
+  else if (act === 'copy') {
+    var nq = JSON.parse(JSON.stringify(q)); nq.id = 'my.' + (cntMine() + 1) + '.' + Math.round(Math.random() * 90 + 10);
+    nq.cat = 'my'; nq.src = '手动'; nq.st = 'new'; nq.due = '—'; nq.note = null; QS.push(nq);
+    toast('已复制到我的题库,可编辑'); refreshCounts(); renderBank();
+  } else if (act === 'edit') {
+    extra.innerHTML = '<div style="margin-top:14px">'
+      + '<label style="display:block;font-size:11.5px;font-weight:600;margin:0 0 4px;color:var(--mut)">题干</label><input id="ef-t" value="' + esc(q.t) + '">'
+      + '<label style="display:block;font-size:11.5px;font-weight:600;margin:10px 0 4px;color:var(--mut)">答案要点(每行一条)</label><textarea id="ef-a" rows="5">' + esc(q.a.join('\n')) + '</textarea>'
+      + '<div class="form-row"><button class="btn ghost" data-e="cancel">取消</button><button class="btn pri" data-e="save">保存修改</button></div></div>';
     extra.querySelectorAll('[data-e]').forEach(function(b){
       b.addEventListener('click', function(){
-        if (this.dataset.e === 'save') { q.t = document.getElementById('ef-t').value; toast('已保存'); renderBank(); }
+        if (b.dataset.e === 'save') { q.t = document.getElementById('ef-t').value; q.a = document.getElementById('ef-a').value.split('\n').filter(String); toast('已保存'); renderBank(); }
         else extra.innerHTML = '';
       });
     });
   } else if (act === 'del') {
-    extra.innerHTML = '<div class="confirm-strip"><span>该题的学习进度、笔记一并删除,不可恢复。</span><span class="sp"></span>'
-      + '<button class="btn bad" data-c="yes">确认删除</button>'
-      + '<button class="btn ghost" data-c="no">取消</button></div>';
-    extra.querySelectorAll('[data-c]').forEach(function(b){
-      b.addEventListener('click', function(){
-        if (this.dataset.c === 'yes') { QS.splice(QS.indexOf(q), 1); bankSel = null; renderBank(); toast('已删除'); }
-        else extra.innerHTML = '';
-      });
+    openConfirm('删除这道题?', '「' + q.t + '」的学习进度、笔记、代码草稿一并删除,不可恢复。', '确认删除', function(){
+      QS.splice(QS.indexOf(q), 1); bk.sel = null; renderBank(); refreshCounts(); toast('已删除');
     });
   }
 }
-document.querySelectorAll('#v-bank .hint-chip').forEach(function(c){
-  c.addEventListener('click', function(){
-    bankFilter = this.dataset.st;
-    document.querySelectorAll('#v-bank .hint-chip').forEach(function(x){ x.classList.toggle('on', x === c); });
-    renderBank();
-  });
+function syncBankBar(){
+  document.getElementById('bank-q').value = bk.q;
+  document.querySelectorAll('#st-chips .hint-chip').forEach(function(c){ c.classList.toggle('on', c.dataset.st === bk.st); });
+  document.querySelectorAll('#dif-chips .hint-chip').forEach(function(c){ c.classList.toggle('on', c.dataset.dif === bk.dif); });
+  document.querySelectorAll('#src-chips .hint-chip').forEach(function(c){ c.classList.toggle('on', c.dataset.src === bk.src); });
+}
+document.getElementById('catbar').addEventListener('click', function(e){
+  var c = e.target.closest('.c'); if (!c) return;
+  bk.cat = c.dataset.cat; bk.sel = null; nav('bank');
 });
-document.getElementById('bank-q').addEventListener('input', function(){ bankQ = this.value.trim(); renderBank(); });
+document.getElementById('st-chips').addEventListener('click', function(e){
+  var c = e.target.closest('.hint-chip'); if (!c) return; bk.st = c.dataset.st; syncBankBar(); renderBank();
+});
+document.getElementById('dif-chips').addEventListener('click', function(e){
+  var c = e.target.closest('.hint-chip'); if (!c) return; bk.dif = c.dataset.dif; syncBankBar(); renderBank();
+});
+document.getElementById('src-chips').addEventListener('click', function(e){
+  var c = e.target.closest('.hint-chip'); if (!c) return; bk.src = c.dataset.src; syncBankBar(); renderBank();
+});
+document.getElementById('mod-sel').addEventListener('change', function(){ bk.mod = this.value; renderBank(); });
+document.getElementById('bank-q').addEventListener('input', function(){ bk.q = this.value.trim(); renderBank(); });
 document.getElementById('bank-head').addEventListener('click', function(e){
   var th = e.target.closest('th'); if (!th || !th.dataset.k) return;
-  if (bankSort.k === th.dataset.k) bankSort.dir *= -1; else bankSort = { k: th.dataset.k, dir: 1 };
+  if (bk.sort.k === th.dataset.k) bk.sort.dir *= -1; else bk.sort = { k: th.dataset.k, dir: 1 };
   renderBank();
 });
 document.getElementById('bank-body').addEventListener('click', function(e){
-  var tr = e.target.closest('tr'); if (!tr) return;
-  bankSel = tr.dataset.id; renderBank();
+  var tr = e.target.closest('tr'); if (!tr || !tr.dataset.id) return;
+  bk.sel = tr.dataset.id; renderBank();
 });
+function bankArrow(d){
+  var rows = bankRows(); if (!rows.length) return;
+  var i = rows.findIndex(function(q){ return q.id === bk.sel; });
+  i = i < 0 ? 0 : Math.min(Math.max(i + d, 0), rows.length - 1);
+  bk.sel = rows[i].id; renderBank();
+  var tr = document.querySelector('#bank-body tr.sel'); if (tr) tr.scrollIntoView({ block:'nearest' });
+}
 
-/* ───── 待审核 ───── */
+/* ═══════════ 待审核 ═══════════ */
 var auditSel = null;
 function renderAudit(){
   if (!PEND.some(function(q){ return q.id === auditSel; })) auditSel = PEND[0] ? PEND[0].id : null;
   document.getElementById('audit-desc').textContent = PEND.length
     ? PEND.length + ' 题待审核;AI 生成的题通过后才进学习队列'
-    : '没有待审核的题';
+    : '没有待审核的题;AI 与按 JD 生成的题会先出现在这里';
   document.getElementById('audit-list').innerHTML = PEND.map(function(q){
     return '<div class="a-row ' + (q.id === auditSel ? 'sel' : '') + '" data-id="' + esc(q.id) + '">'
       + '<div class="src">' + esc(q.gen) + '</div><div class="t">' + esc(q.t) + '</div></div>';
-  }).join('') || '<div style="padding:30px;text-align:center;color:var(--mut-deep)">没有待审核的题</div>';
+  }).join('') || '<div class="empty-tip">没有待审核的题<div class="act"><button class="btn soft" data-v="add">去添加题目</button></div></div>';
   document.querySelectorAll('.a-row').forEach(function(r){
     r.addEventListener('click', function(){ auditSel = this.dataset.id; renderAudit(); });
   });
+  var dv = document.querySelector('#audit-list [data-v]');
+  if (dv) dv.addEventListener('click', function(){ nav('add'); });
   renderAuditDetail();
 }
 function renderAuditDetail(){
   var q = PEND.find(function(x){ return x.id === auditSel; });
   var el = document.getElementById('audit-detail');
-  if (!q) { el.innerHTML = '<div style="color:var(--mut-deep);text-align:center;padding:40px 0">← 选中一道题</div>'; return; }
-  el.innerHTML = '<span class="pill pend">待审核</span> <span class="pill">难度 ' + q.d + '</span>'
+  if (!q) { el.innerHTML = '<div class="empty-tip">选中一道题,通过或拒绝</div>'; return; }
+  el.innerHTML = '<div><span class="pill pend">待审核</span> <span class="pill">难度 ' + q.d + '</span></div>'
     + '<h3>' + esc(q.t) + '</h3>'
     + '<div style="font-size:11.5px;color:var(--mut);margin-top:5px">考察方向:' + esc(q.f) + '</div>'
     + '<div class="ops"><button class="btn ok" data-a="pass">通过,进我的题库</button>'
     + '<button class="btn bad" data-a="rej">拒绝</button></div>'
-    + '<div id="audit-extra"></div>'
-    + '<div class="ans"><b>参考答案要点</b><ul>' + q.a.map(function(x){ return '<li>' + x + '</li>'; }).join('') + '</ul></div>';
+    + '<div class="sec-h">参考答案要点</div><div class="ans"><ul>' + q.a.map(function(x){ return '<li>' + x + '</li>'; }).join('') + '</ul></div>';
   el.querySelectorAll('[data-a]').forEach(function(b){
-    b.addEventListener('click', function(){ auditAct(this.dataset.a); });
+    b.addEventListener('click', function(){
+      if (b.dataset.a === 'pass') {
+        var nq = JSON.parse(JSON.stringify(q));
+        nq.cat = 'my'; nq.st = 'new'; nq.due = '—'; nq.src = q.gen.indexOf('AI 生成') === 0 ? 'AI' : 'JD';
+        QS.push(nq); PEND.splice(PEND.indexOf(q), 1);
+        toast('已通过,进我的题库与学习队列'); refreshCounts(); renderAudit();
+      } else {
+        openConfirm('拒绝这道题?', '「' + q.t + '」将被永久删除,不可恢复。', '确认拒绝', function(){
+          PEND.splice(PEND.indexOf(q), 1); toast('已拒绝并删除'); refreshCounts(); renderAudit();
+        });
+      }
+    });
   });
 }
-function auditAct(act){
-  var q = PEND.find(function(x){ return x.id === auditSel; });
-  var extra = document.getElementById('audit-extra');
-  if (act === 'pass') {
-    PEND.splice(PEND.indexOf(q), 1); toast('已通过,进我的题库');
-    updateToday(); renderAudit();
-  } else {
-    extra.innerHTML = '<div class="confirm-strip"><span>拒绝即永久删除,不可恢复。</span><span class="sp"></span>'
-      + '<button class="btn bad" data-c="yes">确认拒绝</button>'
-      + '<button class="btn ghost" data-c="no">取消</button></div>';
-    extra.querySelectorAll('[data-c]').forEach(function(b){
-      b.addEventListener('click', function(){
-        if (this.dataset.c === 'yes') { PEND.splice(PEND.indexOf(q), 1); toast('已拒绝并删除'); updateToday(); renderAudit(); }
-        else extra.innerHTML = '';
-      });
-    });
-  }
+function auditArrow(d){
+  if (!PEND.length) return;
+  var i = PEND.findIndex(function(q){ return q.id === auditSel; });
+  i = i < 0 ? 0 : Math.min(Math.max(i + d, 0), PEND.length - 1);
+  auditSel = PEND[i].id; renderAudit();
 }
 
-/* ───── 求职 ───── */
-var jdSel = 0;
+/* ═══════════ 添加题目 ═══════════ */
+function resetAdd(opts){
+  document.querySelectorAll('.add-sec').forEach(function(s){ s.classList.remove('hl'); });
+  if (opts && opts.jd != null) {
+    addJdPick(opts.jd);
+    var sec = document.getElementById('add-jd'); sec.classList.add('hl');
+    sec.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+  ['aa-out','aj-out'].forEach(function(id){ document.getElementById(id).classList.remove('on'); });
+}
+document.getElementById('am-d').addEventListener('click', function(e){
+  var b = e.target.closest('button'); if (!b) return;
+  this.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); });
+});
+document.getElementById('am-save').addEventListener('click', function(){
+  var t = document.getElementById('am-t').value.trim(), f = document.getElementById('am-f').value.trim(),
+      a = document.getElementById('am-a').value.split('\n').map(function(s){ return s.trim(); }).filter(String);
+  if (!t || !f || !a.length) { toast('题干、考察方向、答案要点都要填'); return; }
+  QS.push({ id:'my.' + (cntMine() + 1) + '.' + Math.round(Math.random() * 90 + 10), cat:'my',
+    m:'自定义', d:document.querySelector('#am-d .on').textContent, st:'new', due:'—', tags:[], src:'手动',
+    t:t, f:f, a:a });
+  document.getElementById('am-t').value = ''; document.getElementById('am-f').value = ''; document.getElementById('am-a').value = '';
+  toast('已保存到我的题库'); refreshCounts();
+});
+document.getElementById('aa-go').addEventListener('click', function(){
+  var k = document.getElementById('aa-k').value.trim();
+  if (!k) { toast('先填知识点'); return; }
+  var out = document.getElementById('aa-out'), go = this;
+  out.classList.add('on'); out.innerHTML = '<span class="spin"></span>正在按知识点出题,数量由 AI 判断…'; go.disabled = true;
+  setTimeout(function(){
+    PEND.push({ id:'my.gen.' + (PEND.length + 3), m:k, d:'中',
+      t:'「' + k + '」常见的认知误区有哪些？', f:k + ' 的边界与反例',
+      gen:'AI 生成 · 知识点「' + k + '」',
+      a:['<b>先给边界</b>:这个概念解决什么、不解决什么。','列出两个典型误区与反例。','给一个工程上的判断标准。'] });
+    out.innerHTML = '已生成 <b>1</b> 题(演示),先进待审核——<button class="btn ghost" id="aa-go-audit" style="font-size:11.5px;padding:2px 8px">去审核</button>';
+    go.disabled = false; refreshCounts();
+    document.getElementById('aa-go-audit').addEventListener('click', function(){ nav('audit'); });
+  }, 1200);
+});
+function addJdPick(sel){
+  document.getElementById('aj-pick').innerHTML = JDS.map(function(j, i){
+    return '<label class="' + (i === sel ? 'on' : '') + '"><input type="radio" name="ajd" value="' + i + '" ' + (i === sel ? 'checked' : '') + '>'
+      + '<span><b>' + esc(j.t) + '</b> · ' + esc(j.c) + '</span></label>';
+  }).join('');
+}
+document.getElementById('aj-go').addEventListener('click', function(){
+  var r = document.querySelector('#aj-pick input:checked');
+  if (!r) { toast('先选一个 JD'); return; }
+  var j = JDS[+r.value], out = document.getElementById('aj-out'), go = this;
+  var withR = document.getElementById('aj-resume').checked;
+  out.classList.add('on'); out.innerHTML = '<span class="spin"></span>正在围绕「' + esc(j.t) + '」出题' + (withR ? ',结合简历深挖' : '') + '…'; go.disabled = true;
+  setTimeout(function(){
+    PEND.push({ id:'my.gen.' + (PEND.length + 3), m:'JD · ' + j.t, d:'高',
+      t:'结合你的项目经历,「' + j.t + '」岗位会怎么追问 Agent 编排的落地细节？',
+      f:'岗位定向 · 经历深挖', gen:'按 JD 生成 · ' + j.t,
+      a:['从简历里的项目切入,追问<b>选型理由与权衡</b>。','要求给出失败场景与兜底。','追问指标与验证方式。'] });
+    out.innerHTML = '已生成 <b>1</b> 题(演示),先进待审核——<button class="btn ghost" id="aj-go-audit" style="font-size:11.5px;padding:2px 8px">去审核</button>';
+    go.disabled = false; refreshCounts();
+    document.getElementById('aj-go-audit').addEventListener('click', function(){ nav('audit'); });
+  }, 1200);
+});
+
+/* ═══════════ JD 管理 ═══════════ */
+var jdSel = 0, jdEdit = null; // jdEdit: null=详情, -1=新增, i=编辑第 i 个
 function renderJobs(){
   document.getElementById('jd-list').innerHTML = JDS.map(function(j, i){
     return '<div class="jd-item ' + (i === jdSel ? 'sel' : '') + '" data-i="' + i + '">'
-      + '<div class="t">' + esc(j.t) + '</div><div class="c">' + esc(j.c) + ' · 最近使用</div></div>';
-  }).join('');
-  var j = JDS[jdSel];
-  document.getElementById('job-detail').innerHTML =
-    '<span class="pill">' + esc(j.c) + '</span>'
-    + '<h3 style="font-size:16px;margin-top:8px">' + esc(j.t) + '</h3>'
-    + '<div class="stats">'
-    + '<div class="s"><div class="n">' + PEND.length + '</div><div class="l">待审核</div></div>'
-    + '<div class="s"><div class="n">6</div><div class="l">已入我的题库</div></div>'
-    + '<div class="s"><div class="n">2</div><div class="l">已掌握</div></div></div>'
-    + '<div style="display:flex;gap:8px;margin-bottom:14px">'
-    + '<button class="btn pri" id="j-gen">按此 JD 生成题目</button>'
-    + '<button class="btn" data-goto="audit">去审核</button>'
-    + '<button class="btn ghost">编辑 JD</button></div>'
-    + '<div class="jd-text">' + esc(j.d) + '</div>'
-    + '<div class="resume-block"><div class="rh"><span class="t">我的简历</span><span class="m">1,842 字 · 生成深挖题时会结合简历</span>'
-    + '<span style="flex:1"></span><button class="btn ghost" style="font-size:12px">编辑简历</button></div></div>';
-  document.getElementById('j-gen').addEventListener('click', function(){ toast('按 JD 生成题目:AI 生成后进待审核'); });
-  document.querySelectorAll('#job-detail [data-goto]').forEach(function(b){
-    b.addEventListener('click', function(){ show(this.dataset.goto); });
-  });
+      + '<div class="t">' + esc(j.t) + '</div><div class="c">' + esc(j.c) + ' · ' + esc(j.u) + '使用</div></div>';
+  }).join('') || '<div class="empty-tip">还没有 JD<div class="act"><button class="btn soft" id="jd-new2">新增 JD</button></div></div>';
   document.querySelectorAll('.jd-item').forEach(function(c){
-    c.addEventListener('click', function(){ jdSel = +this.dataset.i; renderJobs(); });
+    c.addEventListener('click', function(){ if (jdDirty) { openGuard(function(){ jdDirty = false; jdEdit = null; jdSel = +c.dataset.i; renderJobs(); }); return; } jdEdit = null; jdSel = +c.dataset.i; renderJobs(); });
+  });
+  var n2 = document.getElementById('jd-new2');
+  if (n2) n2.addEventListener('click', function(){ jdEdit = -1; renderJobs(); });
+  renderJobDetail();
+}
+function renderJobDetail(){
+  var el = document.getElementById('job-detail');
+  if (jdEdit !== null) {
+    var isNew = jdEdit === -1, j = isNew ? { t:'', c:'', d:'' } : JDS[jdEdit];
+    el.innerHTML = '<span class="pill">' + (isNew ? '新增 JD' : '编辑 JD') + '</span>'
+      + '<div style="margin-top:12px"><label class="f-label" style="display:block;font-size:11.5px;font-weight:600;margin:0 0 4px;color:var(--mut)">岗位名 <span style="color:var(--cin)">*</span></label>'
+      + '<input id="jf-t" value="' + esc(j.t) + '" placeholder="例如:AI 应用工程师" style="width:100%;font:inherit;font-size:12.5px;padding:7px 10px;border:none;border-radius:7px;background:var(--input);outline:none;color:var(--ink)">'
+      + '<label style="display:block;font-size:11.5px;font-weight:600;margin:10px 0 4px;color:var(--mut)">公司</label>'
+      + '<input id="jf-c" value="' + esc(j.c) + '" style="width:100%;font:inherit;font-size:12.5px;padding:7px 10px;border:none;border-radius:7px;background:var(--input);outline:none;color:var(--ink)">'
+      + '<label style="display:block;font-size:11.5px;font-weight:600;margin:10px 0 4px;color:var(--mut)">JD 正文 <span style="color:var(--cin)">*</span></label>'
+      + '<textarea id="jf-d" rows="7" style="width:100%;font:inherit;font-size:12.5px;line-height:1.8;padding:7px 10px;border:none;border-radius:7px;background:var(--input);outline:none;resize:vertical;color:var(--ink)">' + esc(j.d) + '</textarea>'
+      + '<div class="form-row"><button class="btn ghost" id="jf-x">取消</button><button class="btn pri" id="jf-s">保存 JD</button></div></div>';
+    jdDirty = false;
+    ['jf-t','jf-c','jf-d'].forEach(function(id){
+      document.getElementById(id).addEventListener('input', function(){ jdDirty = true; });
+    });
+    document.getElementById('jf-x').addEventListener('click', function(){ jdEdit = null; jdDirty = false; renderJobs(); });
+    document.getElementById('jf-s').addEventListener('click', function(){
+      var t = document.getElementById('jf-t').value.trim(), d = document.getElementById('jf-d').value.trim();
+      if (!t || !d) { toast('岗位名与 JD 正文必填'); return; }
+      var c = document.getElementById('jf-c').value.trim();
+      if (jdEdit === -1) { JDS.unshift({ t:t, c:c, d:d, u:'刚刚', n:{ pend:0, mine:0, done:0 } }); jdSel = 0; }
+      else { JDS[jdEdit] = { t:t, c:c, d:d, u:'刚刚', n:JDS[jdEdit].n }; jdSel = jdEdit; }
+      jdEdit = null; jdDirty = false; renderJobs(); toast('JD 已保存');
+    });
+    return;
+  }
+  if (!JDS.length) { el.innerHTML = '<div class="empty-tip">选择一个 JD,或新增一个</div>'; return; }
+  var j = JDS[jdSel];
+  el.innerHTML = '<div><span class="pill">' + esc(j.c) + '</span>'
+    + '<span class="pill">' + esc(j.u) + '使用</span></div>'
+    + '<h3 style="font-size:16px;margin-top:8px;font-family:var(--font-display)">' + esc(j.t) + '</h3>'
+    + '<div class="stats">'
+    + '<div class="s"><div class="n">' + j.n.pend + '</div><div class="l">待审核</div></div>'
+    + '<div class="s"><div class="n">' + j.n.mine + '</div><div class="l">已入我的题库</div></div>'
+    + '<div class="s"><div class="n">' + j.n.done + '</div><div class="l">已掌握</div></div></div>'
+    + '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'
+    + '<button class="btn pri" id="j-gen">按此 JD 生成题目</button>'
+    + '<button class="btn" id="j-edit">编辑 JD</button>'
+    + '<button class="btn bad" id="j-del">删除</button></div>'
+    + '<div class="sec-h">JD 正文</div><div class="jd-text">' + esc(j.d) + '</div>'
+    + '<div class="resume-block"><div class="rh"><span class="t">我的简历</span><span class="m">1,842 字 · 生成深挖题时会结合简历</span>'
+    + '<span style="flex:1"></span><button class="btn ghost" id="j-resume" style="font-size:12px">编辑简历</button></div></div>';
+  document.getElementById('j-gen').addEventListener('click', function(){ nav('add', { jd: jdSel }); });
+  document.getElementById('j-edit').addEventListener('click', function(){ jdEdit = jdSel; renderJobs(); });
+  document.getElementById('j-del').addEventListener('click', function(){
+    openConfirm('删除这个 JD?', '「' + j.t + '」将被删除;已生成的题不受影响。', '确认删除', function(){
+      JDS.splice(jdSel, 1); jdSel = 0; renderJobs(); toast('JD 已删除');
+    });
+  });
+  document.getElementById('j-resume').addEventListener('click', function(){ nav('resume'); });
+}
+document.getElementById('jd-new').addEventListener('click', function(){
+  if (jdDirty) { openGuard(function(){ jdDirty = false; jdEdit = -1; renderJobs(); }); return; }
+  jdEdit = -1; renderJobs();
+});
+
+/* ═══════════ 简历管理 ═══════════ */
+var resumeSaved = RESUME;
+var ta = document.getElementById('resume-ta');
+ta.value = RESUME;
+function syncResumeBar(){
+  document.getElementById('resume-cnt').textContent = ta.value.length.toLocaleString() + ' 字'
+    + (resumeDirty ? ' · 未保存' : '');
+  document.getElementById('resume-save').disabled = !resumeDirty;
+}
+ta.addEventListener('input', function(){ resumeDirty = ta.value !== resumeSaved; syncResumeBar(); });
+document.getElementById('resume-save').addEventListener('click', function(){
+  resumeSaved = ta.value; resumeDirty = false; syncResumeBar(); toast('简历已保存(只存本机)');
+});
+
+/* ═══════════ 设置 ═══════════ */
+function segWire(id, fn){
+  document.getElementById(id).addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    this.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); });
+    fn(b.textContent.trim());
   });
 }
-
-/* ───── ⌘K ───── */
-var paletteItems = [
-  { label:'开始复习', sub:'待复习队列', run:function(){ show('today'); startQuiz('due'); } },
-  { label:'开始学习新题', sub:'新题', run:function(){ show('today'); startQuiz('new'); } },
-  { label:'今天', sub:'前往', run:function(){ show('today'); } },
-  { label:'学习', sub:'前往 · 全部题库', run:function(){ startQuiz('all'); } },
-  { label:'题库', sub:'前往', run:function(){ show('bank'); } },
-  { label:'待审核', sub:'前往 · ' + PEND.length + ' 题待审核', run:function(){ show('audit'); } },
-  { label:'求职', sub:'前往 · JD 与简历', run:function(){ show('jobs'); } },
-];
-document.getElementById('open-k');
-document.addEventListener('keydown', function(e){
-  var el = document.activeElement;
-  if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) return;
-  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-    e.preventDefault();
-    document.getElementById('palette-mask').classList.add('on');
-    renderPalette(''); document.getElementById('palette-q').focus();
-  }
+segWire('set-prov', function(v){ toast('服务商已切换:' + v); });
+segWire('set-n', function(v){ toast('每次学习题量:' + v); });
+segWire('set-theme', function(v){ document.body.classList.toggle('night', v === '夜读'); });
+document.getElementById('set-key-save').addEventListener('click', function(){
+  var k = document.getElementById('set-key').value; if (!k) { toast('先填 API Key'); return; }
+  document.getElementById('set-key').value = ''; toast('API Key 已保存,仅存本机');
 });
-function renderPalette(v){
-  var list = paletteItems.filter(function(it){ return !v || it.label.indexOf(v) >= 0; });
-  document.getElementById('palette-list').innerHTML = list.map(function(it){
-    return '<div class="it"><span>' + esc(it.label) + '</span><span class="sub">' + it.sub + '</span></div>';
-  }).join('') || '<div class="it">没有匹配</div>';
-  document.getElementById('palette-list')._items = list;
+document.getElementById('set-sync').addEventListener('click', function(){
+  var b = this; b.disabled = true; b.textContent = '同步中…';
+  setTimeout(function(){
+    b.disabled = false; b.textContent = '立即同步';
+    var d = new Date(), hh = ('0' + d.getHours()).slice(-2), mm = ('0' + d.getMinutes()).slice(-2);
+    document.getElementById('sync-time').textContent = '上次同步:今天 ' + hh + ':' + mm + ' · 前端 135 题 · AI Agent 147 题';
+    toast('官方题库已是最新');
+  }, 900);
+});
+document.getElementById('set-exp').addEventListener('click', function(){ toast('已导出备份文件(演示)'); });
+document.getElementById('set-imp').addEventListener('click', function(){ toast('选择备份文件导入(演示)'); });
+
+/* ═══════════ 弹窗:确认 / 守卫 ═══════════ */
+var cfCb = null;
+function openConfirm(t, b, yes, cb){
+  document.getElementById('cf-t').textContent = t;
+  document.getElementById('cf-b').textContent = b;
+  document.getElementById('cf-yes').textContent = yes;
+  cfCb = cb; document.getElementById('confirm-mask').classList.add('on');
 }
-document.getElementById('palette-q').addEventListener('input', function(){ renderPalette(this.value.trim()); });
-document.getElementById('palette-q').addEventListener('keydown', function(e){
-  var list = document.getElementById('palette-list')._items || [];
-  if (e.key === 'Escape') document.getElementById('palette-mask').classList.remove('on');
-  else if (e.key === 'Enter' && list[0]) { document.getElementById('palette-mask').classList.remove('on'); list[0].run(); }
+document.getElementById('cf-yes').addEventListener('click', function(){
+  document.getElementById('confirm-mask').classList.remove('on'); cfCb && cfCb();
 });
-document.getElementById('palette-mask').addEventListener('click', function(e){
-  if (e.target === this) this.classList.remove('on');
-});
-document.getElementById('palette-list').addEventListener('click', function(e){
-  var it = e.target.closest('.it'); if (!it) return;
-  var list = this._items || [];
-  var idx = Array.prototype.indexOf.call(this.children, it);
-  document.getElementById('palette-mask').classList.remove('on');
-  list[idx] && list[idx].run();
+document.getElementById('cf-no').addEventListener('click', function(){ document.getElementById('confirm-mask').classList.remove('on'); });
+var gdCb = null;
+function openGuard(cb){ gdCb = cb; document.getElementById('guard-mask').classList.add('on'); }
+document.getElementById('gd-stay').addEventListener('click', function(){ document.getElementById('guard-mask').classList.remove('on'); });
+document.getElementById('gd-leave').addEventListener('click', function(){
+  document.getElementById('guard-mask').classList.remove('on');
+  jdDirty = resumeDirty = false;
+  if (active === 'resume') { ta.value = resumeSaved; syncResumeBar(); } // 放弃 = 恢复为已保存内容
+  gdCb && gdCb();
 });
 
-/* ───── 全局键盘 ───── */
+/* ═══════════ ⌘K:动作 + 前往 + 题目直搜 ═══════════ */
+var palItems = [], palSel = 0;
+function buildPalette(v){
+  var items = [];
+  if (cntDue()) items.push({ g:'动作', label:'开始复习 ' + cntDue() + ' 题', sub:'待复习', run:function(){ startQuiz('due'); } });
+  if (cntNew()) items.push({ g:'动作', label:'开始学习 ' + cntNew() + ' 题', sub:'待学习', run:function(){ startQuiz('new'); } });
+  items.push({ g:'动作', label:'添加题目', sub:'手动 / AI / 按 JD', run:function(){ nav('add'); } });
+  items.push({ g:'动作', label:'再过一遍', sub:'全部题', run:function(){ startQuiz('all'); } });
+  var NAVMAP = { '今天':'today', '学习':'quiz', '题库':'bank', '待审核':'audit', 'JD 管理':'jobs', '简历管理':'resume', '设置':'settings' };
+  [['今天','今日学习计划'],['学习','前往'],['题库','浏览与筛选'],['待审核', PEND.length + ' 题待审核'],['JD 管理','前往'],['简历管理','前往'],['设置','前往']]
+    .forEach(function(x){
+      items.push({ g:'前往', label:x[0], sub:x[1], run:function(){ nav(NAVMAP[x[0]]); } });
+    });
+  var qs = QS;
+  if (v) {
+    var kw = v.toLowerCase();
+    items = items.filter(function(it){ return it.label.indexOf(v) >= 0 || it.sub.indexOf(v) >= 0; });
+    qs = QS.filter(function(q){ return (q.t + q.f + q.id + q.m).toLowerCase().indexOf(kw) >= 0; }).slice(0, 7);
+  } else qs = [];
+  qs.forEach(function(q){
+    items.push({ g:'题目', label:q.t, sub:q.id + ' · ' + q.m, run:function(){ nav('bank', { cat:q.cat, sel:q.id, reset:true }); } });
+  });
+  return items;
+}
+function renderPalette(v){
+  palItems = buildPalette(v);
+  palSel = Math.min(palSel, Math.max(palItems.length - 1, 0));
+  var html = '', lastG = '';
+  palItems.forEach(function(it, i){
+    if (it.g !== lastG) { html += '<div class="grp">' + it.g + '</div>'; lastG = it.g; }
+    html += '<div class="it ' + (i === palSel ? 'sel' : '') + '" data-i="' + i + '"><span class="lb">' + esc(it.label) + '</span><span class="sub">' + esc(it.sub) + '</span></div>';
+  });
+  document.getElementById('palette-list').innerHTML = html || '<div class="grp">没有匹配</div>';
+}
+function openPalette(){
+  document.getElementById('palette-mask').classList.add('on');
+  var inp = document.getElementById('palette-q'); inp.value = ''; palSel = 0;
+  renderPalette(''); inp.focus();
+}
+function closePalette(){ document.getElementById('palette-mask').classList.remove('on'); }
+function palRun(i){ var it = palItems[i]; if (!it) return; closePalette(); it.run(); }
+document.getElementById('palette-q').addEventListener('input', function(){ palSel = 0; renderPalette(this.value.trim()); });
+document.getElementById('palette-q').addEventListener('keydown', function(e){
+  if (e.key === 'Escape') closePalette();
+  else if (e.key === 'ArrowDown') { e.preventDefault(); palSel = Math.min(palSel + 1, palItems.length - 1); renderPalette(document.getElementById('palette-q').value.trim()); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); palSel = Math.max(palSel - 1, 0); renderPalette(document.getElementById('palette-q').value.trim()); }
+  else if (e.key === 'Enter') { e.preventDefault(); palRun(palSel); }
+});
+document.getElementById('palette-mask').addEventListener('click', function(e){ if (e.target === this) closePalette(); });
+document.getElementById('palette-list').addEventListener('click', function(e){
+  var it = e.target.closest('.it'); if (!it) return; palRun(+it.dataset.i);
+});
+document.getElementById('palette-list').addEventListener('mousemove', function(e){
+  var it = e.target.closest('.it'); if (!it) return;
+  palSel = +it.dataset.i;
+  this.querySelectorAll('.it').forEach(function(x){ x.classList.toggle('sel', +x.dataset.i === palSel); });
+});
+
+/* ═══════════ 全局键盘 ═══════════ */
 document.addEventListener('keydown', function(e){
-  var el = document.activeElement;
-  if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) return;
+  var inField = /INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '');
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openPalette(); return; }
+  if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key >= '1' && e.key <= '8') {
+    e.preventDefault();
+    nav(['today','quiz','bank','audit','jobs','resume','add','settings'][+e.key - 1]); return;
+  }
+  if (e.key === 'Escape') {
+    if (document.getElementById('palette-mask').classList.contains('on')) { closePalette(); return; }
+    if (document.getElementById('confirm-mask').classList.contains('on')) { document.getElementById('confirm-mask').classList.remove('on'); return; }
+    if (document.getElementById('guard-mask').classList.contains('on')) { document.getElementById('guard-mask').classList.remove('on'); return; }
+    if (state.focus) { exitFocus(); return; }
+    return;
+  }
+  if (inField) return;
   if (active === 'quiz' && SESS) {
     var q = SESS.qs[SESS.i];
+    if (e.key === 'f' || e.key === 'F') { e.preventDefault(); state.focus ? exitFocus() : enterFocus(); return; }
     if (!q) return;
-    if (e.key === ' ' && !SESS.rev) { e.preventDefault(); SESS.rev = true; renderQuiz(); }
+    if (e.key === ' ') { e.preventDefault(); if (!SESS.rev) { SESS.rev = true; renderQuiz(); } }
     else if (SESS.rev && ['1','2','3'].indexOf(e.key) >= 0) { e.preventDefault(); quizRate(['no','mid','ok'][+e.key - 1]); }
+    else if (!SESS.rev && e.key === 'Enter') { e.preventDefault(); SESS.rev = true; renderQuiz(); }
+  } else if (active === 'bank') {
+    if (e.key === 'ArrowDown') { e.preventDefault(); bankArrow(1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); bankArrow(-1); }
+  } else if (active === 'audit') {
+    if (e.key === 'ArrowDown') { e.preventDefault(); auditArrow(1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); auditArrow(-1); }
   }
 });
-updateToday();
+
+/* ═══════════ 启动 ═══════════ */
+addJdPick(0);
+refreshCounts();
+syncResumeBar();
 </script>
 </body>
 </html>

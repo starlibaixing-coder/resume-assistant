@@ -12,6 +12,7 @@ Workspace instructions for ZCode agents working in this repo.
 |---|---|
 | 桌面端定位与全部设计决策(ADR) | `docs/superpowers/specs/2026-08-13-quiz-app-agent-design.md` |
 | 桌面端 UI 重构设计交付物(IA/页面规格/组件与文案规范) | `docs/superpowers/specs/2026-09-04-ui-redesign.md` |
+| 从 0 重设计提案 v3 · 桌面工作台范式(未实施;可操作原型在仓库根 `from-zero-prototype.html`) | `docs/superpowers/specs/2026-09-08-from-zero-redesign.md` |
 | 各阶段施工计划与完成状态 | `docs/superpowers/plans/` |
 | 出题质量 5 原则(改题/生题必读) | `banks/audit/QUALITY.md` |
 | 简历红线 R1/R2/R3 与六阶段工作流 | `skill/SKILL.md` |
