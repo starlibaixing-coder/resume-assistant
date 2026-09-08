@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CommitCareer · 从 0 设计原型「训练场」</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f7f3ea; color: #2b2b26; overflow: hidden; }
+
+  :root {
+    --paper: #f7f3ea; --card: #fffdf7; --input: #efe8d6;
+    --ink: #2b2b26; --ink-deep: #191713; --ink-soft: #26231d;
+    --mut: #8f887a; --mut-deep: #b3ab97; --cin: #c2452d; --cin-bright: #e0684f;
+    --line: #e7dfcc; --ok: #4f7042; --warn: #8a6d1f; --bad: #a8432f;
+    --paper-on-ink: #ece5d4; --mut-on-ink: #9a927e;
+  }
+
+  kbd { font-family: inherit; font-size: 11px; padding: 1px 7px; border-radius: 4px; background: rgba(127,117,94,.16); color: inherit; }
+  .btn { appearance: none; border: none; cursor: pointer; font: inherit; font-size: 14px; font-weight: 600;
+    padding: 10px 20px; border-radius: 10px; background: var(--card); color: var(--ink);
+    box-shadow: 0 1px 3px rgba(60,50,30,.12); transition: box-shadow .16s, transform .12s, background .16s, opacity .16s;
+    display: inline-flex; align-items: center; gap: 9px; }
+  .btn:hover { box-shadow: 0 4px 14px rgba(60,50,30,.18); }
+  .btn:active { transform: translateY(1px); }
+  .btn.pri { background: var(--cin); color: #fff; }
+  .btn.ok { color: var(--ok); } .btn.ok:hover { background: #eef2ea; }
+  .btn.bad { color: var(--bad); } .btn.bad:hover { background: #f7e8e4; }
+  .btn.ghost { background: transparent; box-shadow: none; color: var(--mut); }
+  .btn.ghost:hover { background: var(--input); }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .btn kbd { background: rgba(0,0,0,.07); }
+  .btn.pri kbd { background: rgba(255,255,255,.22); color: #fff; }
+
+  .pill { display: inline-block; font-size: 11px; padding: 2px 10px; border-radius: 999px; background: var(--input); color: #6e6656; }
+  .pill.due { background: #f3e3c2; color: var(--warn); }
+  .pill.new { background: #e3ecdf; color: var(--ok); }
+  .pill.done { background: #ece5d2; color: #a29a86; }
+  .pill.pend { background: #f4ddd6; color: var(--bad); }
+
+  /* ───── 全局导航(训练/题库/目标) ───── */
+  .topnav { position: absolute; top: 0; left: 0; right: 0; height: 60px; display: flex; align-items: center;
+    gap: 26px; padding: 0 40px; z-index: 10; }
+  .navlink { appearance: none; border: none; background: none; cursor: pointer; font: inherit; font-size: 15px;
+    font-weight: 600; color: var(--mut); padding: 6px 2px; border-bottom: 2px solid transparent; transition: color .16s; }
+  .navlink:hover { color: var(--ink); }
+  .navlink.on { color: var(--cin); border-bottom-color: var(--cin); }
+  .navlink .n { font-size: 12px; font-weight: 700; color: #fff; background: var(--cin); border-radius: 999px;
+    padding: 1px 7px; margin-left: 6px; vertical-align: 2px; }
+  .topnav .k { margin-left: auto; }
+
+  .view { position: absolute; inset: 0; display: none; }
+  .view.on { display: block; }
+
+  /* ═════════ 训练 · 待开始 ═════════ */
+  #v-train .wrap { position: absolute; inset: 60px 0 0; overflow-y: auto; }
+  .hero { max-width: 880px; margin: 0 auto; padding: 7vh 40px 0; }
+  .hero .date { font-size: 13px; color: var(--mut); letter-spacing: .05em; }
+  .hero h1 { font-family: "Songti SC", "STSong", "SimSun", serif; font-size: 54px; font-weight: 700;
+    letter-spacing: .02em; margin-top: 10px; }
+  .hero .streak { margin-top: 10px; font-size: 13.5px; color: var(--mut); }
+  .hero .streak b { color: var(--cin); font-weight: 700; }
+
+  /* 三段胶囊:复习 — 新题 — 把关 */
+  .segtrack { display: flex; align-items: center; gap: 0; margin-top: 44px; }
+  .seg { display: flex; align-items: center; gap: 12px; padding: 14px 22px; border-radius: 14px; background: var(--card);
+    box-shadow: 0 1px 3px rgba(60,50,30,.10); }
+  .seg .num { font-family: "Songti SC", serif; font-size: 30px; font-weight: 700; line-height: 1; }
+  .seg .lab { font-size: 13px; color: var(--mut); }
+  .seg.warn .num { color: var(--warn); } .seg.cin .num { color: var(--cin); } .seg.okk .num { color: var(--ok); }
+  .seg.zero { opacity: .38; }
+  .seglink { width: 34px; height: 2px; background: var(--line); flex: none; }
+
+  .startrow { margin-top: 44px; display: flex; align-items: center; gap: 18px; }
+  .btn.start { height: 64px; padding: 0 46px; font-size: 18px; border-radius: 16px; }
+
+  .lastline { margin-top: 30px; font-size: 13.5px; color: var(--mut); }
+  .lastline b { color: var(--ink); }
+
+  .hist { max-width: 880px; margin: 34px auto 0; padding: 0 40px 60px; }
+  .hist h3 { font-size: 13px; font-weight: 700; color: var(--mut); letter-spacing: .1em; margin-bottom: 10px; }
+  .hist .h-row { display: flex; gap: 16px; align-items: center; padding: 11px 16px; border-radius: 12px;
+    background: var(--card); margin-bottom: 8px; font-size: 13.5px; box-shadow: 0 1px 2px rgba(60,50,30,.06); }
+  .hist .h-row .d { width: 90px; color: var(--mut); }
+  .hist .h-row .s { flex: 1; }
+  .hist .h-row .s b { font-weight: 600; }
+  .hist .h-row .link { color: var(--cin); cursor: pointer; font-weight: 600; }
+
+  /* ═════════ 训练 · 进行中(墨底) ═════════ */
+  .drill { position: absolute; inset: 0; background: var(--ink-deep); color: var(--paper-on-ink);
+    display: flex; flex-direction: column; }
+  .drill .top { display: flex; align-items: center; gap: 20px; padding: 20px 40px 0; font-size: 13px; color: var(--mut-on-ink); }
+  .drill .top .seg-tag { font-weight: 700; letter-spacing: .14em; color: var(--cin-bright); }
+  .drill .top .exit { margin-left: auto; cursor: pointer; }
+  .drill .top .exit:hover { color: var(--paper-on-ink); }
+  .drill .bar { height: 2px; background: rgba(236,229,212,.12); margin: 14px 40px 0; }
+  .drill .bar i { display: block; height: 2px; background: var(--cin-bright); transition: width .3s; }
+  .drill .stage { flex: 1; overflow-y: auto; display: flex; flex-direction: column; justify-content: center;
+    padding: 30px 12vw; }
+  .drill .tags { display: flex; gap: 8px; margin-bottom: 22px; }
+  .drill .tag { font-size: 11px; padding: 3px 12px; border-radius: 999px; background: rgba(236,229,212,.1); color: var(--mut-on-ink); }
+  .drill .tag.re { background: rgba(224,104,79,.18); color: var(--cin-bright); }
+  .drill h2 { font-family: "Songti SC", "STSong", "SimSun", serif; font-size: 38px; line-height: 1.6; font-weight: 700;
+    max-width: 22em; }
+  .drill .focus { margin-top: 16px; font-size: 14px; color: var(--mut-on-ink); }
+  .drill .ans { border-top: 1px solid rgba(236,229,212,.14); margin-top: 30px; padding-top: 24px;
+    font-size: 15px; line-height: 2.1; color: #d8d1bf; max-width: 36em; }
+  .drill .ans b { color: var(--paper-on-ink); }
+  .drill .fb { margin-top: 22px; font-size: 13.5px; color: var(--cin-bright); }
+  .drill .ops { display: flex; gap: 12px; padding: 22px 12vw 44px; }
+  .drill .btn { background: rgba(236,229,212,.08); color: var(--paper-on-ink); box-shadow: none; }
+  .drill .btn:hover { background: rgba(236,229,212,.15); box-shadow: none; }
+  .drill .btn.reveal { height: 60px; flex: 1; font-size: 17px; border-radius: 14px; justify-content: center; }
+  .drill .btn.rate { height: 60px; flex: 1; font-size: 16px; border-radius: 14px; justify-content: center; }
+  .drill .btn.rate.no { color: #e58a7a; } .drill .btn.rate.mid { color: #d9b45c; } .drill .btn.rate.ok { color: #8fbc7f; }
+  .drill .btn kbd { background: rgba(236,229,212,.12); }
+
+  /* 段间过渡 / 小结(墨底) */
+  .drill .between { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 0 40px; }
+  .drill .between .big { font-family: "Songti SC", serif; font-size: 42px; font-weight: 700; }
+  .drill .between .sub { margin-top: 14px; font-size: 14.5px; color: var(--mut-on-ink); }
+  .drill .between .btn { margin-top: 38px; height: 56px; padding: 0 44px; font-size: 16px; border-radius: 14px; }
+  .drill .between .btn.go { background: var(--cin-bright); color: #fff; }
+  .drill .sum-list { margin-top: 30px; width: min(560px, 90%); text-align: left; }
+  .drill .sum-list .r { display: flex; gap: 12px; align-items: center; padding: 8px 4px; font-size: 13.5px;
+    border-bottom: 1px solid rgba(236,229,212,.09); }
+  .drill .sum-list .r .rate { width: 34px; font-weight: 700; }
+  .drill .sum-list .r .t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .drill .sum-list .r .d { color: var(--mut-on-ink); }
+
+  /* ═════════ 题库(power table) ═════════ */
+  #v-bank .frame { position: absolute; inset: 60px 0 0; display: flex; flex-direction: column; padding: 0 40px 28px; }
+  .bankbar { display: flex; align-items: center; gap: 14px; padding: 10px 0; }
+  .bankbar .q { flex: 1; display: flex; align-items: center; gap: 8px; background: var(--card); border-radius: 10px;
+    padding: 8px 14px; box-shadow: 0 1px 2px rgba(60,50,30,.07); }
+  .bankbar .q input { flex: 1; border: none; background: none; outline: none; font: inherit; font-size: 13.5px; color: var(--ink); }
+  .bankbar .q .hints { display: flex; gap: 6px; }
+  .hint-chip { font-size: 11.5px; padding: 3px 10px; border-radius: 999px; background: var(--input); color: var(--mut); cursor: pointer; border: none; font-family: inherit; }
+  .hint-chip.on { background: var(--cin); color: #fff; }
+  table.bank { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 14px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(60,50,30,.08); table-layout: fixed; }
+  .bank thead th { font-size: 11.5px; color: var(--mut); text-align: left; font-weight: 700; letter-spacing: .06em;
+    padding: 10px 14px; cursor: pointer; user-select: none; border-bottom: 1px solid var(--line); }
+  .bank thead th:hover { color: var(--ink); }
+  .bank thead th .arrow { font-size: 10px; margin-left: 3px; }
+  .bank tbody tr { cursor: pointer; }
+  .bank tbody td { padding: 10px 14px; font-size: 13.5px; border-bottom: 1px solid #f2ecdd; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; }
+  .bank tbody tr:hover td { background: #f6f1e4; }
+  .bank tbody tr.sel td { background: #f0e9d8; }
+  .bank tbody tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--cin); }
+  .bank .t-cell { font-weight: 500; }
+  .bank-wrap { flex: 1; min-height: 0; display: flex; gap: 18px; }
+  .bank-table-scroll { flex: 1; min-width: 0; overflow-y: auto; }
+  .detail { flex: 0 0 380px; overflow-y: auto; background: var(--card); border-radius: 14px; padding: 22px 24px;
+    box-shadow: 0 1px 3px rgba(60,50,30,.08); }
+  .detail .ops { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .detail .ans { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 14px; font-size: 13px; line-height: 1.95; color: #4a463c; }
+  .detail .ans ul { padding-left: 16px; } .detail .ans li { margin: 3px 0; }
+  .detail .ans b { color: var(--ink); }
+  .detail h3 { font-family: "Songti SC", serif; font-size: 17px; line-height: 1.6; margin-top: 8px; }
+  .detail .form label { display: block; font-size: 12px; font-weight: 600; margin: 12px 0 5px; }
+  .detail .form input, .detail .form textarea { width: 100%; font: inherit; font-size: 13px; padding: 8px 10px;
+    border: none; border-radius: 8px; background: var(--input); outline: none; resize: vertical; color: var(--ink); }
+  .confirm-strip { margin-top: 14px; background: #f7e8e4; border-radius: 10px; padding: 10px 14px; font-size: 12.5px;
+    color: var(--bad); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .confirm-strip .sp { flex: 1; }
+
+  /* ═════════ 目标(pipeline) ═════════ */
+  #v-target .frame { position: absolute; inset: 60px 0 0; overflow-y: auto; padding: 6px 40px 40px; }
+  .jd-cards { display: flex; gap: 14px; }
+  .jd-card { flex: 0 0 320px; text-align: left; cursor: pointer; border: none; font: inherit; background: var(--card);
+    border-radius: 14px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(60,50,30,.09); transition: box-shadow .16s; }
+  .jd-card:hover { box-shadow: 0 4px 14px rgba(60,50,30,.15); }
+  .jd-card.sel { box-shadow: 0 0 0 2px var(--cin), 0 4px 14px rgba(60,50,30,.14); }
+  .jd-card .t { font-weight: 700; font-size: 15px; }
+  .jd-card .c { margin-top: 4px; font-size: 12.5px; color: var(--mut); }
+  .jd-card .d { margin-top: 10px; font-size: 12.5px; line-height: 1.7; color: var(--mut);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .pipeline { margin-top: 26px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .pipe-col { background: var(--card); border-radius: 14px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(60,50,30,.08); }
+  .pipe-col h4 { font-size: 12px; font-weight: 700; color: var(--mut); letter-spacing: .1em; }
+  .pipe-col .big { font-family: "Songti SC", serif; font-size: 34px; font-weight: 700; margin-top: 8px; }
+  .pipe-col .sub { margin-top: 4px; font-size: 12.5px; color: var(--mut); }
+  .pipe-col .acts { margin-top: 14px; display: flex; gap: 8px; }
+  .resume-panel { margin-top: 18px; background: var(--card); border-radius: 14px; padding: 16px 20px;
+    box-shadow: 0 1px 3px rgba(60,50,30,.08); display: flex; align-items: center; gap: 18px; }
+  .resume-panel .t { font-weight: 700; font-size: 14px; }
+  .resume-panel .m { font-size: 12.5px; color: var(--mut); }
+
+  /* ═════════ 审核 triage(墨底全屏) ═════════ */
+  .triage { position: absolute; inset: 0; background: var(--ink-deep); color: var(--paper-on-ink);
+    display: flex; flex-direction: column; z-index: 40; }
+  .triage .top { display: flex; align-items: center; padding: 20px 40px 0; gap: 16px; font-size: 13px; color: var(--mut-on-ink); }
+  .triage .top .x { margin-left: auto; cursor: pointer; } .triage .top .x:hover { color: var(--paper-on-ink); }
+  .triage .depth { display: flex; gap: 5px; }
+  .triage .depth i { width: 20px; height: 4px; border-radius: 2px; background: rgba(236,229,212,.15); }
+  .triage .depth i.pend { background: var(--cin-bright); }
+  .triage .stage { flex: 1; overflow-y: auto; padding: 20px 14vw; display: flex; flex-direction: column; justify-content: center; }
+  .triage .gen { font-size: 12px; color: var(--mut-on-ink); margin-bottom: 12px; }
+  .triage h2 { font-family: "Songti SC", serif; font-size: 32px; line-height: 1.6; font-weight: 700; }
+  .triage .ans { border-top: 1px solid rgba(236,229,212,.14); margin-top: 24px; padding-top: 20px; font-size: 14.5px; line-height: 2.05; color: #d8d1bf; }
+  .triage .ops { display: flex; gap: 12px; padding: 20px 14vw 40px; }
+  .triage .btn { background: rgba(236,229,212,.08); color: var(--paper-on-ink); box-shadow: none; height: 56px; flex: 1;
+    font-size: 16px; border-radius: 14px; justify-content: center; }
+  .triage .btn:hover { background: rgba(236,229,212,.15); box-shadow: none; }
+  .triage .btn.pass { color: #8fbc7f; } .triage .btn.rej { color: #e58a7a; }
+  .triage .btn kbd { background: rgba(236,229,212,.12); }
+  .triage .confirm { padding: 0 14vw 8px; color: #e58a7a; font-size: 13.5px; display: flex; gap: 10px; align-items: center; }
+
+  /* ⌘K */
+  .palette-mask { position: fixed; inset: 0; background: rgba(25,23,19,.4); display: none; z-index: 60; }
+  .palette-mask.on { display: block; }
+  .palette { width: 520px; margin: 12vh auto 0; background: var(--card); border-radius: 14px; overflow: hidden;
+    box-shadow: 0 24px 60px rgba(25,23,19,.35); }
+  .palette input { width: 100%; border: none; outline: none; font: inherit; font-size: 14.5px; padding: 15px 18px;
+    background: none; color: var(--ink); border-bottom: 1px solid var(--line); }
+  .palette .it { padding: 10px 18px; font-size: 13.5px; cursor: pointer; display: flex; justify-content: space-between; color: var(--ink); }
+  .palette .it:hover, .palette .it.sel { background: #f3edde; }
+  .palette .it .sub { color: var(--mut); font-size: 12px; }
+
+  .toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); background: #3a352c; color: #f3eee1;
+    font-size: 13px; padding: 10px 20px; border-radius: 999px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 80; }
+  .toast.on { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- ═════════ 全局导航 ═════════ -->
+<nav class="topnav" id="topnav">
+  <button class="navlink on" data-v="train">训练</button>
+  <button class="navlink" data-v="bank">题库</button>
+  <button class="navlink" data-v="target">目标<span class="n" id="nav-audit">2</span></button>
+  <span class="k"><button class="btn ghost" id="open-k" style="padding:7px 14px;font-size:12.5px">⌘K 全局命令</button></span>
+</nav>
+
+<!-- ═════════ 训练 ═════════ -->
+<section class="view on" id="v-train">
+  <div class="wrap">
+    <div class="hero">
+      <div class="date">9 月 7 日 周一 · 连续 <b style="color:var(--cin)">12</b> 天</div>
+      <h1>今天的训练</h1>
+      <div class="streak">按你的遗忘曲线排好了,清空即完成今天。</div>
+      <div class="segtrack" id="segtrack">
+        <div class="seg warn"><span class="num">12</span><span class="lab">复习<br>到期题</span></div>
+        <div class="seglink"></div>
+        <div class="seg cin"><span class="num">5</span><span class="lab">新题<br>补位</span></div>
+        <div class="seglink"></div>
+        <div class="seg pend zero" id="seg-audit"><span class="num">2</span><span class="lab">把关<br>AI 题</span></div>
+      </div>
+      <div class="startrow">
+        <button class="btn pri start" id="btn-start">开始训练 <kbd>空格</kbd></button>
+        <span style="font-size:12.5px;color:var(--mut)">约 22 分钟 · 复习优先,新题补位</span>
+      </div>
+      <div class="lastline" id="lastline">上次训练:昨天 · 复习 14 张,掌握 9 张,2 张偏弱已排进今天。</div>
+    </div>
+    <div class="hist">
+      <h3>最近训练</h3>
+      <div id="hist-list">
+        <div class="h-row"><span class="d">昨天</span><span class="s">复习 <b>14</b> 张 · 新题 <b>3</b> 张 · 掌握 <b>11</b></span><span class="link">查看小结</span></div>
+        <div class="h-row"><span class="d">9 月 5 日</span><span class="s">复习 <b>9</b> 张 · 新题 <b>5</b> 张 · 掌握 <b>8</b></span><span class="link">查看小结</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 训练 · 进行中(墨底,由 JS 填充) -->
+<section class="drill" id="v-drill" style="display:none"></section>
+
+<!-- ═════════ 题库 ═════════ -->
+<section class="view" id="v-bank">
+  <div class="frame">
+    <div class="bankbar">
+      <div class="q">
+        <input id="bank-q" placeholder="搜索题干 / 考察点,或筛选:难度:高 状态:待复习">
+        <span class="hints">
+          <button class="hint-chip on" data-st="all">全部</button>
+          <button class="hint-chip" data-st="due">待复习</button>
+          <button class="hint-chip" data-st="new">待学习</button>
+          <button class="hint-chip" data-st="done">已掌握</button>
+        </span>
+      </div>
+      <span style="font-size:12.5px;color:var(--mut);white-space:nowrap" id="bank-count"></span>
+    </div>
+    <div class="bank-wrap">
+      <div class="bank-table-scroll">
+        <table class="bank">
+          <thead><tr id="bank-head">
+            <th style="width:88px" data-k="id">题号</th>
+            <th data-k="t">题干</th>
+            <th style="width:110px" data-k="m">模块</th>
+            <th style="width:70px" data-k="d">难度</th>
+            <th style="width:88px" data-k="st">状态</th>
+            <th style="width:110px" data-k="due">下次复习</th>
+          </tr></thead>
+          <tbody id="bank-body"></tbody>
+        </table>
+      </div>
+      <div class="detail" id="bank-detail"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ 目标 ═════════ -->
+<section class="view" id="v-target">
+  <div class="frame">
+    <div class="jd-cards" id="jd-cards"></div>
+    <div class="pipeline">
+      <div class="pipe-col">
+        <h4>这条 JD 的题 · 流水线</h4>
+        <div style="display:flex;gap:34px;margin-top:8px">
+          <div><div class="big" id="pipe-pend" style="color:var(--bad)">2</div><div class="sub">待把关</div></div>
+          <div><div class="big" style="color:var(--ok)">6</div><div class="sub">已入库</div></div>
+        </div>
+        <div class="acts">
+          <button class="btn pri" id="btn-gen">按此 JD 生成题目</button>
+          <button class="btn" id="btn-triage">开始把关 <kbd>回车</kbd></button>
+        </div>
+      </div>
+      <div class="pipe-col">
+        <h4>这份 JD 要求什么</h4>
+        <p style="margin-top:8px;font-size:13px;line-height:1.9;color:#4a463c" id="jd-detail"></p>
+      </div>
+    </div>
+    <div class="resume-panel">
+      <div>
+        <div class="t">我的简历</div>
+        <div class="m">生成深挖题时会结合简历内容</div>
+      </div>
+      <span style="flex:1"></span>
+      <span class="pill">1,842 字</span>
+      <button class="btn" style="padding:8px 16px;font-size:13px">编辑简历</button>
+    </div>
+  </div>
+</section>
+
+<!-- 审核 triage(墨底全屏) -->
+<div class="triage" id="v-triage" style="display:none"></div>
+
+<!-- ⌘K -->
+<div class="palette-mask" id="palette-mask">
+  <div class="palette">
+    <input id="palette-q" placeholder="前往或执行:开始训练 / 题库 / 目标 / 把关…">
+    <div id="palette-list"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* ───── 数据 ───── */
+var QS = [
+  { id:'fe.01.1', m:'JS 原理', d:'中', st:'due', due:'今天', tags:['高频'],
+    t:'什么是闭包？它有哪些实际用途？', f:'理解闭包的本质与工程价值',
+    a:['<b>闭包 = 函数 + 其词法作用域的引用</b>:内层函数引用外层变量,外层返回后变量仍存活。','用途:封装私有状态、柯里化、模块模式、回调中保留上下文。','代价:被引用的变量无法回收。'] },
+  { id:'fe.01.2', m:'JS 原理', d:'高', st:'due', due:'今天', tags:[],
+    t:'事件循环中宏任务与微任务的执行顺序是怎样的？', f:'掌握一轮循环的精确顺序',
+    a:['一轮:当前宏任务 → <b>清空全部微任务</b> → 渲染 → 下一宏任务。','Promise.then 是微任务;setTimeout / I/O 是宏任务。'] },
+  { id:'ag.05.2', m:'Agent 机制', d:'高', st:'due', due:'今天', tags:[],
+    t:'为什么 ReAct 容易跑偏？有哪些缓解手段？', f:'推理-行动循环的失败模式',
+    a:['错误会累积:一步错带偏后续;可能幻觉工具结果或死循环。','缓解:<b>限制步数</b>、校验观察、规划层、关键节点人工确认。'] },
+  { id:'fe.03.1', m:'React', d:'中', st:'new', due:'—', tags:[],
+    t:'React 18 的自动批处理与旧版有何区别？', f:'批处理的范围变化',
+    a:['v17:只有事件处理器内批处理。','v18:<b>所有更新默认批处理</b>;flushSync 可退回。'] },
+  { id:'ag.05.1', m:'Agent 机制', d:'中', st:'new', due:'—', tags:['高频'],
+    t:'什么是 Function Calling？描述它的工作流程。', f:'模型与外部工具的衔接',
+    a:['模型输出<b>函数名 + JSON 参数</b>,应用执行后回传,模型归纳。','适合:步数不定、需要真实数据的任务。'] },
+  { id:'fe.07.1', m:'工程化', d:'初', st:'done', due:'9 月 12 日', tags:[],
+    t:'tree shaking 的原理是什么？', f:'ES Module 静态分析',
+    a:['基于 ESM 静态结构,未引用的导出打包时剔除。','前提:sideEffects 标注正确。'] },
+];
+var PEND = [
+  { id:'my.gen.1', m:'长列表优化', d:'中', t:'什么是虚拟列表？它与分页加载如何取舍？', f:'长列表渲染优化', gen:'AI 生成 · 知识点「长列表优化」',
+    a:['虚拟列表只渲染<b>可视区 ± 缓冲</b>,滚动复用 DOM,总高占位撑起。','要随机跳转用分页;要无限流畅、数据大用虚拟列表。','要点:行绝对定位、二分找起点、动态行高测量缓存。'] },
+  { id:'my.gen.2', m:'并发编程', d:'高', t:'如何设计一个支持取消的异步任务队列？', f:'并发控制与生命周期管理', gen:'按 JD 生成 · AI 应用工程师',
+    a:['每任务持有 <b>AbortController</b>;并发上限 N,完成自动补位。','取消 = abort 传给 fetch,标记 cancelled 不执行回调。','取消后清理副作用;重试与取消互斥。'] },
+];
+var JDS = [
+  { t:'AI 应用工程师', c:'月之暗面', d:'负责 AI Agent 产品的前端与编排层建设,深入理解 Function Calling、RAG 等应用模式;TypeScript 熟练,对模型能力边界有体感。' },
+  { t:'高级前端工程师', c:'字节跳动', d:'负责抖音 Web 性能优化与工程化,深入 React/Vue 原理,大型工程化经验,熟悉 Node 中间层。' },
+];
+var STMAP = { due:['待复习','due'], new:['待学习','new'], done:['已掌握','done'] };
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function toast(msg){ var el = document.getElementById('toast'); el.textContent = msg; el.classList.add('on');
+  clearTimeout(el._t); el._t = setTimeout(function(){ el.classList.remove('on'); }, 1600); }
+
+/* ───── 视图切换 ───── */
+var active = 'train', drilling = false, triaging = false;
+function show(v){
+  active = v; drilling = false; triaging = false;
+  ['train','bank','target'].forEach(function(x){
+    document.getElementById('v-' + x).classList.toggle('on', x === v);
+  });
+  document.getElementById('v-drill').style.display = 'none';
+  document.getElementById('v-triage').style.display = 'none';
+  document.getElementById('topnav').style.display = 'flex';
+  document.querySelectorAll('.navlink').forEach(function(b){ b.classList.toggle('on', b.dataset.v === v); });
+  if (v === 'bank') renderBank();
+  if (v === 'target') renderTarget();
+}
+document.querySelectorAll('.navlink').forEach(function(b){
+  b.addEventListener('click', function(){ show(b.dataset.v); });
+});
+
+/* ───── ⌘K ───── */
+var paletteItems = [
+  { label:'开始今天的训练', sub:'动作', run:function(){ show('train'); startDrill(); } },
+  { label:'去把关 AI 题', sub:'动作 · 2 题待把关', run:function(){ show('target'); openTriage(); } },
+  { label:'训练', sub:'前往', run:function(){ show('train'); } },
+  { label:'题库', sub:'前往', run:function(){ show('bank'); } },
+  { label:'目标', sub:'前往', run:function(){ show('target'); } },
+];
+var palSel = 0;
+function renderPalette(v){
+  var list = paletteItems.filter(function(it){ return !v || it.label.indexOf(v) >= 0; });
+  palSel = 0;
+  document.getElementById('palette-list').innerHTML = list.map(function(it, i){
+    return '<div class="it '+(i===0?'sel':'')+'" data-i="'+i+'"><span>'+esc(it.label)+'</span><span class="sub">'+it.sub+'</span></div>';
+  }).join('') || '<div class="it">没有匹配</div>';
+  document.getElementById('palette-list')._items = list;
+}
+document.getElementById('open-k').addEventListener('click', function(){
+  document.getElementById('palette-mask').classList.add('on'); renderPalette(''); document.getElementById('palette-q').focus();
+});
+document.getElementById('palette-q').addEventListener('input', function(){ renderPalette(this.value.trim()); });
+document.getElementById('palette-q').addEventListener('keydown', function(e){
+  var list = document.getElementById('palette-list')._items || [];
+  if (e.key === 'Escape') { document.getElementById('palette-mask').classList.remove('on'); }
+  else if (e.key === 'Enter' && list[palSel]) { document.getElementById('palette-mask').classList.remove('on'); list[palSel].run(); }
+  else if (e.key === 'ArrowDown') { palSel = Math.min(palSel+1, list.length-1); renderPalette(this.value.trim()); }
+  else if (e.key === 'ArrowUp') { palSel = Math.max(palSel-1, 0); renderPalette(this.value.trim()); }
+});
+document.getElementById('palette-mask').addEventListener('click', function(e){
+  if (e.target === this) this.classList.remove('on');
+});
+document.getElementById('palette-list').addEventListener('click', function(e){
+  var it = e.target.closest('.it'); if (!it || it.dataset.i == null) return;
+  var list = this._items || [];
+  document.getElementById('palette-mask').classList.remove('on');
+  list[+it.dataset.i] && list[+it.dataset.i].run();
+});
+
+/* ═════════ 训练会话(分段 + 不会重排) ═════════ */
+var SESS = null;
+function startDrill(){
+  drilling = true;
+  SESS = {
+    segs: [
+      { name: '复习段', qs: QS.filter(function(q){ return q.st === 'due'; }).map(function(q){ return { q:q, re:false }; }) },
+      { name: '新题段', qs: QS.filter(function(q){ return q.st === 'new'; }).map(function(q){ return { q:q, re:false }; }) },
+    ],
+    seg: 0, i: 0, rev: false, results: [],
+  };
+  document.getElementById('topnav').style.display = 'none';
+  document.getElementById('v-train').classList.remove('on');
+  var d = document.getElementById('v-drill');
+  d.style.display = 'flex';
+  renderDrill();
+}
+document.getElementById('btn-start').addEventListener('click', startDrill);
+
+function curSeg(){ return SESS ? SESS.segs[SESS.seg] : null; }
+function curCard(){ var s = curSeg(); return s ? s.qs[SESS.i] : null; }
+
+function renderDrill(){
+  var d = document.getElementById('v-drill');
+  var s = curSeg(), card = curCard();
+  var segNo = SESS.seg + 1, segAll = SESS.segs.length;
+  var top = '<div class="top"><span class="seg-tag">' + esc(s.name) + '</span>'
+    + '<span>' + (SESS.i + 1) + ' / ' + s.qs.length + '</span>'
+    + '<span>第 ' + segNo + ' / ' + segAll + ' 段</span>'
+    + '<span class="exit" id="d-exit">退出训练 Esc</span></div>'
+    + '<div class="bar"><i style="width:' + (SESS.i / Math.max(s.qs.length,1) * 100) + '%"></i></div>';
+  if (!card) return; // 不会发生:段空已在 start 过滤
+  var q = card.q;
+  var stage = '<div class="stage"><div class="tags">';
+  (q.tags || []).forEach(function(t){ stage += '<span class="tag">' + esc(t) + '</span>'; });
+  if (card.re) stage += '<span class="tag re">刚才不会 · 重练</span>';
+  stage += '</div><h2>' + esc(q.t) + '</h2><div class="focus">' + esc(q.f) + '</div>';
+  if (SESS.rev) stage += '<div class="ans"><ul style="padding-left:18px">' + q.a.map(function(x){ return '<li>' + x + '</li>'; }).join('') + '</ul></div>';
+  stage += '</div>';
+  var ops;
+  if (!SESS.rev) ops = '<button class="btn reveal" id="d-reveal">我想好了,看答案 <kbd>空格</kbd></button>';
+  else ops = '<button class="btn rate no" data-r="no">不会 <kbd>1</kbd></button>'
+    + '<button class="btn rate mid" data-r="mid">模糊 <kbd>2</kbd></button>'
+    + '<button class="btn rate ok" data-r="ok">掌握 <kbd>3</kbd></button>';
+  d.innerHTML = top + stage + '<div class="ops">' + ops + '</div>';
+  d.querySelector('#d-exit').addEventListener('click', exitDrill);
+  var rv = d.querySelector('#d-reveal');
+  if (rv) rv.addEventListener('click', function(){ SESS.rev = true; renderDrill(); });
+  d.querySelectorAll('[data-r]').forEach(function(b){
+    b.addEventListener('click', function(){ rate(this.dataset.r); });
+  });
+}
+function rate(r){
+  var s = curSeg(), card = curCard();
+  SESS.results.push({ q: card.q, r: r });
+  if (r === 'no' && !card.re) {
+    s.qs.push({ q: card.q, re: true }); // 不会:段内重排
+  }
+  SESS.rev = false; SESS.i++;
+  if (SESS.i >= s.qs.length) { nextSegment(); return; }
+  renderDrill();
+}
+function nextSegment(){
+  if (SESS.seg < SESS.segs.length - 1) {
+    // 段间过渡
+    var done = SESS.results.filter(function(x){ return x.r !== 'no'; }).length;
+    var d = document.getElementById('v-drill');
+    var nextSeg = SESS.segs[SESS.seg + 1];
+    SESS.seg++; SESS.i = 0; SESS.rev = false;
+    d.innerHTML = '<div class="between"><div class="big">复习段完成</div>'
+      + '<div class="sub">刚才 ' + done + ' 张里,评「不会」的已排到后面重练。接下来是 ' + nextSeg.qs.length + ' 道新题。</div>'
+      + '<button class="btn go" id="d-go">继续 · ' + esc(nextSeg.name) + ' <kbd>空格</kbd></button></div>';
+    d.querySelector('#d-go').addEventListener('click', renderDrill);
+    return;
+  }
+  renderSummary();
+}
+function renderSummary(){
+  var res = SESS.results;
+  var ok = res.filter(function(x){ return x.r === 'ok'; }).length;
+  var weak = res.filter(function(x){ return x.r === 'no'; });
+  var d = document.getElementById('v-drill');
+  var html = '<div class="between"><div class="big">今天训练完成</div>'
+    + '<div class="sub">' + res.length + ' 张 · 掌握 ' + ok + ' 张' + (weak.length ? ' · 偏弱 ' + weak.length + ' 张已排进明天' : '') + '</div>'
+    + '<div class="sum-list">' + res.map(function(x){
+      var cls = x.r === 'ok' ? '#8fbc7f' : x.r === 'mid' ? '#d9b45c' : '#e58a7a';
+      var dt = x.r === 'ok' ? '7 天后' : x.r === 'mid' ? '3 天后' : '明天 · 优先';
+      return '<div class="r"><span class="rate" style="color:' + cls + '">' + x.r + '</span><span class="t">' + esc(x.q.t) + '</span><span class="d">' + dt + '</span></div>';
+    }).join('') + '</div>'
+    + '<button class="btn go" id="d-done">完成,回到训练</button></div>';
+  d.innerHTML = html;
+  d.querySelector('#d-done').addEventListener('click', function(){
+    var s = document.getElementById('lastline');
+    s.innerHTML = '今天已完成:复习 <b>3</b> 张 · 新题 <b>2</b> 张 · 掌握 <b>' + ok + '</b>' + (weak.length ? ' · 偏弱 ' + weak.length + ' 张排进明天' : '');
+    show('train');
+  });
+}
+function exitDrill(){ show('train'); toast('训练已中断,进度已保存'); }
+
+/* ═════════ 题库(power table) ═════════ */
+var bankFilter = 'all', bankQ = '', bankSort = { k: 'id', dir: 1 }, bankSel = null;
+var DUE_TXT = { due: '今天', new: '—', done: '9 月 12 日' };
+function bankRows(){
+  var rows = QS.filter(function(q){
+    if (bankFilter !== 'all' && q.st !== bankFilter) return false;
+    if (bankQ && (q.t + q.f).toLowerCase().indexOf(bankQ.toLowerCase()) < 0) return false;
+    return true;
+  });
+  var k = bankSort.k, dir = bankSort.dir;
+  rows.sort(function(a, b){
+    var va = a[k] || '', vb = b[k] || '';
+    return va < vb ? -dir : va > vb ? dir : 0;
+  });
+  return rows;
+}
+function renderBank(){
+  var rows = bankRows();
+  if (bankSel && !rows.some(function(q){ return q.id === bankSel; })) bankSel = rows[0] ? rows[0].id : null;
+  document.getElementById('bank-count').textContent = rows.length + ' 题';
+  document.getElementById('bank-body').innerHTML = rows.map(function(q){
+    var st = STMAP[q.st];
+    return '<tr data-id="' + esc(q.id) + '" class="' + (q.id === bankSel ? 'sel' : '') + '">'
+      + '<td>' + esc(q.id) + '</td>'
+      + '<td class="t-cell">' + esc(q.t) + '</td>'
+      + '<td>' + esc(q.m) + '</td>'
+      + '<td>' + esc(q.d) + '</td>'
+      + '<td><span class="pill ' + st[1] + '">' + st[0] + '</span></td>'
+      + '<td>' + esc(q.due) + '</td></tr>';
+  }).join('');
+  renderBankDetail();
+}
+function renderBankDetail(){
+  var q = QS.find(function(x){ return x.id === bankSel; });
+  var el = document.getElementById('bank-detail');
+  if (!q) { el.innerHTML = '<div style="color:var(--mut-deep);font-size:13px;text-align:center;padding:40px 0">← 选中一行看详情</div>'; return; }
+  var st = STMAP[q.st];
+  el.innerHTML = '<span class="pill ' + st[1] + '">' + st[0] + '</span> <span class="pill">难度 ' + q.d + '</span>'
+    + '<h3>' + esc(q.t) + '</h3>'
+    + '<div style="font-size:12px;color:var(--mut);margin-top:6px">考察方向:' + esc(q.f) + '</div>'
+    + '<div class="ops">'
+    + '<button class="btn pri" style="padding:8px 14px;font-size:12.5px" data-act="drill1">练习此题</button>'
+    + '<button class="btn" style="padding:8px 14px;font-size:12.5px" data-act="edit">编辑</button>'
+    + '<button class="btn" style="padding:8px 14px;font-size:12.5px" data-act="copy">复制到我的题库</button>'
+    + '<button class="btn bad" style="padding:8px 14px;font-size:12.5px" data-act="del">删除</button>'
+    + '</div>'
+    + '<div id="detail-extra"></div>'
+    + '<div class="ans"><b>参考答案要点</b><ul>' + q.a.map(function(x){ return '<li>' + x + '</li>'; }).join('') + '</ul></div>';
+  el.querySelectorAll('[data-act]').forEach(function(b){
+    b.addEventListener('click', function(){ bankAct(this.dataset.act, q); });
+  });
+}
+function bankAct(act, q){
+  var extra = document.getElementById('detail-extra');
+  if (act === 'drill1') { toast('深链到训练:只练这道题'); }
+  else if (act === 'copy') { toast('已复制到我的题库'); }
+  else if (act === 'edit') {
+    extra.innerHTML = '<div class="form">'
+      + '<label>题干</label><input id="ef-t" value="' + esc(q.t) + '">'
+      + '<label>答案要点(每行一条)</label><textarea rows="5">' + esc(q.a.join('\n')) + '</textarea>'
+      + '<div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">'
+      + '<button class="btn ghost" style="padding:7px 14px;font-size:12.5px" data-e="cancel">取消</button>'
+      + '<button class="btn pri" style="padding:7px 14px;font-size:12.5px" data-e="save">保存修改</button></div></div>';
+    extra.querySelectorAll('[data-e]').forEach(function(b){
+      b.addEventListener('click', function(){
+        if (this.dataset.e === 'save') {
+          q.t = document.getElementById('ef-t').value;
+          toast('已保存'); renderBank();
+        } else { extra.innerHTML = ''; }
+      });
+    });
+  } else if (act === 'del') {
+    extra.innerHTML = '<div class="confirm-strip"><span>该题的进度、笔记一并删除,不可恢复。</span><span class="sp"></span>'
+      + '<button class="btn bad" style="padding:6px 12px;font-size:12px" data-c="yes">确认删除</button>'
+      + '<button class="btn ghost" style="padding:6px 12px;font-size:12px" data-c="no">取消</button></div>';
+    extra.querySelectorAll('[data-c]').forEach(function(b){
+      b.addEventListener('click', function(){
+        if (this.dataset.c === 'yes') {
+          QS.splice(QS.indexOf(q), 1); bankSel = null; renderBank(); toast('已删除');
+        } else { extra.innerHTML = ''; }
+      });
+    });
+  }
+}
+document.querySelectorAll('.hint-chip').forEach(function(c){
+  c.addEventListener('click', function(){
+    bankFilter = this.dataset.st;
+    document.querySelectorAll('.hint-chip').forEach(function(x){ x.classList.toggle('on', x === c); });
+    renderBank();
+  });
+});
+document.getElementById('bank-q').addEventListener('input', function(){ bankQ = this.value.trim(); renderBank(); });
+document.getElementById('bank-head').addEventListener('click', function(e){
+  var th = e.target.closest('th'); if (!th || !th.dataset.k) return;
+  if (bankSort.k === th.dataset.k) bankSort.dir *= -1; else bankSort = { k: th.dataset.k, dir: 1 };
+  renderBank();
+});
+document.getElementById('bank-body').addEventListener('click', function(e){
+  var tr = e.target.closest('tr'); if (!tr) return;
+  bankSel = tr.dataset.id; renderBank();
+});
+
+/* ═════════ 目标(pipeline) ═════════ */
+var jdSel = 0;
+function renderTarget(){
+  document.getElementById('jd-cards').innerHTML = JDS.map(function(j, i){
+    return '<button class="jd-card ' + (i === jdSel ? 'sel' : '') + '" data-i="' + i + '">'
+      + '<div class="t">' + esc(j.t) + '</div><div class="c">' + esc(j.c) + '</div><div class="d">' + esc(j.d) + '</div></button>';
+  }).join('');
+  document.getElementById('jd-detail').textContent = JDS[jdSel].d;
+  document.getElementById('pipe-pend').textContent = PEND.length;
+  document.getElementById('btn-triage').disabled = PEND.length === 0;
+  document.getElementById('nav-audit').textContent = PEND.length;
+  document.getElementById('nav-audit').style.display = PEND.length ? '' : 'none';
+  document.querySelectorAll('.jd-card').forEach(function(c){
+    c.addEventListener('click', function(){ jdSel = +this.dataset.i; renderTarget(); });
+  });
+}
+document.getElementById('btn-gen').addEventListener('click', function(){ toast('生成中…(真实应用:流式生成 → 产物直接进待把关)'); });
+document.getElementById('btn-triage').addEventListener('click', openTriage);
+
+/* ═════════ 审核 triage ═════════ */
+var TRI = null;
+function openTriage(){
+  if (!PEND.length) { toast('没有待把关的题'); return; }
+  triaging = true; TRI = { i: 0, rev: false, confirm: false, pass: 0, rej: 0 };
+  document.getElementById('topnav').style.display = 'none';
+  show('target');
+  document.getElementById('topnav').style.display = 'none';
+  var t = document.getElementById('v-triage');
+  t.style.display = 'flex'; renderTriage();
+}
+function renderTriage(){
+  var t = document.getElementById('v-triage');
+  if (TRI.i >= PEND.length) {
+    t.innerHTML = '<div class="stage" style="align-items:center;display:flex;flex-direction:column;justify-content:center">'
+      + '<div class="gen" style="font-size:15px;color:#8fbc7f">把关完成</div>'
+      + '<h2 style="margin-top:10px">通过 ' + TRI.pass + ' 道,拒绝 ' + TRI.rej + ' 道</h2>'
+      + '<div class="ops" style="width:min(420px,90%);margin-top:30px;padding:0">'
+      + '<button class="btn" id="t-done">回到目标</button></div></div>';
+    t.querySelector('#t-done').addEventListener('click', closeTriage);
+    return;
+  }
+  var q = PEND[TRI.i];
+  var depth = PEND.map(function(_, i){ return '<i class="' + (i <= TRI.i ? 'pend' : '') + '"></i>'; }).join('');
+  var body = '<div class="stage"><div class="gen">' + esc(q.gen) + ' · ' + (TRI.i + 1) + ' / ' + PEND.length + '</div>'
+    + '<h2>' + esc(q.t) + '</h2><div class="gen" style="margin-top:10px">考察方向:' + esc(q.f) + '</div>'
+    + (TRI.rev ? '<div class="ans"><ul style="padding-left:18px">' + q.a.map(function(x){ return '<li>' + x + '</li>'; }).join('') + '</ul></div>' : '')
+    + '</div>';
+  var confirm = TRI.confirm ? '<div class="confirm"><span>拒绝即永久删除,不可恢复。回车确认,Esc 取消</span></div>' : '';
+  var ops;
+  if (!TRI.rev) ops = '<div class="ops"><button class="btn" id="t-rev">先自己想,再看答案 <kbd>空格</kbd></button></div>';
+  else ops = (TRI.confirm ? confirm : '')
+    + '<div class="ops"><button class="btn pass" id="t-pass">通过,进我的题库 <kbd>1</kbd></button>'
+    + '<button class="btn rej" id="t-rej">拒绝 <kbd>2</kbd></button></div>';
+  t.innerHTML = '<div class="top"><span style="color:var(--cin-bright);font-weight:700;letter-spacing:.14em">把关</span>'
+    + '<span class="depth">' + depth + '</span><span class="x" id="t-x">稍后再看 Esc</span></div>' + body + ops;
+  t.querySelector('#t-x').addEventListener('click', closeTriage);
+  var rv = t.querySelector('#t-rev');
+  if (rv) rv.addEventListener('click', function(){ TRI.rev = true; renderTriage(); });
+  var ps = t.querySelector('#t-pass');
+  if (ps) ps.addEventListener('click', function(){ triAct('pass'); });
+  var rj = t.querySelector('#t-rej');
+  if (rj) rj.addEventListener('click', function(){
+    if (!TRI.confirm) { TRI.confirm = true; renderTriage(); }
+    else triAct('rej');
+  });
+}
+function triAct(kind){
+  var q = PEND[TRI.i];
+  PEND.splice(PEND.indexOf(q), 1);
+  if (kind === 'pass') { TRI.pass++; toast('已通过,进我的题库'); }
+  else { TRI.rej++; toast('已拒绝并删除'); }
+  TRI.rev = false; TRI.confirm = false;
+  renderTriage();
+  renderTarget();
+}
+function closeTriage(){
+  triaging = false;
+  document.getElementById('v-triage').style.display = 'none';
+  document.getElementById('topnav').style.display = 'flex';
+}
+
+/* ───── 全局键盘 ───── */
+document.addEventListener('keydown', function(e){
+  var el = document.activeElement;
+  var typing = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA');
+  if (typing) return;
+  if (triaging) {
+    var t = document.getElementById('v-triage');
+    if (e.key === 'Escape') { if (TRI.confirm) { TRI.confirm = false; renderTriage(); } else closeTriage(); }
+    else if (!TRI.rev && e.key === ' ') { e.preventDefault(); TRI.rev = true; renderTriage(); }
+    else if (TRI.rev && !TRI.confirm && e.key === '1') triAct('pass');
+    else if (TRI.rev && e.key === '2') { if (!TRI.confirm) { TRI.confirm = true; renderTriage(); } else triAct('rej'); }
+    return;
+  }
+  if (drilling && active === 'train') {
+    var d = document.getElementById('v-drill');
+    if (e.key === 'Escape') { exitDrill(); return; }
+    var go = d.querySelector('#d-go'), done = d.querySelector('#d-done');
+    if (go && e.key === ' ') { e.preventDefault(); go.click(); return; }
+    if (done && e.key === ' ') { e.preventDefault(); done.click(); return; }
+    if (!SESS.rev && e.key === ' ') { e.preventDefault(); SESS.rev = true; renderDrill(); }
+    else if (SESS.rev && ['1','2','3'].indexOf(e.key) >= 0) { e.preventDefault(); rate(['no','mid','ok'][+e.key - 1]); }
+    return;
+  }
+  if (e.key === 'Escape') {
+    document.getElementById('palette-mask').classList.remove('on');
+    return;
+  }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); document.getElementById('open-k').click(); return; }
+  if (document.getElementById('palette-mask').classList.contains('on')) return;
+  if (e.key === ' ') { e.preventDefault(); startDrill(); return; }
+});
+</script>
+</body>
+</html>
