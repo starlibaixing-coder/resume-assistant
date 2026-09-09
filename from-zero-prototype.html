@@ -362,7 +362,7 @@
       <section class="view on" id="v-today">
         <div class="view-h">
           <h1>今天</h1>
-          <span class="desc">9 月 9 日 周三 · 连续学习 12 天</span>
+          <span class="desc">9 月 8 日 周二 · 连续学习 12 天</span>
           <div class="right"><button class="btn soft" data-v="add">添加题目</button></div>
         </div>
         <div class="today-grid">
@@ -764,7 +764,7 @@ function renderTodayPlan(){
       + '<div class="info"><div class="t">待复习</div><div class="d">之前学过、今天该再看一遍的题</div></div>'
       + '<button class="btn pri" data-goquiz="due">开始复习 ' + due + ' 题</button></div>';
     if (nw) html += '<div class="plan-row"><span class="num cin">' + nw + '</span>'
-      + '<div class="info"><div class="t">待学习</div><div class="d">第一次学的题,先想后看答案</div></div>'
+      + '<div class="info"><div class="t">待学习</div><div class="d">从没学过的题,先想后看答案</div></div>'
       + '<button class="btn" data-goquiz="new">开始学习 ' + nw + ' 题</button></div>';
     if (pend) html += '<div class="plan-row"><span class="num mut">' + pend + '</span>'
       + '<div class="info"><div class="t">待审核</div><div class="d">AI 生成的题,通过后才进学习队列</div></div>'
@@ -1231,7 +1231,7 @@ function renderJobDetail(){
     + '<div class="s"><div class="n">' + j.n.mine + '</div><div class="l">已入我的题库</div></div>'
     + '<div class="s"><div class="n">' + j.n.done + '</div><div class="l">已掌握</div></div></div>'
     + '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'
-    + '<button class="btn pri" id="j-gen">按 JD 生成题目</button>'
+    + '<button class="btn pri" id="j-gen">按此 JD 生成题目</button>'
     + '<button class="btn" id="j-edit">编辑 JD</button>'
     + '<button class="btn bad" id="j-del">删除</button></div>'
     + '<div class="sec-h">JD 正文</div><div class="jd-text">' + esc(j.d) + '</div>'
