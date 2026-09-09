@@ -13,6 +13,7 @@ Workspace instructions for ZCode agents working in this repo.
 | 桌面端定位与全部设计决策(ADR) | `docs/superpowers/specs/2026-08-13-quiz-app-agent-design.md` |
 | 桌面端功能全景(应然清单,PRD 的功能输入) | `docs/product/desktop-features.md` |
 | 桌面端 PRD(各模块布局与交互,验收基准) | `docs/product/desktop-prd.md` |
+| 桌面端技术设计约束(存储/调用/页面拆分/UI 与开发约束,照此开发) | `docs/product/desktop-tech-design.md` |
 | 产品决策 ADR(grilling/评审会话逐条落档) | `docs/adr/` |
 | 桌面端 UI 重构设计交付物(IA/页面规格/组件与文案规范) | `docs/superpowers/specs/2026-09-04-ui-redesign.md` |
 | 从 0 重设计提案 v3 · 桌面工作台范式(未实施;可操作原型在仓库根 `from-zero-prototype.html`) | `docs/superpowers/specs/2026-09-08-from-zero-redesign.md` |
