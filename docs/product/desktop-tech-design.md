@@ -75,14 +75,17 @@ CREATE TABLE IF NOT EXISTS questions (
   answer      TEXT NOT NULL,         -- JSON 字符串数组,每条一要点
   followups   TEXT NOT NULL DEFAULT '[]',   -- JSON 数组
   source      TEXT NOT NULL CHECK (source IN ('official','manual','copy','ai','jd')),
+  source_ref  TEXT NOT NULL DEFAULT '',   -- 生成来源快照:知识点名 / JD 岗位名(D27:JD 删除后仍保留,徽标与来源行显示它)
+  jd_id       INTEGER,                    -- 按 JD 生成时关联 jds.id(E2 统计用;JD 删除后悬空,展示回退 source_ref)
   status      TEXT NOT NULL DEFAULT 'approved' CHECK (status IN ('approved','pending')),
-  is_code     INTEGER NOT NULL DEFAULT 0,   -- 代码题标记(展示草稿纸入口默认展开)
+  is_code     INTEGER NOT NULL DEFAULT 0,  -- 代码题标记:仅用于「代码题」徽标;草稿纸对所有题默认收起(PRD M3 交互 10)
   created_at  INTEGER NOT NULL,
   updated_at  INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_q_cat   ON questions(category);
 CREATE INDEX IF NOT EXISTS idx_q_stat  ON questions(status);
 CREATE INDEX IF NOT EXISTS idx_q_src   ON questions(source);
+CREATE INDEX IF NOT EXISTS idx_q_jd    ON questions(jd_id);
 
 -- SM-2 进度(官方题与我的题统一一张表,ADR-9 语义)
 CREATE TABLE IF NOT EXISTS review_state (
@@ -148,6 +151,7 @@ CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 
 - 题库「状态」列、筛选芯片、今天页/状态栏/徽标计数全部调用 `deriveStatus`/其 SQL 等价物,**禁止各写各的判断**。
 - 计数口径:待复习 = due≤now 且 approved;待学习/待审核同上;「我的 N」= category='my' 且 approved。
+- **来源信息口径**:待审核列表来源行与来源徽标显示 `source_ref`(「AI 生成 · 知识点『X』」/「按 JD 生成 · 岗位名」);按 JD 统计(E2)= 按 `jd_id` 聚合(含 pending);JD 删除后 `jd_id` 悬空,展示回退 `source_ref`(D27 快照)。
 - `due_at` 粒度 = 自然日:到期日当天 00:00(本地时区)即视为到期;「明天」= 次日 00:00。
 
 ### 3.3 级联清理(应用层执行,顺序固定)
@@ -156,13 +160,13 @@ CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 |---|---|
 | 删除我的题 / 拒绝 pending | 若 approved:先删 review_state、notes、code_drafts,再删 questions(pending 无附属,直删) |
 | 官方库同步下架 | 同上一行(题 id 作废不复用,ADR-9) |
-| 通过 pending | 生成正式 `my.*` id → 更新 questions 行(id、category='my'、source、status='approved') |
+| 通过 pending | 生成正式 `my.*` id → 更新 questions 行(id、category='my'、source、status='approved');`source_ref` 与 `jd_id` 原样保留 |
 | 导入备份 | 单事务:全表 DELETE → INSERT(整库覆盖,D12) |
 
 ### 3.4 备份文件格式
 
-- 导出:单文件,JSON 信封 `{ version: 1, exported_at, tables: { questions, review_state, notes, code_drafts, jds, profile, meta } }`;**不含 secrets**(key 不落备份)。
-- 另提供 YAML 题目导出(仅 questions,官方题库格式对齐,贡献回官方库用,G3)。
+- 导出:单文件,JSON 信封 `{ version: 1, exported_at, tables: { questions, review_state, notes, code_drafts, jds, profile, meta, activity } }`;**不含 secrets**(key 不落备份)。
+- 另提供 YAML 题目导出(仅 questions;字段与官方 banks YAML 对齐:`module` / `moduleName` / `questions[]{id, difficulty, tags, title, focus, answer, followups}`,贡献回官方库用,G3)。
 - 导入:校验 `version` → 确认弹窗(PRD 文案)→ 事务覆盖。
 
 ## 4. 领域规则
@@ -195,15 +199,17 @@ rate(state, rating, now):
 |---|---|---|
 | 复习 | approved 且 due≤now | **无**(ADR-0001) |
 | 学习 | 待学习(id 升序) | min(待学习数, batch_size) |
-| 混合(⌘K「学习」) | 复习全量 + 待学习按上限补位 | 复习无、新题有 |
 | 再过一遍 | 全部 approved(id 升序) | 无(Q9) |
 | 单题直练 | [qid] | — |
+
+- **⌘K 的「开始复习 / 开始学习 N 题」与今天页两按钮同名同义**(分别为复习 / 学习会话);**不存在「混合」队列类型**(PRD v2.3 冲突消解——「待复习优先、待学习补位」是今天页计划的排序原则,不是会话类型)。
 
 - 状态机:`idle → active(i, revealed) → summary`;评分 → 结果条 1s → 220ms 淡出 → i+1。
 - 重练:评 no 且该题本轮未重练过 → push 副本标记 `isRetry`。
 - **题目消失(ADR-0004)**:渲染每题前 `SELECT 1 FROM questions WHERE id=? AND status='approved'`;缺失 → 原位说明条、i+1,不计小结。
 - 小结(Q12):按题去重;重练题一行,标「重练后」,取最终评分;统计 `学习了 N 道题`=去重数,`掌握 N`/`偏弱 N`按最终评分。
-- activity 写入:每次评分落库时同步 upsert 当日行(去重统计在小结时校正 ok 计数)。
+- activity 写入:每次评分落库后**按题重算**当日行——`rated` = 当日至少评分一次的题数(去重),`ok` = 其中最终评分为 ok 的题数;不依赖小结触发,中途退出不丢统计。
+- 跨午夜:进行中的会话按开始时快照继续;评分、计数、streak 按评分时刻的当日计算。
 
 ## 5. 服务层与「后端」调用契约
 
@@ -217,7 +223,7 @@ rate(state, rating, now):
 |---|---|---|
 | SQL | `tauri-plugin-sql`(sqlite) | `sql:allow-load`, `sql:allow-execute`,`allow-select` |
 | 系统全屏 | `getCurrentWindow().setFullscreen(bool)`(专注模式联动进入/退出并完整还原,ADR-0006) | `core:window:allow-set-fullscreen` |
-| 问 AI 子窗口 | `WebviewWindow('ai-chat', { url, w:460, h:680 })`;已开则 `setFocus()` | `core:webview:allow-create-webview-window`, `allow-get-all-webviews`, `core:window:allow-set-focus`;**ai-chat 不进 windows 列表(零 IPC)** |
+| 问 AI 子窗口 | `WebviewWindow('ai-chat', { url, w:460, h:680 })`;已开则 `setFocus()`;主窗口退出(应用退出)时一并关闭(D21) | `core:webview:allow-create-webview-window`, `allow-get-all-webviews`, `core:window:allow-set-focus`;**ai-chat 不进 windows 列表(零 IPC)** |
 | 备份文件 | 对话框 + fs 写/读 | `dialog:default`, `fs` 限定 `app_data`/用户选择路径 |
 | 外链 | `shell open`(浏览器降级 `<a target=_blank>`) | `shell:allow-open` |
 | 日志 | `log` 插件 → `~/Library/Logs/<bundle>/app.log` | `log:default` |
@@ -225,7 +231,7 @@ rate(state, rating, now):
 ### 5.3 官方库同步(`lib/sync.ts`)
 
 - 源:包内 `questions.json`(首次启动播种,写入 category/source='official');远端 URL 常量 `OFFICIAL_BANK_URL`(GitHub Pages)。
-- 流程:拉取 → 解析 → 与本地 official 集合对比:新增 upsert、缺失 → §3.3 级联删除 → `meta.last_sync_at`。
+- 流程:拉取 → 解析 → 与本地 official 集合对比:新增 upsert、缺失 → §3.3 级联删除 → `meta.last_sync_at`。结果三态反馈(PRD M9):已是最新 / 更新 N 题(注明新增 a、下架 d)/ 失败(可重试)。
 - 触发:启动后 2s 静默后台 + 设置页手动;失败仅更新界面提示,不阻塞任何功能;重试由用户或下次启动承担。
 
 ### 5.4 LLM 网关(`lib/generate.ts` + `lib/llm.ts`)
@@ -256,7 +262,7 @@ rate(state, rating, now):
 
 ### 6.2 壳与全局组件
 
-`AppShell`(Sidebar + content `<Outlet/>` + StatusBar)挂 `/session` 之外全部路由;`/session` 自绘最小 chrome(PRD 专注语义的基础)。全局挂载:`CommandPalette`(⌘K)、`ConfirmDialog`、`GuardDialog`、`Toaster(sonner)`、`FocusLayer`。
+`AppShell`(Sidebar + content `<Outlet/>` + StatusBar)挂**全部八个路由**(`/session` 也挂壳——学习页平时有侧栏与状态栏,与 PRD §2.2 一致);专注模式由 `FocusLayer` 隐壳(F 键,PRD M3 交互 9)。全局挂载:`CommandPalette`(⌘K;数据源:动作=storage 计数、前往=路由表、题目=全库字段模糊)、`ConfirmDialog`、`GuardDialog`、`Toaster(sonner)`、`FocusLayer`。
 
 ### 6.3 业务组件清单(`components/biz/`,props 契约要点)
 
@@ -268,9 +274,9 @@ rate(state, rating, now):
 | `NoteEditor` | M3/M4 | 受控文本域 + 保存/取消;pending 题不挂载(Q11) |
 | `AskAiButton` | M3 | 调 `lib/ai-window.ts`;降级为外链 `<a>` |
 | `CategoryTabs` / `FilterChips` / `ModuleSelect` / `QuestionTable` / `QuestionDetail`(+`EditQuestionForm`) | M4 | Table 行数 >200 启虚拟滚动;筛选状态归 `LibraryPage` 本地 |
-| `ManualForm` / `AiGenerateBox` / `JdGenerateBox` / `GeneratingBox`(共用) | M5 | 校验错误字段下就地提示;AI 未配置 → 引导条+禁用 |
-| `AuditList` / `AuditDetail` | M6 | ⌘↩/⌫ 键在 detail 聚焦时生效 |
-| `JdList` / `JdDetail` / `JdForm` / `JdStats` / `ResumeMiniCard` | M7 | 表单 dirty → 全局守卫 |
+| `ManualForm` / `AiGenerateBox` / `JdGenerateBox` / `GeneratingBox`(共用) | M5 | 校验错误字段下就地提示;AI 未配置 → 引导条+禁用;简历为空时「结合简历」勾选禁用并提示先去写简历 |
+| `AuditList` / `AuditDetail` | M6 | 列表按 `created_at DESC`(新生成的在前);detail 支持 `EditQuestionForm` 编辑后通过(D8,直接改 pending 行再通过);⌘↩/⌫ 键在 detail 聚焦时生效(聚焦判定 = 焦点位于 AuditDetail DOM 内) |
+| `JdList` / `JdDetail` / `JdForm` / `JdStats` / `ResumeMiniCard` | M7 | 表单 dirty → 全局守卫;删除当前选中项后自动选中第一项;`JdStats` 按 `jd_id` 聚合(§3.2 来源口径) |
 | `ResumeEditor` | M8 | 字数 hook;⌘S;dirty 守卫 |
 | `SettingsGroups` / `ProviderSeg` / `TestConnectionButton` / `SyncRow` / `BackupRow` | M9 | 分组卡 |
 | `EmptyState` / `ErrorState`(带重试) | 全部 | 统一空态/错误态 |
@@ -343,7 +349,7 @@ npm 命令从仓库根;依赖 `-w desktop`;conventional commits 中文;feature �
 
 ### 8.4 性能预算
 
-表格 >200 行虚拟化;路由切换与评分推进感知 <300ms;同步/生成一律后台或按钮内联加载,不冻结 UI;启动首帧 <1.5s(缓存预热放 idle)。
+表格 >200 行虚拟化;路由切换与评分推进感知 <300ms;交互即时反馈(点击态/加载态出现)≤200ms,对齐 PRD NFR;同步/生成一律后台或按钮内联加载,不冻结 UI;启动首帧 <1.5s(缓存预热放 idle)。
 
 ### 8.5 错误处理与日志
 
@@ -370,10 +376,11 @@ API Key 仅存本机 `secrets`,界面永不回显明文;ai-chat 窗口零 IPC;wo
 
 ## 10. 本文档自行拍板的事项(可推翻)
 
-虚拟化阈值 200 行;`/review` `/jd` `/resume` 独立路由(与侧栏 1:1);activity 表设计(连续天数/记录);备份 JSON 信封 v1(不含 secrets);AI 未配置判定=secrets 无 key;`is_code` 列与草稿纸默认展开联动;错误文案集;e2e 矩阵粒度。grilling R2 六值(Q7 首评 1/2/3 天、Q8 due 升序、Q9 再过一遍不限、Q10 已排期不进状态栏/⌘K、Q11 pending 无笔记、Q12 小结去重)已按推荐固化为规格。
+虚拟化阈值 200 行;`/review` `/jd` `/resume` 独立路由(与侧栏 1:1);activity 表设计(连续天数/记录);备份 JSON 信封 v1(不含 secrets);AI 未配置判定=secrets 无 key;`is_code` 列仅作「代码题」徽标;错误文案集;e2e 矩阵粒度;**⌘K 与今天页按钮同名同义、删除「混合」队列类型(PRD v2.3 冲突消解)**;**questions.source_ref / jd_id 列设计(来源快照 + 按 JD 统计,D27/E2)**;跨午夜会话语义(按评分时刻计)。grilling R2 六值(Q7 首评 1/2/3 天、Q8 due 升序、Q9 再过一遍不限、Q10 已排期不进状态栏/⌘K、Q11 pending 无笔记、Q12 小结去重)已按推荐固化为规格。
 
 ## 11. 变更记录
 
 | 日期 | 版本 | 变更 |
 |---|---|---|
 | 2026-09-09 | v1.0 | 首版:依据 PRD v2.2 + ADR 0001–0006 产出;含 DDL/调度算法/调用契约/路由与组件拆分/UI 与开发约束/测试矩阵/验收映射 |
+| 2026-09-09 | v1.1 | 一致性评审修订:questions 补 `source_ref`/`jd_id` 列(来源行/按 JD 统计/D27 快照,阻塞级);`/session` 恢复挂 AppShell(与 PRD §2.2 一致,专注由 FocusLayer 隐壳);删「混合」队列类型,⌘K 与今天页按钮同名同义(PRD v2.3);审核列表排序与编辑后通过落位;activity 进备份信封、改为每次评分后按题重算;is_code 仅作徽标;补简历空禁用勾选/同步三态反馈/删除 JD 选中第一项/ai-chat 随主窗关闭/200ms 反馈预算/⌘K 数据源/YAML 导出格式/跨午夜语义 |
