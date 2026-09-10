@@ -1,22 +1,21 @@
-import * as React from "react"
-import { Toaster as Sonner, type ToasterProps } from "sonner"
+// sonner Toaster(唯一 toast 通道;主题跟随应用)
+import { Toaster as Sonner, type ToasterProps } from 'sonner';
 
-// shadcn 官方 sonner 封装:表面色映射到 popover/border token,
-// 随 .dark 类自动跟随主题,不引入 sonner 内置配色。
-const Toaster = ({ ...props }: ToasterProps) => {
+function Toaster(props: ToasterProps) {
   return (
     <Sonner
       className="toaster group"
-      style={
-        {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-        } as React.CSSProperties
-      }
+      position="bottom-right"
+      toastOptions={{
+        classNames: {
+          toast:
+            'group toast group-[.toaster]:bg-card group-[.toaster]:text-card-foreground group-[.toaster]:border group-[.toaster]:border-border group-[.toaster]:shadow-lg',
+          description: 'group-[.toast]:text-muted-foreground',
+        },
+      }}
       {...props}
     />
-  )
+  );
 }
 
-export { Toaster }
+export { Toaster };

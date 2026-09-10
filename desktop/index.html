@@ -3,7 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>刷题 Agent</title>
+    <title>CommitCareer</title>
+    <script>
+      // 首帧主题:正式值持久在 DB(meta.theme),这里读 localStorage 镜像避免启动闪色
+      try {
+        if (localStorage.getItem('cc-theme') === 'dark') document.documentElement.classList.add('dark');
+      } catch {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

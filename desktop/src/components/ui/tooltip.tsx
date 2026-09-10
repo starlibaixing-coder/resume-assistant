@@ -1,36 +1,33 @@
-import * as React from "react"
-import * as TooltipPrimitive from "@radix-ui/react-tooltip"
+// shadcn/ui Tooltip(官方源码)
+import * as React from 'react';
+import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 
-import { cn } from "@/lib/utils"
+import { cn } from '@/lib/utils';
 
-// shadcn 官方 Tooltip(Radix 行为 + token 样式),供行内 icon 按钮的 hover 说明用。
-const TooltipProvider = TooltipPrimitive.Provider
+function TooltipProvider({ delayDuration = 200, ...props }: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
+  return <TooltipPrimitive.Provider data-slot="tooltip-provider" delayDuration={delayDuration} {...props} />;
+}
 
-// 自带 Provider(delay 0):调用方直接 <Tooltip> 即用,不必逐处包 Provider
-const Tooltip = ({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Root>) => (
-  <TooltipProvider delayDuration={0}>
-    <TooltipPrimitive.Root {...props} />
-  </TooltipProvider>
-)
+const Tooltip = TooltipPrimitive.Root;
+const TooltipTrigger = TooltipPrimitive.Trigger;
 
-const TooltipTrigger = TooltipPrimitive.Trigger
+function TooltipContent({ className, sideOffset = 6, children, ...props }: React.ComponentProps<typeof TooltipPrimitive.Content>) {
+  return (
+    <TooltipPrimitive.Portal>
+      <TooltipPrimitive.Content
+        data-slot="tooltip-content"
+        sideOffset={sideOffset}
+        className={cn(
+          'z-50 w-fit origin-(--radix-tooltip-content-transform-origin) rounded-md bg-foreground px-2.5 py-1 text-xs text-background',
+          '',
+          className,
+        )}
+        {...props}
+      >
+        {children}
+      </TooltipPrimitive.Content>
+    </TooltipPrimitive.Portal>
+  );
+}
 
-const TooltipContent = React.forwardRef<
-  React.ElementRef<typeof TooltipPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
-  <TooltipPrimitive.Portal>
-    <TooltipPrimitive.Content
-      ref={ref}
-      sideOffset={sideOffset}
-      className={cn(
-        "z-50 w-fit rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground",
-        className
-      )}
-      {...props}
-    />
-  </TooltipPrimitive.Portal>
-))
-TooltipContent.displayName = TooltipPrimitive.Content.displayName
-
-export { Tooltip, TooltipTrigger, TooltipProvider, TooltipContent }
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };

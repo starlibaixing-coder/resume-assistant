@@ -1,166 +1,170 @@
-@import "tailwindcss";
-@plugin "@tailwindcss/typography";
+@import 'tailwindcss';
 
-/* 让 dark: 变体跟随 .dark 类(ThemeProvider 切换),而非 prefers-color-scheme。 */
 @custom-variant dark (&:is(.dark *));
 
-/* ── 设计语言 v8「暖纸书页」(2026-09-07,specs/2026-09-04-ui-redesign.md §v8)──
-   用户选定方向 B:米纸底、墨色字、朱砂点缀、宋体标题的阅读感(微信读书/纸书式)。
-   默认浅色纸面;深色为「夜读」暖黑纸伴生主题,同一身份。
-   显示字体 = 宋体系(题目大标题/页头),中文正文走系统黑体。 */
-
+/* ===== 主题值:浅色「暖纸」 / 深色「夜读」 =====
+   纸面=paper→--background / 卡面→--card / 加深输入面→--input
+   朱砂→--primary / ok·warn·bad→--success·--warning·--destructive
+   唯一取色处:所有组件只允许用这些语义 token,禁止魔法色值。 */
 :root {
-  --background: hsl(42 45% 94%);
-  --foreground: hsl(50 10% 16%);
-
-  --card: hsl(45 55% 98%);
-  --card-foreground: hsl(50 10% 16%);
-
-  --popover: hsl(45 55% 98%);
-  --popover-foreground: hsl(50 10% 16%);
-
-  --sidebar: hsl(43 32% 89%);
-  --sidebar-foreground: hsl(45 15% 35%);
-
-  --primary: hsl(12 60% 47%);
-  --primary-foreground: hsl(45 60% 97%);
-
-  --secondary: hsl(43 32% 91%);
-  --secondary-foreground: hsl(50 10% 25%);
-
-  --muted: hsl(43 32% 91%);
-  --muted-foreground: hsl(44 10% 50%);
-
-  --accent: hsl(43 35% 90%);
-  --accent-foreground: hsl(50 10% 20%);
-
-  --destructive: hsl(8 60% 47%);
-  --destructive-foreground: hsl(45 60% 97%);
-
-  --success: hsl(100 25% 35%);
-  --success-foreground: hsl(45 60% 97%);
-
-  --warning: hsl(45 60% 32%);
-  --warning-foreground: hsl(45 60% 97%);
-
-  --border: hsl(43 28% 83%);
-  --input: hsl(43 28% 81%);
-  --ring: hsl(12 60% 47%);
-
-  --radius: 0.5rem;
+  --radius: 0.625rem;
+  --background: #f5f0e6;
+  --foreground: #2b2318;
+  --card: #fbf8f1;
+  --card-foreground: #2b2318;
+  --muted: #ece5d4;
+  --muted-foreground: #7a6d55;
+  --accent: #f0e8d6;
+  --accent-foreground: #2b2318;
+  --primary: #bc3f2c;
+  --primary-foreground: #fdf6ee;
+  --input: #ede6d5;
+  --border: #e0d6bf;
+  --ring: #bc3f2c;
+  --destructive: #9e2f23;
+  --success: #3e7a52;
+  --warning: #a8721c;
 }
 
 .dark {
-  --background: hsl(40 10% 10%);
-  --foreground: hsl(45 25% 86%);
-
-  --card: hsl(40 10% 13%);
-  --card-foreground: hsl(45 25% 86%);
-
-  --popover: hsl(40 10% 13%);
-  --popover-foreground: hsl(45 25% 86%);
-
-  --sidebar: hsl(40 12% 8%);
-  --sidebar-foreground: hsl(45 15% 65%);
-
-  --primary: hsl(12 65% 62%);
-  --primary-foreground: hsl(45 30% 10%);
-
-  --secondary: hsl(40 8% 15%);
-  --secondary-foreground: hsl(45 25% 86%);
-
-  --muted: hsl(40 8% 15%);
-  --muted-foreground: hsl(45 12% 60%);
-
-  --accent: hsl(40 10% 17%);
-  --accent-foreground: hsl(45 25% 86%);
-
-  --destructive: hsl(8 65% 60%);
-  --destructive-foreground: hsl(45 30% 10%);
-
-  --success: hsl(100 30% 55%);
-  --success-foreground: hsl(45 30% 10%);
-
-  --warning: hsl(45 70% 60%);
-  --warning-foreground: hsl(45 30% 10%);
-
-  --border: hsl(45 20% 85% / 0.12);
-  --input: hsl(45 20% 85% / 0.16);
-  --ring: hsl(12 65% 62%);
+  --background: #191411;
+  --foreground: #ece2cf;
+  --card: #221b16;
+  --card-foreground: #ece2cf;
+  --muted: #2b231c;
+  --muted-foreground: #a3947b;
+  --accent: #2d251d;
+  --accent-foreground: #ece2cf;
+  --primary: #e06a4b;
+  --primary-foreground: #20120d;
+  --input: #2e261f;
+  --border: #372e25;
+  --ring: #e06a4b;
+  --destructive: #e2574a;
+  --success: #7fb998;
+  --warning: #d9a552;
 }
 
+/* 语义变量 → Tailwind 工具类(官方 v4 模式) */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-success: var(--success);
-  --color-success-foreground: var(--success-foreground);
-  --color-warning: var(--warning);
-  --color-warning-foreground: var(--warning-foreground);
-  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
   --color-input: var(--input);
+  --color-border: var(--border);
   --color-ring: var(--ring);
-  --radius-lg: var(--radius);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
   --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
-  /* 显示字体:宋体系,用于题目大标题与页头(书卷身份);中文正文走系统黑体 */
-  --font-display: "Songti SC", "STSong", "SimSun", Georgia, "Times New Roman", serif;
-  --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
-    "Microsoft YaHei", "Segoe UI", Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", "Fira Code", Consolas, "PingFang SC", "Microsoft YaHei", monospace;
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* 展示字体:宋体系,用于题干 / 页头 / 小结标题;正文系统无衬线 */
+@theme {
+  --font-display: 'Songti SC', 'STSong', 'Noto Serif SC', 'SimSun', serif;
 }
 
 @layer base {
-  body {
-    background-color: var(--background);
-    color: var(--foreground);
-    font-family: var(--font-sans);
-  }
   * {
     border-color: var(--border);
   }
+  /* 原生 button 默认色(buttontext)不随主题;自定义按钮一律继承前景色 */
+  button {
+    color: inherit;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family:
+      system-ui,
+      -apple-system,
+      'PingFang SC',
+      'Microsoft YaHei',
+      sans-serif;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
   ::selection {
-    background-color: hsl(12 60% 47% / 0.16);
+    background: color-mix(in srgb, var(--primary) 22%, transparent);
   }
-  @media (prefers-reduced-motion: no-preference) {
-    .page-enter {
-      animation: page-enter 0.35s cubic-bezier(0.2, 0.7, 0.3, 1) both;
-    }
-    .stagger > * {
-      animation: page-enter 0.3s cubic-bezier(0.2, 0.7, 0.3, 1) both;
-    }
-    .stagger > *:nth-child(1) { animation-delay: 0.02s; }
-    .stagger > *:nth-child(2) { animation-delay: 0.06s; }
-    .stagger > *:nth-child(3) { animation-delay: 0.1s; }
-    .stagger > *:nth-child(4) { animation-delay: 0.14s; }
-    .stagger > *:nth-child(5) { animation-delay: 0.18s; }
-    .stagger > *:nth-child(6) { animation-delay: 0.22s; }
-    .stagger > *:nth-child(7) { animation-delay: 0.26s; }
-    .stagger > *:nth-child(8) { animation-delay: 0.3s; }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
   }
-  @keyframes page-enter {
-    from {
-      opacity: 0;
-      transform: translateY(6px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--muted-foreground) 28%, transparent);
+    border-radius: 5px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
     }
   }
+}
+
+/* 轻动效(150–220ms,只做透明度/阴影;prefers-reduced-motion 时被上方规则归零) */
+@keyframes cc-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+[data-slot='dialog-overlay'],
+[data-slot='alert-dialog-overlay'],
+[data-slot='select-content'],
+[data-slot='tooltip-content'] {
+  animation: cc-fade-in 150ms ease-out;
+}
+[data-slot='dialog-content'],
+[data-slot='alert-dialog-content'] {
+  animation: cc-fade-in 180ms ease-out;
+}
+
+/* CodeMirror 只吃语义 token(草稿纸编辑器) */
+.cm-editor {
+  background: transparent;
+  font-size: 13px;
+}
+.cm-editor.cm-focused {
+  outline: none;
+}
+.cm-editor .cm-gutters {
+  background: transparent;
+  color: var(--muted-foreground);
+  border-right: 1px solid var(--border);
+}
+.cm-editor .cm-activeLine {
+  background: color-mix(in srgb, var(--muted) 55%, transparent);
+}
+.cm-editor .cm-activeLineGutter {
+  background: transparent;
+  color: var(--foreground);
+}
+.cm-editor .cm-selectionBackground,
+.cm-editor.cm-focused .cm-selectionBackground {
+  background: color-mix(in srgb, var(--primary) 18%, transparent) !important;
 }
