@@ -1,4 +1,4 @@
-// 壳:文字侧栏(216px,研习/求职两组)+ 内容 Outlet + 底部状态栏(§6.2)。
+// 壳:文字侧栏(216px,学习/求职两组)+ 内容 Outlet + 底部状态栏(§6.2)。
 // 专注模式:html.cc-focus 下 [data-chrome] 隐藏(FocusLayer 联动,题干放大在 session 页)。
 // document.title = {页面名} · CommitCareer。
 
