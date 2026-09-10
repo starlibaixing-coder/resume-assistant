@@ -98,10 +98,10 @@ export function TodayPage() {
         <section>
           <SectionTitle title="题库概览" />
           <div className="grid grid-cols-4 gap-3">
-            <StatTile label="待学习" n={counts.new} onClick={() => navigate('/library?status=new')} />
-            <StatTile label="待复习" n={counts.due} onClick={() => navigate('/library?status=due')} />
+            <StatTile label="待学习" n={counts.new} onClick={() => navigate('/library?cat=all&status=new')} />
+            <StatTile label="待复习" n={counts.due} onClick={() => navigate('/library?cat=all&status=due')} />
             <StatTile label="待审核" n={counts.pending} onClick={() => navigate('/review')} accent />
-            <StatTile label="已掌握" n={counts.mastered} onClick={() => navigate('/library?status=mastered')} />
+            <StatTile label="已掌握" n={counts.mastered} onClick={() => navigate('/library?cat=all&status=mastered')} />
           </div>
         </section>
 
@@ -162,7 +162,7 @@ function DueList({ due, total }: { due: Question[]; total: number }) {
         <li>
           <button
             type="button"
-            onClick={() => navigate('/library?status=due')}
+            onClick={() => navigate('/library?cat=all&status=due')}
             className="cursor-pointer py-2 text-sm text-primary"
           >
             查看全部 {total} 道

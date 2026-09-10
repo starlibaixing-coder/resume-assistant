@@ -26,8 +26,8 @@ export function StatusBar() {
   return (
     <footer data-chrome className="flex h-8 shrink-0 items-center gap-4 bg-card/50 px-4 text-xs text-muted-foreground">
       <div className="flex items-center gap-3">
-        <StatusChip label="待学习" n={counts.new} active={pathname === '/library'} onClick={() => go('/library?status=new')} />
-        <StatusChip label="待复习" n={counts.due} active={false} onClick={() => go('/library?status=due')} />
+        <StatusChip label="待学习" n={counts.new} active={pathname === '/library'} onClick={() => go('/library?cat=all&status=new')} />
+        <StatusChip label="待复习" n={counts.due} active={false} onClick={() => go('/library?cat=all&status=due')} />
         <StatusChip label="待审核" n={counts.pending} active={pathname === '/review'} onClick={() => go('/review')} />
       </div>
       <span className={cn('flex items-center gap-1', streakN > 0 && 'text-success')}>

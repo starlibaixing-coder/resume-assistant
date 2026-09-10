@@ -72,7 +72,7 @@ export function CommandPalette({
         <CommandEmpty>没有匹配的结果</CommandEmpty>
         <CommandGroup heading="动作">
           <CommandItem value="复习" onSelect={startReview}>
-            复习<CommandShortcut>到期 {counts.due} 题</CommandShortcut>
+            复习<CommandShortcut>复习日已到 {counts.due} 题</CommandShortcut>
           </CommandItem>
           {counts.new > 0 && (
             <CommandItem value="学习" onSelect={startStudy}>

@@ -23,7 +23,7 @@ import { STATUS_LABEL } from '@/lib/types';
 import type { Question } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
-type CatKey = 'fe' | 'agent' | 'my';
+type CatKey = 'all' | 'fe' | 'agent' | 'my';
 
 export function LibraryPage() {
   const [params, setParams] = useSearchParams();
@@ -34,7 +34,8 @@ export function LibraryPage() {
 
   const lastCat = (getMeta('last_bank_cat') as CatKey) || 'fe';
   const catParam = (params.get('cat') as CatKey | null) ?? null;
-  const cat: CatKey = catParam === 'fe' || catParam === 'agent' || catParam === 'my' ? catParam : categories.some((c) => c.slug === lastCat) ? lastCat : categories[0]?.slug as CatKey ?? 'fe';
+  const isCat = (v: CatKey | null | undefined): v is CatKey => v === 'all' || v === 'fe' || v === 'agent' || v === 'my';
+  const cat: CatKey = isCat(catParam) ? catParam : isCat(lastCat) && (lastCat === 'all' || categories.some((c) => c.slug === lastCat)) ? lastCat : 'fe';
 
   const [status, setStatus] = useState<StatusFilter>((params.get('status') as StatusFilter | null) ?? 'all');
   const [difficulty, setDifficulty] = useState<DifficultyFilter>('all');
@@ -46,6 +47,7 @@ export function LibraryPage() {
   const [selectedId, setSelectedId] = useState<string | null>(qid);
 
   const pool = useMemo(() => {
+    if (cat === 'all') return [...official, ...my.filter((q) => q.status === 'approved')];
     if (cat === 'my') return my;
     return official.filter((q) => q.category === cat);
   }, [cat, official, my]);
@@ -64,6 +66,12 @@ export function LibraryPage() {
   useEffect(() => {
     if (qid) setSelectedId(qid);
   }, [qid]);
+
+  // ?status= 深链(状态栏/今日概览)→ 同页导航时同步筛选状态
+  useEffect(() => {
+    const s = params.get('status') as StatusFilter | null;
+    setStatus(s && s !== 'all' ? s : 'all');
+  }, [params]);
 
   // 选中题滚动进可视区
   const rowRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -85,6 +93,12 @@ export function LibraryPage() {
     return () => registerListNav(null);
   }, [filtered]);
 
+  const switchCat = (next: CatKey) => {
+    setSource('all');
+    setModule('all');
+    updateParam('cat', next);
+  };
+
   const updateParam = (key: string, v: string | null) => {
     const next = new URLSearchParams(params);
     if (v == null || v === '') next.delete(key);
@@ -104,17 +118,18 @@ export function LibraryPage() {
       {/* 行1:分类页签 + 搜索 */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1">
+          <CategoryTab active={cat === 'all'} label="全部" onClick={() => switchCat('all')} />
           <CategoryTab
             active={cat === 'fe'}
             label={categories.find((c) => c.slug === 'fe')?.name ?? '前端'}
-            onClick={() => updateParam('cat', 'fe')}
+            onClick={() => switchCat('fe')}
           />
           <CategoryTab
             active={cat === 'agent'}
             label={categories.find((c) => c.slug === 'agent')?.name ?? 'Agent'}
-            onClick={() => updateParam('cat', 'agent')}
+            onClick={() => switchCat('agent')}
           />
-          <CategoryTab active={cat === 'my'} label="我的题库" onClick={() => updateParam('cat', 'my')} />
+          <CategoryTab active={cat === 'my'} label="我的题库" onClick={() => switchCat('my')} />
         </div>
         <div className="relative">
           <SearchIcon className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
