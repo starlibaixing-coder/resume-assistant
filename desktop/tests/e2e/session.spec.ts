@@ -29,7 +29,7 @@ test('复习全流程:揭示 → 掌握 → 下一题 → 小结统计', async (
   await expect(page.getByTestId('question-title')).toContainText('到期题甲', { timeout: 4000 });
   await page.getByTestId('reveal-btn').click();
   await page.getByTestId('rating-bar').getByRole('button', { name: /不会/ }).click();
-  // 评 no → 重练副本排在队尾(第 3 题),重练评掌握后才进小结
+  // 评 no → 重练副本立即重问(下一题就是它)
   await expect(page.getByTestId('question-title')).toContainText('到期题甲', { timeout: 4000 });
   await page.getByTestId('reveal-btn').click();
   await page.getByTestId('rating-bar').getByRole('button', { name: /掌握/ }).click();

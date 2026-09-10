@@ -93,7 +93,7 @@ describe('会话引擎:评分 / 重练 / 小结', () => {
     reveal();
     rateCurrent('no', NOW);
     const snap = getSessionSnapshot();
-    expect(snap!.items.map((i) => [i.qid, !!i.isRetry])).toEqual([['a', false], ['b', false], ['a', true]]);
+    expect(snap!.items.map((i) => [i.qid, !!i.isRetry])).toEqual([['a', false], ['a', true], ['b', false]]);
     // 结果条期间锁定:再评无效,最终仍为 no
     rateCurrent('fuzzy', NOW + 1);
     confirmAdvance();
@@ -150,7 +150,7 @@ describe('会话引擎:评分 / 重练 / 小结', () => {
     reveal();
     rateCurrent('ok', NOW + 2000);
     confirmAdvance();
-    // 重练副本 a:评 ok,覆盖当日 a 的 no
+    // 重练副本 a 紧随其后:评 ok,覆盖当日 a 的 no
     reveal();
     rateCurrent('ok', NOW + 3000);
     confirmAdvance();

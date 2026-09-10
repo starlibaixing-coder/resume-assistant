@@ -4,7 +4,7 @@
 //   学习 = 待学习按 id 升序,上限 batch_size
 //   学习全部题目 = 全部 approved,id 升序,不限量(Q9)
 //   单题直练 = [qid]
-// 重练:评 no 且本轮未重练过 → push 副本(D17;重练覆盖 = 直接再调 rate,以最后评分为准)
+// 重练:评 no 且本轮未重练过 → 副本插队到下一题,当场重问(D17;重练覆盖 = 直接再调 rate,以最后评分为准)
 // 消失题(ADR-0004):渲染前查存在性,缺失 → 跳过不计小结。
 // activity:每次评分后 rating_log 按题重算当日行(中途退出不丢统计)。
 
@@ -157,7 +157,7 @@ export function rateCurrent(rating: 'ok' | 'fuzzy' | 'no', now = Date.now()): vo
     // 重练:仅首遇 no 且本轮未重练过
     const alreadyRetried = session.items.some((it) => it.qid === qid && it.isRetry);
     if (rating === 'no' && !isRetry && !alreadyRetried) {
-      session.items.push({ qid, isRetry: true });
+      session.items.splice(session.index + 1, 0, { qid, isRetry: true });
     }
   }
   session.locked = true;
