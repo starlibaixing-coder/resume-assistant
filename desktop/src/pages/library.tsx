@@ -1,4 +1,4 @@
-// 题库(M4):双栏工作台 —— 左:分类 Tabs + 筛选芯片(状态五档/难度/来源)+ 模块下拉 + 题目表(>200 虚拟滚动);
+// 题库(M4):双栏工作台 —— 左:分类页签 + 筛选按钮组(状态五档/难度/来源)+ 模块下拉 + 题目表(>200 虚拟滚动);
 // 右:选中题详情(编辑就地)。深链 ?cat= ?qid= ?status=;↑/↓ 移动选中;分类记忆 meta.last_bank_cat。
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';

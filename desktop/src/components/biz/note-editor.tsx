@@ -40,7 +40,7 @@ export function NoteEditor({ qid, initial }: { qid: string; initial: string }) {
           setValue(e.target.value);
           setDirty(true);
         }}
-        placeholder="这一题的坑、自己的话术、容易忘的点…"
+        placeholder="记录要点、易错点与自己的思路…"
         className="min-h-20 bg-input/70 text-sm"
       />
       {dirty && (

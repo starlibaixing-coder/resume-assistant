@@ -91,7 +91,7 @@ export function JdPage() {
 
         <div className="min-h-0 flex-1 overflow-y-auto rounded-xl bg-card shadow-sm" data-testid="jd-list">
           {jds.length === 0 && !creating ? (
-            <EmptyState title="还没有 JD" description="粘贴一条招聘要求,让 AI 对着它帮你找盲区。" />
+            <EmptyState title="还没有 JD" description="粘贴招聘要求原文,AI 可据此生成题目,定位知识盲区。" />
           ) : (
             <div className="divide-y divide-border/60">
               {jds.map((j) => (

@@ -67,7 +67,7 @@ export function CodeScratchpad({ qid, initial, className }: { qid: string; initi
         extensions={EXTENSIONS}
         basicSetup={BASIC_SETUP}
         height="200px"
-        placeholder="// 随手写点思路,⌘↩ 没绑定这里,点「运行」执行"
+        placeholder="// 在此书写或验证代码,点击「运行」执行"
       />
       {(logs.length > 0 || error) && (
         <div role="log" aria-label="运行输出" className="max-h-40 overflow-y-auto border-t border-border/60 px-3 py-2 font-mono text-xs leading-relaxed">

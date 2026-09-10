@@ -39,10 +39,10 @@ test('复习全流程:揭示 → 掌握 → 下一题 → 小结统计', async (
   await expect(page.getByTestId('today-page')).toBeVisible();
 });
 
-test('空会话空态与再过一遍入口', async ({ page }) => {
+test('空会话空态与总复习入口', async ({ page }) => {
   await page.goto('/#/session');
   await expect(page.getByRole('main').getByText('学习队列')).toBeVisible();
-  await expect(page.getByText('再过一遍(全部题)')).toBeVisible();
+  await expect(page.getByText(/总复习\(全部 \d+ 题\)/)).toBeVisible();
 });
 
 test('草稿纸:写入代码并运行,输出可见', async ({ page }) => {

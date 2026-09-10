@@ -22,7 +22,7 @@ import { getCodeDraft, getMeta, getNote, getQuestion, getReviewStates } from '@/
 import type { BatchSize, Question, Rating } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
-const TYPE_LABEL = { review: '复习', study: '学习', again: '再过一遍', single: '单题练习' } as const;
+const TYPE_LABEL = { review: '复习', study: '学习', again: '总复习', single: '单题练习' } as const;
 
 export function SessionPage() {
   const navigate = useNavigate();
@@ -73,8 +73,8 @@ export function SessionPage() {
             />
             <SessionEntry
               icon={<LayersIcon />}
-              title="再过一遍(全部题)"
-              desc="不按进度筛选,全库题目顺序过一遍,适合阶段自查。"
+              title={`总复习(全部 ${pool.length} 题)`}
+              desc="覆盖全部已入库题目,不按进度筛选,用于阶段自查。"
               disabled={pool.length === 0}
               onClick={() => start('again')}
             />
