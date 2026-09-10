@@ -1,10 +1,11 @@
 // 题库(M4):双栏工作台 —— 左:分类页签 + 筛选按钮组(状态五档/难度/来源)+ 模块下拉 + 题目表(>200 虚拟滚动);
 // 右:选中题详情(编辑就地)。深链 ?cat= ?qid= ?status=;↑/↓ 移动选中;分类记忆 meta.last_bank_cat。
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { SearchIcon } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EmptyState } from '@/components/biz/states';
@@ -46,6 +47,8 @@ export function LibraryPage() {
     if (cat === 'my') return my;
     return official.filter((q) => q.category === cat);
   }, [cat, official, my]);
+
+  const filterActive = status !== 'all' || difficulty !== 'all' || source !== 'all' || module !== 'all' || search !== '';
 
   const filtered = useMemo(
     () => filterQuestions(pool, getCardMap(), { status, difficulty, source, module, search }, Date.now()),
@@ -98,56 +101,95 @@ export function LibraryPage() {
     <div className="flex h-full min-h-0">
       {/* 左栏:列表 */}
       <section className="flex min-h-0 w-[54%] min-w-0 flex-col gap-3 px-6 py-5">
-        <div className="flex items-center gap-1">
-          <CategoryTab
-            active={cat === 'fe'}
-            label={categories.find((c) => c.slug === 'fe')?.name ?? '前端'}
-            onClick={() => updateParam('cat', 'fe')}
-          />
-          <CategoryTab
-            active={cat === 'agent'}
-            label={categories.find((c) => c.slug === 'agent')?.name ?? 'Agent'}
-            onClick={() => updateParam('cat', 'agent')}
-          />
-          <CategoryTab active={cat === 'my'} label="我的题库" onClick={() => updateParam('cat', 'my')} />
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-1">
+            <CategoryTab
+              active={cat === 'fe'}
+              label={categories.find((c) => c.slug === 'fe')?.name ?? '前端'}
+              onClick={() => updateParam('cat', 'fe')}
+            />
+            <CategoryTab
+              active={cat === 'agent'}
+              label={categories.find((c) => c.slug === 'agent')?.name ?? 'Agent'}
+              onClick={() => updateParam('cat', 'agent')}
+            />
+            <CategoryTab active={cat === 'my'} label="我的题库" onClick={() => updateParam('cat', 'my')} />
+          </div>
+          <div className="relative">
+            <SearchIcon className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="搜索题干 / 标签"
+              aria-label="搜索题干或标签"
+              className="h-9 w-52 bg-input pl-8"
+            />
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <FilterGroup label="状态">
-            <ChipRow
-              options={[{ v: 'all', label: '全部' }, ...(Object.keys(STATUS_LABEL) as DerivedStatus[]).map((s) => ({ v: s, label: STATUS_LABEL[s] }))]}
-              value={status}
-              onChange={(v) => { setStatus(v as StatusFilter); updateParam('status', v === 'all' ? null : v); }}
-            />
-          </FilterGroup>
-          <FilterGroup label="难度">
-            <ChipRow
-              options={[{ v: 'all', label: '全部' }, { v: '初', label: '简单' }, { v: '中', label: '中等' }, { v: '高', label: '困难' }]}
-              value={difficulty}
-              onChange={(v) => setDifficulty(v as DifficultyFilter)}
-            />
-          </FilterGroup>
+        <div className="flex flex-wrap items-center gap-2">
+          <Select value={status} onValueChange={(v) => { setStatus(v as StatusFilter); updateParam('status', v === 'all' ? null : v); }}>
+            <SelectTrigger aria-label="按状态筛选" className="h-9 w-[120px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部状态</SelectItem>
+              {(Object.keys(STATUS_LABEL) as DerivedStatus[]).map((s) => (
+                <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={difficulty} onValueChange={(v) => setDifficulty(v as DifficultyFilter)}>
+            <SelectTrigger aria-label="按难度筛选" className="h-9 w-[108px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部难度</SelectItem>
+              <SelectItem value="初">简单</SelectItem>
+              <SelectItem value="中">中等</SelectItem>
+              <SelectItem value="高">困难</SelectItem>
+            </SelectContent>
+          </Select>
           {cat === 'my' && (
-            <FilterGroup label="来源">
-              <ChipRow
-                options={[
-                  { v: 'all', label: '全部' },
-                  { v: 'manual', label: '手动' }, { v: 'ai', label: 'AI' }, { v: 'jd', label: 'JD' }, { v: 'copy', label: '复制' },
-                ]}
-                value={source}
-                onChange={(v) => setSource(v as SourceFilter)}
-              />
-            </FilterGroup>
+            <Select value={source} onValueChange={(v) => setSource(v as SourceFilter)}>
+              <SelectTrigger aria-label="按来源筛选" className="h-9 w-[108px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部来源</SelectItem>
+                <SelectItem value="manual">手动</SelectItem>
+                <SelectItem value="ai">AI</SelectItem>
+                <SelectItem value="jd">JD</SelectItem>
+                <SelectItem value="copy">复制</SelectItem>
+              </SelectContent>
+            </Select>
           )}
           {modulesOf(pool).length > 1 && (
-            <FilterGroup label="模块">
-              <ModuleSelect modules={modulesOf(pool)} value={module} onChange={setModule} />
-            </FilterGroup>
+            <Select value={String(module)} onValueChange={(v) => setModule(v === 'all' ? 'all' : Number(v))}>
+              <SelectTrigger aria-label="按模块筛选" className="h-9 w-[150px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部模块</SelectItem>
+                {modulesOf(pool).map((m) => (
+                  <SelectItem key={m.module} value={String(m.module)}>
+                    {m.name}({m.count})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
-          <div className="relative">
-            <SearchIcon className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="搜索题干 / 标签" className="h-8 w-44 bg-input pl-8 text-xs" />
-          </div>
+          {filterActive && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 text-muted-foreground"
+              onClick={() => { setStatus('all'); setDifficulty('all'); setSource('all'); setModule('all'); setSearch(''); updateParam('status', null); }}
+              data-testid="filter-reset"
+            >
+              重置
+            </Button>
+          )}
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto rounded-xl bg-card shadow-sm" data-testid="question-table">
@@ -204,72 +246,6 @@ function CategoryTab({ active, label, onClick }: { active: boolean; label: strin
     >
       {label}
     </button>
-  );
-}
-
-function FilterGroup({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-xs text-muted-foreground/80">{label}</span>
-      {children}
-    </div>
-  );
-}
-
-function ChipRow({
-  options,
-  value,
-  onChange,
-}: {
-  options: { v: string; label: string }[];
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div className="flex items-center gap-1">
-      {options.map((o) => (
-        <button
-          key={o.v}
-          type="button"
-          onClick={() => onChange(o.v)}
-          className={cn(
-            'cursor-pointer rounded-full px-2.5 py-1 text-xs transition-colors duration-150',
-            value === o.v
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted/70 text-muted-foreground hover:bg-accent hover:text-foreground',
-          )}
-        >
-          {o.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function ModuleSelect({
-  modules,
-  value,
-  onChange,
-}: {
-  modules: { module: number; name: string; count: number }[];
-  value: number | 'all';
-  onChange: (v: number | 'all') => void;
-}) {
-  if (modules.length <= 1) return null;
-  return (
-    <Select value={String(value)} onValueChange={(v) => onChange(v === 'all' ? 'all' : Number(v))}>
-      <SelectTrigger className="h-8 w-44 text-xs" aria-label="模块筛选">
-        <SelectValue placeholder="全部模块" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="all">全部模块</SelectItem>
-        {modules.map((m) => (
-          <SelectItem key={m.module} value={String(m.module)}>
-            {m.name}({m.count})
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
   );
 }
 

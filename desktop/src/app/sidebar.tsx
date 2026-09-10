@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 
 const GROUPS: { label: string; items: { path: string; title: string; icon: typeof CalendarDaysIcon }[] }[] = [
   {
-    label: '研习',
+    label: '学习',
     items: [
       { path: '/', title: '今日', icon: CalendarDaysIcon },
       { path: '/session', title: '学习队列', icon: CirclePlayIcon },
