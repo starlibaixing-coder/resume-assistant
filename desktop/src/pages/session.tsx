@@ -73,7 +73,7 @@ export function SessionPage() {
             />
             <SessionEntry
               icon={<LayersIcon />}
-              title={`学习全部题目(${pool.length})`}
+              title={`学习全部 · ${pool.length} 题`}
               desc="不区分进度,把题库里的题都学一遍。"
               disabled={pool.length === 0}
               onClick={() => start('again')}

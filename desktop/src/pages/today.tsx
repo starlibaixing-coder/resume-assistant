@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { startSession } from '@/lib/session';
 import { useActivityList, useMyQuestions, useOfficialQuestions, useStatusCounts } from '@/lib/hooks';
 import { getMeta, getReviewStates } from '@/lib/storage';
-import type { BatchSize } from '@/lib/types';
+import type { BatchSize, Question } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 export function TodayPage() {
@@ -26,6 +26,15 @@ export function TodayPage() {
     () => [...official, ...my.filter((q) => q.status === 'approved')],
     [official, my],
   );
+
+  const dueList = useMemo(
+    () =>
+      pool
+        .filter((q) => q.status === 'approved' && (getReviewStates().get(q.id)?.dueAt ?? Infinity) <= now)
+        .sort((a, b) => (getReviewStates().get(a.id)?.dueAt ?? 0) - (getReviewStates().get(b.id)?.dueAt ?? 0)),
+    [pool, now],
+  );
+
   const batchMeta = getMeta('batch_size');
   const batch: BatchSize = batchMeta === '20' || batchMeta === '50' || batchMeta === 'all' ? batchMeta : '50';
   const studyN = batch === 'all' ? counts.new : Math.min(counts.new, Number(batch));
@@ -40,7 +49,7 @@ export function TodayPage() {
   const dateLine = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' }).format(now);
 
   const hero = counts.due > 0
-    ? { key: 'review', title: `复习 ${counts.due} 题`, desc: '这些题到了复习日。复习日由你上次的掌握情况决定:评「不会」明天再来,评「掌握」隔得更久。', cta: '复习', onClick: () => start('review') }
+    ? { key: 'review', title: `复习 ${counts.due} 题`, desc: '这些题到了复习日。复习日由上次的掌握情况决定:评「不会」明天再来,评「模糊」缩短间隔,评「掌握」隔得更久。', cta: '复习', onClick: () => start('review') }
     : counts.new > 0
       ? { key: 'study', title: `学习 ${studyN} 题`, desc: '当前没有到期的复习,先学一批新题。', cta: '学习', onClick: () => start('study') }
       : null;
@@ -67,12 +76,8 @@ export function TodayPage() {
                   学习 {studyN} 题
                 </Button>
               )}
-              {hero.key === 'review' && (
-                <Button variant="link" size="sm" onClick={() => navigate('/library?status=due')}>
-                  查看这些题
-                </Button>
-              )}
             </div>
+            {hero.key === 'review' && <DueList due={dueList} total={counts.due} />}
           </section>
         ) : (
           <EmptyState
@@ -133,5 +138,37 @@ function StatTile({ label, n, onClick, accent }: { label: string; n: number; onC
         {n}
       </div>
     </button>
+  );
+}
+
+/** 到期题明细:回答「是哪些题」;点击带所属分类深链进题库抽屉 */
+function DueList({ due, total }: { due: Question[]; total: number }) {
+  const navigate = useNavigate();
+  return (
+    <ul className="mt-5 divide-y divide-border/60 border-t border-border/60 pt-1" data-testid="due-list">
+      {due.slice(0, 5).map((q) => (
+        <li key={q.id}>
+          <button
+            type="button"
+            onClick={() => navigate(`/library?cat=${q.category}&qid=${encodeURIComponent(q.id)}`)}
+            className="flex w-full cursor-pointer items-center gap-3 py-2 text-left transition-colors duration-150 hover:text-primary"
+          >
+            <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{q.title}</span>
+            <span className="shrink-0 text-xs text-muted-foreground/70">{q.moduleName}</span>
+          </button>
+        </li>
+      ))}
+      {total > due.length && (
+        <li>
+          <button
+            type="button"
+            onClick={() => navigate('/library?status=due')}
+            className="cursor-pointer py-2 text-sm text-primary"
+          >
+            查看全部 {total} 道
+          </button>
+        </li>
+      )}
+    </ul>
   );
 }

@@ -19,7 +19,7 @@ export function ActivityList({ days, now }: { days: ActivityDay[]; now: number }
   if (rows.length === 0) {
     return (
       <div className="rounded-xl bg-card px-4 py-6 text-center text-sm text-muted-foreground" data-testid="activity-empty">
-        还没有学习记录,学第一道题后这里会按天汇总。
+        暂无学习记录。
       </div>
     );
   }
