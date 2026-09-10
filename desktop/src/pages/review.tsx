@@ -94,7 +94,7 @@ export function ReviewPage() {
         <div className="flex flex-nowrap items-end justify-between gap-3">
           <div className="min-w-0">
             <h1 className="font-display text-lg font-semibold">审核</h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">AI 生成的题目需人工审核,通过后进入我的题库与学习队列。</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">AI 生成的题目,需人工审核后才能使用。</p>
           </div>
           <span className="shrink-0 whitespace-nowrap rounded-full bg-warning/15 px-2.5 py-1 text-xs font-medium text-warning">
             待审核 {list.length}
