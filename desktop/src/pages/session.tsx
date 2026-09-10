@@ -59,15 +59,15 @@ export function SessionPage() {
           <div className="grid w-full gap-2.5" data-testid="session-entries">
             <SessionEntry
               icon={<RotateCwIcon />}
-              title={dueN > 0 ? `复习 · 到期 ${dueN} 题` : '复习'}
-              desc="到了复习日的题,拖多久都不会消失。"
+              title={dueN > 0 ? `复习 · ${dueN} 题` : '复习'}
+              desc="尚未掌握的题目。"
               disabled={dueN === 0}
               onClick={() => start('review')}
             />
             <SessionEntry
               icon={<BookOpenIcon />}
               title={studyN > 0 ? `学习 · ${studyN} 题` : '学习'}
-              desc="还没有学过的题目,每次一批,数量可在设置中调整。"
+              desc="还没学过的题目,每次一批。"
               disabled={countsNew(pool) === 0}
               onClick={() => start('study')}
             />

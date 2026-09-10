@@ -75,7 +75,7 @@ describe('buildQueue 队列构造', () => {
     expect(out).toHaveLength(3);
   });
 
-  it('全库学习(UI:学习全部题目)= 全部 approved(id 升序),不限量', () => {
+  it('学习全部题目 = 全部 approved(id 升序),不限量', () => {
     const out = buildQueue({ type: 'again', questions: [{ id: 'b' }, { id: 'a' }], cards, batchSize: 'all' });
     expect(out.map((x) => x.qid)).toEqual(['a', 'b']);
   });

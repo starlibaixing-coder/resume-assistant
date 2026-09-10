@@ -49,7 +49,7 @@ export function TodayPage() {
   const dateLine = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' }).format(now);
 
   const hero = counts.due > 0
-    ? { key: 'review', title: `复习 ${counts.due} 题`, desc: '这些题到了复习日。复习日由上次的掌握情况决定:评「不会」明天再来,评「模糊」缩短间隔,评「掌握」隔得更久。', cta: '复习', onClick: () => start('review') }
+    ? { key: 'review', title: `复习 ${counts.due} 题`, desc: '尚未掌握、需要再次复习的题目。', cta: '复习', onClick: () => start('review') }
     : counts.new > 0
       ? { key: 'study', title: `学习 ${studyN} 题`, desc: '当前没有到期的复习,先学一批新题。', cta: '学习', onClick: () => start('study') }
       : null;
