@@ -91,12 +91,14 @@ export function ReviewPage() {
   return (
     <div className="flex h-full min-h-0">
       <section className="flex min-h-0 w-[46%] flex-col gap-3 px-6 py-5">
-        <div className="flex items-end justify-between">
-          <div>
+        <div className="flex flex-nowrap items-end justify-between gap-3">
+          <div className="min-w-0">
             <h1 className="font-display text-lg font-semibold">审核</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">AI 生成的题目需人工审核,通过后进入我的题库与学习队列。</p>
           </div>
-          <span className="rounded-full bg-warning/15 px-2.5 py-1 text-xs font-medium text-warning">待审核 {list.length}</span>
+          <span className="shrink-0 whitespace-nowrap rounded-full bg-warning/15 px-2.5 py-1 text-xs font-medium text-warning">
+            待审核 {list.length}
+          </span>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto rounded-xl bg-card shadow-sm" data-testid="audit-list">

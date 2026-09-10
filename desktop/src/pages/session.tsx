@@ -22,7 +22,7 @@ import { getCodeDraft, getMeta, getNote, getQuestion, getReviewStates } from '@/
 import type { BatchSize, Question, Rating } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
-const TYPE_LABEL = { review: '复习', study: '学习', again: '总复习', single: '单题练习' } as const;
+const TYPE_LABEL = { review: '复习', study: '学习', again: '全库练习', single: '单题练习' } as const;
 
 export function SessionPage() {
   const navigate = useNavigate();
@@ -59,22 +59,22 @@ export function SessionPage() {
           <div className="grid w-full gap-2.5" data-testid="session-entries">
             <SessionEntry
               icon={<RotateCwIcon />}
-              title={dueN > 0 ? `开始复习 · 到期 ${dueN} 题` : '开始复习'}
-              desc="复习今天到期的题目。"
+              title={dueN > 0 ? `复习 · 到期 ${dueN} 题` : '复习'}
+              desc="到了计划复习时间的题,逾期不会失效。"
               disabled={dueN === 0}
               onClick={() => start('review')}
             />
             <SessionEntry
               icon={<BookOpenIcon />}
-              title={studyN > 0 ? `开始学习 · ${studyN} 题` : '开始学习'}
-              desc="学习还没有学过的题目,每次一批,数量可在设置中调整。"
+              title={studyN > 0 ? `学习 · ${studyN} 题` : '学习'}
+              desc="还没有学过的题目,每次一批,数量可在设置中调整。"
               disabled={countsNew(pool) === 0}
               onClick={() => start('study')}
             />
             <SessionEntry
               icon={<LayersIcon />}
-              title={`总复习(全部 ${pool.length} 题)`}
-              desc="不区分学习进度,把全部题目都过一遍,适合阶段性的查漏补缺。"
+              title={`练习全部题目(${pool.length})`}
+              desc="不区分学习进度,题库中的题目按顺序做一遍。"
               disabled={pool.length === 0}
               onClick={() => start('again')}
             />

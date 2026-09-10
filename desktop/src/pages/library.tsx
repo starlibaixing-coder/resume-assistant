@@ -1,5 +1,6 @@
-// 题库(M4):双栏工作台 —— 左:分类页签 + 筛选按钮组(状态五档/难度/来源)+ 模块下拉 + 题目表(>200 虚拟滚动);
-// 右:选中题详情(编辑就地)。深链 ?cat= ?qid= ?status=;↑/↓ 移动选中;分类记忆 meta.last_bank_cat。
+// 题库(M4):全宽列表 + 侧边抽屉详情(点击行打开抽屉;用户指定的交互)。
+// 筛选工具栏:状态/难度/来源(仅我的)/模块 Select 等宽统一 + 搜索;有激活筛选时出现「重置」。
+// 深链 ?cat= ?qid= ?status=;↑/↓ 移动选中(抽屉内容跟随);分类记忆 meta.last_bank_cat。
 
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
@@ -8,6 +9,7 @@ import { SearchIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { EmptyState } from '@/components/biz/states';
 import { DifficultyBadge, StatusBadge } from '@/components/biz/status-badge';
 import { QuestionDetail } from '@/components/biz/question-detail';
@@ -69,7 +71,7 @@ export function LibraryPage() {
     if (selectedId) rowRefs.current.get(selectedId)?.scrollIntoView({ block: 'nearest' });
   }, [selectedId, filtered.length]);
 
-  // ↑/↓ 移动选中(全局热键转发)
+  // ↑/↓ 移动选中(全局热键转发;抽屉打开时内容跟随)
   useEffect(() => {
     registerListNav((dir) => {
       setSelectedId((cur) => {
@@ -90,7 +92,7 @@ export function LibraryPage() {
     setParams(next, { replace: true });
   };
 
-  const selected = filtered.find((q) => q.id === selectedId) ?? filtered[0] ?? null;
+  const selected = filtered.find((q) => q.id === selectedId) ?? null;
 
   const practiceSingle = (id: string) => {
     startSession({ type: 'single', questions: pool, cards: getCardMap(), batchSize: 'all', singleQid: id });
@@ -98,133 +100,136 @@ export function LibraryPage() {
   };
 
   return (
-    <div className="flex h-full min-h-0">
-      {/* 左栏:列表 */}
-      <section className="flex min-h-0 w-[54%] min-w-0 flex-col gap-3 px-6 py-5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-1">
-            <CategoryTab
-              active={cat === 'fe'}
-              label={categories.find((c) => c.slug === 'fe')?.name ?? '前端'}
-              onClick={() => updateParam('cat', 'fe')}
-            />
-            <CategoryTab
-              active={cat === 'agent'}
-              label={categories.find((c) => c.slug === 'agent')?.name ?? 'Agent'}
-              onClick={() => updateParam('cat', 'agent')}
-            />
-            <CategoryTab active={cat === 'my'} label="我的题库" onClick={() => updateParam('cat', 'my')} />
-          </div>
-          <div className="relative">
-            <SearchIcon className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="搜索题干 / 标签"
-              aria-label="搜索题干或标签"
-              className="h-9 w-52 bg-input pl-8"
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Select value={status} onValueChange={(v) => { setStatus(v as StatusFilter); updateParam('status', v === 'all' ? null : v); }}>
-            <SelectTrigger aria-label="按状态筛选" className="h-9 w-[120px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部状态</SelectItem>
-              {(Object.keys(STATUS_LABEL) as DerivedStatus[]).map((s) => (
-                <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={difficulty} onValueChange={(v) => setDifficulty(v as DifficultyFilter)}>
-            <SelectTrigger aria-label="按难度筛选" className="h-9 w-[108px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部难度</SelectItem>
-              <SelectItem value="初">简单</SelectItem>
-              <SelectItem value="中">中等</SelectItem>
-              <SelectItem value="高">困难</SelectItem>
-            </SelectContent>
-          </Select>
-          {cat === 'my' && (
-            <Select value={source} onValueChange={(v) => setSource(v as SourceFilter)}>
-              <SelectTrigger aria-label="按来源筛选" className="h-9 w-[108px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部来源</SelectItem>
-                <SelectItem value="manual">手动</SelectItem>
-                <SelectItem value="ai">AI</SelectItem>
-                <SelectItem value="jd">JD</SelectItem>
-                <SelectItem value="copy">复制</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-          {modulesOf(pool).length > 1 && (
-            <Select value={String(module)} onValueChange={(v) => setModule(v === 'all' ? 'all' : Number(v))}>
-              <SelectTrigger aria-label="按模块筛选" className="h-9 w-[150px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部模块</SelectItem>
-                {modulesOf(pool).map((m) => (
-                  <SelectItem key={m.module} value={String(m.module)}>
-                    {m.name}({m.count})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          {filterActive && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-9 text-muted-foreground"
-              onClick={() => { setStatus('all'); setDifficulty('all'); setSource('all'); setModule('all'); setSearch(''); updateParam('status', null); }}
-              data-testid="filter-reset"
-            >
-              重置
-            </Button>
-          )}
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto rounded-xl bg-card shadow-sm" data-testid="question-table">
-          {filtered.length === 0 ? (
-            <EmptyState title="没有符合筛选的题目" description="调整筛选条件,或到「添加题目」补充。" />
-          ) : filtered.length > 200 ? (
-            <VirtualTable questions={filtered} selectedId={selected?.id ?? null} onSelect={setSelectedId} rowRefs={rowRefs} />
-          ) : (
-            <div className="divide-y divide-border/60">
-              {filtered.map((q) => (
-                <QuestionRow key={q.id} q={q} active={q.id === selected?.id} onSelect={setSelectedId} rowRefs={rowRefs} />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* 右栏:详情 */}
-      <section className="min-h-0 flex-1 border-l border-border/60 bg-card/40">
-        {selected ? (
-          <QuestionDetail
-            key={selected.id}
-            question={selected}
-            onSaved={() => undefined}
-            onDeleted={() => setSelectedId(null)}
-            onCopied={(q) => {
-              updateParam('cat', 'my');
-              setSelectedId(q.id);
-            }}
-            onPractice={practiceSingle}
+    <div className="flex h-full min-h-0 flex-col gap-3 px-6 py-5">
+      {/* 行1:分类页签 + 搜索 */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1">
+          <CategoryTab
+            active={cat === 'fe'}
+            label={categories.find((c) => c.slug === 'fe')?.name ?? '前端'}
+            onClick={() => updateParam('cat', 'fe')}
           />
-        ) : (
-          <EmptyState title="选择一道题" description="在左侧选中题目,即可查看详情与笔记。" />
+          <CategoryTab
+            active={cat === 'agent'}
+            label={categories.find((c) => c.slug === 'agent')?.name ?? 'Agent'}
+            onClick={() => updateParam('cat', 'agent')}
+          />
+          <CategoryTab active={cat === 'my'} label="我的题库" onClick={() => updateParam('cat', 'my')} />
+        </div>
+        <div className="relative">
+          <SearchIcon className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="搜索题干 / 标签"
+            aria-label="搜索题干或标签"
+            className="h-9 w-52 bg-input pl-8"
+          />
+        </div>
+      </div>
+
+      {/* 行2:筛选工具栏(Select 等宽统一) */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Select value={status} onValueChange={(v) => { setStatus(v as StatusFilter); updateParam('status', v === 'all' ? null : v); }}>
+          <SelectTrigger aria-label="按状态筛选" className="h-9 w-40">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部状态</SelectItem>
+            {(Object.keys(STATUS_LABEL) as DerivedStatus[]).map((s) => (
+              <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={difficulty} onValueChange={(v) => setDifficulty(v as DifficultyFilter)}>
+          <SelectTrigger aria-label="按难度筛选" className="h-9 w-40">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部难度</SelectItem>
+            <SelectItem value="初">简单</SelectItem>
+            <SelectItem value="中">中等</SelectItem>
+            <SelectItem value="高">困难</SelectItem>
+          </SelectContent>
+        </Select>
+        {cat === 'my' && (
+          <Select value={source} onValueChange={(v) => setSource(v as SourceFilter)}>
+            <SelectTrigger aria-label="按来源筛选" className="h-9 w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部来源</SelectItem>
+              <SelectItem value="manual">手动</SelectItem>
+              <SelectItem value="ai">AI</SelectItem>
+              <SelectItem value="jd">JD</SelectItem>
+              <SelectItem value="copy">复制</SelectItem>
+            </SelectContent>
+          </Select>
         )}
-      </section>
+        {modulesOf(pool).length > 1 && (
+          <Select value={String(module)} onValueChange={(v) => setModule(v === 'all' ? 'all' : Number(v))}>
+            <SelectTrigger aria-label="按模块筛选" className="h-9 w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部模块</SelectItem>
+              {modulesOf(pool).map((m) => (
+                <SelectItem key={m.module} value={String(m.module)}>
+                  {m.name}({m.count})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        {filterActive && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-9 text-muted-foreground"
+            onClick={() => { setStatus('all'); setDifficulty('all'); setSource('all'); setModule('all'); setSearch(''); updateParam('status', null); }}
+            data-testid="filter-reset"
+          >
+            重置
+          </Button>
+        )}
+      </div>
+
+      {/* 列表(全宽) */}
+      <div className="min-h-0 flex-1 overflow-y-auto rounded-xl bg-card shadow-sm" data-testid="question-table">
+        {filtered.length === 0 ? (
+          <EmptyState title="没有符合筛选的题目" description="调整筛选条件,或到「添加题目」补充。" />
+        ) : filtered.length > 200 ? (
+          <VirtualTable questions={filtered} selectedId={selectedId} onSelect={setSelectedId} rowRefs={rowRefs} />
+        ) : (
+          <div className="divide-y divide-border/60">
+            {filtered.map((q) => (
+              <QuestionRow key={q.id} q={q} active={q.id === selectedId} onSelect={setSelectedId} rowRefs={rowRefs} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 详情抽屉 */}
+      <Sheet open={!!selected} onOpenChange={(o) => !o && setSelectedId(null)}>
+        <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-xl">
+          {selected && (
+            <>
+              <SheetTitle className="sr-only">{selected.title}</SheetTitle>
+              <QuestionDetail
+                key={selected.id}
+                question={selected}
+                onSaved={() => undefined}
+                onDeleted={() => setSelectedId(null)}
+                onCopied={(q) => {
+                  updateParam('cat', 'my');
+                  setSelectedId(q.id);
+                }}
+                onPractice={practiceSingle}
+              />
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

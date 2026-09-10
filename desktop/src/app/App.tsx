@@ -111,7 +111,7 @@ function AppInner() {
       currentPath: () => location.pathname,
       openPalette: () => setPaletteOpen(true),
       isPaletteOpen: () => paletteOpen,
-      isModalOpen: () => !!document.querySelector('[data-slot="dialog-content"], [data-slot="alert-dialog-content"]'),
+      isModalOpen: () => !!document.querySelector('[data-slot="dialog-content"], [data-slot="alert-dialog-content"], [data-slot="sheet-content"]'),
     });
     return initHotkeys();
   }, [guardedNavigate, location.pathname, paletteOpen]);

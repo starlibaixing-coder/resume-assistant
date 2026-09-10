@@ -19,7 +19,7 @@ test('复习全流程:揭示 → 掌握 → 下一题 → 小结统计', async (
       'my.3.2': { ef: 2.5, intervalDays: 1, reps: 1, lastRating: 'no', lastRatedAt: now - 86400000, dueAt: now - 2 },
     },
   );
-  await page.getByRole('button', { name: /开始复习/ }).first().click();
+  await page.getByRole('button', { name: '复习', exact: true }).click();
   await expect(page.getByTestId('question-title')).toContainText('到期题乙'); // due 更早的在前
   await page.getByTestId('reveal-btn').click();
   await expect(page.getByTestId('revealed-area')).toBeVisible();
@@ -39,16 +39,16 @@ test('复习全流程:揭示 → 掌握 → 下一题 → 小结统计', async (
   await expect(page.getByTestId('today-page')).toBeVisible();
 });
 
-test('空会话空态与总复习入口', async ({ page }) => {
+test('空会话空态与练习全部题目入口', async ({ page }) => {
   await page.goto('/#/session');
   await expect(page.getByRole('main').getByText('学习队列')).toBeVisible();
-  await expect(page.getByText(/总复习\(全部 \d+ 题\)/)).toBeVisible();
+  await expect(page.getByText(/练习全部题目/)).toBeVisible();
 });
 
 test('草稿纸:写入代码并运行,输出可见', async ({ page }) => {
   await page.goto('/');
   await seedData(page, [questionSeed('my.3.9')]);
-  await page.getByRole('button', { name: /开始学习/ }).first().click();
+  await page.getByRole('button', { name: '学习', exact: true }).click();
   await page.getByRole('button', { name: /草稿纸/ }).click();
   const editor = page.locator('.cm-content');
   await editor.click();

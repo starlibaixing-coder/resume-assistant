@@ -71,16 +71,16 @@ export function CommandPalette({
       <CommandList>
         <CommandEmpty>没有匹配的结果</CommandEmpty>
         <CommandGroup heading="动作">
-          <CommandItem value="开始复习" onSelect={startReview}>
-            开始复习<CommandShortcut>到期 {counts.due} 题</CommandShortcut>
+          <CommandItem value="复习" onSelect={startReview}>
+            复习<CommandShortcut>到期 {counts.due} 题</CommandShortcut>
           </CommandItem>
           {counts.new > 0 && (
-            <CommandItem value="开始学习" onSelect={startStudy}>
-              开始学习 {batchN} 题<CommandShortcut>待学习 {counts.new}</CommandShortcut>
+            <CommandItem value="学习" onSelect={startStudy}>
+              学习 {batchN} 题<CommandShortcut>待学习 {counts.new}</CommandShortcut>
             </CommandItem>
           )}
-          <CommandItem value="总复习 全部题" onSelect={startAgain}>
-            总复习(全部题)<CommandShortcut>共 {official.length + my.filter((q) => q.status === 'approved').length} 题</CommandShortcut>
+          <CommandItem value="练习全部题目" onSelect={startAgain}>
+            练习全部题目<CommandShortcut>共 {official.length + my.filter((q) => q.status === 'approved').length} 题</CommandShortcut>
           </CommandItem>
           {counts.pending > 0 && (
             <CommandItem value="去审核" onSelect={() => { onOpenChange(false); go('/review'); }}>
