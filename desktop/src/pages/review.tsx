@@ -136,7 +136,7 @@ export function ReviewPage() {
             onReject={() => setRejecting(selected)}
           />
         ) : (
-          <EmptyState title="选择一道待审核的题" description="左侧选中后可预览、编辑或做出裁定。" />
+          <EmptyState title="选择一道待审核的题" description="在左侧选中题目,即可查看、编辑,并通过或拒绝。" />
         )}
       </section>
 

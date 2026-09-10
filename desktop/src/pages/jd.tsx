@@ -135,7 +135,7 @@ export function JdPage() {
         ) : selected ? (
           <JdDetail jd={selected} stats={stats.get(selected.id) ?? { total: 0, pending: 0 }} onDelete={() => setDeleting(selected)} />
         ) : (
-          <EmptyState title="选择一条 JD" description="左侧选中后查看内容、统计,或按它生成题目。" />
+          <EmptyState title="选择一条 JD" description="在左侧选中 JD,即可查看内容与统计,或按它生成题目。" />
         )}
       </section>
 

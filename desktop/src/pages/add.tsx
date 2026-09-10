@@ -100,7 +100,7 @@ function ConfigGuide({ missing }: { missing: string }) {
   return (
     <div className="mb-4 flex items-center gap-2 rounded-md bg-warning/10 px-3 py-2 text-sm text-warning" data-testid="ai-guide">
       <AlertCircleIcon className="size-4 shrink-0" />
-      AI 服务配置不完整(缺 {missing}),请到「设置 · AI 服务」补全后再生成。
+      AI 服务还没配置完整,缺少:{missing}。请先到「设置 · AI 服务」完成配置。
     </div>
   );
 }
@@ -208,7 +208,7 @@ function JdSection({ preselectId }: { preselectId: number | null }) {
     >
       {!cfg.ready && <ConfigGuide missing={missing} />}
       {jds.length === 0 ? (
-        <p className="text-sm text-muted-foreground">还没有 JD。先到「JD」页添加一条招聘要求,再回来按它生成。</p>
+        <p className="text-sm text-muted-foreground">还没有 JD。先到「JD」页添加一条招聘要求,再回来按它生成题目。</p>
       ) : (
         <div className="space-y-4">
           <div className="space-y-1.5">
