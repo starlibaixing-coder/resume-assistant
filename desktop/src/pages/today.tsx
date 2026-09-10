@@ -40,7 +40,7 @@ export function TodayPage() {
   const dateLine = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' }).format(now);
 
   const hero = counts.due > 0
-    ? { key: 'review', title: `复习 ${counts.due} 题`, desc: '这些题到了计划复习时间;完成后,下次复习的间隔会自动延长。', cta: '复习', onClick: () => start('review') }
+    ? { key: 'review', title: `复习 ${counts.due} 题`, desc: '这些题到了复习日。复习日由你上次的掌握情况决定:评「不会」明天再来,评「掌握」隔得更久。', cta: '复习', onClick: () => start('review') }
     : counts.new > 0
       ? { key: 'study', title: `学习 ${studyN} 题`, desc: '当前没有到期的复习,先学一批新题。', cta: '学习', onClick: () => start('study') }
       : null;
@@ -67,6 +67,11 @@ export function TodayPage() {
                   学习 {studyN} 题
                 </Button>
               )}
+              {hero.key === 'review' && (
+                <Button variant="link" size="sm" onClick={() => navigate('/library?status=due')}>
+                  查看这些题
+                </Button>
+              )}
             </div>
           </section>
         ) : (
@@ -74,11 +79,11 @@ export function TodayPage() {
             className="rounded-xl bg-card py-12 shadow-sm"
             icon={<CheckCheckIcon className="size-10" strokeWidth={1.5} />}
             title="今日计划已完成"
-            description="今天没有要复习的,也没有要学的新题。"
+            description="今天没有要复习的,也没有要学的新内容。"
             action={
               pool.length > 0 && (
                 <Button variant="outline" onClick={() => start('again')}>
-                  练习全部题目
+                  学习全部题目
                 </Button>
               )
             }

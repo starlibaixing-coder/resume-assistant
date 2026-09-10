@@ -22,7 +22,7 @@ import { getCodeDraft, getMeta, getNote, getQuestion, getReviewStates } from '@/
 import type { BatchSize, Question, Rating } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
-const TYPE_LABEL = { review: '复习', study: '学习', again: '全库练习', single: '单题练习' } as const;
+const TYPE_LABEL = { review: '复习', study: '学习', again: '学习全部', single: '单题练习' } as const;
 
 export function SessionPage() {
   const navigate = useNavigate();
@@ -60,7 +60,7 @@ export function SessionPage() {
             <SessionEntry
               icon={<RotateCwIcon />}
               title={dueN > 0 ? `复习 · 到期 ${dueN} 题` : '复习'}
-              desc="到了计划复习时间的题,逾期不会失效。"
+              desc="到了复习日的题,拖多久都不会消失。"
               disabled={dueN === 0}
               onClick={() => start('review')}
             />
@@ -73,8 +73,8 @@ export function SessionPage() {
             />
             <SessionEntry
               icon={<LayersIcon />}
-              title={`练习全部题目(${pool.length})`}
-              desc="不区分学习进度,题库中的题目按顺序做一遍。"
+              title={`学习全部题目(${pool.length})`}
+              desc="不区分进度,把题库里的题都学一遍。"
               disabled={pool.length === 0}
               onClick={() => start('again')}
             />

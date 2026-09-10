@@ -19,7 +19,7 @@ export function ActivityList({ days, now }: { days: ActivityDay[]; now: number }
   if (rows.length === 0) {
     return (
       <div className="rounded-xl bg-card px-4 py-6 text-center text-sm text-muted-foreground" data-testid="activity-empty">
-        还没有评分记录。学习并评分后,这里会按天汇总。
+        还没有学习记录,学第一道题后这里会按天汇总。
       </div>
     );
   }
@@ -29,7 +29,7 @@ export function ActivityList({ days, now }: { days: ActivityDay[]; now: number }
         <li key={d.day} className="flex items-center justify-between py-2.5 text-sm">
           <span>{dayLabel(d.day, now)}</span>
           <span className="text-muted-foreground">
-            评分 <span className="font-medium text-foreground tabular-nums">{d.rated}</span> 道
+            学了 <span className="font-medium text-foreground tabular-nums">{d.rated}</span> 道
             {d.ok > 0 && (
               <>
                 {' · 掌握 '}
