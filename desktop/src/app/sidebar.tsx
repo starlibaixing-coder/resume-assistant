@@ -53,7 +53,7 @@ export function Sidebar() {
         </span>
         <div className="leading-tight">
           <div className="font-display text-[15px] font-semibold">CommitCareer</div>
-          <div className="text-[11px] text-muted-foreground">求职刷题工作台</div>
+          <div className="text-[11px] text-muted-foreground">求职学习工作台</div>
         </div>
       </div>
 

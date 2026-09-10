@@ -78,7 +78,7 @@ export function sourceLine(q: Question): string {
     case 'jd':
       return '按 JD 生成';
     case 'copy':
-      return '官方题复制';
+      return '官方复制';
     case 'manual':
       return '手动添加';
     default:

@@ -94,14 +94,14 @@ export function ReviewPage() {
         <div className="flex items-end justify-between">
           <div>
             <h1 className="font-display text-lg font-semibold">审核</h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">AI 产物必须人工审核后才会进入题库与复习队列。</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">AI 生成的题目需人工审核,通过后进入我的题库与学习队列。</p>
           </div>
           <span className="rounded-full bg-warning/15 px-2.5 py-1 text-xs font-medium text-warning">待审核 {list.length}</span>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto rounded-xl bg-card shadow-sm" data-testid="audit-list">
           {list.length === 0 ? (
-            <EmptyState title="没有待审核的题目" description="在「添加题目」用 AI 或按 JD 生成后,题目会先到这里等待裁定。" />
+            <EmptyState title="没有待审核的题目" description="在「添加题目」用 AI 或按 JD 生成后,会先到这里等待审核。" />
           ) : (
             <div className="divide-y divide-border/60">
               {list.map((q) => (

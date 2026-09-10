@@ -19,7 +19,7 @@ test('题库:五档筛选芯片 + 行选中详情 + 单题练习', async ({ page
     },
   );
   await page.getByTestId('nav-/library').click();
-  await page.getByRole('button', { name: '我的', exact: true }).click();
+  await page.getByRole('button', { name: '我的题库', exact: true }).click();
   await expect(page.getByTestId('question-table')).toContainText('筛选命中题');
   // 状态芯片:已掌握 → 只剩 4.2
   await page.getByRole('button', { name: '已掌握', exact: true }).click();

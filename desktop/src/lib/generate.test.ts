@@ -2,7 +2,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { generateQuestions, parseQuestionArray, validateGenerated } from './generate';
+import { generateQuestions, migrateLegacyLlmConfig, parseQuestionArray, validateGenerated } from './generate';
 import * as llm from './llm';
 import { _resetStorageForTest, getMyQuestions } from './storage';
 
@@ -82,5 +82,29 @@ describe('generateQuestions 自修正(桩)', () => {
 
   it('未配置直接拒绝', async () => {
     await expect(generateQuestions({ kind: 'ai', prompt: 'x' }, { ...cfg, ready: false })).rejects.toThrow(/未配置/);
+  });
+});
+
+describe('migrateLegacyLlmConfig(旧版 localStorage 配置迁移)', () => {
+  const fakeLs = (raw: string | null) => ({ getItem: (_k: string) => raw }) as Pick<Storage, 'getItem'>;
+
+  it('meta 为空且存在旧配置 → 写入 meta 并返回 true', () => {
+    const written: Record<string, string> = {};
+    const ok = migrateLegacyLlmConfig(
+      (k) => written[k] ?? '',
+      (k, v) => { written[k] = v; },
+      fakeLs(JSON.stringify({ baseURL: 'https://api.deepseek.com', model: 'deepseek-chat' })),
+    );
+    expect(ok).toBe(true);
+    expect(written.ll_base_url).toBe('https://api.deepseek.com');
+    expect(written.ll_model).toBe('deepseek-chat');
+  });
+
+  it('meta 已有值或无旧配置 → 不动', () => {
+    const writes: [string, string][] = [];
+    const write = (k: string, v: string) => writes.push([k, v]);
+    expect(migrateLegacyLlmConfig(() => 'x', write, fakeLs('{"baseURL":"https://a"}'))).toBe(false);
+    expect(migrateLegacyLlmConfig(() => '', write, fakeLs(null))).toBe(false);
+    expect(writes).toHaveLength(0);
   });
 });

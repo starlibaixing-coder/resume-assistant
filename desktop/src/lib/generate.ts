@@ -172,6 +172,28 @@ function persistPending(list: GeneratedQuestion[], req: GenerateRequest): Questi
   return saved;
 }
 
+// ===== 旧版配置迁移:重建前 base_url/model 存 localStorage('llm-config'),现已入 meta。
+// 首启时若 meta 为空则搬入,避免"已配置过 Key 却提示未配置"。 =====
+
+export function migrateLegacyLlmConfig(
+  readMeta: (k: string) => string,
+  writeMeta: (k: string, v: string) => void,
+  ls: Pick<Storage, 'getItem'> | null = typeof localStorage === 'undefined' ? null : localStorage,
+): boolean {
+  if (readMeta('ll_base_url') || readMeta('ll_model') || !ls) return false;
+  try {
+    const raw = ls.getItem('llm-config');
+    if (!raw) return false;
+    const legacy = JSON.parse(raw) as { baseURL?: string; model?: string };
+    if (!legacy.baseURL && !legacy.model) return false;
+    if (legacy.baseURL) writeMeta('ll_base_url', legacy.baseURL);
+    if (legacy.model) writeMeta('ll_model', legacy.model);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // ===== 测试连接(D10):1 条最小消息 =====
 
 export async function testConnection(cfg: GenerateConfig): Promise<void> {

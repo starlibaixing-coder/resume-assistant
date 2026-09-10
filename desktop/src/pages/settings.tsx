@@ -34,7 +34,7 @@ export function SettingsPage() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-8 py-8">
-        <PageHeader title="设置" description="配置、偏好与数据管理。" />
+        <PageHeader title="设置" description="AI 服务、学习偏好、外观与数据管理。" />
         <AiGroup />
         <StudyGroup />
         <AppearanceGroup />
@@ -349,8 +349,8 @@ function AboutGroup() {
   return (
     <Group icon={<ServerIcon />} title="关于">
       <div className="space-y-1 text-sm text-muted-foreground">
-        <p>CommitCareer · 求职刷题工作台</p>
-        <p>数据在本机 SQLite(app.db);API Key 仅存本机 secrets 表,界面永不回显。</p>
+        <p>CommitCareer · 求职学习工作台</p>
+        <p>数据保存在本机 SQLite(resume.db),不经任何服务器;API Key 仅存本机 secrets 表,界面永不回显。</p>
       </div>
     </Group>
   );
