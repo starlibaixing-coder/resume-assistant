@@ -1,15 +1,17 @@
 // 今日(M2):驾驶舱纵排 —— 问候 + 主计划卡(hero,第一件未完成事 = 唯一主 CTA)
 // + 复习预测(仅有到期数据时出现)+ 题库概览 + 最近学习记录。零值不渲染;全清走 EmptyState。
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowRightIcon, CheckCheckIcon } from 'lucide-react';
 
 import { PageHeader, EmptyState } from '@/components/biz/states';
 import { ActivityList } from '@/components/biz/activity-list';
+import { QuestionDetail } from '@/components/biz/question-detail';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { startSession } from '@/lib/session';
-import { useActivityList, useMyQuestions, useOfficialQuestions, useStatusCounts } from '@/lib/hooks';
+import { useMyQuestions, useOfficialQuestions, useStatusCounts } from '@/lib/hooks';
 import { getMeta, getReviewStates } from '@/lib/storage';
 import type { BatchSize, Question } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -19,7 +21,6 @@ export function TodayPage() {
   const counts = useStatusCounts();
   const official = useOfficialQuestions();
   const my = useMyQuestions();
-  const activity = useActivityList();
   const now = Date.now();
 
   const pool = useMemo(
@@ -38,6 +39,14 @@ export function TodayPage() {
   const batchMeta = getMeta('batch_size');
   const batch: BatchSize = batchMeta === '20' || batchMeta === '50' || batchMeta === 'all' ? batchMeta : '50';
   const studyN = batch === 'all' ? counts.new : Math.min(counts.new, Number(batch));
+
+  const [drawerQid, setDrawerQid] = useState<string | null>(null);
+  const drawerQuestion = drawerQid ? pool.find((q) => q.id === drawerQid) ?? null : null;
+
+  const practiceSingle = (id: string) => {
+    startSession({ type: 'single', questions: pool, cards: getReviewStates(), batchSize: 'all', singleQid: id });
+    navigate('/session');
+  };
 
   const start = (type: 'review' | 'study' | 'again') => {
     startSession({ type, questions: pool, cards: getReviewStates(), batchSize: type === 'study' ? (batch === 'all' ? 'all' : Number(batch)) : 'all' });
@@ -77,7 +86,7 @@ export function TodayPage() {
                 </Button>
               )}
             </div>
-            {hero.key === 'review' && <DueList due={dueList} total={counts.due} />}
+            {hero.key === 'review' && <DueList due={dueList} total={counts.due} onOpen={setDrawerQid} />}
           </section>
         ) : (
           <EmptyState
@@ -107,9 +116,27 @@ export function TodayPage() {
 
         <section>
           <SectionTitle title="最近学习" />
-          <ActivityList days={activity} now={now} />
+          <ActivityList now={now} onOpenQuestion={setDrawerQid} />
         </section>
       </div>
+
+      <Sheet open={!!drawerQuestion} onOpenChange={(o) => !o && setDrawerQid(null)}>
+        <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-xl">
+          {drawerQuestion && (
+            <>
+              <SheetTitle className="sr-only">{drawerQuestion.title}</SheetTitle>
+              <QuestionDetail
+                key={drawerQuestion.id}
+                question={drawerQuestion}
+                onSaved={() => undefined}
+                onDeleted={() => setDrawerQid(null)}
+                onCopied={() => undefined}
+                onPractice={practiceSingle}
+              />
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
@@ -141,8 +168,8 @@ function StatTile({ label, n, onClick, accent }: { label: string; n: number; onC
   );
 }
 
-/** 到期题明细:回答「是哪些题」;点击带所属分类深链进题库抽屉 */
-function DueList({ due, total }: { due: Question[]; total: number }) {
+/** 到期题明细:回答「是哪些题」;点击在本页打开详情抽屉 */
+function DueList({ due, total, onOpen }: { due: Question[]; total: number; onOpen: (id: string) => void }) {
   const navigate = useNavigate();
   return (
     <ul className="mt-5 divide-y divide-border/60 border-t border-border/60 pt-1" data-testid="due-list">
@@ -150,7 +177,7 @@ function DueList({ due, total }: { due: Question[]; total: number }) {
         <li key={q.id}>
           <button
             type="button"
-            onClick={() => navigate(`/library?cat=${q.category}&qid=${encodeURIComponent(q.id)}`)}
+            onClick={() => onOpen(q.id)}
             className="flex w-full cursor-pointer items-center gap-3 py-2 text-left transition-colors duration-150 hover:text-primary"
           >
             <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{q.title}</span>
