@@ -126,7 +126,7 @@ function AiGroup() {
     <Group icon={<ServerIcon />} title="AI 服务">
       <div className="space-y-1.5">
         <Label>服务商</Label>
-        <RadioGroup value={preset.id} onValueChange={pickProvider} className="flex gap-5">
+        <RadioGroup value={preset.id} onValueChange={pickProvider} className="flex h-9 items-center gap-5">
           {PROVIDERS.map((p) => (
             <span key={p.id} className="flex items-center gap-1.5 text-sm">
               <RadioGroupItem value={p.id} id={`provider-${p.id}`} />
@@ -137,24 +137,28 @@ function AiGroup() {
           ))}
         </RadioGroup>
       </div>
-      <div className="grid grid-cols-[6rem_1fr] items-center gap-x-3 gap-y-3">
-        <Label htmlFor="ll-base-url">Base URL</Label>
-        <Input id="ll-base-url" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} placeholder={preset.baseUrl} />
-        <Label htmlFor="ll-model">模型</Label>
-        <Input id="ll-model" value={model} onChange={(e) => setModel(e.target.value)} placeholder={preset.model} />
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="ll-base-url">Base URL</Label>
+          <Input id="ll-base-url" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} placeholder={preset.baseUrl} />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="ll-model">模型</Label>
+          <Input id="ll-model" value={model} onChange={(e) => setModel(e.target.value)} placeholder={preset.model} />
+        </div>
+      </div>
+      <div className="space-y-1.5">
         <Label htmlFor="ll-key">
           <KeyRoundIcon className="inline size-3.5" /> API Key
         </Label>
-        <div className="flex items-center gap-2">
-          <Input
-            id="ll-key"
-            type="password"
-            value={keyInput}
-            onChange={(e) => setKeyInput(e.target.value)}
-            placeholder={savedKey ? '已配置(不回显,可覆盖)' : '粘贴 API Key'}
-            autoComplete="off"
-          />
-        </div>
+        <Input
+          id="ll-key"
+          type="password"
+          value={keyInput}
+          onChange={(e) => setKeyInput(e.target.value)}
+          placeholder={savedKey ? '已配置(不回显,可覆盖)' : '粘贴 API Key'}
+          autoComplete="off"
+        />
       </div>
       <div className="flex justify-end gap-2">
         <Button variant="outline" disabled={testing || !cfgReady} onClick={test}>
@@ -174,7 +178,7 @@ function StudyGroup() {
     <Group icon={<SlidersHorizontalIcon />} title="学习偏好">
       <div className="space-y-1.5">
         <Label>每次学习题量</Label>
-        <RadioGroup value={batch} onValueChange={(v) => setMeta('batch_size', v)} className="flex gap-5">
+        <RadioGroup value={batch} onValueChange={(v) => setMeta('batch_size', v)} className="flex h-9 items-center gap-5">
           {(['20', '50', 'all'] as const).map((v) => (
             <span key={v} className="flex items-center gap-1.5 text-sm">
               <RadioGroupItem value={v} id={`batch-${v}`} />
@@ -198,7 +202,7 @@ function AppearanceGroup() {
     <Group icon={<PaletteIcon />} title="外观">
       <div className="space-y-1.5">
         <Label>主题</Label>
-        <RadioGroup value={theme} onValueChange={(v) => setTheme(v as 'light' | 'dark')} className="flex gap-5">
+        <RadioGroup value={theme} onValueChange={(v) => setTheme(v as 'light' | 'dark')} className="flex h-9 items-center gap-5">
           <span className="flex items-center gap-1.5 text-sm">
             <RadioGroupItem value="light" id="theme-light" />
             <Label htmlFor="theme-light" className="font-normal">

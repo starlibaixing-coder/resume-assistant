@@ -77,9 +77,10 @@
   * {
     border-color: var(--border);
   }
-  /* 原生 button 默认色(buttontext)不随主题;自定义按钮一律继承前景色 */
+  /* 原生 button 默认色(buttontext)不随主题;自定义按钮一律继承前景色;按钮文本不换行 */
   button {
     color: inherit;
+    white-space: nowrap;
   }
   html,
   body,

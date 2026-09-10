@@ -76,11 +76,11 @@ export function TodayPage() {
             className="rounded-xl bg-card py-12 shadow-sm"
             icon={<CheckCheckIcon className="size-10" strokeWidth={1.5} />}
             title="今日计划已完成"
-            description="没有到期的复习,也没有待学习的题目。想保持手感,可将全部题目再过一遍。"
+            description="没有到期的复习,也没有待学习的题目。想巩固全部内容,可进行一次总复习。"
             action={
               pool.length > 0 && (
                 <Button variant="outline" onClick={() => start('again')}>
-                  再过一遍
+                  总复习
                 </Button>
               )
             }
