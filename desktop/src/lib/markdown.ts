@@ -1,18 +1,44 @@
-// 轻量 markdown 渲染封装
-// 答案数组项 join('\n') 后整体解析,支持 **bold** / `code` / ```代码块``` / GFM 表格
+// 轻量 markdown 渲染(marked):答案要点/追问支持 **粗体**、`代码`、列表。
+// LLM 参与的内容不可信:渲染后剥离脚本类标签与事件属性(无 DOMPurify 依赖)。
+
 import { marked } from 'marked';
 
-marked.setOptions({
-  breaks: true, // 单换行也转 <br>
-  gfm: true, // 表格、删除线等
-});
+marked.setOptions({ async: false, gfm: true, breaks: true });
 
-// 缓存:相同文本不重复解析(答案内容静态)
-const cache = new Map<string, string>();
+function sanitize(html: string): string {
+  const doc = new DOMParser().parseFromString(`<div>${html}</div>`, 'text/html');
+  const root = doc.body.firstElementChild as HTMLElement;
+  for (const el of Array.from(root.querySelectorAll('script,style,iframe,object,embed,link,meta'))) {
+    el.remove();
+  }
+  for (const el of Array.from(root.querySelectorAll('*'))) {
+    for (const attr of Array.from(el.attributes)) {
+      const name = attr.name.toLowerCase();
+      if (name.startsWith('on')) el.removeAttribute(attr.name);
+      if ((name === 'href' || name === 'src') && /^\s*javascript:/i.test(attr.value)) el.removeAttribute(attr.name);
+    }
+    if (el.tagName === 'A') {
+      el.setAttribute('target', '_blank');
+      el.setAttribute('rel', 'noopener noreferrer');
+    }
+  }
+  return root.innerHTML;
+}
 
 export function renderMarkdown(text: string): string {
-  if (cache.has(text)) return cache.get(text) as string;
-  const html = marked.parse(text) as string;
-  cache.set(text, html);
-  return html;
+  if (!text?.trim()) return '';
+  try {
+    return sanitize(marked.parse(text) as string);
+  } catch {
+    return escapeHtml(text);
+  }
+}
+
+export function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }

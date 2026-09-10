@@ -1,349 +1,357 @@
-import { useEffect, useState } from 'react';
-import { Sun, Moon, Monitor, type LucideIcon } from 'lucide-react';
-import { loadConfig, loadKey, saveConfig, saveKey, isTauri } from '@/lib/llm-config';
-import { syncOfficialBank, getLastSyncedAt } from '@/lib/officialbank';
+// 设置(M9):分组卡纵列 —— AI 服务(Provider/Key/BaseURL/测试连接)/ 学习偏好(batch_size)/
+// 外观(暖纸/夜读,即时生效)/ 官方题库(同步三态)/ 备份(导出/导入,真机下载需后端 dialog+fs)/ 关于。
+
+import { useEffect, useRef, useState } from 'react';
+import { DatabaseBackupIcon, DownloadIcon, KeyRoundIcon, PaletteIcon, RefreshCwIcon, ServerIcon, SlidersHorizontalIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import { useTheme, type Theme } from '@/lib/theme';
-import { useQuestions } from '@/lib/questions';
-import { clearProgress, clearNotes, loadProgress, loadNotes } from '@/lib/storage';
-import { getMyCategory } from '@/lib/mylib';
-import { loadLimit, saveLimit, LIMIT_OPTIONS } from '@/lib/prefs';
-import { chat } from '@/lib/provider';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { PageHeader } from '@/components/page-header';
+import { PageHeader } from '@/components/biz/states';
 import {
-  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-
-// 设置页五分区:学习(全局偏好)→ 外观 → AI 生成(LLM)→ 数据管理 → 关于。
-// 2026-09-04 UI 重构:LLM 表单 dirty 跟踪;清空确认迁 AlertDialog。
-// v10:多选一控件统一 RadioGroup(每次学习题量 / 外观主题此前是按钮组,
-// 与全站「多选一 = RadioGroup」规范相悖)。
-
-const THEME_OPTIONS: Array<{ value: Theme; label: string; icon: LucideIcon }> = [
-  { value: 'light', label: '浅色', icon: Sun },
-  { value: 'dark', label: '深色', icon: Moon },
-  { value: 'system', label: '跟随系统', icon: Monitor },
-];
+import { downloadTextFile, envelopeToJson, myQuestionsToYaml, parseEnvelope, type QuestionYamlSource } from '@/lib/backup';
+import { isTauri } from '@/lib/db';
+import { PROVIDERS } from '@/lib/types';
+import { useMeta, useMyQuestions, useSecret, useThemeValue } from '@/lib/hooks';
+import { buildEnvelope, importEnvelope, setMeta, setSecret } from '@/lib/storage';
+import { lastSyncAt, syncOfficial } from '@/lib/sync';
+import { setTheme } from '@/lib/theme';
+import { testConnection } from '@/lib/generate';
+import { formatDateTime } from '@/lib/utils';
 
 export function SettingsPage() {
-  const { data } = useQuestions();
-  const myCategory = getMyCategory();
+  return (
+    <div className="h-full overflow-y-auto">
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-8 py-8">
+        <PageHeader title="设置" description="配置、偏好与数据管理。" />
+        <AiGroup />
+        <StudyGroup />
+        <AppearanceGroup />
+        <SyncGroup />
+        <BackupGroup />
+        <AboutGroup />
+      </div>
+    </div>
+  );
+}
 
-  // ── 学习 ──
-  const [limit, setLimit] = useState<number>(() => loadLimit());
+function Group({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-xl bg-card p-6 shadow-sm">
+      <div className="mb-4 flex items-center gap-2">
+        <span className="text-primary">{icon}</span>
+        <h2 className="font-display text-base font-semibold">{title}</h2>
+      </div>
+      <div className="space-y-4">{children}</div>
+    </section>
+  );
+}
 
-  // ── 外观 ──
-  const { theme, setTheme } = useTheme();
+// ===== AI 服务 =====
 
-  // ── AI 生成(自定义:任何 OpenAI 兼容端点)──
-  const [baseURL, setBaseURL] = useState(loadConfig().baseURL);
-  const [model, setModel] = useState(loadConfig().model);
-  const [apiKey, setApiKey] = useState('');
-  // 已存基线:dirty = 当前输入 ≠ 基线;key 异步读回后补进基线,避免误报 dirty
-  const [baseline, setBaseline] = useState({ baseURL: loadConfig().baseURL, model: loadConfig().model, apiKey: '' });
-  // 内联状态只承载"异步就近"的结果:测试连接回显 + key 读取失败;
-  // 保存的成败走 toast(全局反馈统一),不再挤在这里
-  const [status, setStatus] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
+function AiGroup() {
+  const savedBaseUrl = useMeta('ll_base_url');
+  const savedModel = useMeta('ll_model');
+  const savedKey = useSecret('llm-api-key');
+  const providerId = useMeta('ll_provider') || 'zhipu';
+  const preset = PROVIDERS.find((p) => p.id === providerId) ?? PROVIDERS[0];
+
+  const [baseUrl, setBaseUrl] = useState(savedBaseUrl || preset.baseUrl);
+  const [model, setModel] = useState(savedModel || preset.model);
+  const [keyInput, setKeyInput] = useState('');
   const [testing, setTesting] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const llmDirty = baseURL !== baseline.baseURL || model !== baseline.model || apiKey !== baseline.apiKey;
+  const hydrated = useRef(false);
 
-  // ── 数据管理 ──
-  const [refresh, setRefresh] = useState(0);
-  const [syncing, setSyncing] = useState(false);
-  const [lastSynced, setLastSynced] = useState<number | null>(null);
-  const [confirm, setConfirm] = useState<{ kind: 'progress' | 'notes'; category: string; name: string } | null>(null);
-  const [clearing, setClearing] = useState(false);
-
-  // 启动时读已存 key 回显(password 输入框视觉遮蔽即可,不做 '********' 掩码——
-  // 掩码会制造"已保存"的错觉,浏览器预览刷新后 key 实际为空却看不出来)
+  // 首次拿到持久化值后不再跟随(本地可编辑)
   useEffect(() => {
-    loadKey()
-      .then((k) => {
-        setApiKey(k);
-        setBaseline((b) => ({ ...b, apiKey: k }));
-      })
-      .catch((e) => {
-        // key 读取失败必须显式暴露(曾经静默吞掉,掩盖 keyring feature 缺失数月)
-        setStatus({ kind: 'err', text: `读取已存 key 失败:${e instanceof Error ? e.message : String(e)}` });
-      });
-  }, []);
-
-  useEffect(() => {
-    getLastSyncedAt().then(setLastSynced).catch(() => {});
-  }, [refresh]);
-
-  const handleSyncOfficial = async () => {
-    setSyncing(true);
-    try {
-      const stats = await syncOfficialBank();
-      toast.success(`官方题库已同步:新增 ${stats.added} · 修订 ${stats.updated} · 移除 ${stats.removed}`);
-      setLastSynced(await getLastSyncedAt());
-    } catch (e) {
-      toast.error('同步失败', { description: e instanceof Error ? e.message : String(e) });
-    } finally {
-      setSyncing(false);
+    if (!hydrated.current && (savedBaseUrl || savedModel)) {
+      setBaseUrl(savedBaseUrl || preset.baseUrl);
+      setModel(savedModel || preset.model);
+      hydrated.current = true;
     }
+  }, [savedBaseUrl, savedModel, preset]);
+
+  const pickProvider = (id: string) => {
+    const p = PROVIDERS.find((x) => x.id === id)!;
+    setMeta('ll_provider', p.id);
+    if (!savedBaseUrl) setBaseUrl(p.baseUrl);
+    if (!savedModel) setModel(p.model);
   };
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      saveConfig({ baseURL: baseURL.trim(), model: model.trim() });
-      await saveKey(apiKey.trim());
-      setBaseline({ baseURL: baseURL.trim(), model: model.trim(), apiKey: apiKey.trim() });
-      toast.success('LLM 配置已保存');
-    } catch (e) {
-      toast.error('保存失败', { description: e instanceof Error ? e.message : String(e) });
-    } finally {
-      setSaving(false);
+  const cfgReady = !!(savedKey && baseUrl && model);
+
+  const save = async () => {
+    setMeta('ll_base_url', baseUrl.trim());
+    setMeta('ll_model', model.trim());
+    if (keyInput.trim()) {
+      try {
+        await setSecret('llm-api-key', keyInput.trim());
+      } catch (e) {
+        toast.error('API Key 保存失败', { description: e instanceof Error ? e.message : String(e) });
+        return;
+      }
     }
+    toast.success('AI 服务配置已保存');
   };
 
-  const handleTest = async () => {
-    setTesting(true); // 状态只显示最终结果,进行中由按钮自己表达(不重复提示)
+  const test = async () => {
+    if (!savedKey) {
+      toast.error('请先填写并保存 API Key');
+      return;
+    }
+    setTesting(true);
     try {
-      const key = apiKey.trim(); // 输入框即真相,不另读存储
-      if (!key) throw new Error('未填 API key');
-      if (!baseURL.trim() || !model.trim()) throw new Error('baseURL / model 未填全');
-      const reply = await chat(
-        [
-          { role: 'system', content: '只回复:ok' },
-          { role: 'user', content: 'ping' },
-        ],
-        { apiKey: key, baseURL: baseURL.trim(), model: model.trim() },
-      );
-      setStatus({ kind: 'ok', text: `连通正常${reply ? `:${reply.slice(0, 20)}` : ''}` });
+      await testConnection({ apiKey: savedKey, baseUrl: baseUrl.trim(), model: model.trim(), ready: true });
+      toast.success('连接成功');
     } catch (e) {
-      setStatus({ kind: 'err', text: `连接失败: ${e instanceof Error ? e.message : String(e)}` });
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error(/鉴权失败/.test(msg) ? 'API Key 无效' : /网络错误/.test(msg) ? '网络错误,检查 Base URL' : `连接失败:${msg}`);
     } finally {
       setTesting(false);
     }
   };
 
-  // 分类清单:官方 + 我的库(即使为空也列,进度/笔记可能残留)
-  const categories = [
-    ...(data?.categories ?? []).filter((c) => c.slug !== 'my').map((c) => ({ slug: c.slug, name: c.name })),
-    { slug: 'my', name: myCategory.name },
-  ];
+  return (
+    <Group icon={<ServerIcon />} title="AI 服务">
+      <div className="space-y-1.5">
+        <Label>服务商</Label>
+        <RadioGroup value={preset.id} onValueChange={pickProvider} className="flex gap-5">
+          {PROVIDERS.map((p) => (
+            <span key={p.id} className="flex items-center gap-1.5 text-sm">
+              <RadioGroupItem value={p.id} id={`provider-${p.id}`} />
+              <Label htmlFor={`provider-${p.id}`} className="font-normal">
+                {p.label}
+              </Label>
+            </span>
+          ))}
+        </RadioGroup>
+      </div>
+      <div className="grid grid-cols-[6rem_1fr] items-center gap-x-3 gap-y-3">
+        <Label htmlFor="ll-base-url">Base URL</Label>
+        <Input id="ll-base-url" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} placeholder={preset.baseUrl} />
+        <Label htmlFor="ll-model">模型</Label>
+        <Input id="ll-model" value={model} onChange={(e) => setModel(e.target.value)} placeholder={preset.model} />
+        <Label htmlFor="ll-key">
+          <KeyRoundIcon className="inline size-3.5" /> API Key
+        </Label>
+        <div className="flex items-center gap-2">
+          <Input
+            id="ll-key"
+            type="password"
+            value={keyInput}
+            onChange={(e) => setKeyInput(e.target.value)}
+            placeholder={savedKey ? '已配置(不回显,可覆盖)' : '粘贴 API Key'}
+            autoComplete="off"
+          />
+        </div>
+      </div>
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" disabled={testing || !cfgReady} onClick={test}>
+          {testing ? '测试中…' : '测试连接'}
+        </Button>
+        <Button onClick={save}>保存</Button>
+      </div>
+    </Group>
+  );
+}
 
-  const handleClear = async () => {
-    if (!confirm) return;
-    setClearing(true);
+// ===== 学习偏好 =====
+
+function StudyGroup() {
+  const batch = useMeta('batch_size') || '50';
+  return (
+    <Group icon={<SlidersHorizontalIcon />} title="学习偏好">
+      <div className="space-y-1.5">
+        <Label>每次学习题量</Label>
+        <RadioGroup value={batch} onValueChange={(v) => setMeta('batch_size', v)} className="flex gap-5">
+          {(['20', '50', 'all'] as const).map((v) => (
+            <span key={v} className="flex items-center gap-1.5 text-sm">
+              <RadioGroupItem value={v} id={`batch-${v}`} />
+              <Label htmlFor={`batch-${v}`} className="font-normal">
+                {v === 'all' ? '全部学完' : `每次 ${v} 题`}
+              </Label>
+            </span>
+          ))}
+        </RadioGroup>
+        <p className="text-xs text-muted-foreground">复习永远不限量(ADR-0001);此选项只限制每次「学习」进入队列的题量。</p>
+      </div>
+    </Group>
+  );
+}
+
+// ===== 外观 =====
+
+function AppearanceGroup() {
+  const theme = useThemeValue();
+  return (
+    <Group icon={<PaletteIcon />} title="外观">
+      <div className="space-y-1.5">
+        <Label>主题</Label>
+        <RadioGroup value={theme} onValueChange={(v) => setTheme(v as 'light' | 'dark')} className="flex gap-5">
+          <span className="flex items-center gap-1.5 text-sm">
+            <RadioGroupItem value="light" id="theme-light" />
+            <Label htmlFor="theme-light" className="font-normal">
+              暖纸(浅色)
+            </Label>
+          </span>
+          <span className="flex items-center gap-1.5 text-sm">
+            <RadioGroupItem value="dark" id="theme-dark" />
+            <Label htmlFor="theme-dark" className="font-normal">
+              夜读(深色)
+            </Label>
+          </span>
+        </RadioGroup>
+      </div>
+    </Group>
+  );
+}
+
+// ===== 官方题库同步 =====
+
+function SyncGroup() {
+  const [syncing, setSyncing] = useState(false);
+  const last = lastSyncAt();
+  const run = async () => {
+    setSyncing(true);
     try {
-      if (confirm.kind === 'progress') clearProgress(confirm.category);
-      else clearNotes(confirm.category);
-      setConfirm(null);
-      setRefresh((v) => v + 1);
+      const r = await syncOfficial();
+      if (r.status === 'same') toast.info('官方题库已是最新');
+      else if (r.status === 'updated') toast.success(`更新 ${r.added + r.removed} 题`, { description: `新增 ${r.added} 题,下架 ${r.removed} 题(连带清进度)` });
+      else toast.error(`同步失败:${r.message}`, { description: '可稍后重试,不影响本地使用' });
     } finally {
-      setClearing(false);
+      setSyncing(false);
+    }
+  };
+  return (
+    <Group icon={<RefreshCwIcon />} title="官方题库">
+      <div className="flex items-center justify-between gap-4">
+        <div className="text-sm text-muted-foreground">
+          {last ? `上次同步:${formatDateTime(last)}` : '尚未同步;启动时会自动后台同步。'}
+        </div>
+        <Button size="sm" variant="outline" disabled={syncing} onClick={run} data-testid="sync-btn">
+          {syncing ? '同步中…' : '立即同步'}
+        </Button>
+      </div>
+    </Group>
+  );
+}
+
+// ===== 备份 =====
+
+function BackupGroup() {
+  const my = useMyQuestions();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [pendingImportEnv, setPendingImportEnv] = useState<ReturnType<typeof parseEnvelope> | null>(null);
+
+  const exportJson = () => {
+    const name = `commitcareer-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    if (!downloadTextFile(name, envelopeToJson(buildEnvelope()))) {
+      toast.info('桌面端导出需要文件对话框支持', { description: '该能力待后端补充(dialog + fs 插件),见后端 TODO。' });
+    }
+  };
+
+  const exportYaml = () => {
+    const approved: QuestionYamlSource[] = my
+      .filter((q) => q.status === 'approved')
+      .map((q) => ({ id: q.id, difficulty: q.difficulty, tags: q.tags, title: q.title, focus: q.focus, answer: q.answer, followups: q.followups }));
+    if (approved.length === 0) {
+      toast.info('我的题库还没有已入库的题目');
+      return;
+    }
+    if (!downloadTextFile('my-questions.yaml', myQuestionsToYaml(approved), 'text/yaml')) {
+      toast.info('桌面端导出需要文件对话框支持', { description: '该能力待后端补充(dialog + fs 插件),见后端 TODO。' });
+    }
+  };
+
+  const onFile = async (file: File) => {
+    try {
+      const env = parseEnvelope(await file.text());
+      setPendingImportEnv(env); // 校验通过,弹确认(整库覆盖)
+    } catch (e) {
+      toast.error('导入失败', { description: e instanceof Error ? e.message : String(e) });
     }
   };
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="mx-auto max-w-2xl space-y-6 px-8 py-8" data-refresh={refresh}>
-      <PageHeader title="设置" />
+    <Group icon={<DatabaseBackupIcon />} title="备份">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button size="sm" variant="outline" onClick={exportJson}>
+          <DownloadIcon /> 导出备份(JSON)
+        </Button>
+        <Button size="sm" variant="outline" onClick={exportYaml}>
+          <DownloadIcon /> 导出我的题目(YAML)
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
+          导入备份…
+        </Button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) void onFile(f);
+            e.target.value = '';
+          }}
+        />
+      </div>
+      <p className="text-xs text-muted-foreground">
+        备份含题目、进度、笔记、草稿、JD 与设置,不含 API Key;导入为整库覆盖。{isTauri() && '桌面端「导出」待后端补文件对话框能力。'}
+      </p>
 
-      {/* ── 学习 ─────────────────────────────────────── */}
-      <section className="border-t border-border pt-6">
-        <h2 className="text-sm font-semibold tracking-wide">学习</h2>
-        <div className="mt-4 space-y-3">
-          <RadioGroup
-            value={String(limit)}
-            onValueChange={(v) => {
-              const opt = Number(v);
-              setLimit(opt);
-              saveLimit(opt);
-            }}
-            aria-label="每次学习题量"
-            className="flex flex-wrap gap-x-5 gap-y-2"
-          >
-            {LIMIT_OPTIONS.map((opt) => (
-              <div key={opt} className="flex items-center gap-1.5">
-                <RadioGroupItem value={String(opt)} id={`limit-${opt}`} />
-                <Label htmlFor={`limit-${opt}`} className="cursor-pointer font-mono text-xs font-normal text-muted-foreground">
-                  {opt === 0 ? '全部' : opt}
-                </Label>
-              </div>
-            ))}
-          </RadioGroup>
-          <p className="text-xs text-muted-foreground">进入学习队列即按此数量取题;先取待复习,再取待学习。</p>
-        </div>
-      </section>
-
-      {/* ── 外观 ────────────────────────────────────── */}
-      <section className="border-t border-border pt-6">
-        <h2 className="text-sm font-semibold tracking-wide">外观</h2>
-        <div className="mt-4">
-          <RadioGroup value={theme} onValueChange={(v) => setTheme(v as Theme)} aria-label="外观主题" className="flex flex-wrap gap-x-5 gap-y-2">
-            {THEME_OPTIONS.map((o) => (
-              <div key={o.value} className="flex items-center gap-1.5">
-                <RadioGroupItem value={o.value} id={`theme-${o.value}`} />
-                <Label htmlFor={`theme-${o.value}`} className="cursor-pointer text-xs font-normal text-muted-foreground">
-                  <o.icon className="mr-1 inline h-3.5 w-3.5" aria-hidden />
-                  {o.label}
-                </Label>
-              </div>
-            ))}
-          </RadioGroup>
-        </div>
-      </section>
-
-      {/* ── AI 生成 ─────────────────────────────────── */}
-      <section className="border-t border-border pt-6">
-        <h2 className="text-sm font-semibold tracking-wide">AI 生成(LLM)</h2>
-        <div className="mt-4 space-y-5">
-          <div className="text-xs text-muted-foreground">
-            任何 OpenAI 兼容端点(智谱 / DeepSeek / 本地 Ollama 等)。
-          </div>
-
-          {/* baseURL / model */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="llm-base-url" className="font-mono text-xs text-muted-foreground">baseURL</Label>
-              <Input id="llm-base-url" value={baseURL} onChange={(e) => setBaseURL(e.target.value)} placeholder="https://…/v1" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="llm-model" className="font-mono text-xs text-muted-foreground">model</Label>
-              <Input id="llm-model" value={model} onChange={(e) => setModel(e.target.value)} placeholder="glm-4-flash" />
-            </div>
-          </div>
-
-          {/* API key */}
-          <div className="space-y-1.5">
-            <Label htmlFor="llm-api-key" className="font-mono text-xs text-muted-foreground">API key</Label>
-            <Input
-              id="llm-api-key"
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="sk-…"
-              autoComplete="off"
-            />
-            <div className="text-xs text-muted-foreground">
-              {isTauri()
-                ? 'key 保存在本机应用数据中,退出不丢;保存后会回显在这里。'
-                : '浏览器预览:key 只存内存,刷新即丢;桌面版才会保存。'}
-            </div>
-          </div>
-
-          {/* 操作:无改动时保存禁用;测试连接结果就近显示(语义色) */}
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            <Button onClick={handleSave} disabled={saving || !llmDirty}>{saving ? '保存中…' : '保存 LLM 配置'}</Button>
-            <Button variant="secondary" onClick={handleTest} disabled={testing}>
-              {testing ? '测试中…' : '测试连接'}
-            </Button>
-            {status && (
-              <span className={`text-xs ${status.kind === 'ok' ? 'text-success' : 'text-destructive'}`}>
-                {status.text}
-              </span>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 数据管理 ───────────────────────────────── */}
-      <section className="border-t border-border pt-6">
-        <h2 className="text-sm font-semibold tracking-wide">数据管理</h2>
-        {/* 行列表用分隔线:同层级信息不套边框 */}
-        <div className="mt-4 divide-y divide-border">
-          {/* 官方题库同步:远端(GitHub Pages)→ 本地 SQLite 物化 */}
-          <div className="flex flex-wrap items-center justify-between gap-2 py-3">
-            <div className="min-w-0">
-              <div className="text-sm">官方题库</div>
-              <div className="mt-0.5 text-xs text-muted-foreground">
-                {lastSynced ? `上次同步 ${new Date(lastSynced).toLocaleString()}` : '尚未同步(仅包内快照)'}
-              </div>
-            </div>
-            <Button size="sm" variant="secondary" disabled={syncing} onClick={handleSyncOfficial}>
-              {syncing ? '同步中…' : '同步官方题库'}
-            </Button>
-          </div>
-          {categories.map((c) => {
-            const progressCount = Object.keys(loadProgress(c.slug)).length;
-            const noteCount = Object.keys(loadNotes(c.slug)).length;
-            return (
-              <div key={c.slug} className="flex flex-wrap items-center justify-between gap-2 py-3">
-                <div className="min-w-0">
-                  <div className="text-sm">{c.name}</div>
-                  <div className="mt-0.5 text-xs tabular-nums text-muted-foreground">
-                    进度 {progressCount} 条 · 笔记 {noteCount} 条
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    disabled={progressCount === 0}
-                    onClick={() => setConfirm({ kind: 'progress', category: c.slug, name: c.name })}
-                  >
-                    清空进度
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    disabled={noteCount === 0}
-                    onClick={() => setConfirm({ kind: 'notes', category: c.slug, name: c.name })}
-                  >
-                    清空笔记
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-          <div className="py-3 text-xs text-muted-foreground">
-            清空按分类执行:清空进度会删除学习进度(题目和笔记保留);清空笔记只删笔记(进度保留)。均不可恢复。
-          </div>
-        </div>
-      </section>
-
-      {/* ── 关于 ───────────────────────────────────── */}
-      <section className="border-t border-border pt-6">
-        <h2 className="text-sm font-semibold tracking-wide">关于</h2>
-        <div className="mt-4">
-          <a
-            href="https://github.com/starlibaixing-coder/resume-assistant"
-            target="_blank"
-            rel="noreferrer"
-            className="text-xs text-muted-foreground hover:text-primary"
-          >
-            GitHub 源码与官方题库
-          </a>
-        </div>
-      </section>
-
-      {/* 清空确认:不可逆操作统一 AlertDialog */}
-      <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
+      <AlertDialog open={!!pendingImportEnv} onOpenChange={(o) => !o && setPendingImportEnv(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{confirm?.kind === 'progress' ? '清空学习进度?' : '清空笔记?'}</AlertDialogTitle>
+            <AlertDialogTitle>导入将覆盖当前全部数据</AlertDialogTitle>
             <AlertDialogDescription>
-              将删除「{confirm?.name}」的{confirm?.kind === 'progress' ? '全部学习进度' : '全部笔记'}
-              ,{confirm?.kind === 'progress' ? '笔记会保留' : '学习进度会保留'}。此操作不可恢复。
+              现有题目、进度、笔记、JD 与设置会被备份文件整体替换,且不可恢复。确定继续吗?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={clearing}
-              onClick={(e) => {
-                e.preventDefault();
-                void handleClear();
+              onClick={async () => {
+                const env = pendingImportEnv;
+                setPendingImportEnv(null);
+                if (!env) return;
+                try {
+                  await importEnvelope(env);
+                  toast.success('备份已导入');
+                } catch (e) {
+                  toast.error('导入失败', { description: e instanceof Error ? e.message : String(e) });
+                }
               }}
             >
-              {clearing ? '清空中…' : '确认清空'}
+              覆盖导入
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </Group>
+  );
+}
+
+// ===== 关于 =====
+
+function AboutGroup() {
+  return (
+    <Group icon={<ServerIcon />} title="关于">
+      <div className="space-y-1 text-sm text-muted-foreground">
+        <p>CommitCareer · 求职刷题工作台</p>
+        <p>数据在本机 SQLite(app.db);API Key 仅存本机 secrets 表,界面永不回显。</p>
       </div>
-    </div>
+    </Group>
   );
 }

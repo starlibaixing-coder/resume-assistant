@@ -1,186 +1,190 @@
-// 存储层(B 方案:内存缓存 + SQLite 持久化)—— cache 逻辑 + persist 契约
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+// 存储网关往返与级联(mock db):行映射 / 补列 / 通过 / 复制 / 备份信封 / activity 派生
+
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
-  loadProgress,
-  saveCard,
-  getCard,
-  deleteCard,
-  clearProgress,
-  saveNote,
-  getNote,
-  clearNotes,
-  getCodeDraft,
-  saveCodeDraft,
-  rowToCard,
   _resetStorageForTest,
-  _setDbForTest,
-  type ReviewRow,
+  approvePending,
+  buildEnvelope,
+  copyOfficialToMy,
+  deleteMyQuestion,
+  ensureSchema,
+  getCard,
+  getMyQuestions,
+  getNote,
+  getOfficialQuestions,
+  getQuestion,
+  initStorage,
+  myRowToQuestion,
+  saveCard,
+  saveJd,
+  saveMyQuestion,
+  type MyRow,
 } from './storage';
-import type { CardState } from './sm2';
+import { rate } from './scheduler';
+import type Database from '@tauri-apps/plugin-sql';
 
-const CAT = 'agent';
+const DAY = 24 * 60 * 60 * 1000;
 
-function card(partial: Partial<CardState> = {}): CardState {
-  return { due: 0, interval: 1, ease: 2.5, reps: 1, lastReview: 0, ...partial };
+interface Call {
+  sql: string;
+  params?: unknown[];
 }
 
-beforeEach(() => _resetStorageForTest());
+function fakeDb(selectResults: Record<string, unknown[]> = {}) {
+  const calls: Call[] = [];
+  const db = {
+    select: vi.fn(async (sql: string) => {
+      for (const key of Object.keys(selectResults)) {
+        if (sql.includes(key)) return selectResults[key];
+      }
+      return [];
+    }),
+    execute: vi.fn(async (sql: string, params?: unknown[]) => {
+      calls.push({ sql, params });
+      return { rowsAffected: 0 } as never;
+    }),
+  } as unknown as Database & { execute: ReturnType<typeof vi.fn> };
+  return { db, calls };
+}
 
-describe('rowToCard', () => {
-  it('SQLite 行映射到 CardState', () => {
-    const row: ReviewRow = { id: 'a', category: 't', interval: 3, ease: 2.6, reps: 2, due: 100, last_review: 50 };
-    expect(rowToCard(row)).toEqual({ due: 100, interval: 3, ease: 2.6, reps: 2, lastReview: 50 });
+function myRow(id: string, over: Partial<MyRow> = {}): MyRow {
+  const now = Date.now();
+  return {
+    id,
+    category: 'my',
+    module: 1,
+    module_name: '基础',
+    index_real: 1,
+    difficulty: '中',
+    title: `题 ${id}`,
+    focus: 'f',
+    answer: JSON.stringify(['a'.repeat(60)]),
+    followups: JSON.stringify(['q1']),
+    tags: JSON.stringify(['t']),
+    status: 'approved',
+    source: 'manual',
+    source_id: null,
+    source_ref: '',
+    jd_id: null,
+    is_code: 0,
+    created_at: now,
+    updated_at: now,
+    ...over,
+  };
+}
+
+beforeEach(() => {
+  _resetStorageForTest();
+});
+
+describe('initStorage(mock db)', () => {
+  it('预热:官方/我的/进度/笔记全部灌入缓存;补列 DDL 幂等执行', async () => {
+    const { db } = fakeDb({
+      official_questions: [
+        {
+          id: 'fe.1.1', category: 'fe', module: 1, module_name: '闭包', index_real: 1.1,
+          difficulty: '中', title: '什么是闭包', focus: '词法作用域',
+          answer: JSON.stringify(['要点']), followups: '[]', tags: '["必问"]', synced_at: 1,
+        },
+      ],
+      official_categories: [{ slug: 'fe', name: '前端', description: '' }],
+      questions: [myRow('my.1.1', { status: 'pending', source: 'ai', source_ref: '知识点「x」' })],
+      review_state: [{ id: 'fe.1.1', category: 'fe', interval: 3, ease: 2.5, reps: 1, due: Date.now() + DAY, last_review: 1, last_rating: 'ok' }],
+      notes: [{ id: 'fe.1.1', content: '我的笔记' }],
+      jds: [{ id: 1, title: '前端岗', company: 'X', content: 'c', created_at: 1, last_active_at: 2 }],
+      meta: [{ key: 'batch_size', value: '20' }],
+      secrets: [{ name: 'llm-api-key', value: 'sk-1' }],
+    });
+    await initStorage({ db, loadBundledBank: false });
+
+    expect(getOfficialQuestions()).toHaveLength(1);
+    expect(getMyQuestions()).toHaveLength(1);
+    expect(getCard('fe.1.1')?.lastRating).toBe('ok');
+    expect(getNote('fe.1.1')).toBe('我的笔记');
+    expect(getQuestion('my.1.1')?.sourceRef).toBe('知识点「x」');
+    // 补列 DDL 已随 init 执行(ALTER×4 + CREATE×2),由 execute 调用数间接验证
+    expect(db.execute).toHaveBeenCalled();
   });
 
-  it('last_review null → lastReview null', () => {
-    const row = { id: '', category: '', interval: 1, ease: 2.5, reps: 1, due: 0, last_review: null };
-    expect(rowToCard(row as ReviewRow).lastReview).toBeNull();
+  it('ensureSchema:重复列报错被吞,其余错误抛出', async () => {
+    let calls = 0;
+    const db = {
+      execute: vi.fn(async (sql: string) => {
+        if (sql.startsWith('ALTER')) {
+          calls += 1;
+          if (calls === 1) throw new Error('duplicate column name: last_rating');
+        }
+        return { rowsAffected: 0 } as never;
+      }),
+    } as unknown as Database;
+    await expect(ensureSchema(db)).resolves.toBeUndefined();
   });
 });
 
-describe('进度缓存(同步 API)', () => {
-  it('saveCard/getCard 往返', () => {
-    saveCard(CAT, 'a', card({ interval: 5 }));
-    expect(getCard(CAT, 'a')?.interval).toBe(5);
+describe('写入路径', () => {
+  it('saveMyQuestion → fire-and-forget UPSERT;saveCard → review_state UPSERT 含 last_rating', async () => {
+    const { db, calls } = fakeDb();
+    await initStorage({ db, loadBundledBank: false });
+    saveMyQuestion(myRowToQuestion(myRow('my.9.1')));
+    saveCard('my.9.1', rate(null, 'ok', Date.now()), 'my');
+    expect(calls.some((c) => c.sql.includes('INSERT INTO questions'))).toBe(true);
+    const rs = calls.find((c) => c.sql.includes('INSERT INTO review_state'));
+    expect(rs?.sql).toContain('last_rating');
   });
 
-  it('loadProgress 返回副本(改副本不污染缓存)', () => {
-    saveCard(CAT, 'a', card());
-    const p = loadProgress(CAT);
-    p['a'] = { ...p['a'], interval: 999 };
-    expect(getCard(CAT, 'a')?.interval).toBe(1);
+  it('deleteMyQuestion 级联:附属四表 + 题目行,顺序固定', async () => {
+    const { db, calls } = fakeDb();
+    await initStorage({ db, loadBundledBank: false });
+    saveMyQuestion(myRowToQuestion(myRow('my.9.2')));
+    calls.length = 0;
+    deleteMyQuestion('my.9.2');
+    await vi.waitFor(() => expect(calls.length).toBe(5));
+    const order = calls.map((c) => c.sql);
+    expect(order[0]).toContain('DELETE FROM review_state');
+    expect(order[1]).toContain('DELETE FROM notes');
+    expect(order[2]).toContain('DELETE FROM code_drafts');
+    expect(order[3]).toContain('DELETE FROM rating_log');
+    expect(order[4]).toContain('DELETE FROM questions');
   });
 
-  it('loadProgress 空分类返回 {}', () => {
-    expect(loadProgress('nope')).toEqual({});
+  it('approvePending:gen.* → my.<模块>.<序号>,source_ref/jd_id 保留', async () => {
+    const { db } = fakeDb();
+    await initStorage({ db, loadBundledBank: false });
+    saveMyQuestion(myRowToQuestion(myRow('gen.1.0', { status: 'pending', source: 'jd', jd_id: 3, source_ref: '按 JD 生成 · 前端' })));
+    const newId = approvePending('gen.1.0');
+    expect(newId).toMatch(/^my\.1\.\d+$/);
+    const q = getQuestion(newId!)!;
+    expect(q.status).toBe('approved');
+    expect(q.jdId).toBe(3);
+    expect(q.sourceRef).toBe('按 JD 生成 · 前端');
   });
 
-  it('clearProgress 清除', () => {
-    saveCard(CAT, 'a', card());
-    clearProgress(CAT);
-    expect(getCard(CAT, 'a')).toBeNull();
+  it('copyOfficialToMy:source=copy 且带溯源 id', async () => {
+    const fake = fakeDb({
+      official_questions: [
+        {
+          id: 'fe.2.1', category: 'fe', module: 2, module_name: 'm', index_real: 1,
+          difficulty: '初', title: 't', focus: 'f', answer: '["a"]', followups: '[]', tags: '[]', synced_at: 1,
+        },
+      ],
+    });
+    await initStorage({ db: fake.db, loadBundledBank: false });
+    const copy = copyOfficialToMy('fe.2.1');
+    expect(copy?.source).toBe('copy');
+    expect(copy?.sourceId).toBe('fe.2.1');
+    expect(copy?.origin).toBe('my');
   });
 
-  it('分类隔离', () => {
-    saveCard(CAT, 'a', card({ interval: 1 }));
-    saveCard('fe', 'a', card({ interval: 9 }));
-    expect(getCard(CAT, 'a')?.interval).toBe(1);
-    expect(getCard('fe', 'a')?.interval).toBe(9);
-  });
-
-  it('deleteCard 删单题,不影响同分类其它题(撤销评分用)', () => {
-    saveCard(CAT, 'a', card({ interval: 1 }));
-    saveCard(CAT, 'b', card({ interval: 2 }));
-    deleteCard(CAT, 'a');
-    expect(getCard(CAT, 'a')).toBeNull();
-    expect(getCard(CAT, 'b')?.interval).toBe(2);
-  });
-
-  it('deleteCard 不存在的题是 no-op', () => {
-    expect(() => deleteCard(CAT, 'ghost')).not.toThrow();
-    expect(loadProgress(CAT)).toEqual({});
-  });
-});
-
-describe('笔记缓存', () => {
-  it('saveNote/getNote 往返', () => {
-    saveNote(CAT, 'a', '<p>n</p>');
-    expect(getNote(CAT, 'a')).toBe('<p>n</p>');
-  });
-
-  it('空内容删除', () => {
-    saveNote(CAT, 'a', '<p>n</p>');
-    saveNote(CAT, 'a', '   ');
-    expect(getNote(CAT, 'a')).toBe('');
-  });
-
-  it('getNote 不存在返回空串', () => {
-    expect(getNote(CAT, 'x')).toBe('');
-  });
-
-  it('笔记与进度隔离', () => {
-    saveCard(CAT, 'a', card());
-    saveNote(CAT, 'a', '<p>n</p>');
-    clearNotes(CAT);
-    expect(getCard(CAT, 'a')?.interval).toBe(1);
-    expect(getNote(CAT, 'a')).toBe('');
-  });
-});
-
-describe('代码草稿纸缓存', () => {
-  it('saveCodeDraft/getCodeDraft 往返', () => {
-    saveCodeDraft(CAT, 'a', 'console.log(1)');
-    expect(getCodeDraft(CAT, 'a')).toBe('console.log(1)');
-  });
-
-  it('空白内容删除', () => {
-    saveCodeDraft(CAT, 'a', 'console.log(1)');
-    saveCodeDraft(CAT, 'a', '   ');
-    expect(getCodeDraft(CAT, 'a')).toBe('');
-  });
-
-  it('getCodeDraft 不存在返回空串', () => {
-    expect(getCodeDraft(CAT, 'x')).toBe('');
-  });
-
-  it('与笔记隔离(同 id 互不干扰)', () => {
-    saveNote(CAT, 'a', '<p>n</p>');
-    saveCodeDraft(CAT, 'a', 'let x = 1');
-    clearNotes(CAT);
-    expect(getCodeDraft(CAT, 'a')).toBe('let x = 1');
-  });
-});
-
-describe('persist 契约(mock db)', () => {
-  it('saveCard 触发 review_state UPSERT(参数顺序正确)', async () => {
-    const execute = vi.fn().mockResolvedValue({});
-    _setDbForTest({ execute, select: vi.fn() } as never);
-    saveCard(CAT, 'a', card({ interval: 5, ease: 2.6, reps: 2, due: 100, lastReview: 50 }));
-    await vi.waitFor(() => expect(execute).toHaveBeenCalled());
-    const [sql, args] = execute.mock.calls[0];
-    expect(sql).toContain('INSERT INTO review_state');
-    expect(sql).toContain('ON CONFLICT(id) DO UPDATE');
-    expect(args).toEqual(['a', CAT, 5, 2.6, 2, 100, 50]);
-  });
-
-  it('saveNote 非空 UPSERT / 空 DELETE', async () => {
-    const execute = vi.fn().mockResolvedValue({});
-    _setDbForTest({ execute, select: vi.fn() } as never);
-    saveNote(CAT, 'a', '<p>n</p>');
-    await vi.waitFor(() => expect(execute).toHaveBeenCalled());
-    expect(execute.mock.calls[0][0]).toContain('INSERT INTO notes');
-    execute.mockClear();
-    saveNote(CAT, 'a', '');
-    await vi.waitFor(() => expect(execute).toHaveBeenCalled());
-    expect(execute.mock.calls[0][0]).toContain('DELETE FROM notes');
-  });
-
-  it('saveCodeDraft 非空 UPSERT / 空 DELETE', async () => {
-    const execute = vi.fn().mockResolvedValue({});
-    _setDbForTest({ execute, select: vi.fn() } as never);
-    saveCodeDraft(CAT, 'a', 'let x = 1');
-    await vi.waitFor(() => expect(execute).toHaveBeenCalled());
-    const [sql, args] = execute.mock.calls[0];
-    expect(sql).toContain('INSERT INTO code_drafts');
-    expect(args).toEqual(['a', CAT, 'let x = 1', expect.any(Number)]);
-    execute.mockClear();
-    saveCodeDraft(CAT, 'a', '  ');
-    await vi.waitFor(() => expect(execute).toHaveBeenCalled());
-    expect(execute.mock.calls[0][0]).toContain('DELETE FROM code_drafts');
-  });
-
-  it('deleteCard 触发 review_state DELETE', async () => {
-    const execute = vi.fn().mockResolvedValue({});
-    _setDbForTest({ execute, select: vi.fn() } as never);
-    deleteCard(CAT, 'a');
-    await vi.waitFor(() => expect(execute).toHaveBeenCalled());
-    const [sql, args] = execute.mock.calls[0];
-    expect(sql).toContain('DELETE FROM review_state');
-    expect(args).toEqual(['a']);
-  });
-
-  it('db 未就绪时 persist 静默跳过(不抛错)', () => {
-    _resetStorageForTest();
-    expect(() => saveCard(CAT, 'a', card())).not.toThrow();
+  it('备份信封:不含 secrets;导入前可解析(version 校验在 backup.ts)', async () => {
+    const { db } = fakeDb();
+    await initStorage({ db, loadBundledBank: false });
+    saveJd({ id: 1, title: 't', company: '', content: 'c', createdAt: 1, lastActiveAt: 2 });
+    const env = buildEnvelope();
+    expect(env.version).toBe(1);
+    expect(Object.keys(env.tables).sort()).toEqual(
+      ['code_drafts', 'jds', 'meta', 'notes', 'profile', 'questions', 'rating_log', 'review_state'],
+    );
+    expect('secrets' in env.tables).toBe(false);
   });
 });

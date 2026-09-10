@@ -1,123 +1,133 @@
-// 真机冒烟自检(SMOKE=1 / --smoke 启动时由 main.tsx 调起)。
-// 走真 SQLite(smoke.db,迁移由 Rust 注册),不触碰用户数据(resume.db)。
-// 五步:连接+迁移 → 写读删回环 → key 存取 → 档案存取 → 草稿→approve 链路。
-// 每步结果经 invoke(smoke_report) 打到 stdout,结束由 main.tsx 调 smoke_finish 退出。
+// 真机冒烟(SMOKE=1):走真 SQLite(smoke.db,后端已注册同套迁移),五步自检,
+// 每步经 smoke_report 打到 stdout,smoke_finish 以退出码收尾(scripts/smoke.py 汇总)。
 
-export async function runSmoke(): Promise<boolean> {
-  const { default: Database } = await import('@tauri-apps/plugin-sql');
-  const { invoke } = await import('@tauri-apps/api/core');
+import { invoke } from '@tauri-apps/api/core';
 
-  const report = async (step: string, pass: boolean, detail: string) => {
-    console.log(`[smoke] ${pass ? 'PASS' : 'FAIL'}  ${step}  ${detail}`);
-    try {
-      await invoke('smoke_report', { step, pass, detail });
-    } catch {
-      // 日志通道尽力而为,不因它判失败
-    }
+import { countStatus } from './bank';
+import { newCard, rate } from './scheduler';
+import {
+  _resetStorageForTest,
+  approvePending,
+  deleteMyQuestion,
+  ensureSchema,
+  getCard,
+  getMyQuestions,
+  initStorage,
+  recordRating,
+  saveMyQuestion,
+} from './storage';
+import { buildQueue } from './session';
+import type { Question } from './types';
+
+async function report(step: string, pass: boolean, detail: string): Promise<void> {
+  await invoke('smoke_report', { step, pass, detail });
+}
+
+function fakeQuestion(id: string, status: 'approved' | 'pending' = 'approved'): Question {
+  const now = Date.now();
+  return {
+    id,
+    origin: 'my',
+    category: 'my',
+    module: 1,
+    moduleName: '冒烟模块',
+    index: 1,
+    difficulty: '中',
+    title: `冒烟测试题 ${id}`,
+    focus: '存储链路是否完好',
+    answer: ['这是一条不少于五十字的冒烟测试答案要点,用于验证 SQLite 读写与缓存链路都正常工作,包含足够的字符数。'],
+    followups: [],
+    tags: ['smoke'],
+    status,
+    source: 'manual',
+    sourceId: null,
+    sourceRef: '',
+    jdId: null,
+    isCode: false,
+    createdAt: now,
+    updatedAt: now,
   };
-  const step = async (name: string, fn: () => Promise<string>): Promise<boolean> => {
-    try {
-      await report(name, true, await fn());
-      return true;
-    } catch (e) {
-      await report(name, false, e instanceof Error ? e.message : String(e));
-      return false;
-    }
+}
+
+export async function runSmoke(): Promise<void> {
+  let pass = true;
+  const fail = (detail: string) => {
+    pass = false;
+    return detail;
   };
 
-  let db: InstanceType<typeof Database> | null = null;
-  const results: boolean[] = [];
+  try {
+    _resetStorageForTest();
+    await initStorage({ file: 'sqlite:smoke.db', loadBundledBank: false });
+    const db = await (async () => {
+      const { openDb } = await import('./db');
+      return openDb('sqlite:smoke.db');
+    })();
+    if (db) await ensureSchema(db);
+    await report('init-storage', true, `缓存预热完成`);
+  } catch (e) {
+    await report('init-storage', false, fail(e instanceof Error ? e.message : String(e)));
+    await invoke('smoke_finish', { passed: false });
+    return;
+  }
 
-  results.push(
-    await step('storage.init', async () => {
-      db = await Database.load('sqlite:smoke.db');
-      return 'sqlite:smoke.db 连接 + 迁移 001-007';
-    }),
-  );
-  if (!db) return false;
+  try {
+    // 1. 题目写入往返
+    const q = fakeQuestion('my.smoke.1');
+    saveMyQuestion(q);
+    const found = getMyQuestions().find((x) => x.id === q.id);
+    await report('question-roundtrip', !!found, found ? '我的题写入缓存成功' : fail('写入后读不到'));
 
-  const { initMyLibDb, loadMyQuestionsFromDb, addDrafts, approveQuestion, getMyQuestions } = await import('./mylib');
-  const { initProfileDb, loadProfileFromDb, saveProfile, getProfile } = await import('./profile');
-  const { initJdsDb, loadJdsFromDb, addJd, getJds } = await import('./jd');
-  const { initSecretsDb, loadSecretsFromDb, setSecret, getSecret } = await import('./secrets');
-  initMyLibDb(db);
-  await loadMyQuestionsFromDb();
-  initProfileDb(db);
-  await loadProfileFromDb();
-  initJdsDb(db);
-  await loadJdsFromDb();
-  initSecretsDb(db);
-  await loadSecretsFromDb();
+    // 2. 评分 → review_state
+    const card = rate(null, 'ok', Date.now());
+    const { saveCard } = await import('./storage');
+    saveCard(q.id, card, 'my');
+    const back = getCard(q.id);
+    const dueOk = back ? new Date(back.dueAt).getHours() === 0 && new Date(back.dueAt).getMinutes() === 0 : false;
+    await report('rating-due', !!back && dueOk, back ? `due=${new Date(back.dueAt).toISOString()} interval=${back.intervalDays}` : fail('评分后无卡片'));
 
-  results.push(
-    await step('storage.roundtrip', async () => {
-      await db!.execute(
-        "INSERT INTO secrets(name, value) VALUES('_smoke', '1') ON CONFLICT(name) DO UPDATE SET value = '1'",
-        [],
-      );
-      const rows = await db!.select<Array<{ value: string }>>("SELECT value FROM secrets WHERE name = '_smoke'");
-      if (rows[0]?.value !== '1') throw new Error('写入后读回不一致');
-      await db!.execute("DELETE FROM secrets WHERE name = '_smoke'", []);
-      return '写读删回环(execute 权限 / 磁盘)';
-    }),
-  );
+    // 3. rating_log → activity
+    recordRating(q.id, 'ok', Date.now());
+    const { activityDays } = await import('./storage');
+    const days = activityDays();
+    await report('activity-log', days.length > 0 && days[0].rated >= 1, `activity ${days[0]?.day ?? '-'} rated=${days[0]?.rated ?? 0}`);
 
-  results.push(
-    await step('secrets.key', async () => {
-      await setSecret('llm-api-key', 'sk-smoke');
-      if ((await getSecret('llm-api-key')) !== 'sk-smoke') throw new Error('key 写读不一致');
-      await setSecret('llm-api-key', '');
-      if ((await getSecret('llm-api-key')) !== '') throw new Error('key 清除失败');
-      return 'key 落库读回 + 清除';
-    }),
-  );
+    // 4. pending 通过 → 正式 id
+    const p = fakeQuestion('gen.smoke.1', 'pending');
+    saveMyQuestion(p);
+    const newId = approvePending('gen.smoke.1');
+    await report('approve-pending', !!newId && newId!.startsWith('my.'), `新 id=${newId ?? '-'}`);
 
-  results.push(
-    await step('profile.save', async () => {
-      await saveProfile({ company: 'smoke 公司', resume: '# smoke 简历' });
-      const p = getProfile();
-      if (p?.company !== 'smoke 公司' || !p.resume) throw new Error('档案写读不一致');
-      // JD 走 jds 表(中枢一期):INSERT 自增 id 回填 + 列表读回
-      const jd = await addJd({ title: '', company: 'smoke 公司', content: '负责 smoke 自检…' });
-      if (!getJds().some((j) => j.id === jd.id && j.content.includes('smoke'))) throw new Error('JD 写读不一致');
-      return '档案(公司+简历)+ JD(jds 表)存取';
-    }),
-  );
+    // 5. 级联删除
+    deleteMyQuestion(newId!);
+    deleteMyQuestion('my.smoke.1');
+    await report('cascade-delete', getMyQuestions().length === 0, `剩余我的题 ${getMyQuestions().length}`);
 
-  results.push(
-    await step('mylib.flow', async () => {
-      const [q] = await addDrafts(
-        [
-          {
-            difficulty: '中' as const,
-            title: 'smoke 题干:冒烟链路验证?',
-            focus: '冒烟自检',
-            answer: [`${'冒'.repeat(30)}烟答案内容,凑足五十字以上的技术要点表述,确保通过共享校验。`],
-            followups: [],
-            tags: ['smoke'],
-          },
-        ],
-        'smoke 批次',
-        'ai',
-      );
-      if (q.source !== 'ai') throw new Error('来源标注未落库');
-      await approveQuestion(q.id);
-      const approved = getMyQuestions().find((x) => x.id === q.id);
-      if (approved?.status !== 'approved') throw new Error('草稿 → approve 链路断裂');
-      return `草稿 → approve → 聚合(${q.id})`;
-    }),
-  );
+    // 6. 队列构造(review 只含到期)
+    const now = Date.now();
+    const dueCard = rate(null, 'ok', now - 3 * 24 * 60 * 60 * 1000);
+    saveMyQuestion(fakeQuestion('my.smoke.9'));
+    saveCard('my.smoke.9', dueCard, 'my');
+    saveMyQuestion(fakeQuestion('my.smoke.10'));
+    const queue = buildQueue({
+      type: 'review',
+      questions: [{ id: 'my.smoke.9' }, { id: 'my.smoke.10' }],
+      cards: new Map([['my.smoke.9', dueCard]]),
+      batchSize: 'all',
+    });
+    const counts = countStatus(getMyQuestions(), new Map([['my.smoke.9', dueCard]]), now);
+    await report(
+      'queue-review',
+      queue.length === 1 && queue[0].qid === 'my.smoke.9' && counts.due === 1 && counts.new === 1,
+      `复习队列 ${queue.length} 项,五档计数 待复习=${counts.due} 待学习=${counts.new}`,
+    );
 
-  results.push(
-    await step('official.seed', async () => {
-      const ob = await import('./officialbank');
-      ob.initOfficialDb(db!);
-      await ob.ensureOfficial();
-      const total = ob.getOfficial()?.total ?? 0;
-      if (!total) throw new Error('官方题播种后为空');
-      return `官方题入库 ${total} 题(包内快照播种,读路径=DB 物化)`;
-    }),
-  );
+    // 新卡数值锚点:首评 ok → 3 天
+    const c2 = rate(null, 'ok', now);
+    await report('sm2-anchor', c2.intervalDays === 3 && newCard(now).ef === 2.5, `首评 ok 间隔 ${c2.intervalDays} 天`);
+  } catch (e) {
+    await report('smoke-steps', false, fail(e instanceof Error ? e.message : String(e)));
+  }
 
-  return results.every(Boolean);
+  await invoke('smoke_finish', { passed: pass });
 }
