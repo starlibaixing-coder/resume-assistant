@@ -261,7 +261,7 @@ function BackupGroup() {
   const exportJson = () => {
     const name = `commitcareer-backup-${new Date().toISOString().slice(0, 10)}.json`;
     if (!downloadTextFile(name, envelopeToJson(buildEnvelope()))) {
-      toast.info('桌面端导出需要文件对话框支持', { description: '该能力待后端补充(dialog + fs 插件),见后端 TODO。' });
+      toast.info('当前版本暂不支持在桌面端导出文件', { description: '文件导出能力将在后续版本提供。' });
     }
   };
 
@@ -274,7 +274,7 @@ function BackupGroup() {
       return;
     }
     if (!downloadTextFile('my-questions.yaml', myQuestionsToYaml(approved), 'text/yaml')) {
-      toast.info('桌面端导出需要文件对话框支持', { description: '该能力待后端补充(dialog + fs 插件),见后端 TODO。' });
+      toast.info('当前版本暂不支持在桌面端导出文件', { description: '文件导出能力将在后续版本提供。' });
     }
   };
 
@@ -312,7 +312,7 @@ function BackupGroup() {
         />
       </div>
       <p className="text-xs text-muted-foreground">
-        备份含题目、进度、笔记、草稿、JD 与设置,不含 API Key;导入为整库覆盖。{isTauri() && '桌面端「导出」待后端补文件对话框能力。'}
+        备份含题目、进度、笔记、草稿、JD 与设置,不含 API Key;导入为整库覆盖。{isTauri() && '当前版本暂不支持在桌面端导出文件。'}
       </p>
 
       <AlertDialog open={!!pendingImportEnv} onOpenChange={(o) => !o && setPendingImportEnv(null)}>

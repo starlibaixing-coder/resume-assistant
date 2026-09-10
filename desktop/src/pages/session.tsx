@@ -54,27 +54,27 @@ export function SessionPage() {
             className="py-0"
             icon={<GraduationCapIcon className="size-10" strokeWidth={1.5} />}
             title="学习队列"
-            description="选择一种方式开始;进行中的会话在切换页面后保留。"
+            description="选择一种方式开始,中途离开不会丢失进度。"
           />
           <div className="grid w-full gap-2.5" data-testid="session-entries">
             <SessionEntry
               icon={<RotateCwIcon />}
               title={dueN > 0 ? `开始复习 · 到期 ${dueN} 题` : '开始复习'}
-              desc="复习今天到期的题目,按记忆间隔安排。"
+              desc="复习今天到期的题目。"
               disabled={dueN === 0}
               onClick={() => start('review')}
             />
             <SessionEntry
               icon={<BookOpenIcon />}
               title={studyN > 0 ? `开始学习 · ${studyN} 题` : '开始学习'}
-              desc="学习还没评过分的题目,按设置的数量分批。"
+              desc="学习还没有学过的题目,每次一批,数量可在设置中调整。"
               disabled={countsNew(pool) === 0}
               onClick={() => start('study')}
             />
             <SessionEntry
               icon={<LayersIcon />}
               title={`总复习(全部 ${pool.length} 题)`}
-              desc="覆盖全部已入库题目,不按进度筛选,用于阶段自查。"
+              desc="不区分学习进度,把全部题目都过一遍,适合阶段性的查漏补缺。"
               disabled={pool.length === 0}
               onClick={() => start('again')}
             />

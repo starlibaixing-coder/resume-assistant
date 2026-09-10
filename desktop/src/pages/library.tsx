@@ -112,7 +112,7 @@ export function LibraryPage() {
           <CategoryTab active={cat === 'my'} label="我的题库" onClick={() => updateParam('cat', 'my')} />
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <FilterGroup label="状态">
             <ChipRow
               options={[{ v: 'all', label: '全部' }, ...(Object.keys(STATUS_LABEL) as DerivedStatus[]).map((s) => ({ v: s, label: STATUS_LABEL[s] }))]}
@@ -139,12 +139,14 @@ export function LibraryPage() {
               />
             </FilterGroup>
           )}
-          <div className="ml-auto flex items-center gap-2">
-            <ModuleSelect modules={modulesOf(pool)} value={module} onChange={setModule} />
-            <div className="relative">
-              <SearchIcon className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
-              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="搜索题干 / 标签" className="h-8 w-44 bg-input pl-8 text-xs" />
-            </div>
+          {modulesOf(pool).length > 1 && (
+            <FilterGroup label="模块">
+              <ModuleSelect modules={modulesOf(pool)} value={module} onChange={setModule} />
+            </FilterGroup>
+          )}
+          <div className="relative">
+            <SearchIcon className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="搜索题干 / 标签" className="h-8 w-44 bg-input pl-8 text-xs" />
           </div>
         </div>
 
@@ -178,7 +180,7 @@ export function LibraryPage() {
             onPractice={practiceSingle}
           />
         ) : (
-          <EmptyState title="选择一道题" description="在左侧选中题目查看详情、笔记与操作。" />
+          <EmptyState title="选择一道题" description="在左侧选中题目,即可查看详情与笔记。" />
         )}
       </section>
     </div>

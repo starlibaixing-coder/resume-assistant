@@ -80,7 +80,7 @@ export function ResumePage() {
       <div className="mb-4 flex items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-lg font-semibold">简历</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">Markdown 格式;按 JD 生成题目时可勾选「结合简历出题」。</p>
+          <p className="mt-0.5 text-sm text-muted-foreground">用 Markdown 书写;按 JD 生成题目时,可勾选「结合简历出题」。</p>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="tabular-nums">{charCount} 字</span>
