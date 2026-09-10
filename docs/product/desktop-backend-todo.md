@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS rating_log (                     -- activity 派生�
 | B3 | **ai-chat 子窗口随主窗退出关闭(D21)** | 前端只创建/聚焦;主窗关闭时 ai-chat 是否退出取决于平台默认行为,未验证 | 在 Rust 侧 `WindowEvent::CloseRequested/Destroyed` 或前端 `onCloseRequested` 里显式关闭 label=`ai-chat` 的 webview |
 | B4 | **备份导入的原子事务** | 导入走 BEGIN→…→COMMIT 两条 `execute`,同一连接可回滚,但**非严格单事务**(插件逐条往返,中断窗口存在) | 插件层无事务 API;建议后端加 `apply_backup(json)` 自定义命令, rusqlite `transaction()` 内整库覆盖 |
 | B5 | **真机验证** | smoke 前端(`lib/smoke.ts`)已适配新存储,协议(is_smoke_mode/smoke_report/smoke_finish)不变;尚未在真机跑过 | `npm run smoke` 跑一轮;`npm run tauri dev` 手测:系统全屏进出、ai-chat 窗口、真 LLM 一轮、官方库同步 |
+| B6 | **多份简历** | 简历页当前单份(profile.resume);导入/导出/预览已支持 | 新表 `resumes(id, name, content, updated_at)` + 迁移;简历页改为列表切换;「按 JD 生成 · 结合简历」需选择用哪份(默认最近编辑) |
 
 ## C. 技术设计文档与现实不符(建议下轮修订文档,前端已按现实适配)
 

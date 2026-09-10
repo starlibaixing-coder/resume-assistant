@@ -90,3 +90,11 @@ src/
 - typecheck(tsc -b strict)0 错;vite build 通过;禁词 grep 0 命中;Rust 测试 6/6(后端未动)
 - 截图目检:暖纸 9 页 + 夜读 5 页(`desktop/scripts/rebuild-shots.mjs` 可复现)
 - **覆盖层声明**:以上均为 web 层;真 SQLite/系统全屏/ai-chat 窗口/真 LLM 需 `npm run tauri dev` + `npm run smoke`(smoke.ts 已适配新存储,协议不变)
+
+---
+
+## 8. 变更记录
+
+| 日期 | 变更 |
+|---|---|
+| 2026-09-10 | 首版实施(用户评审九条细节反馈后修订):答案/追问去 38rem 上限改铺满;评分三键去 kbd 数字;专注/结束按钮明确化;答案可隐藏(hideAnswer);学习队列空态改三入口卡(各带说明);复习预测仅有到期数据时出现、去 00:00 术语;最近学习加缺省;题库筛选区带标签分组对齐、「我的」→「我的题库」、难度芯片用简单/中等/困难;添加题目按频率排序(AI→按JD→手动)、引导条精确到缺项、旧版 localStorage llm-config 启动迁移(migrateLegacyLlmConfig)、题目表单标签上方对齐+答案 Markdown 预览;JD 表单标签上方对齐;简历新增导入 .md/导出 .md/Markdown 预览(多份简历 → 后端 TODO B6);术语对齐(官方复制/学习队列/道题量词) |

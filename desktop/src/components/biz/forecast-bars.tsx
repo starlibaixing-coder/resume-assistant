@@ -46,14 +46,20 @@ function dayLabel(day: string, now: number): string {
 
 export function ActivityList({ days, now }: { days: ActivityDay[]; now: number }) {
   const rows = recentActivity(days, 6);
-  if (rows.length === 0) return null; // 零值行不渲染(M2)
+  if (rows.length === 0) {
+    return (
+      <div className="rounded-xl bg-card px-4 py-6 text-center text-sm text-muted-foreground" data-testid="activity-empty">
+        暂无学习记录。完成一次评分后,这里会按天汇总。
+      </div>
+    );
+  }
   return (
     <ul className="divide-y divide-border/70 rounded-xl bg-card px-4">
       {rows.map((d) => (
         <li key={d.day} className="flex items-center justify-between py-2.5 text-sm">
           <span>{dayLabel(d.day, now)}</span>
           <span className="text-muted-foreground">
-            评分 <span className="font-medium text-foreground tabular-nums">{d.rated}</span> 题
+            评分 <span className="font-medium text-foreground tabular-nums">{d.rated}</span> 道
             {d.ok > 0 && (
               <>
                 {' · 掌握 '}

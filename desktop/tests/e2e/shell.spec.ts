@@ -26,7 +26,7 @@ test('⌘1–8 / ⌘, 切换路由并更新标题', async ({ page }) => {
   await expect(page.getByTestId('question-table')).toBeVisible();
   await expect(page).toHaveTitle(/题库 · CommitCareer/);
   await page.keyboard.press('Meta+,');
-  await expect(page.getByText('AI 服务')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'AI 服务' })).toBeVisible();
   await expect(page).toHaveTitle(/设置 · CommitCareer/);
   await page.keyboard.press('Meta+1');
   await expect(page.getByTestId('today-page')).toBeVisible();

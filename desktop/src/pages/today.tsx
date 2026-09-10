@@ -1,5 +1,5 @@
 // 今日(M2):驾驶舱纵排 —— 问候 + 主计划卡(hero,第一件未完成事 = 唯一主 CTA)
-// + 7 日到期预测 + 五档统计条 + 最近学习记录。零值行不渲染;全清走 EmptyState。
+// + 复习预测(仅有到期数据时出现)+ 题库概览 + 最近学习记录。零值不渲染;全清走 EmptyState。
 
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router';
@@ -40,10 +40,12 @@ export function TodayPage() {
   const dateLine = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' }).format(now);
 
   const hero = counts.due > 0
-    ? { key: 'review', title: `复习 ${counts.due} 题`, desc: '今天有一批题到了复习期,先把到期的清完。', cta: '开始复习', onClick: () => start('review') }
+    ? { key: 'review', title: `复习 ${counts.due} 题`, desc: '先完成今日到期的复习,新内容随后安排。', cta: '开始复习', onClick: () => start('review') }
     : counts.new > 0
-      ? { key: 'study', title: `学习 ${studyN} 题`, desc: '没有到期的复习,正是开始学习的好时候。', cta: '开始学习', onClick: () => start('study') }
+      ? { key: 'study', title: `学习 ${studyN} 题`, desc: '当前没有到期复习,直接开始学习。', cta: '开始学习', onClick: () => start('study') }
       : null;
+
+  const hasForecast = counts.due > 0;
 
   return (
     <div className="h-full overflow-y-auto" data-testid="today-page">
@@ -64,7 +66,7 @@ export function TodayPage() {
               </Button>
               {counts.due > 0 && counts.new > 0 && (
                 <Button size="lg" variant="ghost" onClick={() => start('study')}>
-                  学习 {studyN} 题
+                  开始学习 {studyN} 题
                 </Button>
               )}
             </div>
@@ -73,8 +75,8 @@ export function TodayPage() {
           <EmptyState
             className="rounded-xl bg-card py-12 shadow-sm"
             icon={<CheckCheckIcon className="size-10" strokeWidth={1.5} />}
-            title="今日计划已清空"
-            description="没有到期的复习,也没有待学习的题目。想保持手感,可以把全库再过一遍。"
+            title="今日计划已完成"
+            description="没有到期的复习,也没有待学习的题目。想保持手感,可将全部题目再过一遍。"
             action={
               pool.length > 0 && (
                 <Button variant="outline" onClick={() => start('again')}>
@@ -85,9 +87,9 @@ export function TodayPage() {
           />
         )}
 
-        {counts.due > 0 && (
+        {hasForecast && (
           <section className="rounded-xl bg-card p-6 shadow-sm">
-            <SectionTitle title="接下来 7 天" desc="按自然日到期的复习量;到期当天 00:00 即计入。" />
+            <SectionTitle title="复习预测" desc="未来 7 天,每天到期的题目数量。" />
             <ForecastBars now={now} />
           </section>
         )}

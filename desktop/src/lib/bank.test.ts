@@ -105,7 +105,7 @@ describe('filterQuestions / modulesOf / sourceLine', () => {
   it('sourceLine:source_ref 快照优先(D27)', () => {
     expect(sourceLine(q({ sourceRef: '按 JD 生成 · 前端岗' }))).toBe('按 JD 生成 · 前端岗');
     expect(sourceLine(q({ source: 'ai' }))).toBe('AI 生成');
-    expect(sourceLine(q({ source: 'copy' }))).toBe('官方题复制');
+    expect(sourceLine(q({ source: 'copy' }))).toBe('官方复制');
   });
 });
 

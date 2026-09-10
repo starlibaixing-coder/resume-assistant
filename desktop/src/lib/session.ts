@@ -135,6 +135,13 @@ export function reveal(): void {
   emit();
 }
 
+/** 隐藏答案(重新自测);␣/Enter 可再次揭示 */
+export function hideAnswer(): void {
+  if (!session || session.finished || !session.revealed) return;
+  session.revealed = false;
+  emit();
+}
+
 /** 评分:单一通道写 review_state + rating_log;评 no 触发重练副本。
  *  写入后锁定,由 UI 在结果条(~1s)播完调 confirmAdvance() 推进(§4.2 结果条节奏)。 */
 export function rateCurrent(rating: 'ok' | 'fuzzy' | 'no', now = Date.now()): void {

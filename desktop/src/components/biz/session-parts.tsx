@@ -1,7 +1,7 @@
 // 会话组件:评分三键(kbd 提示)/ 结果反馈条(语义色,1s 自动推进)/ 进度头 / 小结面板(M3)。
 
 import { useEffect, useState } from 'react';
-import { CheckIcon, HelpCircleIcon, XIcon } from 'lucide-react';
+import { CheckIcon, HelpCircleIcon, Maximize2Icon, Minimize2Icon, XIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { MarkdownText } from './markdown-text';
@@ -11,18 +11,17 @@ import { rate } from '@/lib/scheduler';
 import type { Rating } from '@/lib/types';
 
 export function RatingBar({ disabled, onRate }: { disabled?: boolean; onRate: (r: Rating) => void }) {
-  const items: { r: Rating; label: string; key: string; cls: string; icon: typeof CheckIcon }[] = [
-    { r: 'no', label: '不会', key: '1', cls: 'hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40', icon: XIcon },
-    { r: 'fuzzy', label: '模糊', key: '2', cls: 'hover:bg-warning/10 hover:text-warning hover:border-warning/40', icon: HelpCircleIcon },
-    { r: 'ok', label: '掌握', key: '3', cls: 'hover:bg-success/10 hover:text-success hover:border-success/40', icon: CheckIcon },
+  const items: { r: Rating; label: string; cls: string; icon: typeof CheckIcon }[] = [
+    { r: 'no', label: '不会', cls: 'hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40', icon: XIcon },
+    { r: 'fuzzy', label: '模糊', cls: 'hover:bg-warning/10 hover:text-warning hover:border-warning/40', icon: HelpCircleIcon },
+    { r: 'ok', label: '掌握', cls: 'hover:bg-success/10 hover:text-success hover:border-success/40', icon: CheckIcon },
   ];
   return (
     <div className="flex gap-2.5" data-testid="rating-bar">
-      {items.map(({ r, label, key, cls, icon: Icon }) => (
+      {items.map(({ r, label, cls, icon: Icon }) => (
         <Button key={r} variant="outline" disabled={disabled} onClick={() => onRate(r)} className={cn('h-11 flex-1 text-sm', cls)}>
           <Icon className="size-4" strokeWidth={1.75} />
           {label}
-          <kbd className="ml-1 rounded border border-border/70 bg-muted px-1 text-[10px] text-muted-foreground">{key}</kbd>
         </Button>
       ))}
     </div>
@@ -79,7 +78,7 @@ export function ProgressHeader({
   onEnd: () => void;
 }) {
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-3">
       <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">{type}</span>
       <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
         <div
@@ -90,19 +89,25 @@ export function ProgressHeader({
       <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
         {Math.min(index + 1, total)} / {total}
       </span>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={onToggleFocus}
         title={focusMode ? '退出专注 (Esc)' : '专注模式 (F)'}
-        className="cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
+        className="text-muted-foreground"
+        data-testid="focus-btn"
       >
-        {focusMode ? '⤢' : '⤡'}
-      </button>
-      {!focusMode && (
-        <Button variant="ghost" size="sm" onClick={onEnd} className="text-muted-foreground">
-          结束
-        </Button>
-      )}
+        {focusMode ? <Minimize2Icon /> : <Maximize2Icon />} {focusMode ? '退出专注' : '专注'}
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onEnd}
+        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+        data-testid="end-btn"
+      >
+        结束
+      </Button>
     </div>
   );
 }

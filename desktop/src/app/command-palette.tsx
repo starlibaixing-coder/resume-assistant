@@ -79,8 +79,8 @@ export function CommandPalette({
               开始学习 {batchN} 题<CommandShortcut>待学习 {counts.new}</CommandShortcut>
             </CommandItem>
           )}
-          <CommandItem value="再过一遍" onSelect={startAgain}>
-            再过一遍<CommandShortcut>全库 {official.length + my.filter((q) => q.status === 'approved').length} 题</CommandShortcut>
+          <CommandItem value="再过一遍 全部题" onSelect={startAgain}>
+            再过一遍(全部题)<CommandShortcut>共 {official.length + my.filter((q) => q.status === 'approved').length} 题</CommandShortcut>
           </CommandItem>
           {counts.pending > 0 && (
             <CommandItem value="去审核" onSelect={() => { onOpenChange(false); go('/review'); }}>

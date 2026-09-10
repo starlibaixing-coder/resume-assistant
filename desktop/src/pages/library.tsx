@@ -1,7 +1,7 @@
 // 题库(M4):双栏工作台 —— 左:分类 Tabs + 筛选芯片(状态五档/难度/来源)+ 模块下拉 + 题目表(>200 虚拟滚动);
 // 右:选中题详情(编辑就地)。深链 ?cat= ?qid= ?status=;↑/↓ 移动选中;分类记忆 meta.last_bank_cat。
 
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { SearchIcon } from 'lucide-react';
 
@@ -109,38 +109,48 @@ export function LibraryPage() {
             label={categories.find((c) => c.slug === 'agent')?.name ?? 'Agent'}
             onClick={() => updateParam('cat', 'agent')}
           />
-          <CategoryTab active={cat === 'my'} label="我的" onClick={() => updateParam('cat', 'my')} />
+          <CategoryTab active={cat === 'my'} label="我的题库" onClick={() => updateParam('cat', 'my')} />
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <ChipRow
-            options={[{ v: 'all', label: '全部' }, ...(Object.keys(STATUS_LABEL) as DerivedStatus[]).map((s) => ({ v: s, label: STATUS_LABEL[s] }))]}
-            value={status}
-            onChange={(v) => { setStatus(v as StatusFilter); updateParam('status', v === 'all' ? null : v); }}
-          />
-          <ChipRow
-            options={[{ v: 'all', label: '难度' }, { v: '初', label: '初' }, { v: '中', label: '中' }, { v: '高', label: '高' }]}
-            value={difficulty}
-            onChange={(v) => setDifficulty(v as DifficultyFilter)}
-          />
-          <ChipRow
-            options={[
-              { v: 'all', label: '来源' },
-              ...(cat === 'my' ? [{ v: 'manual', label: '手动' }, { v: 'ai', label: 'AI' }, { v: 'jd', label: 'JD' }, { v: 'copy', label: '复制' }] : []),
-            ]}
-            value={source}
-            onChange={(v) => setSource(v as SourceFilter)}
-          />
-          <ModuleSelect modules={modulesOf(pool)} value={module} onChange={setModule} />
-          <div className="relative ml-auto">
-            <SearchIcon className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="搜题干 / 标签…" className="h-8 w-44 bg-input pl-8 text-xs" />
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+          <FilterGroup label="状态">
+            <ChipRow
+              options={[{ v: 'all', label: '全部' }, ...(Object.keys(STATUS_LABEL) as DerivedStatus[]).map((s) => ({ v: s, label: STATUS_LABEL[s] }))]}
+              value={status}
+              onChange={(v) => { setStatus(v as StatusFilter); updateParam('status', v === 'all' ? null : v); }}
+            />
+          </FilterGroup>
+          <FilterGroup label="难度">
+            <ChipRow
+              options={[{ v: 'all', label: '全部' }, { v: '初', label: '简单' }, { v: '中', label: '中等' }, { v: '高', label: '困难' }]}
+              value={difficulty}
+              onChange={(v) => setDifficulty(v as DifficultyFilter)}
+            />
+          </FilterGroup>
+          {cat === 'my' && (
+            <FilterGroup label="来源">
+              <ChipRow
+                options={[
+                  { v: 'all', label: '全部' },
+                  { v: 'manual', label: '手动' }, { v: 'ai', label: 'AI' }, { v: 'jd', label: 'JD' }, { v: 'copy', label: '复制' },
+                ]}
+                value={source}
+                onChange={(v) => setSource(v as SourceFilter)}
+              />
+            </FilterGroup>
+          )}
+          <div className="ml-auto flex items-center gap-2">
+            <ModuleSelect modules={modulesOf(pool)} value={module} onChange={setModule} />
+            <div className="relative">
+              <SearchIcon className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="搜索题干 / 标签" className="h-8 w-44 bg-input pl-8 text-xs" />
+            </div>
           </div>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto rounded-xl bg-card shadow-sm" data-testid="question-table">
           {filtered.length === 0 ? (
-            <EmptyState title="没有符合筛选的题目" description="调整筛选条件,或去「添加题目」补充题库。" />
+            <EmptyState title="没有符合筛选的题目" description="调整筛选条件,或到「添加题目」补充。" />
           ) : filtered.length > 200 ? (
             <VirtualTable questions={filtered} selectedId={selected?.id ?? null} onSelect={setSelectedId} rowRefs={rowRefs} />
           ) : (
@@ -192,6 +202,15 @@ function CategoryTab({ active, label, onClick }: { active: boolean; label: strin
     >
       {label}
     </button>
+  );
+}
+
+function FilterGroup({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-muted-foreground/80">{label}</span>
+      {children}
+    </div>
   );
 }
 

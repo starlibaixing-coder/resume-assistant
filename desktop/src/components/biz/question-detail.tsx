@@ -134,7 +134,7 @@ export function QuestionDetail({
           <AlertDialogHeader>
             <AlertDialogTitle>删除这道题?</AlertDialogTitle>
             <AlertDialogDescription>
-              将同时删除它的复习进度、笔记与草稿,不可恢复。
+              将同时删除该题的复习进度、笔记与草稿,此操作不可恢复。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

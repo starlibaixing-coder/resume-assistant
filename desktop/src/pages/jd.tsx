@@ -85,7 +85,7 @@ export function JdPage() {
             <p className="mt-0.5 text-sm text-muted-foreground">招聘要求集中管理,对着 JD 出题查漏补缺。</p>
           </div>
           <Button size="sm" variant="outline" onClick={createNew} data-testid="jd-new-btn">
-            <PlusIcon /> 新建
+            <PlusIcon /> 新建 JD
           </Button>
         </div>
 
@@ -249,18 +249,30 @@ function JdForm({ jd, onDone }: { jd: Jd | null; onDone: (saved: Jd | null) => v
   };
 
   return (
-    <div className="flex h-full flex-col gap-4 overflow-y-auto p-5" data-testid="jd-form">
-      <div className="grid grid-cols-[5rem_1fr] items-center gap-x-3 gap-y-3">
-        <Label htmlFor="jd-company">公司</Label>
-        <Input id="jd-company" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="选填" />
-        <Label htmlFor="jd-title">
-          <span className="text-destructive">*</span> 岗位名
-        </Label>
-        <Input id="jd-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="如:资深前端工程师" />
-        <Label htmlFor="jd-content" className="self-start pt-1.5">
+    <div className="flex h-full flex-col gap-5 overflow-y-auto p-5" data-testid="jd-form">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="jd-company">公司</Label>
+          <Input id="jd-company" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="选填" />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="jd-title">
+            <span className="text-destructive">*</span> 岗位名
+          </Label>
+          <Input id="jd-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="如:资深前端工程师" />
+        </div>
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col gap-1.5">
+        <Label htmlFor="jd-content">
           <span className="text-destructive">*</span> JD 全文
         </Label>
-        <Textarea id="jd-content" value={content} onChange={(e) => setContent(e.target.value)} className="min-h-72" placeholder="粘贴完整的招聘要求" />
+        <Textarea
+          id="jd-content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          className="min-h-72 flex-1 resize-none"
+          placeholder="粘贴完整的招聘要求"
+        />
       </div>
       <div className="flex justify-end gap-2">
         <Button variant="ghost" onClick={() => { clearDirtyGuard('jd-form'); onDone(null); }}>
