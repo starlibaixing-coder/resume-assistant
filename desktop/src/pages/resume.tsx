@@ -1,14 +1,13 @@
 // 简历(M8):编辑器版式 —— 标题栏含字数/保存状态,⌘S 保存,dirty 走全局守卫。
-// 支持 Markdown(渲染端一致);提供导入(.md/.txt)、导出(.md)、预览。
+// 所见即所得 Markdown(Tiptap):「## 」即打即变标题;内容仍按 Markdown 存储与导入导出。
 // 多份简历需后端新表(见 docs/product/desktop-backend-todo.md B6),当前单份。
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { DownloadIcon, EyeIcon, PencilLineIcon, UploadIcon } from 'lucide-react';
+import { DownloadIcon, UploadIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { MarkdownText } from '@/components/biz/markdown-text';
+import { MarkdownEditor } from '@/components/biz/markdown-editor';
 import { clearDirtyGuard, registerDirtyGuard } from '@/lib/guard';
 import { registerSaveHook } from '@/lib/page-hooks';
 import { downloadTextFile } from '@/lib/backup';
@@ -20,7 +19,6 @@ export function ResumePage() {
   const [value, setValue] = useState(profile.resume);
   const [dirty, setDirty] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
-  const [preview, setPreview] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const charCount = value.replace(/\s/g, '').length;
@@ -89,16 +87,6 @@ export function ResumePage() {
       </div>
 
       <div className="mb-3 flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          className={cnSoft(preview)}
-          onClick={() => setPreview((v) => !v)}
-          data-testid="resume-preview-btn"
-        >
-          {preview ? <PencilLineIcon /> : <EyeIcon />} {preview ? '继续编辑' : '预览'}
-        </Button>
-        <span className="mx-1 h-4 w-px bg-border" />
         <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => fileRef.current?.click()}>
           <UploadIcon /> 导入 .md
         </Button>
@@ -122,33 +110,17 @@ export function ResumePage() {
         </Button>
       </div>
 
-      {preview ? (
-        <div
-          className="min-h-0 flex-1 overflow-y-auto rounded-xl bg-card p-6 shadow-sm"
-          data-testid="resume-preview"
-        >
-          {value.trim() ? (
-            <MarkdownText text={value} className="[&_h1]:mt-4 [&_h1]:text-xl [&_h1]:font-semibold [&_h2]:mt-4 [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:mt-3 [&_h3]:font-medium [&_li]:ml-5 [&_li]:list-disc [&_p]:my-2 first:[&_h1]:mt-0" />
-          ) : (
-            <p className="text-sm text-muted-foreground">简历为空,切回编辑填写。</p>
-          )}
-        </div>
-      ) : (
-        <Textarea
-          value={value}
-          onChange={(e) => {
-            setValue(e.target.value);
-            setDirty(true);
-          }}
-          placeholder={'# 你的名字\n\n## 经历\n- …\n\n## 技能\n- …'}
-          className="min-h-0 flex-1 resize-none rounded-xl bg-card p-6 text-sm leading-relaxed shadow-sm"
-          data-testid="resume-editor"
-        />
-      )}
+      <MarkdownEditor
+        value={value}
+        onChange={(v) => {
+          setValue(v);
+          setDirty(true);
+        }}
+        placeholder={'# 你的名字\n\n## 经历\n- …\n\n## 技能\n- …'}
+        className="min-h-0 flex-1 overflow-y-auto rounded-xl bg-card p-6 shadow-sm [&_.tiptap]:min-h-[60vh] [&_.tiptap]:bg-transparent [&_.tiptap]:p-0"
+        editorClassName="text-sm leading-relaxed [&_h1]:mt-4 [&_h2]:mt-4 [&_h3]:mt-3 [&_li]:ml-5 [&_p]:my-2"
+        testId="resume-editor"
+      />
     </div>
   );
-}
-
-function cnSoft(active: boolean): string {
-  return active ? 'bg-accent text-foreground' : 'text-muted-foreground';
 }

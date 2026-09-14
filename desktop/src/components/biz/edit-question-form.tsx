@@ -1,17 +1,17 @@
 // 题目表单字段(添加题目 / 题库编辑 / 审核编辑共用):
-// 标签在字段上方、统一间距;答案要点与追问支持 Markdown(与渲染端一致),答案可预览。
-// 校验:题干/focus 非空、答案合计 ≥50 字(与题库共享预检同口径)。
+// 标签在字段上方、统一间距;答案要点为所见即所得 Markdown(一段一个要点,即打即现),
+// 追问仍是每行一条的纯文本。校验:题干/focus 非空、答案合计 ≥50 字(与题库共享预检同口径)。
 
 import { useCallback, useEffect, useState } from 'react';
-import { EyeIcon, PencilLineIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
-import { AnswerBlock } from '@/components/biz/markdown-text';
+import { MarkdownEditor } from '@/components/biz/markdown-editor';
 import { clearDirtyGuard, registerDirtyGuard } from '@/lib/guard';
+import { markdownToPoints, pointsToMarkdown } from '@/lib/markdown';
 import { saveMyQuestion } from '@/lib/storage';
 import type { Difficulty, Question } from '@/lib/types';
 
@@ -20,7 +20,7 @@ export interface QuestionDraft {
   difficulty: Difficulty;
   title: string;
   focus: string;
-  answerText: string; // 每行一个要点,支持 Markdown
+  answerText: string; // markdown;空行分段,一段一个要点
   followupsText: string; // 每行一条
   tagsText: string; // 逗号分隔
 }
@@ -31,7 +31,7 @@ export function draftOf(q: Question): QuestionDraft {
     difficulty: q.difficulty,
     title: q.title,
     focus: q.focus,
-    answerText: q.answer.join('\n'),
+    answerText: pointsToMarkdown(q.answer),
     followupsText: q.followups.join('\n'),
     tagsText: q.tags.join(', '),
   };
@@ -41,11 +41,7 @@ export function validateDraft(d: QuestionDraft): string[] {
   const errors: string[] = [];
   if (!d.title.trim()) errors.push('题干不能为空');
   if (!d.focus.trim()) errors.push('考察方向不能为空');
-  const len = d.answerText
-    .split('\n')
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .join('').length;
+  const len = markdownToPoints(d.answerText).join('').length;
   if (len < 50) errors.push(`答案合计过短(${len} 字,至少 50 字)`);
   if (!d.moduleName.trim()) errors.push('模块名不能为空');
   return errors;
@@ -58,7 +54,7 @@ export function applyDraft(q: Question, d: QuestionDraft): Question {
     difficulty: d.difficulty,
     title: d.title.trim(),
     focus: d.focus.trim(),
-    answer: d.answerText.split('\n').map((s) => s.trim()).filter(Boolean),
+    answer: markdownToPoints(d.answerText),
     followups: d.followupsText.split('\n').map((s) => s.trim()).filter(Boolean),
     tags: d.tagsText.split(/[,，]/).map((s) => s.trim()).filter(Boolean),
     updatedAt: Date.now(),
@@ -87,8 +83,6 @@ export function QuestionFormFields({
   idPrefix: string;
 }) {
   const set = (patch: Partial<QuestionDraft>) => onChange({ ...draft, ...patch });
-  const [preview, setPreview] = useState(false);
-  const answerLines = draft.answerText.split('\n').map((s) => s.trim()).filter(Boolean);
 
   return (
     <div className="space-y-5">
@@ -119,28 +113,16 @@ export function QuestionFormFields({
       </Field>
 
       <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <Label>
-            <span className="text-destructive">*</span> 答案要点
-            <span className="font-normal text-muted-foreground">(每行一个要点,支持 Markdown:**粗体**、`代码`)</span>
-          </Label>
-          <Button type="button" variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" onClick={() => setPreview((v) => !v)}>
-            {preview ? <PencilLineIcon /> : <EyeIcon />} {preview ? '继续编辑' : '预览'}
-          </Button>
-        </div>
-        {preview ? (
-          <div className="min-h-32 rounded-md bg-input/50 p-3">
-            {answerLines.length > 0 ? <AnswerBlock points={answerLines} /> : <p className="text-sm text-muted-foreground">暂无内容</p>}
-          </div>
-        ) : (
-          <Textarea
-            id={`${idPrefix}-answer`}
-            value={draft.answerText}
-            onChange={(e) => set({ answerText: e.target.value })}
-            className="min-h-36"
-            placeholder={'主流架构:Decoder-only Transformer…\n核心:注意力机制(Self-Attention)…'}
-          />
-        )}
+        <Label>
+          <span className="text-destructive">*</span> 答案要点
+          <span className="font-normal text-muted-foreground">(一段一个要点,直接写 Markdown:**粗体**、`代码`,即打即现)</span>
+        </Label>
+        <MarkdownEditor
+          value={draft.answerText}
+          onChange={(answerText) => set({ answerText })}
+          editorClassName="min-h-36"
+          placeholder={'主流架构:Decoder-only Transformer…\n\n核心:注意力机制(Self-Attention)…'}
+        />
       </div>
 
       <Field label="追问" hint="(每行一条,不给主答案提示)">

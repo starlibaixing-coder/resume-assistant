@@ -60,3 +60,16 @@ test('审核:待审列表 → 编辑后通过 → 计数联动;拒绝走确认',
   await page.getByRole('button', { name: '拒绝' }).last().click();
   await expect(page.getByText('没有待审核的题目')).toBeVisible();
 });
+
+test('简历所见即所得:Markdown 即打即变标题,保存与计数联动', async ({ page }) => {
+  await page.goto('/');
+  await seedData(page, []);
+  await page.getByTestId('nav-/resume').click();
+  const editor = page.locator('.tiptap');
+  await editor.click();
+  await editor.pressSequentially('# 手写 Promise.all');
+  // 输入「# 」后当行即变一级标题,无需切换预览
+  await expect(editor.locator('h1')).toHaveText('手写 Promise.all');
+  await page.getByTestId('resume-save-btn').click();
+  await expect(page.getByTestId('resume-save-state')).toContainText('已保存');
+});

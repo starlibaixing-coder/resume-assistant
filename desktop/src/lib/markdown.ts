@@ -42,3 +42,13 @@ export function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+
+/** 要点数组 → 单篇 markdown(空行分段:一段/一块 = 一个要点,供 WYSIWYG 编辑器载入) */
+export function pointsToMarkdown(points: string[]): string {
+  return points.map((p) => p.trim()).filter(Boolean).join('\n\n');
+}
+
+/** markdown → 要点数组(按空行分块;连续列表项同属一块,展示时整块经 marked 渲染) */
+export function markdownToPoints(md: string): string[] {
+  return md.split(/\n{2,}/).map((s) => s.trim()).filter(Boolean);
+}
