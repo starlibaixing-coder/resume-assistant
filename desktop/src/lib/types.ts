@@ -89,6 +89,14 @@ export interface Profile {
   preferences: string;
 }
 
+/** 简历(B6 多份;存量单份由启动迁移搬入) */
+export interface Resume {
+  id: number;
+  name: string;
+  content: string;
+  updatedAt: number;
+}
+
 /** 每日活动聚合行(由 rating_log 派生) */
 export interface ActivityDay {
   day: string;

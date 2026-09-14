@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { QuestionFormFields, applyDraft, validateDraft } from '@/components/biz/edit-question-form';
 import { generateQuestions, resolveConfig } from '@/lib/generate';
-import { useJdList, useMeta, useProfile, useSecret } from '@/lib/hooks';
+import { useJdList, useMeta, useResumes, useSecret } from '@/lib/hooks';
 import { nextMyQuestionId, saveMyQuestion } from '@/lib/storage';
 import type { Jd } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -164,11 +164,13 @@ function AiSection() {
 function JdSection({ preselectId }: { preselectId: number | null }) {
   const jds = useJdList();
   const { cfg, missing } = useLlmConfig();
-  const profile = useProfile();
+  const resumes = useResumes();
   const [jdId, setJdId] = useState<string>(preselectId ? String(preselectId) : jds[0] ? String(jds[0].id) : '');
   const [withResume, setWithResume] = useState(false);
+  const [resumePick, setResumePick] = useState<number | null>(null); // null = 默认最近编辑(B6)
   const [running, setRunning] = useState(false);
-  const resumeEmpty = !profile.resume.trim();
+  const activeResume = resumes.find((r) => r.id === resumePick) ?? resumes[0] ?? null;
+  const resumeEmpty = !activeResume || !activeResume.content.trim();
 
   useEffect(() => {
     if (preselectId && jds.some((j) => j.id === preselectId)) setJdId(String(preselectId));
@@ -186,7 +188,7 @@ function JdSection({ preselectId }: { preselectId: number | null }) {
           prompt: jd.content,
           jdTitle: jd.company ? `${jd.company} · ${jd.title}` : jd.title,
           jdId: jd.id,
-          resume: withResume ? profile.resume : undefined,
+          resume: withResume ? activeResume?.content : undefined,
         },
         cfg,
       );
@@ -231,6 +233,23 @@ function JdSection({ preselectId }: { preselectId: number | null }) {
             <Label htmlFor="with-resume" className="font-normal">
               结合简历出题
             </Label>
+            {resumes.length > 1 && (
+              <Select
+                value={String(activeResume?.id ?? '')}
+                onValueChange={(v) => setResumePick(Number(v))}
+              >
+                <SelectTrigger aria-label="选择用哪份简历" className="h-8 w-44">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {resumes.map((r) => (
+                    <SelectItem key={r.id} value={String(r.id)}>
+                      {r.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             {resumeEmpty && <span className="text-xs text-muted-foreground">简历为空,请先到「简历」页填写</span>}
           </div>
           <div className="flex justify-end">

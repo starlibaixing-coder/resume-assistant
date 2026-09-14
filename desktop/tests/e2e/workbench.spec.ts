@@ -65,6 +65,8 @@ test('简历所见即所得:Markdown 即打即变标题,保存与计数联动', 
   await page.goto('/');
   await seedData(page, []);
   await page.getByTestId('nav-/resume').click();
+  // 多份简历(B6):空态先建一份
+  await page.getByTestId('resume-create-btn').click();
   const editor = page.locator('.tiptap');
   await editor.click();
   await editor.pressSequentially('# 手写 Promise.all');
@@ -72,4 +74,14 @@ test('简历所见即所得:Markdown 即打即变标题,保存与计数联动', 
   await expect(editor.locator('h1')).toHaveText('手写 Promise.all');
   await page.getByTestId('resume-save-btn').click();
   await expect(page.getByTestId('resume-save-state')).toContainText('已保存');
+  // 重命名当前份,便于与新建的第二份区分
+  await page.getByRole('button', { name: '重命名简历' }).click();
+  await page.locator('#resume-rename').fill('测试简历 A');
+  await page.locator('#resume-rename').press('Enter');
+  // 再建一份并可切回,内容随份切换
+  await page.getByTestId('resume-new-btn').click();
+  await expect(page.locator('.tiptap')).not.toContainText('手写 Promise.all');
+  await page.getByTestId('resume-select').click();
+  await page.getByRole('option', { name: '测试简历 A' }).click();
+  await expect(page.locator('.tiptap')).toContainText('手写 Promise.all');
 });
