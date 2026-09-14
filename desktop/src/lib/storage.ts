@@ -11,7 +11,7 @@ import type Database from '@tauri-apps/plugin-sql';
 import { openDb } from './db';
 import { logger } from './logger';
 import { nextDayStart } from './utils';
-import type { ActivityDay, CardState, Difficulty, Jd, Profile, Question, QStatus, Rating } from './types';
+import type { ActivityDay, CardState, Difficulty, Jd, Profile, Question, QStatus, Rating, Resume } from './types';
 
 // ===== 行类型(SQLite 实际列) =====
 
@@ -122,6 +122,7 @@ const metaCache = new Map<string, string>();
 const secretCache = new Map<string, string>();
 const ratingLogCache = new Map<string, RatingLogRow>();
 let profileCache: Profile = { resume: '', preferences: '{}' };
+const resumeCache: Resume[] = []; // 按 updated_at DESC 保持有序,首项即「最近编辑」
 
 let db: Database | null = null;
 let initPromise: Promise<void> | null = null;
@@ -129,7 +130,7 @@ let persistErrorHook: ((msg: string) => void) | null = null;
 
 // ===== pub-sub =====
 
-export type StorageKey = 'official' | 'my' | 'review' | 'notes' | 'drafts' | 'jds' | 'profile' | 'secrets' | 'meta' | 'activity';
+export type StorageKey = 'official' | 'my' | 'review' | 'notes' | 'drafts' | 'jds' | 'profile' | 'secrets' | 'meta' | 'activity' | 'resumes';
 const listeners = new Map<StorageKey | '*', Set<() => void>>();
 
 export function subscribe(key: StorageKey | '*', fn: () => void): () => void {
@@ -179,6 +180,11 @@ export async function ensureSchema(database: Database): Promise<void> {
       'CREATE TABLE IF NOT EXISTS rating_log (' +
         'question_id TEXT NOT NULL, day TEXT NOT NULL, rating TEXT NOT NULL, rated_at INTEGER NOT NULL, ' +
         'PRIMARY KEY(question_id, day))',
+      /^$/,
+    ],
+    [
+      'CREATE TABLE IF NOT EXISTS resumes (' +
+        'id INTEGER PRIMARY KEY, name TEXT NOT NULL, content TEXT NOT NULL DEFAULT \'\', updated_at INTEGER NOT NULL)',
       /^$/,
     ],
   ];
@@ -343,6 +349,14 @@ export async function initStorage(
       const secretRows = await db.select<{ name: string; value: string }[]>('SELECT name, value FROM secrets');
       for (const s of secretRows) secretCache.set(s.name, s.value);
 
+      // 简历(B6 多份;存量单份首次启动搬入)
+      const resumeRows = await db.select<{ id: number; name: string; content: string; updated_at: number }[]>(
+        'SELECT id, name, content, updated_at FROM resumes ORDER BY updated_at DESC',
+      );
+      for (const r of resumeRows)
+        resumeCache.push({ id: r.id, name: r.name, content: r.content, updatedAt: r.updated_at });
+      if (resumeCache.length === 0 && profileCache.resume.trim()) addResume('我的简历', profileCache.resume);
+
       // 评分日志(activity 派生源)
       const logRows = await db.select<RatingLogRow[]>('SELECT question_id, day, rating, rated_at FROM rating_log');
       for (const l of logRows) ratingLogCache.set(`${l.question_id}|${l.day}`, l);
@@ -438,6 +452,19 @@ export function getJds(): Jd[] {
 
 export function getProfile(): Profile {
   return profileCache;
+}
+
+export function getResumes(): Resume[] {
+  return [...resumeCache];
+}
+
+/** 最近编辑的简历(JD「结合简历出题」默认项) */
+export function defaultResume(): Resume | null {
+  return resumeCache[0] ?? null;
+}
+
+export function getResume(id: number): Resume | null {
+  return resumeCache.find((r) => r.id === id) ?? null;
 }
 
 export function getMeta(key: string): string {
@@ -606,6 +633,45 @@ export function touchJd(id: number): void {
   notify('jds');
 }
 
+// ===== 写:简历(B6 多份) =====
+
+function nextResumeId(): number {
+  return resumeCache.reduce((m, r) => Math.max(m, r.id), 0) + 1;
+}
+
+export function addResume(name: string, content = ''): Resume {
+  const r: Resume = { id: nextResumeId(), name: name.trim() || '未命名简历', content, updatedAt: Date.now() };
+  resumeCache.push(r);
+  resumeCache.sort((a, b) => b.updatedAt - a.updatedAt);
+  persist(
+    (d) => d.execute('INSERT INTO resumes(id,name,content,updated_at) VALUES($1,$2,$3,$4)', [r.id, r.name, r.content, r.updatedAt]),
+    'addResume',
+  );
+  notify('resumes');
+  return r;
+}
+
+export function saveResume(id: number, patch: { name?: string; content?: string }): void {
+  const r = resumeCache.find((x) => x.id === id);
+  if (!r) return;
+  if (patch.name !== undefined) r.name = patch.name.trim() || r.name;
+  if (patch.content !== undefined) r.content = patch.content;
+  r.updatedAt = Date.now();
+  resumeCache.sort((a, b) => b.updatedAt - a.updatedAt);
+  persist(
+    (d) => d.execute('UPDATE resumes SET name=$2, content=$3, updated_at=$4 WHERE id=$1', [r.id, r.name, r.content, r.updatedAt]),
+    'saveResume',
+  );
+  notify('resumes');
+}
+
+export function deleteResume(id: number): void {
+  const i = resumeCache.findIndex((x) => x.id === id);
+  if (i >= 0) resumeCache.splice(i, 1);
+  persist((d) => d.execute('DELETE FROM resumes WHERE id = $1', [id]), 'deleteResume');
+  notify('resumes');
+}
+
 export function nextJdId(): number {
   return jdCache.reduce((m, j) => Math.max(m, j.id), 0) + 1;
 }
@@ -682,6 +748,7 @@ export interface BackupEnvelope {
     code_drafts: { id: string; category: string; content: string; updated_at: number }[];
     jds: Jd[];
     profile: Profile[];
+    resumes: Resume[];
     meta: { key: string; value: string }[];
     rating_log: RatingLogRow[];
   };
@@ -699,6 +766,7 @@ export function buildEnvelope(): BackupEnvelope {
       code_drafts: [...draftCache.entries()].map(([id, content]) => ({ id, category: 'my', content, updated_at: now })),
       jds: [...jdCache],
       profile: [profileCache],
+      resumes: [...resumeCache],
       meta: [...metaCache.entries()].map(([key, value]) => ({ key, value })),
       rating_log: [...ratingLogCache.values()],
     },
@@ -709,7 +777,7 @@ export function buildEnvelope(): BackupEnvelope {
 export async function importEnvelope(env: BackupEnvelope): Promise<void> {
   if (!db) {
     applyEnvelopeToCaches(env);
-    notify('official', 'my', 'review', 'notes', 'drafts', 'jds', 'profile', 'meta', 'activity');
+    notify('official', 'my', 'review', 'notes', 'drafts', 'jds', 'profile', 'meta', 'activity', 'resumes');
     return;
   }
   await db.execute('BEGIN');
@@ -721,6 +789,7 @@ export async function importEnvelope(env: BackupEnvelope): Promise<void> {
     await db.execute('DELETE FROM jds');
     await db.execute('DELETE FROM meta');
     await db.execute('DELETE FROM rating_log');
+    await db.execute('DELETE FROM resumes');
     for (const r of env.tables.questions) await db.execute(upsertMySql(), myRowParams(r));
     for (const r of env.tables.review_state) {
       await db.execute(
@@ -737,6 +806,8 @@ export async function importEnvelope(env: BackupEnvelope): Promise<void> {
       await db.execute('INSERT INTO jds(id,title,company,content,created_at,last_active_at) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(id) DO UPDATE SET title=$2,company=$3,content=$4,last_active_at=$6', [j.id, j.title, j.company, j.content, j.createdAt, j.lastActiveAt]);
     for (const p of env.tables.profile)
       await db.execute('INSERT INTO profile(id,resume,preferences) VALUES(1,$1,$2) ON CONFLICT(id) DO UPDATE SET resume=$1,preferences=$2', [p.resume, p.preferences]);
+    for (const r of env.tables.resumes ?? [])
+      await db.execute('INSERT INTO resumes(id,name,content,updated_at) VALUES($1,$2,$3,$4)', [r.id, r.name, r.content, r.updatedAt]);
     for (const m of env.tables.meta)
       await db.execute('INSERT INTO meta(key,value) VALUES($1,$2) ON CONFLICT(key) DO UPDATE SET value=$2', [m.key, m.value]);
     for (const l of env.tables.rating_log)
@@ -747,7 +818,7 @@ export async function importEnvelope(env: BackupEnvelope): Promise<void> {
     throw e;
   }
   applyEnvelopeToCaches(env);
-  notify('official', 'my', 'review', 'notes', 'drafts', 'jds', 'profile', 'meta', 'activity');
+  notify('official', 'my', 'review', 'notes', 'drafts', 'jds', 'profile', 'meta', 'activity', 'resumes');
 }
 
 function applyEnvelopeToCaches(env: BackupEnvelope): void {
@@ -761,6 +832,9 @@ function applyEnvelopeToCaches(env: BackupEnvelope): void {
   for (const c of env.tables.code_drafts) draftCache.set(c.id, c.content);
   jdCache.length = 0;
   jdCache.push(...env.tables.jds);
+  resumeCache.length = 0;
+  resumeCache.push(...(env.tables.resumes ?? []));
+  resumeCache.sort((a, b) => b.updatedAt - a.updatedAt);
   if (env.tables.profile[0]) profileCache = env.tables.profile[0];
   metaCache.clear();
   for (const m of env.tables.meta) metaCache.set(m.key, m.value);
@@ -859,6 +933,7 @@ export function _resetStorageForTest(): void {
   secretCache.clear();
   ratingLogCache.clear();
   profileCache = { resume: '', preferences: '{}' };
+  resumeCache.length = 0;
   db = null;
   initPromise = null;
 }
@@ -870,6 +945,7 @@ export function _seedForTest(seed: {
   notes?: Record<string, string>;
   jds?: Jd[];
   profile?: Profile;
+  resumes?: Resume[];
   meta?: Record<string, string>;
   ratingLog?: RatingLogRow[];
 }): void {
@@ -888,9 +964,14 @@ export function _seedForTest(seed: {
     jdCache.push(...seed.jds.filter((j) => !known.has(j.id)));
   }
   if (seed.profile) profileCache = seed.profile;
+  if (seed.resumes) {
+    resumeCache.length = 0;
+    resumeCache.push(...seed.resumes);
+    resumeCache.sort((a, b) => b.updatedAt - a.updatedAt);
+  }
   if (seed.meta) for (const [k, v] of Object.entries(seed.meta)) metaCache.set(k, v);
   if (seed.ratingLog) for (const l of seed.ratingLog) ratingLogCache.set(`${l.question_id}|${l.day}`, l);
-  notify('official', 'my', 'review', 'notes', 'drafts', 'jds', 'profile', 'meta', 'activity');
+  notify('official', 'my', 'review', 'notes', 'drafts', 'jds', 'profile', 'meta', 'activity', 'resumes');
 }
 
 /** 供 e2e/dev 注入演示数据 */

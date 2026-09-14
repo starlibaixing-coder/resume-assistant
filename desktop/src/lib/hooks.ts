@@ -15,6 +15,7 @@ import {
   getNote,
   getOfficialQuestions,
   getProfile,
+  getResumes,
   getReviewStates,
   getSecret,
   getVersion,
@@ -22,7 +23,7 @@ import {
   type StorageKey,
 } from './storage';
 import { getTheme, subscribeTheme, type Theme } from './theme';
-import type { ActivityDay, Jd, Profile, Question } from './types';
+import type { ActivityDay, Jd, Profile, Question, Resume } from './types';
 
 function useVersion(): number {
   return useSyncExternalStore((fn) => subscribe('*', fn), getVersion, () => 0);
@@ -85,6 +86,17 @@ export function useProfile(): Profile {
     getProfile,
     getProfile,
   );
+}
+
+let resumesCache: { v: number; r: Resume[] } | null = null;
+
+export function useResumes(): Resume[] {
+  useKeyVersion('resumes');
+  const v = useVersion();
+  return useMemo(() => {
+    if (resumesCache?.v !== v) resumesCache = { v, r: getResumes() };
+    return resumesCache.r;
+  }, [v]);
 }
 
 export function useMeta(key: string): string {

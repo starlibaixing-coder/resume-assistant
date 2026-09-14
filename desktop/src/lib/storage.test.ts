@@ -1,24 +1,30 @@
 // 存储网关往返与级联(mock db):行映射 / 补列 / 通过 / 复制 / 备份信封 / activity 派生
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   _resetStorageForTest,
+  addResume,
   approvePending,
   buildEnvelope,
   copyOfficialToMy,
+  defaultResume,
   deleteMyQuestion,
+  deleteResume,
   ensureSchema,
   getCard,
   getMyQuestions,
   getNote,
   getOfficialQuestions,
   getQuestion,
+  getResume,
+  getResumes,
   initStorage,
   myRowToQuestion,
   saveCard,
   saveJd,
   saveMyQuestion,
+  saveResume,
   type MyRow,
 } from './storage';
 import { rate } from './scheduler';
@@ -183,8 +189,43 @@ describe('写入路径', () => {
     const env = buildEnvelope();
     expect(env.version).toBe(1);
     expect(Object.keys(env.tables).sort()).toEqual(
-      ['code_drafts', 'jds', 'meta', 'notes', 'profile', 'questions', 'rating_log', 'review_state'],
+      ['code_drafts', 'jds', 'meta', 'notes', 'profile', 'questions', 'rating_log', 'resumes', 'review_state'],
     );
     expect('secrets' in env.tables).toBe(false);
+  });
+});
+
+describe('简历 CRUD(B6 多份)', () => {
+  beforeEach(() => _resetStorageForTest());
+  afterEach(() => vi.useRealTimers());
+
+  it('新建即激活有序:缓存按 updated_at DESC,首项为最近编辑', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-14T10:00:00'));
+    const a = addResume('A', '# A');
+    vi.setSystemTime(new Date('2026-09-14T10:01:00'));
+    const b = addResume('B');
+    expect(getResumes().map((r) => r.name)).toEqual(['B', 'A']);
+    expect(defaultResume()?.id).toBe(b.id);
+    vi.setSystemTime(new Date('2026-09-14T10:02:00'));
+    saveResume(a.id, { content: '# A2' });
+    expect(defaultResume()?.id).toBe(a.id);
+    expect(getResume(a.id)?.content).toBe('# A2');
+  });
+
+  it('重命名去首尾空白,空白名回落原名;删除生效', () => {
+    const a = addResume('  老名字  ', 'x');
+    expect(getResume(a.id)?.name).toBe('老名字');
+    saveResume(a.id, { name: '   ' });
+    expect(getResume(a.id)?.name).toBe('老名字');
+    deleteResume(a.id);
+    expect(getResume(a.id)).toBeNull();
+  });
+
+  it('备份信封携带 resumes,旧信封无该键时导入按空表处理', () => {
+    addResume('A', '内容');
+    const env = buildEnvelope();
+    expect(env.tables.resumes).toHaveLength(1);
+    expect(env.tables.resumes[0].name).toBe('A');
   });
 });
