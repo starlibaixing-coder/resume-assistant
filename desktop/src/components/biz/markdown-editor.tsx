@@ -40,8 +40,9 @@ export function MarkdownEditor({ value, onChange, placeholder, editorClassName, 
       },
       editorProps: {
         attributes: {
+          // 不加 focus ring:大面积编辑面聚焦时整块高亮边框反而喧宾夺主(用户反馈的「粉色边框」)
           class: cn(
-            'tiptap min-h-20 w-full rounded-md bg-input/70 px-3 py-2 text-sm leading-relaxed outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
+            'tiptap min-h-20 w-full rounded-md bg-input/70 px-3 py-2 text-sm leading-relaxed outline-none',
             editorClassName,
           ),
         },
