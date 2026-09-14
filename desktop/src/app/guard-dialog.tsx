@@ -34,7 +34,7 @@ export function GuardDialog() {
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>有未保存的更改</AlertDialogTitle>
-          <AlertDialogDescription>离开当前页面将丢失未保存的修改。确定要放弃更改并离开吗?</AlertDialogDescription>
+          <AlertDialogDescription>离开当前页面,未保存的修改会丢失。确定放弃并离开吗?</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>继续编辑</AlertDialogCancel>

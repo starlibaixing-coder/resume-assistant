@@ -41,12 +41,12 @@ export function StatusBar() {
         type="button"
         className="cursor-pointer transition-colors duration-150 hover:text-foreground"
         onClick={() =>
-          toast.info(sync ? `官方库上次同步:${formatDateTime(sync)}` : '官方库尚未同步', {
+          toast.info(sync ? `官方题库上次同步:${formatDateTime(sync)}` : '官方题库尚未同步', {
             description: '可在设置页手动同步',
           })
         }
       >
-        {sync ? `已同步 ${formatDateTime(sync)}` : '官方库未同步'}
+        {sync ? `已同步 ${formatDateTime(sync)}` : '官方题库未同步'}
       </button>
       <button
         type="button"

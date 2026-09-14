@@ -71,7 +71,7 @@ export function ResumePage() {
     }
     const name = `resume-${new Date().toISOString().slice(0, 10)}.md`;
     if (!downloadTextFile(name, value, 'text/markdown')) {
-      toast.info('桌面端导出需要文件对话框支持', { description: '该能力待后端补充(dialog + fs 插件),见后端 TODO。' });
+      toast.info('当前版本暂不支持在桌面端导出文件', { description: '文件导出能力将在后续版本提供。' });
     }
   };
 

@@ -58,7 +58,7 @@ export function ReviewPage() {
   const approve = (q: Question) => {
     const newId = approvePending(q.id);
     if (newId) {
-      toast.success('已通过,题目入库', { description: `新 id:${newId}` });
+      toast.success('已通过,进入我的题库', { description: `新 id:${newId}` });
       setSelectedId(null);
     }
   };

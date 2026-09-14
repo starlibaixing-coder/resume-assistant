@@ -73,7 +73,7 @@ export function JdPage() {
   const remove = (jd: Jd) => {
     deleteJd(jd.id);
     setDeleting(null);
-    toast.success('JD 已删除', { description: '已生成的题目保留,来源显示岗位名快照。' });
+    toast.success('JD 已删除', { description: '已生成的题目保留,来源仍显示岗位名。' });
   };
 
   return (
@@ -198,7 +198,7 @@ function JdDetail({ jd, stats, onDelete }: { jd: Jd; stats: { total: number; pen
 
       <div className="flex flex-wrap gap-2">
         <Button size="sm" onClick={() => navigate(`/add?jd=${jd.id}`)} data-testid="jd-generate-shortcut">
-          <Wand2Icon /> 按 JD 生成题目
+          <Wand2Icon /> 按 JD 生成
         </Button>
         <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
           <PencilIcon /> 编辑

@@ -34,7 +34,7 @@ export function AddPage() {
         <div>
           <h1 className="font-display text-lg font-semibold">添加题目</h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            选择出题方式。AI 生成与按 JD 生成先进入审核;手动录入直接进入我的题库。
+            选择出题方式。AI 生成与按 JD 生成先进入待审核;手动录入直接进入我的题库。
           </p>
         </div>
 
@@ -124,7 +124,7 @@ function AiSection() {
     setRunning(true);
     try {
       const { saved } = await generateQuestions({ kind: 'ai', prompt: knowledge.trim() }, cfg);
-      toast.success(`已生成 ${saved.length} 题,进入待审核`, { description: '到「审核」页裁定后才会进入我的题库。' });
+      toast.success(`已生成 ${saved.length} 道题,进入待审核`, { description: '到「审核」页裁定后才会进入我的题库。' });
       setKnowledge('');
     } catch (e) {
       toast.error(llmErrorText(e));
@@ -134,7 +134,7 @@ function AiSection() {
   };
 
   return (
-    <SectionCard icon={<SparklesIcon />} title="AI 生成题目" desc="输入知识点,AI 围绕它出题;生成后先进入审核。" testid="section-ai">
+    <SectionCard icon={<SparklesIcon />} title="AI 生成题目" desc="输入知识点,AI 围绕它出题;生成后先进待审核。" testid="section-ai">
       {!cfg.ready && <ConfigGuide missing={missing} />}
       <div className="space-y-4">
         <div className="space-y-1.5">
@@ -190,7 +190,7 @@ function JdSection({ preselectId }: { preselectId: number | null }) {
         },
         cfg,
       );
-      toast.success(`已生成 ${saved.length} 题,进入待审核`, { description: '到「审核」页裁定后才会进入我的题库。' });
+      toast.success(`已生成 ${saved.length} 道题,进入待审核`, { description: '到「审核」页裁定后才会进入我的题库。' });
     } catch (e) {
       toast.error(llmErrorText(e));
     } finally {
@@ -202,7 +202,7 @@ function JdSection({ preselectId }: { preselectId: number | null }) {
     <SectionCard
       icon={<BriefcaseIcon />}
       title="按 JD 生成题目"
-      desc="对着招聘要求出题,定位知识盲区;生成后先进入审核。"
+      desc="对着招聘要求出题,定位知识盲区;生成后先进待审核。"
       highlight={!!preselectId}
       testid="section-jd"
     >

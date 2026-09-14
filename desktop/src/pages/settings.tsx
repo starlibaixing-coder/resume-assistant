@@ -188,7 +188,7 @@ function StudyGroup() {
             </span>
           ))}
         </RadioGroup>
-        <p className="text-xs text-muted-foreground">复习永远不限量(ADR-0001);此选项只限制每次「学习」进入队列的题量。</p>
+        <p className="text-xs text-muted-foreground">复习永远不限量;此选项只限制每次「学习」的题量。</p>
       </div>
     </Group>
   );
@@ -231,7 +231,7 @@ function SyncGroup() {
     try {
       const r = await syncOfficial();
       if (r.status === 'same') toast.info('官方题库已是最新');
-      else if (r.status === 'updated') toast.success(`更新 ${r.added + r.removed} 题`, { description: `新增 ${r.added} 题,下架 ${r.removed} 题(连带清进度)` });
+      else if (r.status === 'updated') toast.success(`更新 ${r.added + r.removed} 道题`, { description: `新增 ${r.added} 道题,下架 ${r.removed} 道题(连带清进度)` });
       else toast.error(`同步失败:${r.message}`, { description: '可稍后重试,不影响本地使用' });
     } finally {
       setSyncing(false);

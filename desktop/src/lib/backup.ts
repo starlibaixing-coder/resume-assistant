@@ -50,7 +50,7 @@ export function myQuestionsToYaml(questions: QuestionYamlSource[]): string {
     lines.push('  followups:');
     for (const f of q.followups.length ? q.followups : ['']) lines.push('    - ' + JSON.stringify(f));
   }
-  return `# CommitCareer 我的题库导出(贡献回官方库请走 banks/clean 管线)\n` + lines.join('\n') + '\n';
+  return `# CommitCareer 我的题库导出(贡献回官方题库请走 banks/clean 管线)\n` + lines.join('\n') + '\n';
 }
 
 export interface QuestionYamlSource {

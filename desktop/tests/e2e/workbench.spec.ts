@@ -51,7 +51,7 @@ test('审核:待审列表 → 编辑后通过 → 计数联动;拒绝走确认',
   // 通过
   await page.getByTestId('audit-list').getByText('待审题一').click();
   await page.getByTestId('approve-btn').click();
-  await expect(page.getByText(/已通过,题目入库/)).toBeVisible();
+  await expect(page.getByText(/已通过,进入我的题库/)).toBeVisible();
   await expect(page.getByTestId('audit-list')).toContainText('待审题二');
   // 拒绝:确认弹窗初始焦点在取消
   await page.getByTestId('audit-list').getByText('待审题二').click();

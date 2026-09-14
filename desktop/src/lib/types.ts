@@ -66,7 +66,7 @@ export const STATUS_LABEL: Record<DerivedStatus, string> = {
 export const SOURCE_LABEL: Record<QuestionSource, string> = {
   official: '官方题库',
   manual: '手动添加',
-  copy: '官方题复制',
+  copy: '官方复制',
   ai: 'AI 生成',
   jd: '按 JD 生成',
 };

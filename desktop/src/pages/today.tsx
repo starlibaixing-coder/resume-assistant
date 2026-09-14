@@ -55,9 +55,9 @@ export function TodayPage() {
   const dateLine = new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' }).format(now);
 
   const hero = counts.due > 0
-    ? { key: 'review', title: `复习 ${counts.due} 题`, desc: '尚未掌握、需要再次复习的题目。', cta: '复习', onClick: () => start('review') }
+    ? { key: 'review', title: `复习 ${counts.due} 题`, desc: '尚未掌握的题目。', cta: '复习', onClick: () => start('review') }
     : counts.new > 0
-      ? { key: 'study', title: `学习 ${studyN} 题`, desc: '当前没有到期的复习,先学一批新题。', cta: '学习', onClick: () => start('study') }
+      ? { key: 'study', title: `学习 ${studyN} 题`, desc: '当前没有到期的复习,先学一批待学习的题。', cta: '学习', onClick: () => start('study') }
       : null;
 
   return (
@@ -172,7 +172,7 @@ function DueList({ due, total, onPractice }: { due: Question[]; total: number; o
             onClick={() => navigate('/library?cat=all&status=due')}
             className="cursor-pointer py-2 text-sm text-primary"
           >
-            查看全部 {total} 道
+            查看全部 {total} 道题
           </button>
         </li>
       )}

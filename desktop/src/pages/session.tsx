@@ -67,14 +67,14 @@ export function SessionPage() {
             <SessionEntry
               icon={<BookOpenIcon />}
               title={studyN > 0 ? `学习 · ${studyN} 题` : '学习'}
-              desc="还没学过的题目,每次一批。"
+              desc="待学习的题目,每次一批。"
               disabled={countsNew(pool) === 0}
               onClick={() => start('study')}
             />
             <SessionEntry
               icon={<LayersIcon />}
               title={`学习全部 · ${pool.length} 题`}
-              desc="不区分进度,把题库里的题都学一遍。"
+              desc="不区分进度,题库里的题按顺序都学一遍。"
               disabled={pool.length === 0}
               onClick={() => start('again')}
             />
@@ -167,7 +167,7 @@ function SessionRun({
   if (!exists) {
     return (
       <div className="flex h-full items-center justify-center">
-        <EmptyState title="该题已被删除" description="正在跳过,不计入本次小结。" />
+        <EmptyState title="该题已删除" description="正在跳过,不计入本次小结。" />
       </div>
     );
   }
