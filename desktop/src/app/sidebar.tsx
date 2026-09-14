@@ -102,7 +102,7 @@ export function Sidebar() {
           data-testid="nav-/settings"
           onClick={() => go('/settings')}
           className={cn(
-            'flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-md px-3 text-sm transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
+            'group flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-md px-3 text-sm transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
             pathname === '/settings'
               ? 'bg-primary/10 font-medium text-primary'
               : 'text-muted-foreground hover:bg-accent hover:text-foreground',

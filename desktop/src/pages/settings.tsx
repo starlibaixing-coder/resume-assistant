@@ -63,8 +63,12 @@ function Group({ icon, title, children }: { icon: React.ReactNode; title: string
 function AiGroup() {
   const savedBaseUrl = useMeta('ll_base_url');
   const savedModel = useMeta('ll_model');
+  const savedProvider = useMeta('ll_provider');
   const savedKey = useSecret('llm-api-key');
-  const providerId = useMeta('ll_provider') || 'zhipu';
+
+  // 未点过服务商时跟随已存值;点选即整组切到该服务商预设,保存时一并落库
+  const [providerOverride, setProviderOverride] = useState<string | null>(null);
+  const providerId = providerOverride ?? savedProvider ?? 'zhipu';
   const preset = PROVIDERS.find((p) => p.id === providerId) ?? PROVIDERS[0];
 
   const [baseUrl, setBaseUrl] = useState(savedBaseUrl || preset.baseUrl);
@@ -84,14 +88,15 @@ function AiGroup() {
 
   const pickProvider = (id: string) => {
     const p = PROVIDERS.find((x) => x.id === id)!;
-    setMeta('ll_provider', p.id);
-    if (!savedBaseUrl) setBaseUrl(p.baseUrl);
-    if (!savedModel) setModel(p.model);
+    setProviderOverride(p.id);
+    setBaseUrl(p.baseUrl);
+    setModel(p.model);
   };
 
   const cfgReady = !!(savedKey && baseUrl && model);
 
   const save = async () => {
+    setMeta('ll_provider', providerId);
     setMeta('ll_base_url', baseUrl.trim());
     setMeta('ll_model', model.trim());
     if (keyInput.trim()) {
