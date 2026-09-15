@@ -105,9 +105,9 @@ export interface ActivityDay {
   lastAt: number;
 }
 
-/** LLM 服务商预设(§5.4 常量表) */
+/** LLM 服务商预设(§5.4 常量表);custom = 任意 OpenAI 兼容服务,URL/模型必填、Key 可选 */
 export interface ProviderPreset {
-  id: 'zhipu' | 'deepseek' | 'ollama';
+  id: 'zhipu' | 'deepseek' | 'custom';
   label: string;
   baseUrl: string;
   model: string;
@@ -116,7 +116,7 @@ export interface ProviderPreset {
 export const PROVIDERS: ProviderPreset[] = [
   { id: 'zhipu', label: '智谱 GLM', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-4-flash' },
   { id: 'deepseek', label: 'DeepSeek', baseUrl: 'https://api.deepseek.com', model: 'deepseek-chat' },
-  { id: 'ollama', label: 'Ollama 本地', baseUrl: 'http://localhost:11434/v1', model: 'qwen2.5:7b' },
+  { id: 'custom', label: '自定义', baseUrl: '', model: '' },
 ];
 
 /** 各服务商 API Key 在 secrets 表的存储名(按家分存,互不共用) */
@@ -124,9 +124,14 @@ export function apiKeySecretName(providerId: string): string {
   return `llm-api-key:${providerId}`;
 }
 
-/** 本地推理服务无需鉴权,Key 可留空 */
+/** 自定义服务商视服务而定,Key 可留空 */
 export function providerNeedsKey(providerId: string): boolean {
-  return providerId !== 'ollama';
+  return providerId !== 'custom';
+}
+
+/** 已存/已选 id 不在预设里(如移除的 ollama)时归一为空串,让调用方回落默认服务商 */
+export function knownProvider(providerId: string | null | undefined): string {
+  return PROVIDERS.some((p) => p.id === providerId) ? (providerId as string) : '';
 }
 
 /** 每次学习题量(meta.batch_size;'all' = 不限量,ADR-0001 复习永远不限量) */

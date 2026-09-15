@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { downloadTextFile, envelopeToJson, myQuestionsToYaml, parseEnvelope, type QuestionYamlSource } from '@/lib/backup';
 import { isTauri } from '@/lib/db';
-import { apiKeySecretName, PROVIDERS, providerNeedsKey } from '@/lib/types';
+import { apiKeySecretName, knownProvider, PROVIDERS, providerNeedsKey } from '@/lib/types';
 import { useMeta, useMyQuestions, useSecret, useThemeValue } from '@/lib/hooks';
 import { buildEnvelope, importEnvelope, setMeta, setSecret } from '@/lib/storage';
 import { lastSyncAt, syncOfficial } from '@/lib/sync';
@@ -61,7 +61,9 @@ function Group({ icon, title, children }: { icon: React.ReactNode; title: string
 
 // ===== AI 服务 =====
 
-// 思考模式按官方文档的能力给选项:智谱 glm-5.3-flash 仅支持 enabled;DeepSeek 可开可关
+// 思考模式/推理强度按官方文档的能力给选项:智谱 glm-5.3-flash 思考仅支持 enabled;
+// DeepSeek 可开可关;自定义服务商不显示这两项(通用 OpenAI 兼容端点未必支持)
+const REASONING_PROVIDERS = ['zhipu', 'deepseek'];
 const THINKING_OPTIONS: Record<string, { value: string; label: string }[]> = {
   zhipu: [{ value: 'enabled', label: '开启' }],
   deepseek: [
@@ -74,9 +76,9 @@ function AiGroup() {
   const savedProvider = useMeta('ll_provider');
 
   // 未点过服务商时跟随已存值;点选即切到该服务商自己的配置,保存时一并落库
+  // knownProvider 把不在预设里的已存值(如移除的 ollama)归空,回落默认服务商
   const [providerOverride, setProviderOverride] = useState<string | null>(null);
-  // useMeta 缺失返回空串,须用 || 兜底(?? 对 '' 不生效),否则首次未保存时读写到空后缀槽位
-  const providerId = (providerOverride ?? savedProvider) || 'zhipu';
+  const providerId = (providerOverride ?? knownProvider(savedProvider)) || 'zhipu';
   const preset = PROVIDERS.find((p) => p.id === providerId) ?? PROVIDERS[0];
 
   // URL/模型/Key/生成参数按服务商各存各的;字段值 = 该家已存值,缺省回落预设
@@ -187,11 +189,21 @@ function AiGroup() {
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="ll-base-url">Base URL</Label>
-          <Input id="ll-base-url" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} placeholder={preset.baseUrl} />
+          <Input
+            id="ll-base-url"
+            value={baseUrl}
+            onChange={(e) => setBaseUrl(e.target.value)}
+            placeholder={preset.baseUrl || 'OpenAI 兼容地址,如 https://api.siliconflow.cn/v1'}
+          />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="ll-model">模型</Label>
-          <Input id="ll-model" value={model} onChange={(e) => setModel(e.target.value)} placeholder={preset.model} />
+          <Input
+            id="ll-model"
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+            placeholder={preset.model || '服务商的模型名,如 deepseek-chat'}
+          />
         </div>
       </div>
       <div className="space-y-1.5">
@@ -208,85 +220,78 @@ function AiGroup() {
               ? '已配置(不回显,可覆盖)'
               : providerNeedsKey(providerId)
                 ? '粘贴 API Key'
-                : '本地服务通常无需 Key'
+                : '视服务而定,可不填'
           }
           autoComplete="off"
         />
-        <p className="text-xs text-muted-foreground">Key 按服务商独立保存;Ollama 本地服务通常无需填写。</p>
+        <p className="text-xs text-muted-foreground">Key 按服务商独立保存;自定义服务商视所连服务的鉴权要求,可不填。</p>
       </div>
-      <div className="space-y-1.5">
-        <Label>生成参数(可选,留空用服务商官方默认)</Label>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="ll-temperature" className="font-normal text-muted-foreground">
-              采样温度 temperature(0–2)
-            </Label>
-            <Input
-              id="ll-temperature"
-              type="number"
-              min={0}
-              max={2}
-              step={0.1}
-              value={temperature}
-              onChange={(e) => setTemperature(e.target.value)}
-              placeholder={preset.id === 'zhipu' ? '1(GLM 推荐)' : '1'}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="ll-top-p" className="font-normal text-muted-foreground">
-              多样性 top_p(0–1)
-            </Label>
-            <Input
-              id="ll-top-p"
-              type="number"
-              min={0}
-              max={1}
-              step={0.05}
-              value={topP}
-              onChange={(e) => setTopP(e.target.value)}
-              placeholder={preset.id === 'zhipu' ? '0.95(GLM 推荐)' : '1'}
-            />
-          </div>
-          {providerId !== 'ollama' && (
-            <div className="space-y-1.5">
-              <Label className="font-normal text-muted-foreground">推理强度 reasoning_effort</Label>
-              <Select value={reasoning || 'default'} onValueChange={(v) => setReasoning(v === 'default' ? '' : v)}>
-                <SelectTrigger className="w-full" data-testid="ll-reasoning">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="default">默认</SelectItem>
-                  <SelectItem value="high">high</SelectItem>
-                  <SelectItem value="max">max</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-          {THINKING_OPTIONS[providerId] && (
-            <div className="space-y-1.5">
-              <Label className="font-normal text-muted-foreground">思考模式 thinking</Label>
-              <Select value={thinking || 'default'} onValueChange={(v) => setThinking(v === 'default' ? '' : v)}>
-                <SelectTrigger className="w-full" data-testid="ll-thinking">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="default">默认</SelectItem>
-                  {THINKING_OPTIONS[providerId].map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="ll-temperature">采样温度 temperature</Label>
+          <Input
+            id="ll-temperature"
+            type="number"
+            min={0}
+            max={2}
+            step={0.1}
+            value={temperature}
+            onChange={(e) => setTemperature(e.target.value)}
+            placeholder={preset.id === 'zhipu' ? '1(GLM 推荐)' : '留空用官方默认'}
+          />
         </div>
-        <p className="text-xs text-muted-foreground">
-          {preset.id === 'zhipu' && 'GLM 推荐组合:温度 1、多样性 0.95、推理强度 max;思考模式仅支持开启。'}
-          {preset.id === 'deepseek' && 'DeepSeek 默认开启思考(强度 high),温度可调 0–2。'}
-          {preset.id === 'ollama' && '本地模型的参数以模型自身默认为准。'}
-        </p>
+        <div className="space-y-1.5">
+          <Label htmlFor="ll-top-p">多样性 top_p</Label>
+          <Input
+            id="ll-top-p"
+            type="number"
+            min={0}
+            max={1}
+            step={0.05}
+            value={topP}
+            onChange={(e) => setTopP(e.target.value)}
+            placeholder={preset.id === 'zhipu' ? '0.95(GLM 推荐)' : '留空用官方默认'}
+          />
+        </div>
+        {REASONING_PROVIDERS.includes(providerId) && (
+          <div className="space-y-1.5">
+            <Label>推理强度 reasoning_effort</Label>
+            <Select value={reasoning || 'default'} onValueChange={(v) => setReasoning(v === 'default' ? '' : v)}>
+              <SelectTrigger className="w-full" data-testid="ll-reasoning">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">默认</SelectItem>
+                <SelectItem value="high">high</SelectItem>
+                <SelectItem value="max">max</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        {THINKING_OPTIONS[providerId] && (
+          <div className="space-y-1.5">
+            <Label>思考模式 thinking</Label>
+            <Select value={thinking || 'default'} onValueChange={(v) => setThinking(v === 'default' ? '' : v)}>
+              <SelectTrigger className="w-full" data-testid="ll-thinking">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">默认</SelectItem>
+                {THINKING_OPTIONS[providerId].map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
+      <p className="text-xs text-muted-foreground">
+        参数留空用服务商官方默认。{preset.id === 'zhipu' && 'GLM 推荐组合:温度 1、多样性 0.95、推理强度 max,思考模式仅支持开启。'}
+        {preset.id === 'deepseek' && 'DeepSeek 默认开启思考(强度 high)。'}
+        {preset.id === 'custom' && '推理强度与思考模式按所连服务支持的为准。'}
+      </p>
       <div className="flex justify-end gap-2">
         <Button variant="outline" disabled={testing || !canTest} onClick={test}>
           {testing ? '测试中…' : '测试连接'}

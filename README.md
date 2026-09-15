@@ -26,7 +26,7 @@ npm install
 npm run tauri dev    # 运行桌面应用(Rust 编译,首次较慢)
 ```
 
-首次使用:设置页填 LLM 服务商 + API key(智谱/DeepSeek/本地 Ollama 均可)。
+首次使用:设置页填 LLM 服务商 + API key(智谱/DeepSeek,或任意 OpenAI 兼容的自定义服务商)。
 
 ## 面试题库(banks/)
 

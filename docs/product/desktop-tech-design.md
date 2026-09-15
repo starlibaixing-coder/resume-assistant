@@ -236,7 +236,7 @@ rate(state, rating, now):
 
 ### 5.4 LLM 网关(`lib/generate.ts` + `lib/llm.ts`)
 
-- Provider 配置:zhipu / deepseek / ollama(各自 base_url 与默认 model 常量表);`chat(messages, {provider, key, baseUrl})` 走 OpenAI 兼容 `/chat/completions`。
+- Provider 配置:zhipu / deepseek / custom(自定义 = 任意 OpenAI 兼容服务,URL/模型必填、Key 可选;各自 base_url 与默认 model 常量表,`knownProvider` 把不在预设里的已存值归空回落默认);生成参数按服务商分存 meta `ll_temperature/ll_top_p/ll_reasoning_effort/ll_thinking:<provider>`,`chat()` 只带已设置项、未设置走服务端默认;`chat(messages, {provider, key, baseUrl, params?})` 走 OpenAI 兼容 `/chat/completions`。
 - **生成契约**:system prompt 内嵌题库质量六红线(答案不泄漏题干、追问不给提示、一题一问、概念不混、focus 不泄漏答案、answer≥50 字);user prompt = 知识点 或 JD 全文+公司(+可选简历全文,勾选时);输出 = **JSON 数组**,元素 schema `{module, difficulty, title, focus, answer[], followups[], is_code?}`;数量由模型按广度决定,上限 12。
 - 预检:共享 `validateQuestion`(题干非空 / focus 非空 / answer 合计 ≥50 字 / difficulty 合法 / id 唯一);不达标 → 把错误回传模型自修正,**重试 ≤2**;仍失败 → 整批丢弃,报错(不产生 pending)。
 - 产物:逐题落 `questions`(status='pending',临时 id,source='ai'|'jd');`jds.last_active_at` 刷新。

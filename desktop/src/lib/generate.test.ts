@@ -3,6 +3,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { generateQuestions, migrateLegacyApiKey, migrateLegacyLlmConfig, migrateLegacyProviderConfig, parseQuestionArray, resolveConfig, resolveParams, validateGenerated } from './generate';
+import { knownProvider } from './types';
 import * as llm from './llm';
 import { _resetStorageForTest, getMeta, getMyQuestions, getSecret, setMeta, setSecret } from './storage';
 
@@ -115,8 +116,8 @@ describe('resolveConfig(按服务商)', () => {
     expect(resolveConfig('deepseek', 'https://api.deepseek.com', 'deepseek-chat', 'sk-x').ready).toBe(true);
   });
 
-  it('Ollama 本地:Key 留空也 ready', () => {
-    const cfg = resolveConfig('ollama', 'http://localhost:11434/v1', 'qwen2.5:7b', '');
+  it('自定义服务商:Key 可留空也 ready', () => {
+    const cfg = resolveConfig('custom', 'https://api.example.com/v1', 'some-model', '');
     expect(cfg.ready).toBe(true);
     expect(cfg.apiKey).toBe('');
   });
@@ -145,6 +146,14 @@ describe('resolveParams(生成参数,meta 按服务商)', () => {
       )[k] ?? '';
     expect(resolveParams(read, 'zhipu')).toEqual({ temperature: 1, top_p: 0.95, thinking: 'enabled' });
     expect(resolveParams(read, 'deepseek')).toEqual({ reasoning_effort: 'high' });
+  });
+
+  it('knownProvider:已移除/未知 id 归空,预设内原样返回', () => {
+    expect(knownProvider('ollama')).toBe('');
+    expect(knownProvider('nope')).toBe('');
+    expect(knownProvider('')).toBe('');
+    expect(knownProvider(null)).toBe('');
+    expect(knownProvider('custom')).toBe('custom');
   });
 });
 

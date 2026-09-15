@@ -16,7 +16,7 @@ import { QuestionFormFields, applyDraft, validateDraft } from '@/components/biz/
 import { generateQuestions, resolveConfig, resolveParams } from '@/lib/generate';
 import { useJdList, useMeta, useResumes, useSecret } from '@/lib/hooks';
 import { nextMyQuestionId, saveMyQuestion } from '@/lib/storage';
-import { apiKeySecretName, PROVIDERS, providerNeedsKey } from '@/lib/types';
+import { apiKeySecretName, knownProvider, PROVIDERS, providerNeedsKey } from '@/lib/types';
 import type { Jd } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -85,7 +85,8 @@ function SectionCard({
 // ===== AI 服务配置状态(全页共用) =====
 
 function useLlmConfig() {
-  const providerId = useMeta('ll_provider') || 'zhipu';
+  // knownProvider 把不在预设里的已存值(如移除的 ollama)归空,回落默认服务商
+  const providerId = knownProvider(useMeta('ll_provider')) || 'zhipu';
   const preset = PROVIDERS.find((p) => p.id === providerId) ?? PROVIDERS[0];
   const apiKey = useSecret(apiKeySecretName(providerId));
   // 配置与生成参数按服务商各存各的;缺省回落该家预设/官方默认
