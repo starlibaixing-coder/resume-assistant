@@ -61,16 +61,16 @@ function Group({ icon, title, children }: { icon: React.ReactNode; title: string
 // ===== AI 服务 =====
 
 function AiGroup() {
-  const savedBaseUrl = useMeta('ll_base_url');
-  const savedModel = useMeta('ll_model');
   const savedProvider = useMeta('ll_provider');
 
-  // 未点过服务商时跟随已存值;点选即整组切到该服务商预设,保存时一并落库
+  // 未点过服务商时跟随已存值;点选即切到该服务商自己的配置,保存时一并落库
   const [providerOverride, setProviderOverride] = useState<string | null>(null);
   const providerId = providerOverride ?? savedProvider ?? 'zhipu';
   const preset = PROVIDERS.find((p) => p.id === providerId) ?? PROVIDERS[0];
 
-  // Key 按服务商各存各的;Ollama 等本地服务无需鉴权
+  // URL/模型/Key 按服务商各存各的;字段值 = 该家已存值,缺省回落预设
+  const savedBaseUrl = useMeta(`ll_base_url:${providerId}`);
+  const savedModel = useMeta(`ll_model:${providerId}`);
   const savedKey = useSecret(apiKeySecretName(providerId));
   const keyReady = !providerNeedsKey(providerId) || !!savedKey;
 
@@ -78,31 +78,27 @@ function AiGroup() {
   const [model, setModel] = useState(savedModel || preset.model);
   const [keyInput, setKeyInput] = useState('');
   const [testing, setTesting] = useState(false);
-  const hydrated = useRef(false);
 
-  // 首次拿到持久化值后不再跟随(本地可编辑)
+  // 切换服务商:表单重置为该家已存值(未保存的草稿不跨家携带)
+  // 仅依赖 providerId——保存后的 meta 刷新不得打断正在进行的编辑
   useEffect(() => {
-    if (!hydrated.current && (savedBaseUrl || savedModel)) {
-      setBaseUrl(savedBaseUrl || preset.baseUrl);
-      setModel(savedModel || preset.model);
-      hydrated.current = true;
-    }
-  }, [savedBaseUrl, savedModel, preset]);
+    setBaseUrl(savedBaseUrl || preset.baseUrl);
+    setModel(savedModel || preset.model);
+    setKeyInput('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [providerId]);
 
   const pickProvider = (id: string) => {
-    const p = PROVIDERS.find((x) => x.id === id)!;
-    setProviderOverride(p.id);
-    setBaseUrl(p.baseUrl);
-    setModel(p.model);
-    setKeyInput(''); // 输入框里的 Key 属于上一家,切走即清,防止误存到别家
+    setProviderOverride(id);
   };
 
-  const cfgReady = !!(keyReady && baseUrl && model);
+  // 测试连接针对表单当前值:Key 用输入框里的(未保存)或已存的,无需先保存
+  const canTest = !!(keyReady || keyInput.trim()) && !!baseUrl && !!model;
 
   const save = async () => {
     setMeta('ll_provider', providerId);
-    setMeta('ll_base_url', baseUrl.trim());
-    setMeta('ll_model', model.trim());
+    setMeta(`ll_base_url:${providerId}`, baseUrl.trim());
+    setMeta(`ll_model:${providerId}`, model.trim());
     if (keyInput.trim()) {
       try {
         await setSecret(apiKeySecretName(providerId), keyInput.trim());
@@ -115,13 +111,15 @@ function AiGroup() {
   };
 
   const test = async () => {
-    if (providerNeedsKey(providerId) && !savedKey) {
-      toast.error('请先填写并保存 API Key');
+    // 测试连接针对表单当前值:Key 未保存时用输入框里的,无需先保存
+    const keyToTest = keyInput.trim() || savedKey;
+    if (providerNeedsKey(providerId) && !keyToTest) {
+      toast.error('请先填写 API Key');
       return;
     }
     setTesting(true);
     try {
-      await testConnection({ apiKey: savedKey, baseUrl: baseUrl.trim(), model: model.trim(), ready: true });
+      await testConnection({ apiKey: keyToTest, baseUrl: baseUrl.trim(), model: model.trim(), ready: true });
       toast.success('连接成功');
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -177,7 +175,7 @@ function AiGroup() {
         <p className="text-xs text-muted-foreground">Key 按服务商独立保存;Ollama 本地服务通常无需填写。</p>
       </div>
       <div className="flex justify-end gap-2">
-        <Button variant="outline" disabled={testing || !cfgReady} onClick={test}>
+        <Button variant="outline" disabled={testing || !canTest} onClick={test}>
           {testing ? '测试中…' : '测试连接'}
         </Button>
         <Button onClick={save}>保存</Button>

@@ -36,11 +36,27 @@ export interface GenerateConfig {
   ready: boolean;
 }
 
-export function resolveConfig(read: (k: string) => string, secret: string, providerId = 'zhipu'): GenerateConfig {
-  const baseUrl = read('ll_base_url');
-  const model = read('ll_model');
-  const apiKey = secret;
+export function resolveConfig(
+  providerId: string,
+  baseUrl: string,
+  model: string,
+  apiKey: string,
+): GenerateConfig {
   return { apiKey, baseUrl, model, ready: !!((providerNeedsKey(providerId) ? apiKey : true) && baseUrl && model) };
+}
+
+/** 旧全局 ll_base_url/ll_model → 按服务商分存(一次性,挂到当时激活的服务商;与 Key 迁移同批执行) */
+export function migrateLegacyProviderConfig(
+  read: (k: string) => string,
+  write: (k: string, v: string) => void,
+): boolean {
+  const provider = read('ll_provider') || 'zhipu';
+  const url = read('ll_base_url');
+  const model = read('ll_model');
+  if ((!url && !model) || read(`ll_base_url:${provider}`)) return false;
+  if (url) write(`ll_base_url:${provider}`, url);
+  if (model) write(`ll_model:${provider}`, model);
+  return true;
 }
 
 /** 旧全局 llm-api-key → 按服务商分存(一次性;挂到当时激活的服务商名下,迁完即清) */

@@ -16,7 +16,7 @@ import { QuestionFormFields, applyDraft, validateDraft } from '@/components/biz/
 import { generateQuestions, resolveConfig } from '@/lib/generate';
 import { useJdList, useMeta, useResumes, useSecret } from '@/lib/hooks';
 import { nextMyQuestionId, saveMyQuestion } from '@/lib/storage';
-import { apiKeySecretName, providerNeedsKey } from '@/lib/types';
+import { apiKeySecretName, PROVIDERS, providerNeedsKey } from '@/lib/types';
 import type { Jd } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -86,13 +86,15 @@ function SectionCard({
 
 function useLlmConfig() {
   const providerId = useMeta('ll_provider') || 'zhipu';
+  const preset = PROVIDERS.find((p) => p.id === providerId) ?? PROVIDERS[0];
   const apiKey = useSecret(apiKeySecretName(providerId));
-  const baseUrl = useMeta('ll_base_url');
-  const model = useMeta('ll_model');
+  // 配置按服务商各存各的;缺省回落该家预设
+  const baseUrl = useMeta(`ll_base_url:${providerId}`) || preset.baseUrl;
+  const model = useMeta(`ll_model:${providerId}`) || preset.model;
   return useMemo(() => {
     const keyMissing = providerNeedsKey(providerId) && !apiKey;
     return {
-      cfg: resolveConfig((k) => (k === 'll_base_url' ? baseUrl : model), apiKey, providerId),
+      cfg: resolveConfig(providerId, baseUrl, model, apiKey),
       missing: [keyMissing && 'API Key', !baseUrl && 'Base URL', !model && '模型'].filter(Boolean).join('、'),
     };
   }, [apiKey, baseUrl, model, providerId]);

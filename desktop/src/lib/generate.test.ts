@@ -2,9 +2,9 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { generateQuestions, migrateLegacyApiKey, migrateLegacyLlmConfig, parseQuestionArray, resolveConfig, validateGenerated } from './generate';
+import { generateQuestions, migrateLegacyApiKey, migrateLegacyLlmConfig, migrateLegacyProviderConfig, parseQuestionArray, resolveConfig, validateGenerated } from './generate';
 import * as llm from './llm';
-import { _resetStorageForTest, getMyQuestions, getSecret, setSecret } from './storage';
+import { _resetStorageForTest, getMeta, getMyQuestions, getSecret, setMeta, setSecret } from './storage';
 
 const GOOD = JSON.stringify([
   {
@@ -110,17 +110,39 @@ describe('migrateLegacyLlmConfig(旧版 localStorage 配置迁移)', () => {
 });
 
 describe('resolveConfig(按服务商)', () => {
-  const read = (k: string) => (k === 'll_base_url' ? 'https://api.deepseek.com' : 'deepseek-chat');
-
   it('需要 Key 的服务商:有 Key 才 ready', () => {
-    expect(resolveConfig(read, '', 'deepseek').ready).toBe(false);
-    expect(resolveConfig(read, 'sk-x', 'deepseek').ready).toBe(true);
+    expect(resolveConfig('deepseek', 'https://api.deepseek.com', 'deepseek-chat', '').ready).toBe(false);
+    expect(resolveConfig('deepseek', 'https://api.deepseek.com', 'deepseek-chat', 'sk-x').ready).toBe(true);
   });
 
   it('Ollama 本地:Key 留空也 ready', () => {
-    const cfg = resolveConfig(read, '', 'ollama');
+    const cfg = resolveConfig('ollama', 'http://localhost:11434/v1', 'qwen2.5:7b', '');
     expect(cfg.ready).toBe(true);
     expect(cfg.apiKey).toBe('');
+  });
+});
+
+describe('migrateLegacyProviderConfig(全局 url/model → 按服务商分存)', () => {
+  beforeEach(() => _resetStorageForTest());
+
+  it('迁移到激活服务商名下;目标已存在时不覆盖', () => {
+    setMeta('ll_provider', 'deepseek');
+    setMeta('ll_base_url', 'https://api.deepseek.com');
+    setMeta('ll_model', 'deepseek-v4-flash');
+    expect(migrateLegacyProviderConfig(getMeta, setMeta)).toBe(true);
+    expect(getMeta('ll_base_url:deepseek')).toBe('https://api.deepseek.com');
+    expect(getMeta('ll_model:deepseek')).toBe('deepseek-v4-flash');
+
+    // 目标已有:不迁移(保留该家自己的值)
+    setMeta('ll_base_url', 'https://other.example.com');
+    expect(migrateLegacyProviderConfig(getMeta, setMeta)).toBe(false);
+    expect(getMeta('ll_base_url:deepseek')).toBe('https://api.deepseek.com');
+  });
+
+  it('无全局值时不动作', () => {
+    setMeta('ll_provider', 'zhipu');
+    expect(migrateLegacyProviderConfig(getMeta, setMeta)).toBe(false);
+    expect(getMeta('ll_base_url:zhipu')).toBe('');
   });
 });
 
