@@ -2,9 +2,9 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { generateQuestions, migrateLegacyLlmConfig, parseQuestionArray, validateGenerated } from './generate';
+import { generateQuestions, migrateLegacyApiKey, migrateLegacyLlmConfig, parseQuestionArray, resolveConfig, validateGenerated } from './generate';
 import * as llm from './llm';
-import { _resetStorageForTest, getMyQuestions } from './storage';
+import { _resetStorageForTest, getMyQuestions, getSecret, setSecret } from './storage';
 
 const GOOD = JSON.stringify([
   {
@@ -106,5 +106,40 @@ describe('migrateLegacyLlmConfig(旧版 localStorage 配置迁移)', () => {
     expect(migrateLegacyLlmConfig(() => 'x', write, fakeLs('{"baseURL":"https://a"}'))).toBe(false);
     expect(migrateLegacyLlmConfig(() => '', write, fakeLs(null))).toBe(false);
     expect(writes).toHaveLength(0);
+  });
+});
+
+describe('resolveConfig(按服务商)', () => {
+  const read = (k: string) => (k === 'll_base_url' ? 'https://api.deepseek.com' : 'deepseek-chat');
+
+  it('需要 Key 的服务商:有 Key 才 ready', () => {
+    expect(resolveConfig(read, '', 'deepseek').ready).toBe(false);
+    expect(resolveConfig(read, 'sk-x', 'deepseek').ready).toBe(true);
+  });
+
+  it('Ollama 本地:Key 留空也 ready', () => {
+    const cfg = resolveConfig(read, '', 'ollama');
+    expect(cfg.ready).toBe(true);
+    expect(cfg.apiKey).toBe('');
+  });
+});
+
+describe('migrateLegacyApiKey(全局 Key → 按服务商分存)', () => {
+  it('迁移到激活服务商名下并清除旧条目;已有目标 Key 时不覆盖', async () => {
+    await setSecret('llm-api-key', 'sk-legacy');
+    await migrateLegacyApiKey(getSecret, setSecret, () => 'deepseek');
+    expect(getSecret('llm-api-key:deepseek')).toBe('sk-legacy');
+    expect(getSecret('llm-api-key')).toBe('');
+
+    // 再迁移一次:目标已有 Key,不得覆盖;旧条目已空,不再动作
+    await setSecret('llm-api-key', 'sk-again');
+    await migrateLegacyApiKey(getSecret, setSecret, () => 'deepseek');
+    expect(getSecret('llm-api-key:deepseek')).toBe('sk-legacy');
+    expect(getSecret('llm-api-key')).toBe('');
+  });
+
+  it('无旧条目时不动任何数据', async () => {
+    await migrateLegacyApiKey(getSecret, setSecret, () => 'zhipu');
+    expect(getSecret('llm-api-key:zhipu')).toBe('');
   });
 });

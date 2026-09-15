@@ -16,6 +16,7 @@ import { QuestionFormFields, applyDraft, validateDraft } from '@/components/biz/
 import { generateQuestions, resolveConfig } from '@/lib/generate';
 import { useJdList, useMeta, useResumes, useSecret } from '@/lib/hooks';
 import { nextMyQuestionId, saveMyQuestion } from '@/lib/storage';
+import { apiKeySecretName, providerNeedsKey } from '@/lib/types';
 import type { Jd } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -84,16 +85,17 @@ function SectionCard({
 // ===== AI 服务配置状态(全页共用) =====
 
 function useLlmConfig() {
-  const apiKey = useSecret('llm-api-key');
+  const providerId = useMeta('ll_provider') || 'zhipu';
+  const apiKey = useSecret(apiKeySecretName(providerId));
   const baseUrl = useMeta('ll_base_url');
   const model = useMeta('ll_model');
-  return useMemo(
-    () => ({
-      cfg: resolveConfig((k) => (k === 'll_base_url' ? baseUrl : model), apiKey),
-      missing: [!apiKey && 'API Key', !baseUrl && 'Base URL', !model && '模型'].filter(Boolean).join('、'),
-    }),
-    [apiKey, baseUrl, model],
-  );
+  return useMemo(() => {
+    const keyMissing = providerNeedsKey(providerId) && !apiKey;
+    return {
+      cfg: resolveConfig((k) => (k === 'll_base_url' ? baseUrl : model), apiKey, providerId),
+      missing: [keyMissing && 'API Key', !baseUrl && 'Base URL', !model && '模型'].filter(Boolean).join('、'),
+    };
+  }, [apiKey, baseUrl, model, providerId]);
 }
 
 function ConfigGuide({ missing }: { missing: string }) {

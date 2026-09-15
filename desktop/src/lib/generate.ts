@@ -4,6 +4,7 @@
 
 import { chat, LlmError } from './llm';
 import { nextPendingId, saveMyQuestion, touchJd } from './storage';
+import { apiKeySecretName, providerNeedsKey } from './types';
 import type { Difficulty, Question } from './types';
 
 export const MAX_QUESTIONS = 12;
@@ -35,11 +36,24 @@ export interface GenerateConfig {
   ready: boolean;
 }
 
-export function resolveConfig(read: (k: string) => string, secret: string): GenerateConfig {
+export function resolveConfig(read: (k: string) => string, secret: string, providerId = 'zhipu'): GenerateConfig {
   const baseUrl = read('ll_base_url');
   const model = read('ll_model');
   const apiKey = secret;
-  return { apiKey, baseUrl, model, ready: !!(apiKey && baseUrl && model) };
+  return { apiKey, baseUrl, model, ready: !!((providerNeedsKey(providerId) ? apiKey : true) && baseUrl && model) };
+}
+
+/** 旧全局 llm-api-key → 按服务商分存(一次性;挂到当时激活的服务商名下,迁完即清) */
+export async function migrateLegacyApiKey(
+  getSecret: (name: string) => string,
+  setSecret: (name: string, value: string) => Promise<void>,
+  read: (k: string) => string,
+): Promise<void> {
+  const legacy = getSecret('llm-api-key');
+  if (!legacy) return;
+  const target = apiKeySecretName(read('ll_provider') || 'zhipu');
+  if (!getSecret(target)) await setSecret(target, legacy);
+  await setSecret('llm-api-key', '');
 }
 
 // ===== 解析与校验(纯函数,单测锚点) =====

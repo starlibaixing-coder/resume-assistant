@@ -119,5 +119,15 @@ export const PROVIDERS: ProviderPreset[] = [
   { id: 'ollama', label: 'Ollama 本地', baseUrl: 'http://localhost:11434/v1', model: 'qwen2.5:7b' },
 ];
 
+/** 各服务商 API Key 在 secrets 表的存储名(按家分存,互不共用) */
+export function apiKeySecretName(providerId: string): string {
+  return `llm-api-key:${providerId}`;
+}
+
+/** 本地推理服务无需鉴权,Key 可留空 */
+export function providerNeedsKey(providerId: string): boolean {
+  return providerId !== 'ollama';
+}
+
 /** 每次学习题量(meta.batch_size;'all' = 不限量,ADR-0001 复习永远不限量) */
 export type BatchSize = '20' | '50' | 'all';

@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { downloadTextFile, envelopeToJson, myQuestionsToYaml, parseEnvelope, type QuestionYamlSource } from '@/lib/backup';
 import { isTauri } from '@/lib/db';
-import { PROVIDERS } from '@/lib/types';
+import { apiKeySecretName, PROVIDERS, providerNeedsKey } from '@/lib/types';
 import { useMeta, useMyQuestions, useSecret, useThemeValue } from '@/lib/hooks';
 import { buildEnvelope, importEnvelope, setMeta, setSecret } from '@/lib/storage';
 import { lastSyncAt, syncOfficial } from '@/lib/sync';
@@ -64,12 +64,15 @@ function AiGroup() {
   const savedBaseUrl = useMeta('ll_base_url');
   const savedModel = useMeta('ll_model');
   const savedProvider = useMeta('ll_provider');
-  const savedKey = useSecret('llm-api-key');
 
   // 未点过服务商时跟随已存值;点选即整组切到该服务商预设,保存时一并落库
   const [providerOverride, setProviderOverride] = useState<string | null>(null);
   const providerId = providerOverride ?? savedProvider ?? 'zhipu';
   const preset = PROVIDERS.find((p) => p.id === providerId) ?? PROVIDERS[0];
+
+  // Key 按服务商各存各的;Ollama 等本地服务无需鉴权
+  const savedKey = useSecret(apiKeySecretName(providerId));
+  const keyReady = !providerNeedsKey(providerId) || !!savedKey;
 
   const [baseUrl, setBaseUrl] = useState(savedBaseUrl || preset.baseUrl);
   const [model, setModel] = useState(savedModel || preset.model);
@@ -91,9 +94,10 @@ function AiGroup() {
     setProviderOverride(p.id);
     setBaseUrl(p.baseUrl);
     setModel(p.model);
+    setKeyInput(''); // 输入框里的 Key 属于上一家,切走即清,防止误存到别家
   };
 
-  const cfgReady = !!(savedKey && baseUrl && model);
+  const cfgReady = !!(keyReady && baseUrl && model);
 
   const save = async () => {
     setMeta('ll_provider', providerId);
@@ -101,7 +105,7 @@ function AiGroup() {
     setMeta('ll_model', model.trim());
     if (keyInput.trim()) {
       try {
-        await setSecret('llm-api-key', keyInput.trim());
+        await setSecret(apiKeySecretName(providerId), keyInput.trim());
       } catch (e) {
         toast.error('API Key 保存失败', { description: e instanceof Error ? e.message : String(e) });
         return;
@@ -111,7 +115,7 @@ function AiGroup() {
   };
 
   const test = async () => {
-    if (!savedKey) {
+    if (providerNeedsKey(providerId) && !savedKey) {
       toast.error('请先填写并保存 API Key');
       return;
     }
@@ -161,9 +165,16 @@ function AiGroup() {
           type="password"
           value={keyInput}
           onChange={(e) => setKeyInput(e.target.value)}
-          placeholder={savedKey ? '已配置(不回显,可覆盖)' : '粘贴 API Key'}
+          placeholder={
+            savedKey
+              ? '已配置(不回显,可覆盖)'
+              : providerNeedsKey(providerId)
+                ? '粘贴 API Key'
+                : '本地服务通常无需 Key'
+          }
           autoComplete="off"
         />
+        <p className="text-xs text-muted-foreground">Key 按服务商独立保存;Ollama 本地服务通常无需填写。</p>
       </div>
       <div className="flex justify-end gap-2">
         <Button variant="outline" disabled={testing || !cfgReady} onClick={test}>

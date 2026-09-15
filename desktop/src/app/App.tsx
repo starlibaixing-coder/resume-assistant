@@ -21,8 +21,8 @@ import { SettingsPage } from '@/pages/settings';
 import { ErrorState } from '@/components/biz/states';
 import { initHotkeys, setHotkeyDeps } from '@/lib/hotkeys';
 import { requestNavigation } from '@/lib/guard';
-import { initStorage, setOnPersistError, getMeta, setMeta, _seedForTest, _resetStorageForTest } from '@/lib/storage';
-import { migrateLegacyLlmConfig } from '@/lib/generate';
+import { initStorage, setOnPersistError, getMeta, getSecret, setMeta, setSecret, _seedForTest, _resetStorageForTest } from '@/lib/storage';
+import { migrateLegacyApiKey, migrateLegacyLlmConfig } from '@/lib/generate';
 import { startSession } from '@/lib/session';
 import { seedOfficialIfEmpty } from '@/lib/sync';
 import { initTheme } from '@/lib/theme';
@@ -41,6 +41,7 @@ export function App() {
       .then(async () => {
         await seedOfficialIfEmpty();
         migrateLegacyLlmConfig(getMeta, setMeta);
+        await migrateLegacyApiKey(getSecret, setSecret, getMeta);
         if (cancelled) return;
         initTheme();
         setReady(true);
