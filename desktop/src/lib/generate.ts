@@ -3,6 +3,7 @@
 // 产物逐题落 questions(status='pending',临时 id,source='ai'|'jd'),刷新 jds.last_active_at。
 
 import { chat, LlmError } from './llm';
+import type { ChatParams } from './llm';
 import { nextPendingId, saveMyQuestion, touchJd } from './storage';
 import { apiKeySecretName, providerNeedsKey } from './types';
 import type { Difficulty, Question } from './types';
@@ -34,6 +35,8 @@ export interface GenerateConfig {
   baseUrl: string;
   model: string;
   ready: boolean;
+  /** 生成参数(可选;未设置的字段不进请求体,走服务端官方默认) */
+  params?: ChatParams;
 }
 
 export function resolveConfig(
@@ -41,8 +44,28 @@ export function resolveConfig(
   baseUrl: string,
   model: string,
   apiKey: string,
+  params?: ChatParams,
 ): GenerateConfig {
-  return { apiKey, baseUrl, model, ready: !!((providerNeedsKey(providerId) ? apiKey : true) && baseUrl && model) };
+  return { apiKey, baseUrl, model, ready: !!((providerNeedsKey(providerId) ? apiKey : true) && baseUrl && model), params };
+}
+
+/** 按服务商读生成参数(meta `ll_*:<id>`);全部为空返回 undefined(请求不带参数字段) */
+export function resolveParams(read: (k: string) => string, providerId: string): ChatParams | undefined {
+  const num = (k: string) => {
+    const raw = read(k).trim();
+    if (!raw) return undefined;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : undefined;
+  };
+  const params: ChatParams = {
+    temperature: num(`ll_temperature:${providerId}`),
+    top_p: num(`ll_top_p:${providerId}`),
+    reasoning_effort: read(`ll_reasoning_effort:${providerId}`).trim() || undefined,
+    thinking: read(`ll_thinking:${providerId}`).trim() || undefined,
+  };
+  const allEmpty =
+    params.temperature === undefined && params.top_p === undefined && !params.reasoning_effort && !params.thinking;
+  return allEmpty ? undefined : params;
 }
 
 /** 旧全局 ll_base_url/ll_model → 按服务商分存(一次性,挂到当时激活的服务商;与 Key 迁移同批执行) */

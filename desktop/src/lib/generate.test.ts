@@ -2,7 +2,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { generateQuestions, migrateLegacyApiKey, migrateLegacyLlmConfig, migrateLegacyProviderConfig, parseQuestionArray, resolveConfig, validateGenerated } from './generate';
+import { generateQuestions, migrateLegacyApiKey, migrateLegacyLlmConfig, migrateLegacyProviderConfig, parseQuestionArray, resolveConfig, resolveParams, validateGenerated } from './generate';
 import * as llm from './llm';
 import { _resetStorageForTest, getMeta, getMyQuestions, getSecret, setMeta, setSecret } from './storage';
 
@@ -119,6 +119,32 @@ describe('resolveConfig(按服务商)', () => {
     const cfg = resolveConfig('ollama', 'http://localhost:11434/v1', 'qwen2.5:7b', '');
     expect(cfg.ready).toBe(true);
     expect(cfg.apiKey).toBe('');
+  });
+
+  it('params 透传', () => {
+    expect(resolveConfig('zhipu', 'u', 'm', 'k').params).toBeUndefined();
+    expect(resolveConfig('zhipu', 'u', 'm', 'k', { temperature: 1 }).params).toEqual({ temperature: 1 });
+  });
+});
+
+describe('resolveParams(生成参数,meta 按服务商)', () => {
+  it('全部为空 → undefined(请求不带参数字段)', () => {
+    expect(resolveParams(() => '', 'zhipu')).toBeUndefined();
+  });
+
+  it('按服务商读各槽位;空串与非法数字忽略', () => {
+    const read = (k: string) =>
+      (
+        {
+          'll_temperature:zhipu': '1',
+          'll_top_p:zhipu': '0.95',
+          'll_thinking:zhipu': 'enabled',
+          'll_temperature:deepseek': 'abc',
+          'll_reasoning_effort:deepseek': 'high',
+        } as Record<string, string>
+      )[k] ?? '';
+    expect(resolveParams(read, 'zhipu')).toEqual({ temperature: 1, top_p: 0.95, thinking: 'enabled' });
+    expect(resolveParams(read, 'deepseek')).toEqual({ reasoning_effort: 'high' });
   });
 });
 

@@ -106,6 +106,7 @@ src/
 
 | 日期 | 变更 |
 |---|---|
+| 2026-09-15(二) | 生成参数可调(用户指定,依两家官方文档):请求体去硬编码 `temperature:0.7`,`chat()` 只带已设置项、未设置走服务端官方默认;参数按服务商分存 meta `ll_temperature/ll_top_p/ll_reasoning_effort/ll_thinking:<provider>`,设置页 AI 服务组新增「生成参数(可选)」区(温度 0–2 / 多样性 0–1 / 推理强度 / 思考模式,按家显隐:Ollama 仅温度与多样性,智谱思考模式仅 enabled、DeepSeek 可开可关),测试连接同样吃表单参数;智谱占位提示官方推荐组合(温度 1 / 多样性 0.95 / 强度 max);顺手修 settings `providerId` 空串兜底(`??`→`||`,否则首装未存 ll_provider 时读写到空后缀槽位) |
 | 2026-09-15 | AI 服务商配置整体按服务商分存(用户反馈:只配了 DeepSeek 别家也显示已配置;Base URL/模型切服务商即被预设吞掉、保存不生效):secrets 名 `llm-api-key:<provider>`,meta 名 `ll_base_url:<provider>`/`ll_model:<provider>`,启动一次性迁移把旧全局值挂到当时激活的服务商并清除旧 Key 条目(若 meta.ll_provider 与 Key 实际归属不符需手工重贴);Ollama 本地无需 Key;测试连接改用表单当前值(Key 未保存取输入框),不再要求先保存;切换服务商不再吞自定义值——每家看各家的已存配置,预设仅作未配置时的缺省 |
 | 2026-09-14(二) | 多份简历落地(B6,前端幂等 DDL):存储新表 `resumes` + 启动迁移(存量 profile.resume 搬入「我的简历」),备份信封含 resumes、旧备份按空表导入;简历页 = Select 切换 + 新建/重命名/删除,dirty 时切份先确认;按 JD 生成的「结合简历」默认取最近编辑,多于一份出选择器;同轮:Markdown 编辑器去聚焦描边(用户反馈粉色边框喧宾夺主) |
 | 2026-09-14 | 长文本编辑升级所见即所得(用户指定「### 输入完就是三级标题,不要切换」):新增 biz 组件 `markdown-editor`(Tiptap v2 + tiptap-markdown,依赖以 `-w desktop` 规范安装),接入简历/答案要点/笔记三处;简历「预览」按钮移除(编辑即渲染),答案要点语义从「每行一个要点」改「一段一个要点」(`pointsToMarkdown`/`markdownToPoints` 空行分段,展示端仍走 marked),存储保持 Markdown 格式不变;同轮:设置页服务商切换即时填充预设并随保存落库(原实现被 savedBaseUrl 门槛卡死)、品牌图标重绘(朱砂印章 C,`tauri icon` 全套重生成,除白边)、侧栏设置项补 `group` class 让 ⌘, 悬停提示生效、文案对齐术语表(禁词清零/官方题库/道题量词) |

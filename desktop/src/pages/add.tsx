@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { QuestionFormFields, applyDraft, validateDraft } from '@/components/biz/edit-question-form';
-import { generateQuestions, resolveConfig } from '@/lib/generate';
+import { generateQuestions, resolveConfig, resolveParams } from '@/lib/generate';
 import { useJdList, useMeta, useResumes, useSecret } from '@/lib/hooks';
 import { nextMyQuestionId, saveMyQuestion } from '@/lib/storage';
 import { apiKeySecretName, PROVIDERS, providerNeedsKey } from '@/lib/types';
@@ -88,16 +88,30 @@ function useLlmConfig() {
   const providerId = useMeta('ll_provider') || 'zhipu';
   const preset = PROVIDERS.find((p) => p.id === providerId) ?? PROVIDERS[0];
   const apiKey = useSecret(apiKeySecretName(providerId));
-  // 配置按服务商各存各的;缺省回落该家预设
+  // 配置与生成参数按服务商各存各的;缺省回落该家预设/官方默认
   const baseUrl = useMeta(`ll_base_url:${providerId}`) || preset.baseUrl;
   const model = useMeta(`ll_model:${providerId}`) || preset.model;
+  const temperature = useMeta(`ll_temperature:${providerId}`);
+  const topP = useMeta(`ll_top_p:${providerId}`);
+  const reasoning = useMeta(`ll_reasoning_effort:${providerId}`);
+  const thinking = useMeta(`ll_thinking:${providerId}`);
   return useMemo(() => {
     const keyMissing = providerNeedsKey(providerId) && !apiKey;
+    const params = resolveParams(
+      (k) =>
+        ({
+          [`ll_temperature:${providerId}`]: temperature,
+          [`ll_top_p:${providerId}`]: topP,
+          [`ll_reasoning_effort:${providerId}`]: reasoning,
+          [`ll_thinking:${providerId}`]: thinking,
+        })[k] ?? '',
+      providerId,
+    );
     return {
-      cfg: resolveConfig(providerId, baseUrl, model, apiKey),
+      cfg: resolveConfig(providerId, baseUrl, model, apiKey, params),
       missing: [keyMissing && 'API Key', !baseUrl && 'Base URL', !model && '模型'].filter(Boolean).join('、'),
     };
-  }, [apiKey, baseUrl, model, providerId]);
+  }, [apiKey, baseUrl, model, providerId, temperature, topP, reasoning, thinking]);
 }
 
 function ConfigGuide({ missing }: { missing: string }) {
